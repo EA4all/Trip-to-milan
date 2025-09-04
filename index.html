@@ -1414,7 +1414,7 @@
         
         onAuthStateChanged(auth, (user) => {
           if (user) {
-            tripDocRef = doc(db, "trips", tripId);
+            tripDocRef = doc(db, "milantrip", tripId);
 
             onSnapshot(tripDocRef, async (docSnap) => {
                 if (docSnap.exists()) {
