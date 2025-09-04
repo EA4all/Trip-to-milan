@@ -1280,7 +1280,7 @@
     // --- Gemini Translation ---
     async function callGemini(payload, prompt) {
         payload.contents[0].parts[0].text = prompt; // Explicitly set the correct prompt
-        const apiKey = ""; 
+        const apiKey = "AIzaSyB80v2xdhebJqhjyruJ5Ta0eyhJiq7DsI8"; 
         const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
         const resultContainer = $('#translation-result-container');
         resultContainer.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i>`;
