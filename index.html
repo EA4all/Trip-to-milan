@@ -1304,7 +1304,7 @@
     // --- Gemini Translation ---
     async function callGemini(payload, prompt) {
         payload.contents[0].parts[0].text = prompt;
-        const apiKey = "AIzaSyD47-qHc8vmGQt4n4LluKW64LEMB-UYrfk"; // User's API Key
+        const apiKey = "AIzaSyB80v2xdhebJqhjyruJ5Ta0eyhJiq7DsI8"; // User's API Key
         const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
         
         try {
