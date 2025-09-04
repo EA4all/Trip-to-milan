@@ -184,7 +184,11 @@
     <section id="overview" class="my-12 scroll-mt-24">
       <div class="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
         <h2 class="text-3xl font-bold text-center text-brand-900 dark:text-brand-300">סקירה כללית</h2>
-        <button id="find-nearby-btn" class="btn btn-primary"><i class="fa-solid fa-location-crosshairs mr-2"></i>מצא מקומות קרובים אליי</button>
+        <div class="flex gap-2 flex-wrap justify-center">
+            <button id="share-btn" class="btn btn-primary"><i class="fa-solid fa-share-alt mr-2"></i>שתף תוכנית</button>
+            <button id="gemini-btn" class="btn btn-primary"><i class="fa-solid fa-wand-magic-sparkles mr-2"></i>שאל את Gemini</button>
+            <button id="find-nearby-btn" class="btn btn-primary"><i class="fa-solid fa-location-crosshairs mr-2"></i>מצא מקומות קרובים אליי</button>
+        </div>
       </div>
       <div id="overview-cards" class="grid sm:grid-cols-2 lg:grid-cols-4 gap-6"></div>
     </section>
@@ -402,6 +406,26 @@
         </div>
     </div>
   </div>
+  <div id="gemini-modal" class="modal-backdrop">
+    <div class="modal">
+        <div class="p-4 border-b flex justify-between items-center">
+            <h3 class="text-lg font-bold">שאל את Gemini</h3>
+            <button id="gemini-close-btn" class="text-2xl">&times;</button>
+        </div>
+        <div class="p-4 flex-grow overflow-y-auto">
+            <label for="gemini-prompt" class="block text-sm font-medium mb-1">הכנס שאלה או בקשה:</label>
+            <textarea id="gemini-prompt" class="w-full p-2 rounded-lg border bg-white dark:bg-gray-800" rows="4" placeholder="לדוגמה: תן לי 3 הצעות למסעדות רומנטיות בערב באזור נבילי."></textarea>
+            <div class="mt-4">
+                <h4 class="font-semibold mb-2">תשובה:</h4>
+                <div id="gemini-response" class="p-3 bg-gray-100 dark:bg-gray-800 rounded-lg min-h-[100px] whitespace-pre-wrap"></div>
+            </div>
+        </div>
+        <div class="p-4 border-t flex justify-end">
+            <button id="gemini-submit-btn" class="btn btn-primary">שלח שאילתה</button>
+        </div>
+    </div>
+</div>
+
 
   <!-- Floating Nav -->
   <div id="floating-nav-container" class="md:hidden fixed bottom-0 left-0 right-0 z-40">
@@ -1279,12 +1303,10 @@
 
     // --- Gemini Translation ---
     async function callGemini(payload, prompt) {
-        payload.contents[0].parts[0].text = prompt; // Explicitly set the correct prompt
-        const apiKey = "AIzaSyB80v2xdhebJqhjyruJ5Ta0eyhJiq7DsI8"; 
+        payload.contents[0].parts[0].text = prompt;
+        const apiKey = "AIzaSyD47-qHc8vmGQt4n4LluKW64LEMB-UYrfk"; // User's API Key
         const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
-        const resultContainer = $('#translation-result-container');
-        resultContainer.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i>`;
-
+        
         try {
             const response = await fetch(apiUrl, {
                 method: 'POST',
@@ -1296,17 +1318,12 @@
                 throw new Error(error.error.message || `שגיאת רשת: ${response.status}`);
             }
             const result = await response.json();
-            let text = result.candidates?.[0]?.content?.parts?.[0]?.text;
-            if (text) {
-                text = text.replace(/[\*\_`]/g, '').trim(); // Clean the response text
-                const langCode = currentLang === 'he-it' ? 'it-IT' : 'he-IL';
-                resultContainer.innerHTML = `<span>${text}</span> <button onclick="window.speakText('${text.replace(/'/g, "\\'")}', '${langCode}')" class="btn btn-ghost p-1 h-auto"><i class="fa-solid fa-volume-high"></i></button>`;
-            } else {
-                 resultContainer.innerHTML = `<span>לא התקבלה תשובה מ-Gemini.</span>`;
-            }
+            const text = result.candidates?.[0]?.content?.parts?.[0]?.text;
+            return text || "לא התקבלה תשובה מ-Gemini.";
+
         } catch (error) {
             console.error("Gemini API Error:", error);
-            resultContainer.innerHTML = `<span>שגיאה בתרגום: ${error.message}</span>`;
+            return `שגיאה: ${error.message}`;
         }
     }
     window.speakText = (text, lang) => {
@@ -1317,24 +1334,43 @@
     }
 
     async function translateText(text) {
+        const resultContainer = $('#translation-result-container');
+        resultContainer.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i>`;
         const targetLang = currentLang === 'he-it' ? 'Italian' : 'Hebrew';
         const prompt = `Translate the following to ${targetLang}. Provide ONLY the translated text, with no additional formatting or explanations. Text to translate: "${text}"`;
-        const payload = { contents: [{ parts: [{ text: "" }] }] }; // Text will be injected by callGemini
-        await callGemini(payload, prompt);
+        const payload = { contents: [{ parts: [{ text: "" }] }] };
+        let responseText = await callGemini(payload, prompt);
+        responseText = responseText.replace(/[\*\_`]/g, '').trim();
+        const langCode = currentLang === 'he-it' ? 'it-IT' : 'he-IL';
+        resultContainer.innerHTML = `<span>${responseText}</span> <button onclick="window.speakText('${responseText.replace(/'/g, "\\'")}', '${langCode}')" class="btn btn-ghost p-1 h-auto"><i class="fa-solid fa-volume-high"></i></button>`;
     }
     
     async function translateImage(base64ImageData, mimeType) {
+        const resultContainer = $('#translation-result-container');
+        resultContainer.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i>`;
         const targetLang = currentLang === 'he-it' ? 'Italian' : 'Hebrew';
         const prompt = `Extract any text from this image and translate it to ${targetLang}. Provide ONLY the translated text, with no additional formatting. If no text is found, respond with "לא נמצא טקסט".`;
-        const payload = {
-            contents: [{
-                parts: [
-                    { text: "" }, // Placeholder, will be replaced
-                    { inlineData: { mimeType: mimeType, data: base64ImageData } }
-                ]
-            }]
-        };
-        await callGemini(payload, prompt);
+        const payload = { contents: [{ parts: [{ text: "" }, { inlineData: { mimeType: mimeType, data: base64ImageData } }] }] };
+        let responseText = await callGemini(payload, prompt);
+        responseText = responseText.replace(/[\*\_`]/g, '').trim();
+        const langCode = currentLang === 'he-it' ? 'it-IT' : 'he-IL';
+        resultContainer.innerHTML = `<span>${responseText}</span> <button onclick="window.speakText('${responseText.replace(/'/g, "\\'")}', '${langCode}')" class="btn btn-ghost p-1 h-auto"><i class="fa-solid fa-volume-high"></i></button>`;
+    }
+
+    async function askGeneralGemini() {
+        const prompt = $('#gemini-prompt').value;
+        if (!prompt) return;
+
+        const responseContainer = $('#gemini-response');
+        const submitBtn = $('#gemini-submit-btn');
+        submitBtn.disabled = true;
+        responseContainer.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> חושב...`;
+
+        const payload = { contents: [{ parts: [{ text: "" }] }] };
+        const responseText = await callGemini(payload, prompt);
+
+        responseContainer.textContent = responseText;
+        submitBtn.disabled = false;
     }
     
     // --- INIT ---
@@ -1344,17 +1380,24 @@
           apiKey: "AIzaSyD47-qHc8vmGQt4n4LluKW64LEMB-UYrfk",
           authDomain: "trip-to-milan.firebaseapp.com",
           projectId: "trip-to-milan",
-          storageBucket: "trip-to-milan.appspot.com",
+          storageBucket: "trip-to-milan.firebasestorage.app",
           messagingSenderId: "305191186184",
           appId: "1:305191186184:web:fff1488b64a06942dfc6bd",
+          measurementId: "G-P17LYZJ2H0"
         };
         
         const app = initializeApp(firebaseConfig);
         auth = getAuth(app);
         db = getFirestore(app);
 
-        // --- Caching Logic ---
-        const cachedData = localStorage.getItem('tripData_milan2024');
+        // --- Caching and Sharing Logic ---
+        let tripId = window.location.hash.substring(1);
+        if (!tripId) {
+            tripId = Math.random().toString(36).substring(2, 12);
+            window.location.hash = tripId;
+        }
+
+        const cachedData = localStorage.getItem(`tripData_${tripId}`);
         if (cachedData) {
             localTripData = JSON.parse(cachedData);
             renderAllPlans(localTripData.plan);
@@ -1371,17 +1414,16 @@
         
         onAuthStateChanged(auth, (user) => {
           if (user) {
-            tripDocRef = doc(db, "trips", "milan2024");
+            tripDocRef = doc(db, "trips", tripId);
 
             onSnapshot(tripDocRef, async (docSnap) => {
                 if (docSnap.exists()) {
                     localTripData = docSnap.data();
-                    localStorage.setItem('tripData_milan2024', JSON.stringify(localTripData));
-                } else {
+                    localStorage.setItem(`tripData_${tripId}`, JSON.stringify(localTripData));
+                } else if(!cachedData) { // Only create if no cache exists, to prevent overwriting
                     localTripData = getInitialTripData();
                     await setDoc(tripDocRef, localTripData);
                 }
-                // --- Re-render based on fresh Firestore data ---
                 renderAllPlans(localTripData.plan);
                 renderSuggestions(localTripData.suggestions);
                 renderKosher();
@@ -1389,9 +1431,7 @@
                 renderBudget(localTripData);
                 renderDocuments(localTripData.documents);
                 renderGallery(localTripData.gallery);
-
-                if (localTripData.theme === 'dark') document.documentElement.classList.add('dark');
-                else document.documentElement.classList.remove('dark');
+                if (localTripData.theme === 'dark') document.documentElement.classList.add('dark'); else document.documentElement.classList.remove('dark');
             }, (error) => console.error("Firestore snapshot error:", error));
           }
         });
@@ -1544,6 +1584,25 @@
         });
         
         $('#find-nearby-btn').addEventListener('click', findNearby);
+        $('#gemini-btn').addEventListener('click', () => $('#gemini-modal').classList.add('flex'));
+        $('#gemini-close-btn').addEventListener('click', () => $('#gemini-modal').classList.remove('flex'));
+        $('#gemini-submit-btn').addEventListener('click', askGeneralGemini);
+
+        $('#share-btn').addEventListener('click', () => {
+            const url = window.location.href;
+            const textArea = document.createElement("textarea");
+            textArea.value = url;
+            document.body.appendChild(textArea);
+            textArea.focus();
+            textArea.select();
+            try {
+                document.execCommand('copy');
+                showAlert('הקישור הועתק!', 'הקישור לשיתוף התוכנית הועתק ללוח.');
+            } catch (err) {
+                showAlert('שגיאה', 'לא ניתן היה להעתיק את הקישור.');
+            }
+            document.body.removeChild(textArea);
+        });
 
         $('#open-master-map-btn').addEventListener('click', () => {
             const locations = [];
