@@ -1,16 +1,20 @@
 <!DOCTYPE html>
-<html lang="he">
+<html lang="he" dir="rtl">
 <head>
-  <meta charset="UTF-8">
-  <title>Firebase Test</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>תוכנית טיול למילאנו</title>
 </head>
 <body>
-  <h1>בדיקת Firestore</h1>
+    <h1>שלום, ברוכים הבאים לטיול למילאנו!</h1>
+    <button id="firestoreBtn">בדוק/עדכן מסמך ב-Firestore</button>
 
-  <script type="module">
+    <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-    import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+    import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+    import { getFirestore, doc, setDoc, updateDoc, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
+    // ======= Firebase config =======
     const firebaseConfig = {
       apiKey: "AIzaSyD47-qHc8vmGQt4n4LluKW64LEMB-UYrfk",
       authDomain: "trip-to-milan.firebaseapp.com",
@@ -20,23 +24,47 @@
       measurementId: "G-P17LYZJ2H0"
     };
 
+    // ======= Initialize =======
     const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
     const db = getFirestore(app);
 
-    async function checkFirestore() {
-      console.log("Project ID:", firebaseConfig.projectId);
+    // ======= Sign in anonymously =======
+    signInAnonymously(auth)
+      .then(() => console.log("Signed in anonymously"))
+      .catch((error) => console.error("Auth error:", error.code, error.message));
 
+    // ======= Firestore operation =======
+    async function checkOrUpdateDocument() {
       try {
-        // כאן תנסה לקרוא מכל קולקציה קיימת, למשל 'testCollection'
-        const snapshot = await getDocs(collection(db, "testCollection"));
-        console.log("Firestore connection successful!");
-        snapshot.forEach(doc => console.log(doc.id, doc.data()));
+        const collectionName = "milantrip"; // שם הקולקציה שלך
+        const docRef = doc(db, collectionName, "doc1");
+
+        const docSnap = await getDoc(docRef);
+
+        if (docSnap.exists()) {
+          console.log("Document exists, updating...");
+          await updateDoc(docRef, {
+            lastUpdated: new Date().toISOString(),
+            status: "updated"
+          });
+        } else {
+          console.log("Document does not exist, creating...");
+          await setDoc(docRef, {
+            created: new Date().toISOString(),
+            status: "new"
+          });
+        }
+
+        console.log("Firestore operation successful!");
       } catch (error) {
-        console.error("Error connecting to Firestore:", error);
+        console.error("Firestore error code:", error.code || "N/A");
+        console.error("Firestore error message:", error.message);
       }
     }
 
-    checkFirestore();
-  </script>
+    // ======= Button click =======
+    document.getElementById("firestoreBtn").addEventListener("click", checkOrUpdateDocument);
+    </script>
 </body>
 </html>
