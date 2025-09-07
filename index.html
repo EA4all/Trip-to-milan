@@ -1,113 +1,101 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="he" dir="rtl">
 <head>
-  <meta charset="utf-8">
-  <title>Trip-to-milan — Firebase debug</title>
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <style>body{font-family:Arial;margin:16px} pre{background:#f6f6f6;padding:8px;border-radius:6px;white-space:pre-wrap}</style>
+  <meta charset="utf-8" />
+  <title>Debug Firestore - trip-to-milan</title>
 </head>
 <body>
-  <h1>Trip-to-milan — בדיקת Firestore</h1>
-  <p id="status">ממתין... הדבק את firebaseConfig בקוד לפני הריצה.</p>
-  <pre id="log" style="height:360px;overflow:auto"></pre>
+  <h1>בדיקות Firebase / Firestore (trip-to-milan)</h1>
+  <pre id="out" style="white-space:pre-wrap;background:#f6f6f6;padding:10px;border:1px solid #ddd"></pre>
 
   <script type="module">
-    // ----------------- הדבק כאן את ה-firebaseConfig מה-Firebase Console -----------------
-    const firebaseConfig = {
-  apiKey: "AIzaSyD47-qHc8vmGQt4n4LluKW64LEMB-UYrfk",
-  authDomain: "trip-to-milan.firebaseapp.com",
-  projectId: "trip-to-milan",
-  storageBucket: "trip-to-milan.firebasestorage.app",
-  messagingSenderId: "305191186184",
-  appId: "1:305191186184:web:fff1488b64a06942dfc6bd",
-  measurementId: "G-P17LYZJ2H0"
+    const out = msg => {
+      console.log(msg);
+      document.getElementById('out').textContent += msg + "\n";
     };
-    // --------------------------------------------------------------------------------------
 
     import { initializeApp } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-app.js";
     import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-auth.js";
-    import { getFirestore, doc, getDoc, setDoc, updateDoc } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js";
+    import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js";
 
-    const logEl = document.getElementById('log');
-    const statusEl = document.getElementById('status');
-    function appendLog(...parts){ const s = parts.map(p => (typeof p === 'object' ? JSON.stringify(p,null,2) : String(p))).join(' '); console.log(...parts); logEl.innerText += s + "\\n"; logEl.scrollTop = logEl.scrollHeight; }
-    function setStatus(s){ statusEl.innerText = s; appendLog('[STATUS]', s); }
+    const firebaseConfig = {
+      apiKey: "AIzaSyD47-qHc8vmGQt4n4LluKW64LEMB-UYrfk",
+      authDomain: "trip-to-milan.firebaseapp.com",
+      projectId: "trip-to-milan",
+      storageBucket: "trip-to-milan.firebasestorage.app",
+      messagingSenderId: "305191186184",
+      appId: "1:305191186184:web:fff1488b64a06942dfc6bd",
+      measurementId: "G-P17LYZJ2H0"
+    };
 
-    // בדיקת שדות חובה
-    const req = ['apiKey','authDomain','projectId','appId'];
-    const missing = req.filter(k => !firebaseConfig[k] || firebaseConfig[k].includes('PASTE'));
-    if (missing.length) {
-      setStatus('שגיאה: הדבק את כל השדות ב-firebaseConfig: ' + missing.join(', '));
-      throw new Error('Missing firebaseConfig fields: ' + missing.join(', '));
-    }
-
-    setStatus('מאתחל Firebase (projectId=' + firebaseConfig.projectId + ')');
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db = getFirestore(app);
-    appendLog('Firebase initialized — projectId:', firebaseConfig.projectId, 'storageBucket:', firebaseConfig.storageBucket);
 
-    // TripId
-    const tripId = window.location.hash.replace('#','') || ('trip_' + Math.random().toString(36).slice(2,8));
-    if (!window.location.hash) window.location.hash = tripId;
-    appendLog('Using tripId:', tripId, 'collection: milantrip');
+    out("[STATUS] מאתחל Firebase (projectId=" + firebaseConfig.projectId + ")");
+    out("Firebase initialized — projectId: " + firebaseConfig.projectId + " storageBucket: " + firebaseConfig.storageBucket);
 
-    // התחברות אנונימית
+    // TripId / collection
+    let tripId = window.location.hash.replace('#','') || 'trip_' + Math.random().toString(36).substring(2,8);
+    window.location.hash = tripId;
+    const collection = "milantrip";
+    out("Using tripId: " + tripId + " collection: " + collection);
+
     signInAnonymously(auth)
-      .then(cred => appendLog('signInAnonymously OK UID=', cred.user.uid))
-      .catch(err => appendLog('signInAnonymously ERROR code=', err.code, 'message=', err.message));
+      .then(() => out("[STATUS] signInAnonymously OK"))
+      .catch(err => out("[ERROR] Anonymous sign-in failed: " + (err && err.message)));
 
     onAuthStateChanged(auth, async (user) => {
-      appendLog('onAuthStateChanged =>', user ? ('uid=' + user.uid) : 'no user');
+      out("onAuthStateChanged => uid=" + (user ? user.uid : "no-user"));
       if (!user) return;
+
       try {
         const idToken = await user.getIdToken();
-        appendLog('got idToken (truncated):', idToken.slice(0,40) + '...');
+        out("got idToken (truncated): " + idToken.substring(0,40) + "...");
 
-        // 1) נסה לגעת ב־Firestore דרך ה-SDK (getDoc)
+        // ניסיון קריאה ע״י SDK
+        out("Trying getDoc via SDK...");
         try {
-          const ref = doc(db, 'milantrip', tripId);
-          appendLog('Trying getDoc via SDK...');
+          const ref = doc(db, collection, tripId);
           const snap = await getDoc(ref);
-          appendLog('SDK getDoc exists:', snap.exists());
-        } catch(sdkErr) {
-          appendLog('SDK getDoc ERROR:', sdkErr && sdkErr.code, sdkErr && sdkErr.message);
+          if (snap.exists()) {
+            out("SDK getDoc OK, data: " + JSON.stringify(snap.data()));
+          } else {
+            out("SDK getDoc: document NOT FOUND (but DB might exist).");
+          }
+        } catch (sdkErr) {
+          out("SDK getDoc ERROR: " + (sdkErr && sdkErr.message));
         }
 
-        // 2) נסה לקרוא את אותו מסמך דרך ה-REST כדי לראות גוף תשובה מהשרת (יותר מפורט)
-        const restUrl = `https://firestore.googleapis.com/v1/projects/${firebaseConfig.projectId}/databases/(default)/documents/milantrip/${encodeURIComponent(tripId)}`;
-        appendLog('Trying REST GET (with Authorization):', restUrl);
-        const r1 = await fetch(restUrl, {
-          method: 'GET',
-          headers: { 'Authorization': 'Bearer ' + idToken }
-        });
-        const txt1 = await r1.text();
-        appendLog('REST GET status:', r1.status, r1.statusText, 'body:', txt1);
-
-        // 3) גם נסה REST עם ?key=API_KEY (לפעמים נותן שגיאה שונה)
-        const restUrlKey = restUrl + '?key=' + encodeURIComponent(firebaseConfig.apiKey);
-        appendLog('Trying REST GET (with ?key=):', restUrlKey);
-        const r2 = await fetch(restUrlKey);
-        const txt2 = await r2.text();
-        appendLog('REST GET with key status:', r2.status, r2.statusText, 'body:', txt2);
-
-        // 4) נסה לכתוב דרך ה-REST (POST) לדוגמה אם קריאה הצליחה
-        if (r1.status === 200 || r2.status === 200) {
-          appendLog('READ OK via REST — לא נבצע כתיבה דרך REST אוטומטית (לא להיבהל).');
-        } else {
-          appendLog('READ failed on REST — זה המידע שהשרת החזיר לעיל (העתק לי את ה-body של אחת מהשורות).');
+        // ניסיון REST GET עם Authorization
+        const restUrl = `https://firestore.googleapis.com/v1/projects/${firebaseConfig.projectId}/databases/(default)/documents/${collection}/${tripId}`;
+        out("Trying REST GET (with Authorization): " + restUrl);
+        try {
+          const r = await fetch(restUrl, {
+            method: "GET",
+            headers: { "Authorization": "Bearer " + idToken }
+          });
+          const text = await r.text();
+          out("REST GET status: " + r.status + "  body: " + text);
+        } catch (err) {
+          out("REST GET (with Authorization) failed: " + err);
         }
 
-      } catch(err){
-        appendLog('Error in onAuthStateChanged handler:', err && err.message, err);
+        // ניסיון REST GET עם ?key=APIKEY (לבדיקות)
+        const restUrlKey = restUrl + `?key=${firebaseConfig.apiKey}`;
+        out("Trying REST GET (with ?key=): " + restUrlKey);
+        try {
+          const r2 = await fetch(restUrlKey);
+          const text2 = await r2.text();
+          out("REST GET with key status: " + r2.status + "  body: " + text2);
+        } catch (err) {
+          out("REST GET (with key) failed: " + err);
+        }
+
+      } catch(e) {
+        out("[ERROR] failed to get idToken: " + e);
       }
     });
-
-    // small helper to recommend rule change
-    appendLog('מדריך קצר: אם אתה רוצה לאפשר גישה מהדפדפן בבדיקות מקומיות לשנות זמנית את חוקים ל:');
-    appendLog("service cloud.firestore { match /databases/{database}/documents { match /{document=**} { allow read, write: if true; } } }");
-
-    setStatus('מחכה לאימות אנונימי ואז מתבצעות בדיקות...');
   </script>
 </body>
 </html>
