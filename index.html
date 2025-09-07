@@ -131,6 +131,17 @@
     }
     .relative:hover .delete-btn { opacity: 1; }
 
+    @media print {
+        body * { visibility: hidden; }
+        #plan, #plan * { visibility: visible; }
+        #plan { position: absolute; left: 0; top: 0; width: 100%; }
+        #plan details { page-break-inside: avoid; }
+        #plan summary, .nav-link, .btn, header, main > section:not(#plan), #floating-nav-container, .day-actions { display: none !important; }
+        #plan details[open] > div { display: block !important; }
+        #plan-content-container { padding: 0 !important; }
+        h2 { font-size: 24px !important; }
+    }
+
 
     @media (max-width: 767px) {
       body { padding-bottom: 70px; } /* Add padding for floating nav */
@@ -194,7 +205,14 @@
     </section>
 
     <section id="plan" class="my-12 scroll-mt-24">
-      <h2 class="text-3xl font-bold text-center text-brand-900 dark:text-brand-300 mb-6">תוכנית הטיול היומית</h2>
+      <div class="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
+        <h2 class="text-3xl font-bold text-center text-brand-900 dark:text-brand-300">תוכנית הטיול היומית</h2>
+        <div class="flex gap-2 flex-wrap justify-center">
+            <button id="collapse-all" class="btn btn-ghost btn-sm"><i class="fa-solid fa-compress mr-1"></i>כווץ הכל</button>
+            <button id="expand-all" class="btn btn-ghost btn-sm"><i class="fa-solid fa-expand mr-1"></i>הרחב הכל</button>
+            <button id="print-btn" class="btn btn-ghost btn-sm"><i class="fa-solid fa-print mr-1"></i>הדפס תוכנית</button>
+        </div>
+      </div>
       <div class="bg-white dark:bg-gray-950 p-2 sm:p-6 rounded-2xl shadow-lg">
         <div class="border-b border-gray-200 dark:border-gray-800 mb-6">
           <nav class="-mb-px flex flex-wrap justify-center gap-2 sm:gap-4" aria-label="Tabs" id="day-tabs-nav"></nav>
@@ -425,6 +443,19 @@
         </div>
     </div>
 </div>
+<div id="daily-tip-modal" class="modal-backdrop">
+    <div class="modal">
+        <div class="p-4 border-b flex items-center gap-3">
+            <i class="fa-solid fa-lightbulb text-yellow-400 text-xl"></i>
+            <h3 class="text-lg font-bold">טיפ היום למטייל</h3>
+        </div>
+        <div id="daily-tip-body" class="p-6 whitespace-pre-wrap">טוען טיפ...</div>
+        <div class="p-4 border-t flex justify-end">
+            <button id="daily-tip-close" class="btn btn-primary">הבנתי</button>
+        </div>
+    </div>
+</div>
+
 
 
   <!-- Floating Nav -->
@@ -1623,18 +1654,32 @@
 
         $('#share-btn').addEventListener('click', () => {
             const url = window.location.href;
-            const textArea = document.createElement("textarea");
-            textArea.value = url;
-            document.body.appendChild(textArea);
-            textArea.focus();
-            textArea.select();
-            try {
-                document.execCommand('copy');
-                showAlert('הקישור הועתק!', 'הקישור לשיתוף התוכנית הועתק ללוח.');
-            } catch (err) {
-                showAlert('שגיאה', 'לא ניתן היה להעתיק את הקישור.');
+            const shareData = {
+                title: 'תוכנית הטיול שלנו למילאנו',
+                text: 'הצטרפו לתכנון הטיול שלנו!',
+                url: url
+            };
+            if (navigator.share) {
+                navigator.share(shareData).catch((err) => {
+                    if (err.name !== 'AbortError') {
+                        console.error('Share failed:', err);
+                        showAlert('שגיאת שיתוף', `לא ניתן היה לשתף: ${err.message}`);
+                    }
+                });
+            } else {
+                const textArea = document.createElement("textarea");
+                textArea.value = url;
+                document.body.appendChild(textArea);
+                textArea.focus();
+                textArea.select();
+                try {
+                    document.execCommand('copy');
+                    showAlert('הקישור הועתק!', 'לא נמצאה אפשרות שיתוף. הקישור הועתק ללוח.');
+                } catch (err) {
+                    showAlert('שגיאה', 'לא ניתן היה להעתיק את הקישור.');
+                }
+                document.body.removeChild(textArea);
             }
-            document.body.removeChild(textArea);
         });
 
         $('#open-master-map-btn').addEventListener('click', () => {
