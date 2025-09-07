@@ -14,15 +14,15 @@
     import { getFirestore, doc, setDoc, updateDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
     // config שלך
-    const firebaseConfig = {
+const firebaseConfig = {
   apiKey: "AIzaSyD47-qHc8vmGQt4n4LluKW64LEMB-UYrfk",
   authDomain: "trip-to-milan.firebaseapp.com",
   projectId: "trip-to-milan",
-  storageBucket: "trip-to-milan.firebasestorage.app",
+  storageBucket: "trip-to-milan.appspot.com", // <── שונה
   messagingSenderId: "305191186184",
   appId: "1:305191186184:web:fff1488b64a06942dfc6bd",
   measurementId: "G-P17LYZJ2H0"
-    };
+};
 
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
