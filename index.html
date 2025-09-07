@@ -1,78 +1,106 @@
 <!DOCTYPE html>
-<html lang="he">
+<html lang="he" dir="rtl">
 <head>
-    <meta charset="UTF-8">
-    <title>Firebase v12 Test</title>
+  <meta charset="utf-8" />
+  <title>Trip-to-milan - Debug Firebase</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <style> body{font-family:Arial,Helvetica,sans-serif;padding:16px} pre{background:#f6f6f6;padding:8px;border-radius:6px;overflow:auto} </style>
 </head>
 <body>
-    <h1>בדיקת Firestore v12</h1>
-    <button id="readBtn">קרא מסמך</button>
-    <button id="writeBtn">כתוב מסמך</button>
-    <pre id="output"></pre>
+  <h1>בדיקות Firebase — trip-to-milan</h1>
+  <p id="status">ממתין...</p>
 
-    <!-- Firebase SDK v12 -->
-    <script type="module">
-        // 1. Import מה-SDK של Firebase v12
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-app.js";
-        import { getFirestore, doc, getDoc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js";
+  <script type="module">
+    // ======= החלף כאן את הערכים ב־firebaseConfig שקיבלת מה־Firebase Console ========
+    const firebaseConfig = {
+      apiKey: "AIzaSyD47-qHc8vmGQt4n4LluKW64LEMB-UYrfk",
+      authDomain: "trip-to-milan.firebaseapp.com",
+      projectId: "trip-to-milan",
+      storageBucket: "PROJECT_ID.appspot.com", // או מה שמופיע בקונסול
+      messagingSenderId: "SENDER_ID",
+      appId: "APP_ID",
+      measurementId: "MEASUREMENT_ID"
+    };
+    // =============================================================================
 
-        // 2. הגדרות הפרויקט שלך מ-Firebase
-        const firebaseConfig = {
-            apiKey: "AIzaSyD47-qHc8vmGQt4n4LluKW64LEMB-UYrfk",
-            authDomain: "trip-to-milan.firebaseapp.com",
-            projectId: "trip-to-milan",
-            storageBucket: "trip-to-milan.firebasestorage.app",
-            messagingSenderId: "305191186184",
-            appId: "1:305191186184:web:fff1488b64a06942dfc6bd"
-        };
+    // ה־SDK שנשתמש בו (גירסה שהזכרת — 12.2.1)
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-app.js";
+    import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-auth.js";
+    import { getFirestore, doc, setDoc, updateDoc, getDoc } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js";
 
-        // 3. אתחול האפליקציה וה-Firestore
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
+    const statusEl = document.getElementById('status');
+    function log(msg){ console.log(msg); statusEl.innerText = msg; }
 
-        const output = document.getElementById("output");
+    try {
+      const app = initializeApp(firebaseConfig);
+      const auth = getAuth(app);
+      const db = getFirestore(app);
+      log("Firebase initialized. Project ID: " + (firebaseConfig.projectId || "—לא הוגדר—"));
 
-        // 4. פונקציה לקריאת מסמך
-        async function readDocument() {
-            try {
-                const docRef = doc(db, "testCollection", "testDoc");
-                const docSnap = await getDoc(docRef);
+      // TripId מה־hash או קביעה אוטומטית
+      let tripId = window.location.hash.replace('#', '');
+      if (!tripId) {
+        tripId = 'trip_' + Math.random().toString(36).substring(2,8);
+        window.location.hash = tripId;
+      }
+      console.log("TripId:", tripId);
 
-                if (docSnap.exists()) {
-                    output.textContent = "נתונים קיימים: " + JSON.stringify(docSnap.data(), null, 2);
-                } else {
-                    output.textContent = "המסמך לא קיים!";
-                }
-            } catch (error) {
-                output.textContent = "שגיאה בקריאה: " + error;
-            }
-        }
+      // בדיקות ראשוניות של config
+      console.group("Config check");
+      console.log("apiKey:", firebaseConfig.apiKey ? "ok" : "MISSING");
+      console.log("projectId:", firebaseConfig.projectId);
+      console.log("authDomain:", firebaseConfig.authDomain);
+      console.log("storageBucket:", firebaseConfig.storageBucket);
+      console.groupEnd();
 
-        // 5. פונקציה לכתיבת מסמך
-        async function writeDocument() {
-            try {
-                const docRef = doc(db, "testCollection", "testDoc");
-                await setDoc(docRef, {
-                    message: "שלום Firebase!",
-                    timestamp: new Date()
-                });
-                output.textContent = "המסמך נכתב בהצלחה!";
-            } catch (error) {
-                output.textContent = "שגיאה בכתיבה: " + error;
-            }
-        }
-
-        // 6. אפשרות לאזנה בזמן אמת (Realtime Updates)
-        const docRef = doc(db, "testCollection", "testDoc");
-        onSnapshot(docRef, (docSnap) => {
-            if (docSnap.exists()) {
-                console.log("Realtime Update:", docSnap.data());
-            }
+      // התחברות אנונימית
+      signInAnonymously(auth)
+        .then(cred => {
+          console.log("Signed in anonymously, uid:", cred.user.uid);
+          log("Signed in anonymously: " + cred.user.uid);
+        })
+        .catch(err => {
+          console.error("Anonymous sign-in failed:", err.code, err.message);
+          log("Sign-in failed: " + err.message);
         });
 
-        // 7. חיבור הכפתורים לפונקציות
-        document.getElementById("readBtn").addEventListener("click", readDocument);
-        document.getElementById("writeBtn").addEventListener("click", writeDocument);
-    </script>
+      onAuthStateChanged(auth, (user) => {
+        console.log("onAuthStateChanged:", user ? "User UID=" + user.uid : "No user");
+      });
+
+      // הפניה למסמך בקולקשן "milantrip" — זה השם שכתבת
+      const tripDocRef = doc(db, "milantrip", tripId);
+      console.log("Attempting Firestore operations on collection 'milantrip'...");
+
+      // פונקציה שבודקת אם יש מסמך וקוראת/כותבת
+      async function checkOrUpdateDocument() {
+        try {
+          console.log("Trying getDoc...");
+          const snap = await getDoc(tripDocRef);
+          if (snap.exists()) {
+            console.log("Document exists, data:", snap.data());
+            log("Document exists — כתבתי שדה updated=true");
+            await updateDoc(tripDocRef, { updatedAt: Date.now() });
+            console.log("updateDoc success");
+          } else {
+            console.log("Document does not exist — will create with testField");
+            log("Doc not found — יצירת doc חדש בשם " + tripId);
+            await setDoc(tripDocRef, { testField: Date.now() });
+            console.log("setDoc success");
+          }
+        } catch (err) {
+          console.error("Firestore error code:", err.code, "message:", err.message);
+          log("Firestore error: " + (err.message || err.code));
+        }
+      }
+
+      // תריץ את הבדיקה אחרי התחברות קצרה
+      setTimeout(checkOrUpdateDocument, 500);
+
+    } catch (e) {
+      console.error("Init error:", e);
+      log("Init error: " + e.message);
+    }
+  </script>
 </body>
 </html>
