@@ -170,8 +170,8 @@
           <a href="#tools" class="nav-link px-3 py-2 rounded-md text-sm font-medium">כלים</a>
         </div>
         <div class="flex items-center gap-2">
-            <div id="sync-status" class="text-xs text-gray-400 flex items-center gap-2" title="מחובר">
-                <i class="fa-solid fa-cloud text-green-500"></i> <span class="hidden sm:inline">מחובר</span>
+            <div id="sync-status" class="text-xs text-gray-400 flex items-center gap-2" title="מתחבר...">
+                <i class="fa-solid fa-cloud text-yellow-500"></i> <span class="hidden sm:inline">מתחבר...</span>
             </div>
             <button id="theme-toggle" class="btn btn-ghost" aria-label="החלפת מצב"><i class="fa-solid fa-sun"></i></button>
         </div>
@@ -512,6 +512,7 @@
     let cameraStream = null;
     let eurToIlsRate = 4.0; // Default rate
     let userCoords = null;
+    let isFirebaseConnected = false;
     
     // --- DATA ---
     const attractions = {
@@ -1302,9 +1303,15 @@
     }
 
     // --- Gemini Translation ---
-    async function callGemini(payload, prompt) {
+    async function callGemini(payload, prompt, useSearch = false) {
         payload.contents[0].parts[0].text = prompt;
-        const apiKey = "AIzaSyB80v2xdhebJqhjyruJ5Ta0eyhJiq7DsI8"; // User's API Key
+        if (useSearch) {
+            payload.tools = [{ "google_search": {} }];
+        } else {
+            delete payload.tools;
+        }
+
+        const apiKey = "AIzaSyB80v2xdhebJqhjyruJ5Ta0eyhJiq7DsI8"; 
         const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
         
         try {
@@ -1339,7 +1346,7 @@
         const targetLang = currentLang === 'he-it' ? 'Italian' : 'Hebrew';
         const prompt = `Translate the following to ${targetLang}. Provide ONLY the translated text, with no additional formatting or explanations. Text to translate: "${text}"`;
         const payload = { contents: [{ parts: [{ text: "" }] }] };
-        let responseText = await callGemini(payload, prompt);
+        let responseText = await callGemini(payload, prompt, false);
         responseText = responseText.replace(/[\*\_`]/g, '').trim();
         const langCode = currentLang === 'he-it' ? 'it-IT' : 'he-IL';
         resultContainer.innerHTML = `<span>${responseText}</span> <button onclick="window.speakText('${responseText.replace(/'/g, "\\'")}', '${langCode}')" class="btn btn-ghost p-1 h-auto"><i class="fa-solid fa-volume-high"></i></button>`;
@@ -1351,7 +1358,7 @@
         const targetLang = currentLang === 'he-it' ? 'Italian' : 'Hebrew';
         const prompt = `Extract any text from this image and translate it to ${targetLang}. Provide ONLY the translated text, with no additional formatting. If no text is found, respond with "לא נמצא טקסט".`;
         const payload = { contents: [{ parts: [{ text: "" }, { inlineData: { mimeType: mimeType, data: base64ImageData } }] }] };
-        let responseText = await callGemini(payload, prompt);
+        let responseText = await callGemini(payload, prompt, false);
         responseText = responseText.replace(/[\*\_`]/g, '').trim();
         const langCode = currentLang === 'he-it' ? 'it-IT' : 'he-IL';
         resultContainer.innerHTML = `<span>${responseText}</span> <button onclick="window.speakText('${responseText.replace(/'/g, "\\'")}', '${langCode}')" class="btn btn-ghost p-1 h-auto"><i class="fa-solid fa-volume-high"></i></button>`;
@@ -1367,7 +1374,7 @@
         responseContainer.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> חושב...`;
 
         const payload = { contents: [{ parts: [{ text: "" }] }] };
-        const responseText = await callGemini(payload, prompt);
+        const responseText = await callGemini(payload, prompt, true);
 
         responseContainer.textContent = responseText;
         submitBtn.disabled = false;
@@ -1377,7 +1384,7 @@
     document.addEventListener('DOMContentLoaded', () => {
         // --- Firebase Initialization ---
         const firebaseConfig = {
-          apiKey: "AIzaSyD47-qHc8vmGQt4n4LluKW64LEMB-UYrfk",
+          apiKey: "AIzaSyB80v2xdhebJqhjyruJ5Ta0eyhJiq7DsI8",
           authDomain: "trip-to-milan.firebaseapp.com",
           projectId: "trip-to-milan",
           storageBucket: "trip-to-milan.firebasestorage.app",
@@ -1410,20 +1417,33 @@
             if (localTripData.theme === 'dark') document.documentElement.classList.add('dark');
         }
 
-        signInAnonymously(auth).catch((error) => console.error("Anonymous sign-in failed:", error));
+        signInAnonymously(auth).catch((error) => {
+            console.error("Anonymous sign-in failed:", error);
+            showAlert("שגיאת התחברות ל-Firebase", `ההתחברות האנונימית נכשלה. ייתכן שצריך לאשר את הדומיין הזה בהגדרות ה-Authentication.\n\n${error.message}`);
+        });
         
         onAuthStateChanged(auth, (user) => {
           if (user) {
-            tripDocRef = doc(db, "milantrip", tripId);
+            tripDocRef = doc(db, "milantrip", tripId); // Corrected collection name
+            
+            const unsubscribe = onSnapshot(tripDocRef, async (docSnap) => {
+                if (!isFirebaseConnected) {
+                    const statusIcon = $('#sync-status i');
+                    const statusText = $('#sync-status span');
+                    statusIcon.classList.remove('text-yellow-500');
+                    statusIcon.classList.add('text-green-500');
+                    statusText.textContent = 'מחובר';
+                    isFirebaseConnected = true;
+                }
 
-            onSnapshot(tripDocRef, async (docSnap) => {
                 if (docSnap.exists()) {
                     localTripData = docSnap.data();
                     localStorage.setItem(`tripData_${tripId}`, JSON.stringify(localTripData));
-                } else if(!cachedData) { // Only create if no cache exists, to prevent overwriting
+                } else if(!cachedData) {
                     localTripData = getInitialTripData();
                     await setDoc(tripDocRef, localTripData);
                 }
+                
                 renderAllPlans(localTripData.plan);
                 renderSuggestions(localTripData.suggestions);
                 renderKosher();
@@ -1432,7 +1452,15 @@
                 renderDocuments(localTripData.documents);
                 renderGallery(localTripData.gallery);
                 if (localTripData.theme === 'dark') document.documentElement.classList.add('dark'); else document.documentElement.classList.remove('dark');
-            }, (error) => console.error("Firestore snapshot error:", error));
+            }, (error) => {
+                console.error("Firestore snapshot error:", error);
+                const statusIcon = $('#sync-status i');
+                const statusText = $('#sync-status span');
+                statusIcon.classList.remove('text-green-500', 'text-yellow-500');
+                statusIcon.classList.add('text-red-500');
+                statusText.textContent = 'בעיית סנכרון';
+                showAlert('בעיית סנכרון', `לא ניתן להתחבר למסד הנתונים.\nודא שחוקי האבטחה (Rules) ב-Firestore מוגדרים כראוי.\n\n${error.message}`);
+            });
           }
         });
 
@@ -1451,11 +1479,12 @@
         // --- Event Listeners ---
         $('#theme-toggle').addEventListener('click', async () => {
             const isDark = document.documentElement.classList.toggle('dark');
-            if(tripDocRef) await updateDoc(tripDocRef, { theme: isDark ? 'dark' : 'light' });
+            if(tripDocRef && isFirebaseConnected) await updateDoc(tripDocRef, { theme: isDark ? 'dark' : 'light' });
         });
         
         $('#add-checklist-item-form').addEventListener('submit', async e => {
             e.preventDefault();
+            if(!isFirebaseConnected) { showAlert('שגיאת סנכרון', 'אין חיבור למסד הנתונים. אנא בדוק את החיבור לאינטרנט.'); return; }
             const text = $('#new-item-text').value.trim(); if (!text) return;
             let categoryName = $('#new-category-text').value.trim() || $('#category-select').value;
             if (!categoryName) { showAlert('שגיאה', 'יש לבחור או ליצור קטגוריה.'); return; }
@@ -1474,6 +1503,7 @@
         
         $('#expense-form').addEventListener('submit', async e => {
             e.preventDefault();
+            if(!isFirebaseConnected) { showAlert('שגיאת סנכרון', 'אין חיבור למסד הנתונים. אנא בדוק את החיבור לאינטרנט.'); return; }
             const desc = $('#expense-desc').value.trim();
             const amount = parseFloat($('#expense-amount').value);
             const category = $('#expense-category').value;
@@ -1487,11 +1517,13 @@
         });
         
         $('#total-budget').addEventListener('input', async e => {
+            if(!isFirebaseConnected) { return; }
             const newTotalBudget = parseFloat(e.target.value) || 0;
             if (tripDocRef) await updateDoc(tripDocRef, { totalBudget: newTotalBudget });
         });
 
         $('#include-estimated-costs').addEventListener('change', async (e) => {
+            if(!isFirebaseConnected) { return; }
             const include = e.target.checked;
             await updateDoc(tripDocRef, { 'settings.includeEstimatedCostsInBalance': include });
         });
@@ -1525,6 +1557,7 @@
         $('#plan-content-container').addEventListener('submit', (e) => {
             if (e.target.matches('form[id^="journal-form-"]')) {
                 e.preventDefault();
+                if(!isFirebaseConnected) { showAlert('שגיאת סנכרון', 'אין חיבור למסד הנתונים. אנא בדוק את החיבור לאינטרנט.'); return; }
                 const form = e.target;
                 const dayId = form.id.replace('journal-form-', '');
                 const textInput = form.querySelector('input[type="text"]');
@@ -1649,4 +1682,3 @@
   </script>
 </body>
 </html>
-
