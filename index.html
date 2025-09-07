@@ -1,49 +1,50 @@
-<!-- גרסה עם console.log לצורכי debug -->
 <!DOCTYPE html>
 <html lang="he" dir="rtl">
 <head>
   <meta charset="UTF-8" />
-  <title>Debug Firebase</title>
+  <title>Debug Firebase Firestore</title>
 </head>
 <body>
-  <h1>בדיקות Firebase</h1>
+  <h1>בדיקות Firebase Firestore</h1>
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
     import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
     import { getFirestore, doc, setDoc, updateDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-    // config שלך
-const firebaseConfig = {
-  apiKey: "AIzaSyD47-qHc8vmGQt4n4LluKW64LEMB-UYrfk",
-  authDomain: "trip-to-milan.firebaseapp.com",
-  projectId: "trip-to-milan",
-  storageBucket: "gs://trip-to-milan.firebasestorage.app", // <── שונה
-  messagingSenderId: "305191186184",
-  appId: "1:305191186184:web:fff1488b64a06942dfc6bd",
-  measurementId: "G-P17LYZJ2H0"
-};
+    // --- Config שלך ---
+    const firebaseConfig = {
+      apiKey: "AIzaSyD47-qHc8vmGQt4n4LluKW64LEMB-UYrfk",
+      authDomain: "trip-to-milan.firebaseapp.com",
+      projectId: "trip-to-milan",
+      // storageBucket לא נדרש כאן
+      messagingSenderId: "305191186184",
+      appId: "1:305191186184:web:fff1488b64a06942dfc6bd",
+      measurementId: "G-P17LYZJ2H0"
+    };
 
+    // --- Initialize Firebase ---
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db = getFirestore(app);
-
     console.log("Firebase initialized, project:", firebaseConfig.projectId);
 
-    // TripId
+    // --- TripId מתוך ה-URL או יצירה אוטומטית ---
     let tripId = window.location.hash.replace('#','');
     if (!tripId) {
       tripId = 'trip_' + Math.random().toString(36).substring(2,8);
       window.location.hash = tripId;
     }
-    console.log("TripId שנבחר:", tripId, "URL:", window.location.href);
+    console.log("TripId שנבחר:", tripId);
 
     const tripDocRef = doc(db, "milantrip", tripId);
     console.log("Firestore docRef path:", tripDocRef.path);
 
+    // --- Anonymous sign-in ---
     signInAnonymously(auth)
       .then(cred => {
         console.log("Signed in anonymously, uid:", cred.user.uid);
+        writeTestData(); // מבצע write רק אחרי שהמשתמש מחובר
       })
       .catch(err => {
         console.error("Anonymous sign-in failed:", err.code, err.message);
@@ -53,7 +54,8 @@ const firebaseConfig = {
       console.log("onAuthStateChanged:", user ? "User UID=" + user.uid : "No user");
     });
 
-    async function testWrite() {
+    // --- פונקציה לכתיבה ועדכון Firestore ---
+    async function writeTestData() {
       try {
         await setDoc(tripDocRef, { testField: Date.now() });
         console.log("setDoc success");
@@ -68,8 +70,6 @@ const firebaseConfig = {
         console.error("updateDoc failed:", err);
       }
     }
-
-    testWrite();
   </script>
 </body>
 </html>
