@@ -1,70 +1,78 @@
 <!DOCTYPE html>
-<html lang="he" dir="rtl">
+<html lang="he">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>תוכנית טיול למילאנו</title>
+    <title>Firebase v12 Test</title>
 </head>
 <body>
-    <h1>שלום, ברוכים הבאים לטיול למילאנו!</h1>
-    <button id="firestoreBtn">בדוק/עדכן מסמך ב-Firestore</button>
+    <h1>בדיקת Firestore v12</h1>
+    <button id="readBtn">קרא מסמך</button>
+    <button id="writeBtn">כתוב מסמך</button>
+    <pre id="output"></pre>
 
+    <!-- Firebase SDK v12 -->
     <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-    import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-    import { getFirestore, doc, setDoc, updateDoc, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        // 1. Import מה-SDK של Firebase v12
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-app.js";
+        import { getFirestore, doc, getDoc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js";
 
-    // ======= Firebase config =======
-    const firebaseConfig = {
-      apiKey: "AIzaSyD47-qHc8vmGQt4n4LluKW64LEMB-UYrfk",
-      authDomain: "trip-to-milan.firebaseapp.com",
-      projectId: "trip-to-milan",
-      messagingSenderId: "305191186184",
-      appId: "1:305191186184:web:fff1488b64a06942dfc6bd",
-      measurementId: "G-P17LYZJ2H0"
-    };
+        // 2. הגדרות הפרויקט שלך מ-Firebase
+        const firebaseConfig = {
+            apiKey: "YOUR_API_KEY",
+            authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+            projectId: "YOUR_PROJECT_ID",
+            storageBucket: "YOUR_PROJECT_ID.appspot.com",
+            messagingSenderId: "YOUR_SENDER_ID",
+            appId: "YOUR_APP_ID"
+        };
 
-    // ======= Initialize =======
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const db = getFirestore(app);
+        // 3. אתחול האפליקציה וה-Firestore
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
 
-    // ======= Sign in anonymously =======
-    signInAnonymously(auth)
-      .then(() => console.log("Signed in anonymously"))
-      .catch((error) => console.error("Auth error:", error.code, error.message));
+        const output = document.getElementById("output");
 
-    // ======= Firestore operation =======
-    async function checkOrUpdateDocument() {
-      try {
-        const collectionName = "milantrip"; // שם הקולקציה שלך
-        const docRef = doc(db, collectionName, "doc1");
+        // 4. פונקציה לקריאת מסמך
+        async function readDocument() {
+            try {
+                const docRef = doc(db, "testCollection", "testDoc");
+                const docSnap = await getDoc(docRef);
 
-        const docSnap = await getDoc(docRef);
-
-        if (docSnap.exists()) {
-          console.log("Document exists, updating...");
-          await updateDoc(docRef, {
-            lastUpdated: new Date().toISOString(),
-            status: "updated"
-          });
-        } else {
-          console.log("Document does not exist, creating...");
-          await setDoc(docRef, {
-            created: new Date().toISOString(),
-            status: "new"
-          });
+                if (docSnap.exists()) {
+                    output.textContent = "נתונים קיימים: " + JSON.stringify(docSnap.data(), null, 2);
+                } else {
+                    output.textContent = "המסמך לא קיים!";
+                }
+            } catch (error) {
+                output.textContent = "שגיאה בקריאה: " + error;
+            }
         }
 
-        console.log("Firestore operation successful!");
-      } catch (error) {
-        console.error("Firestore error code:", error.code || "N/A");
-        console.error("Firestore error message:", error.message);
-      }
-    }
+        // 5. פונקציה לכתיבת מסמך
+        async function writeDocument() {
+            try {
+                const docRef = doc(db, "testCollection", "testDoc");
+                await setDoc(docRef, {
+                    message: "שלום Firebase!",
+                    timestamp: new Date()
+                });
+                output.textContent = "המסמך נכתב בהצלחה!";
+            } catch (error) {
+                output.textContent = "שגיאה בכתיבה: " + error;
+            }
+        }
 
-    // ======= Button click =======
-    document.getElementById("firestoreBtn").addEventListener("click", checkOrUpdateDocument);
+        // 6. אפשרות לאזנה בזמן אמת (Realtime Updates)
+        const docRef = doc(db, "testCollection", "testDoc");
+        onSnapshot(docRef, (docSnap) => {
+            if (docSnap.exists()) {
+                console.log("Realtime Update:", docSnap.data());
+            }
+        });
+
+        // 7. חיבור הכפתורים לפונקציות
+        document.getElementById("readBtn").addEventListener("click", readDocument);
+        document.getElementById("writeBtn").addEventListener("click", writeDocument);
     </script>
 </body>
 </html>
