@@ -1,75 +1,74 @@
-<!DOCTYPE html>
-<html lang="he" dir="rtl">
-<head>
-  <meta charset="UTF-8" />
-  <title>Debug Firebase Firestore</title>
-</head>
-<body>
-  <h1>בדיקות Firebase Firestore</h1>
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+import { getFirestore, doc, setDoc, updateDoc, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-    import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-    import { getFirestore, doc, setDoc, updateDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+const firebaseConfig = {
+  apiKey: "AIzaSyD47-qHc8vmGQt4n4LluKW64LEMB-UYrfk",
+  authDomain: "trip-to-milan.firebaseapp.com",
+  projectId: "trip-to-milan",
+  messagingSenderId: "305191186184",
+  appId: "1:305191186184:web:fff1488b64a06942dfc6bd",
+  measurementId: "G-P17LYZJ2H0"
+};
 
-    // --- Config שלך ---
-    const firebaseConfig = {
-      apiKey: "AIzaSyD47-qHc8vmGQt4n4LluKW64LEMB-UYrfk",
-      authDomain: "trip-to-milan.firebaseapp.com",
-      projectId: "trip-to-milan",
-      // storageBucket לא נדרש כאן
-      messagingSenderId: "305191186184",
-      appId: "1:305191186184:web:fff1488b64a06942dfc6bd",
-      measurementId: "G-P17LYZJ2H0"
-    };
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
 
-    // --- Initialize Firebase ---
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const db = getFirestore(app);
-    console.log("Firebase initialized, project:", firebaseConfig.projectId);
+let tripId = window.location.hash.replace('#','') || 'trip_' + Math.random().toString(36).substring(2,8);
+window.location.hash = tripId;
 
-    // --- TripId מתוך ה-URL או יצירה אוטומטית ---
-    let tripId = window.location.hash.replace('#','');
-    if (!tripId) {
-      tripId = 'trip_' + Math.random().toString(36).substring(2,8);
-      window.location.hash = tripId;
-    }
-    console.log("TripId שנבחר:", tripId);
+const tripDocRef = doc(db, "milantrip", tripId);
 
-    const tripDocRef = doc(db, "milantrip", tripId);
-    console.log("Firestore docRef path:", tripDocRef.path);
+console.log("Initializing Firebase, TripId:", tripId);
 
-    // --- Anonymous sign-in ---
-    signInAnonymously(auth)
-      .then(cred => {
-        console.log("Signed in anonymously, uid:", cred.user.uid);
-        writeTestData(); // מבצע write רק אחרי שהמשתמש מחובר
-      })
-      .catch(err => {
-        console.error("Anonymous sign-in failed:", err.code, err.message);
-      });
+signInAnonymously(auth)
+.then(cred => {
+    console.log("Signed in anonymously, UID:", cred.user.uid);
+    testWrite();
+})
+.catch(err => {
+    console.error("Sign-in failed:", err);
+});
 
-    onAuthStateChanged(auth, (user) => {
-      console.log("onAuthStateChanged:", user ? "User UID=" + user.uid : "No user");
-    });
+onAuthStateChanged(auth, (user) => {
+    console.log("Auth state changed:", user ? "User UID=" + user.uid : "No user");
+});
 
-    // --- פונקציה לכתיבה ועדכון Firestore ---
-    async function writeTestData() {
-      try {
+async function testWrite() {
+    console.log("Trying setDoc...");
+    try {
         await setDoc(tripDocRef, { testField: Date.now() });
-        console.log("setDoc success");
-      } catch (err) {
-        console.error("setDoc failed:", err);
-      }
-
-      try {
-        await updateDoc(tripDocRef, { updated: true });
-        console.log("updateDoc success");
-      } catch (err) {
-        console.error("updateDoc failed:", err);
-      }
+        console.log("setDoc succeeded");
+    } catch(err) {
+        console.error("setDoc failed:", err.code, err.message);
+        if(err.code === 'permission-denied') {
+            console.error("⚠️ Permission denied – check Firestore rules!");
+        }
     }
-  </script>
-</body>
-</html>
+
+    console.log("Trying updateDoc...");
+    try {
+        await updateDoc(tripDocRef, { updated: true });
+        console.log("updateDoc succeeded");
+    } catch(err) {
+        console.error("updateDoc failed:", err.code, err.message);
+        if(err.code === 'permission-denied') {
+            console.error("⚠️ Permission denied – check Firestore rules!");
+        }
+    }
+
+    console.log("Trying getDoc...");
+    try {
+        const docSnap = await getDoc(tripDocRef);
+        if(docSnap.exists()) {
+            console.log("Document exists:", docSnap.data());
+        } else {
+            console.log("Document does not exist yet");
+        }
+    } catch(err) {
+        console.error("getDoc failed:", err.code, err.message);
+    }
+}
+</script>
