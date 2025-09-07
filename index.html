@@ -721,7 +721,7 @@
       const submenu = $('#plan-submenu-links');
       nav.innerHTML = ''; content.innerHTML = ''; submenu.innerHTML = '';
       
-      Object.entries(planData).forEach(([dayId, dayData], i) => {
+      Object.entries(planData).sort((a, b) => a[0].localeCompare(b[0])).forEach(([dayId, dayData], i) => {
         const active = i === 0;
         nav.innerHTML += `<button class="tab-button ${active ? 'tab-active' : ''}" data-content="${dayId}">${dayData.name}</button>`;
         content.innerHTML += `<div id="${dayId}" class="content-section ${active ? 'active' : ''}"></div>`;
@@ -1384,7 +1384,7 @@
     document.addEventListener('DOMContentLoaded', () => {
         // --- Firebase Initialization ---
         const firebaseConfig = {
-          apiKey: "AIzaSyB80v2xdhebJqhjyruJ5Ta0eyhJiq7DsI8",
+          apiKey: "AIzaSyD47-qHc8vmGQt4n4LluKW64LEMB-UYrfk",
           authDomain: "trip-to-milan.firebaseapp.com",
           projectId: "trip-to-milan",
           storageBucket: "trip-to-milan.firebasestorage.app",
@@ -1682,3 +1682,4 @@
   </script>
 </body>
 </html>
+
