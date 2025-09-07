@@ -1,74 +1,42 @@
-<script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-import { getFirestore, doc, setDoc, updateDoc, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+<!DOCTYPE html>
+<html lang="he">
+<head>
+  <meta charset="UTF-8">
+  <title>Firebase Test</title>
+</head>
+<body>
+  <h1>בדיקת Firestore</h1>
 
-const firebaseConfig = {
-  apiKey: "AIzaSyD47-qHc8vmGQt4n4LluKW64LEMB-UYrfk",
-  authDomain: "trip-to-milan.firebaseapp.com",
-  projectId: "trip-to-milan",
-  messagingSenderId: "305191186184",
-  appId: "1:305191186184:web:fff1488b64a06942dfc6bd",
-  measurementId: "G-P17LYZJ2H0"
-};
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+    import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db = getFirestore(app);
+    const firebaseConfig = {
+      apiKey: "AIzaSyD47-qHc8vmGQt4n4LluKW64LEMB-UYrfk",
+      authDomain: "trip-to-milan.firebaseapp.com",
+      projectId: "trip-to-milan",
+      messagingSenderId: "305191186184",
+      appId: "1:305191186184:web:fff1488b64a06942dfc6bd",
+      measurementId: "G-P17LYZJ2H0"
+    };
 
-let tripId = window.location.hash.replace('#','') || 'trip_' + Math.random().toString(36).substring(2,8);
-window.location.hash = tripId;
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
 
-const tripDocRef = doc(db, "milantrip", tripId);
+    async function checkFirestore() {
+      console.log("Project ID:", firebaseConfig.projectId);
 
-console.log("Initializing Firebase, TripId:", tripId);
-
-signInAnonymously(auth)
-.then(cred => {
-    console.log("Signed in anonymously, UID:", cred.user.uid);
-    testWrite();
-})
-.catch(err => {
-    console.error("Sign-in failed:", err);
-});
-
-onAuthStateChanged(auth, (user) => {
-    console.log("Auth state changed:", user ? "User UID=" + user.uid : "No user");
-});
-
-async function testWrite() {
-    console.log("Trying setDoc...");
-    try {
-        await setDoc(tripDocRef, { testField: Date.now() });
-        console.log("setDoc succeeded");
-    } catch(err) {
-        console.error("setDoc failed:", err.code, err.message);
-        if(err.code === 'permission-denied') {
-            console.error("⚠️ Permission denied – check Firestore rules!");
-        }
+      try {
+        // כאן תנסה לקרוא מכל קולקציה קיימת, למשל 'testCollection'
+        const snapshot = await getDocs(collection(db, "testCollection"));
+        console.log("Firestore connection successful!");
+        snapshot.forEach(doc => console.log(doc.id, doc.data()));
+      } catch (error) {
+        console.error("Error connecting to Firestore:", error);
+      }
     }
 
-    console.log("Trying updateDoc...");
-    try {
-        await updateDoc(tripDocRef, { updated: true });
-        console.log("updateDoc succeeded");
-    } catch(err) {
-        console.error("updateDoc failed:", err.code, err.message);
-        if(err.code === 'permission-denied') {
-            console.error("⚠️ Permission denied – check Firestore rules!");
-        }
-    }
-
-    console.log("Trying getDoc...");
-    try {
-        const docSnap = await getDoc(tripDocRef);
-        if(docSnap.exists()) {
-            console.log("Document exists:", docSnap.data());
-        } else {
-            console.log("Document does not exist yet");
-        }
-    } catch(err) {
-        console.error("getDoc failed:", err.code, err.message);
-    }
-}
-</script>
+    checkFirestore();
+  </script>
+</body>
+</html>
