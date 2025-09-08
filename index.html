@@ -605,6 +605,15 @@
         { name: "Kosher King", type: 'dining', style: "מרכול", address: "Piazza Napoli, 15, 20146 Milano MI", phone: "+390242296773", website: "https://www.facebook.com/kosherkingmilan/", hours: "א'-ה' 08:30-19:30; ו' 08:30-16:00", coords: { lat: 45.4563, lon: 9.1492 } },
       ]
     };
+    
+    const dailyTips = [
+      "זכרו לתקף את כרטיס התחבורה הציבורית שלכם במכונות הצהובות לפני כל נסיעה במטרו, אוטובוס או טראם כדי למנוע קנסות.",
+      "אפרטיבו (Aperitivo) הוא מנהג איטלקי פופולרי. בין 18:00 ל-21:00, שלמו על משקה וקבלו גישה חופשית למזנון אכול כפי יכולתך. רובע נבילי הוא מקום מעולה לחוות זאת.",
+      "'Coperto' הוא חיוב שירות קבוע שרוב המסעדות מוסיפות לחשבון. זה לא טיפ, אלא תשלום על השירות והלחם. טיפ נוסף אינו חובה אך מוערך.",
+      "הרבה מוזיאונים וכנסיות דורשים לבוש צנוע (כתפיים וברכיים מכוסות). כדאי להחזיק צעיף קל בתיק למקרה הצורך.",
+      "מים מהברז במילאנו בטוחים וטובים לשתייה. חפשו ברזיות ציבוריות (fontanelle) כדי למלא את בקבוק המים שלכם ולחסוך כסף.",
+      "אם אתם מתכננים לראות את 'הסעודה האחרונה' של דה וינצ'י, חובה להזמין כרטיסים באינטרנט מספר חודשים מראש. הכניסה מוגבלת מאוד."
+    ];
 
     const tripMeta = {
         flights: {
@@ -704,6 +713,22 @@
         $('#alert-modal-body').textContent = message;
         $('#alert-modal').classList.add('flex');
     }
+    
+    function openTipModal() {
+        const tip = dailyTips[Math.floor(Math.random() * dailyTips.length)];
+        $('#daily-tip-body').textContent = tip;
+        $('#daily-tip-modal').classList.add('flex');
+    }
+
+    function showDailyTip() {
+        const lastTipDate = localStorage.getItem('lastTipDate');
+        const today = new Date().toISOString().slice(0, 10);
+
+        if (lastTipDate !== today) {
+            openTipModal();
+            localStorage.setItem('lastTipDate', today);
+        }
+    }
 
     // --- RENDER FUNCTIONS ---
     function renderOverview() {
@@ -720,7 +745,7 @@
         const hotelHtml = `<div class="bg-gray-50 dark:bg-gray-800/50 p-4 rounded-lg space-y-2">
             <h3 class="font-bold text-lg"><i class="fa-solid fa-hotel mr-2"></i>מלון</h3>
             <p><b>${hotel.name}</b></p>
-            <div class="flex gap-2"><a href="${hotel.tel}" class="btn btn-ghost"><i class="fa fa-phone"></i> חיוג</a><a href="https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(hotel.address)}" target="_blank" class="btn btn-ghost"><i class="fa fa-map-location-dot"></i> ניווט</a></div>
+            <div class="flex gap-2"><a href="${hotel.tel}" class="btn btn-ghost"><i class="fa fa-phone"></i> חיוג</a><a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(hotel.address)}" target="_blank" class="btn btn-ghost"><i class="fa fa-map-location-dot"></i> ניווט</a></div>
         </div>`;
         const contactsHtml = `<div class="bg-gray-50 dark:bg-gray-800/50 p-4 rounded-lg space-y-2">
             <h3 class="font-bold text-lg"><i class="fa-solid fa-address-book mr-2"></i>טלפונים חשובים</h3>
@@ -760,6 +785,7 @@
     }
 
     function renderAllPlans(planData) {
+      if (!planData) return;
       const nav = $('#day-tabs-nav'), content = $('#plan-content-container');
       const submenu = $('#plan-submenu-links');
       nav.innerHTML = ''; content.innerHTML = ''; submenu.innerHTML = '';
@@ -823,7 +849,7 @@
         if (activity.info) links.push(`<a href="${activity.info}" target="_blank" class="btn btn-ghost"><i class="fa-solid fa-circle-info"></i> מידע</a>`);
         if (activity.address) {
             links.push(`<a href="https://waze.com/ul?q=${encodeURIComponent(activity.address)}" target="_blank" class="btn btn-ghost" title="Waze"><i class="fa-brands fa-waze"></i></a>`);
-            links.push(`<a href="https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(activity.address)}" target="_blank" class="btn btn-ghost" title="Google Maps"><i class="fa-brands fa-google"></i></a>`);
+            links.push(`<a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(activity.address)}" target="_blank" class="btn btn-ghost" title="Google Maps"><i class="fa-brands fa-google"></i></a>`);
         }
         if (previousActivity && previousActivity.address && activity.address) {
             const transitUrl = `https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(previousActivity.address)}&destination=${encodeURIComponent(activity.address)}&travelmode=transit`;
@@ -877,7 +903,7 @@
                 <td data-label="פעולות" class="p-3">
                     <div class="flex flex-wrap gap-2 justify-end">
                         <button onclick="window.openAddToDayModal('${s.id}')" class="btn btn-primary btn-sm"><i class="fa-solid fa-plus"></i> הוסף</button>
-                        <a href="https://www.google.com/maps/dir/?api=1&destination=${s.coords.lat},${s.coords.lon}" target="_blank" class="btn btn-ghost btn-sm"><i class="fa-solid fa-map-location-dot"></i> מפה</a>
+                        <a href="https://www.google.com/maps/search/?api=1&query=${s.coords.lat},${s.coords.lon}" target="_blank" class="btn btn-ghost btn-sm"><i class="fa-solid fa-map-location-dot"></i> מפה</a>
                     </div>
                 </td>
             </tr>
@@ -905,7 +931,6 @@
         const now = new Date();
         const timeZone = 'Europe/Rome';
         
-        // More reliable way to get current time parts in Milan
         const milanParts = new Intl.DateTimeFormat('en-US', {
             timeZone,
             weekday: 'short',
@@ -957,7 +982,6 @@
                             const [endH, endM] = endStr.split(':').map(Number);
                             const startTotalMinutes = startH * 60 + (startM || 0);
                             let endTotalMinutes = endH * 60 + (endM || 0);
-                             // Handle cases like closing at midnight (24:00)
                             if (endTotalMinutes === 0 && endH === 0) endTotalMinutes = 24 * 60;
 
                             if (currentTimeInMinutes >= startTotalMinutes && currentTimeInMinutes < endTotalMinutes) {
