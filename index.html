@@ -764,7 +764,7 @@
       const submenu = $('#plan-submenu-links');
       nav.innerHTML = ''; content.innerHTML = ''; submenu.innerHTML = '';
       
-      Object.entries(planData).forEach(([dayId, dayData], i) => {
+      Object.entries(planData).sort((a, b) => a[0].localeCompare(b[0])).forEach(([dayId, dayData], i) => {
         const active = i === 0;
         nav.innerHTML += `<button class="tab-button ${active ? 'tab-active' : ''}" data-content="${dayId}">${dayData.name}</button>`;
         content.innerHTML += `<div id="${dayId}" class="content-section ${active ? 'active' : ''}"></div>`;
@@ -856,6 +856,7 @@
             ${imgHTML}
             <div class="p-4 md:p-5 flex-grow">
               <p class="text-gray-700 dark:text-gray-300">${fmtBold(activity.description)}</p>
+              ${activity.hours ? `<p class="text-sm text-gray-500 dark:text-gray-400 mt-2"><i class="fa-solid fa-clock w-4 mr-1"></i> ${activity.hours}</p>` : ''}
               <div class="mt-4 flex flex-wrap items-center gap-2">${links.join('')}</div>
             </div>
           </div>
@@ -926,12 +927,16 @@
         try {
             const dayParts = hoursString.split(';').map(s => s.trim());
             for (const part of dayParts) {
-                const [daySpec, ...timeSpecs] = part.split(' ');
-                const timeStr = timeSpecs.join('');
+                const daySpecMatch = part.match(/^[א-ת]['-א-ת]*/);
+                if(!daySpecMatch) continue;
 
+                const daySpec = daySpecMatch[0];
+                const timeStr = part.substring(daySpec.length).trim();
+                
                 let days = [];
-                if (daySpec.includes('-')) {
-                    const [startDayChar, endDayChar] = daySpec.split('-');
+                const cleanedDaySpec = daySpec.replace(/'/g, '');
+                if (cleanedDaySpec.includes('-')) {
+                    const [startDayChar, endDayChar] = cleanedDaySpec.split('-');
                     const startDay = dayMapHe[startDayChar];
                     const endDay = dayMapHe[endDayChar];
                     if (startDay !== undefined && endDay !== undefined) {
@@ -940,20 +945,20 @@
                         }
                     }
                 } else {
-                    days = daySpec.split(',').map(d => dayMapHe[d]).filter(d => d !== undefined);
+                    days = cleanedDaySpec.split(',').map(d => dayMapHe[d]).filter(d => d !== undefined);
                 }
                 
                 if (days.includes(currentDay)) {
                     const timeRanges = timeStr.split(',');
                     for (const range of timeRanges) {
-                        const [startStr, endStr] = range.split('-');
+                        const [startStr, endStr] = range.trim().split('-');
                         if(startStr && endStr){
                             const [startH, startM] = startStr.split(':').map(Number);
                             const [endH, endM] = endStr.split(':').map(Number);
                             const startTotalMinutes = startH * 60 + (startM || 0);
                             let endTotalMinutes = endH * 60 + (endM || 0);
                              // Handle cases like closing at midnight (24:00)
-                            if (endTotalMinutes === 0) endTotalMinutes = 24 * 60;
+                            if (endTotalMinutes === 0 && endH === 0) endTotalMinutes = 24 * 60;
 
                             if (currentTimeInMinutes >= startTotalMinutes && currentTimeInMinutes < endTotalMinutes) {
                                 return true;
@@ -987,7 +992,7 @@
             return style.includes(filter.toLowerCase());
         });
 
-        const content = filtered.map(item => (item.style.includes('בשרי') || item.style.includes('חלבי') || item.style.includes('פלאפל') || item.style.includes('טייק') ? rowRestaurant(item) : rowMarket(item))).join('');
+        const content = filtered.map(item => (item.style.includes('בשרי') || item.style.includes('חלבי') || item.style.includes('פלאפל') || item.style.includes('טייק-אווי') ? rowRestaurant(item) : rowMarket(item))).join('');
         $('#kosher-results').innerHTML = `<table class="min-w-full text-sm responsive-table"><tbody>${content || `<tr><td class="p-4 text-center">לא נמצאו תוצאות.</td></tr>`}</tbody></table>`;
     }
 
