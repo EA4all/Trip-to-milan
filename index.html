@@ -680,7 +680,7 @@
         if (!activityToModify) return;
 
         const opts = $('#modal-day-options');
-        opts.innerHTML = Object.entries(localTripData.plan).map(([dayId, dayData]) => 
+        opts.innerHTML = Object.entries(localTripData.plan).sort((a,b) => a[0].localeCompare(b[0])).map(([dayId, dayData]) => 
             `<button class="btn btn-primary" onclick="window.addActivityToDay('${dayId}', '${type}')">${dayData.name}</button>`
         ).join('');
         modal.classList.add('flex');
@@ -939,9 +939,19 @@
             hour12: false,
         }).formatToParts(now);
 
-        const milanDayStr = milanParts.find(p => p.type === 'weekday').value;
-        const currentHour = parseInt(milanParts.find(p => p.type === 'hour').value, 10);
-        const currentMinute = parseInt(milanParts.find(p => p.type === 'minute').value, 10);
+        const milanDayStr = milanParts.find(p => p.type === 'weekday')?.value;
+        const hourPart = milanParts.find(p => p.type === 'hour')?.value;
+        const minutePart = milanParts.find(p => p.type === 'minute')?.value;
+        
+        if (!milanDayStr || !hourPart || !minutePart) {
+             console.error("Could not determine Milan time");
+             return false;
+        }
+
+        let currentHour = parseInt(hourPart, 10);
+        if (currentHour === 24) currentHour = 0;
+
+        const currentMinute = parseInt(minutePart, 10);
         
         const dayMapEn = {'Sun': 0, 'Mon': 1, 'Tue': 2, 'Wed': 3, 'Thu': 4, 'Fri': 5, 'Sat': 6};
         const currentDay = dayMapEn[milanDayStr];
@@ -950,43 +960,51 @@
         const dayMapHe = {'א': 0, 'ב': 1, 'ג': 2, 'ד': 3, 'ה': 4, 'ו': 5, 'ש': 6};
 
         try {
-            const dayParts = hoursString.split(';').map(s => s.trim());
-            for (const part of dayParts) {
-                const daySpecMatch = part.match(/^[א-ת]['-א-ת]*/);
-                if(!daySpecMatch) continue;
+            const dayEntries = hoursString.split(';').map(s => s.trim());
+            for (const entry of dayEntries) {
+                const firstSpaceIndex = entry.indexOf(' ');
+                if (firstSpaceIndex === -1) continue;
 
-                const daySpec = daySpecMatch[0];
-                const timeStr = part.substring(daySpec.length).trim();
-                
-                let days = [];
+                const daySpec = entry.substring(0, firstSpaceIndex);
+                const timeSpec = entry.substring(firstSpaceIndex + 1);
+
+                let applicableDays = [];
                 const cleanedDaySpec = daySpec.replace(/'/g, '');
                 if (cleanedDaySpec.includes('-')) {
-                    const [startDayChar, endDayChar] = cleanedDaySpec.split('-');
-                    const startDay = dayMapHe[startDayChar];
-                    const endDay = dayMapHe[endDayChar];
+                    const [startChar, endChar] = cleanedDaySpec.split('-');
+                    const startDay = dayMapHe[startChar];
+                    const endDay = dayMapHe[endChar];
                     if (startDay !== undefined && endDay !== undefined) {
                         for (let i = startDay; i <= endDay; i++) {
-                            days.push(i);
+                            applicableDays.push(i);
                         }
                     }
                 } else {
-                    days = cleanedDaySpec.split(',').map(d => dayMapHe[d]).filter(d => d !== undefined);
+                    applicableDays = cleanedDaySpec.split(',').map(d => dayMapHe[d]).filter(d => d !== undefined);
                 }
                 
-                if (days.includes(currentDay)) {
-                    const timeRanges = timeStr.split(',');
-                    for (const range of timeRanges) {
-                        const [startStr, endStr] = range.trim().split('-');
-                        if(startStr && endStr){
-                            const [startH, startM] = startStr.split(':').map(Number);
-                            const [endH, endM] = endStr.split(':').map(Number);
-                            const startTotalMinutes = startH * 60 + (startM || 0);
-                            let endTotalMinutes = endH * 60 + (endM || 0);
-                            if (endTotalMinutes === 0 && endH === 0) endTotalMinutes = 24 * 60;
+                const timeRanges = timeSpec.split(',').map(r => r.trim());
 
-                            if (currentTimeInMinutes >= startTotalMinutes && currentTimeInMinutes < endTotalMinutes) {
-                                return true;
-                            }
+                for (const range of timeRanges) {
+                    const [startStr, endStr] = range.split('-');
+                    if (!startStr || !endStr) continue;
+
+                    const [startH, startM] = startStr.split(':').map(Number);
+                    const [endH, endM] = endStr.split(':').map(Number);
+                    const startTotalMinutes = startH * 60 + (startM || 0);
+                    let endTotalMinutes = endH * 60 + (endM || 0);
+                    
+                    if (endTotalMinutes < startTotalMinutes) { // Crosses midnight
+                        const previousDay = currentDay === 0 ? 6 : currentDay - 1;
+                        if (applicableDays.includes(currentDay) && currentTimeInMinutes >= startTotalMinutes) {
+                            return true;
+                        }
+                        if (applicableDays.includes(previousDay) && currentTimeInMinutes < endTotalMinutes) {
+                             return true;
+                        }
+                    } else { // Same day
+                        if (applicableDays.includes(currentDay) && currentTimeInMinutes >= startTotalMinutes && currentTimeInMinutes < endTotalMinutes) {
+                            return true;
                         }
                     }
                 }
