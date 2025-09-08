@@ -517,8 +517,6 @@
     import { getFirestore, doc, onSnapshot, setDoc, updateDoc, arrayUnion, arrayRemove, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
     // --- CONFIGURATION ---
-    // ⚠️ חשוב! יש להחליף את הטקסט בתוך הגרשיים במפתחות API אמיתיים
-    // ודא שהמפתח שהודבק נמצא *בתוך* המרכאות
     const FIREBASE_CONFIG = {
       apiKey: "AIzaSyD47-qHc8vmGQt4n4LluKW64LEMB-UYrfk",
       authDomain: "trip-to-milan.firebaseapp.com",
@@ -1177,7 +1175,7 @@
                     <span>${Math.round(data.daily.temperature_2m_min[i])}°/${Math.round(data.daily.temperature_2m_max[i])}°</span>
                 </div>`).join('');
             
-            getPackingSuggestion(data); // New function call
+            getPackingSuggestion(data);
         } catch (e) { 
             $('#weather-forecast').innerHTML = `<p class="text-xs text-red-500">שגיאה בטעינת תחזית. ${e.message}</p>`; 
         }
@@ -1199,7 +1197,7 @@
         suggestionEl.innerHTML = `מכין המלצת אריזה... <i class="fa-solid fa-spinner fa-spin"></i>`;
         
         const summary = `Min temps: ${weatherData.daily.temperature_2m_min.map(Math.round).join(', ')} C. Max temps: ${weatherData.daily.temperature_2m_max.map(Math.round).join(', ')} C. Weather codes (WMO): ${weatherData.daily.weathercode.join(', ')}.`;
-        const prompt = `Based on this 7-day weather forecast summary for Milan: ${summary}. Provide a short, helpful packing recommendation in Hebrew (1-2 sentences). Mention key items like umbrella, light jacket, sweater, sunglasses, etc., as appropriate for the forecast.`;
+        const prompt = `Based on this 7-day weather forecast summary for Milan: ${summary}. Provide a short packing recommendation in Hebrew (1-2 sentences max). Give ONLY the Hebrew sentence, without any additional text, translation, or transliteration.`;
         const payload = { contents: [{ parts: [{ text: "" }] }] };
         const suggestion = await callGemini(payload, prompt, false);
         
