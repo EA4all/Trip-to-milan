@@ -8,7 +8,6 @@
   <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
   <meta name="theme-color" content="#0b1220" media="(prefers-color-scheme: dark)">
 
-  <!-- Tailwind CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
@@ -28,15 +27,12 @@
       }
     };
   </script>
-  <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Assistant:wght@300;400;600;700&display=swap" rel="stylesheet">
 
-  <!-- Font Awesome for icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" xintegrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
   
-  <!-- Chart.js CDN -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
   <style>
@@ -399,7 +395,6 @@
 
   </main>
   
-  <!-- Modals -->
   <div id="add-to-day-modal" class="modal-backdrop">
     <div class="modal">
         <div class="p-4 border-b"><h3 class="text-lg font-bold">הוסף פעילות ליום...</h3></div>
@@ -411,7 +406,7 @@
   </div>
   <div id="camera-modal" class="modal-backdrop">
     <div class="modal">
-        <div class="p-4 border-b flex justify-between items-center"><h3 class="text-lg font-bold">תרגם מתמונה</h3><button id="camera-close-btn" class="text-2xl">&times;</button></div>
+        <div class="p-4 border-b flex justify-between items-center"><h3 class="text-lg font-bold">תרגם מתמונה</h3><button id="camera-close-btn" class="text-2xl">×</button></div>
         <div class="p-4 flex-grow relative">
             <video id="camera-feed" class="w-full h-full object-cover bg-black rounded-lg" playsinline autoplay></video>
             <canvas id="camera-canvas" class="hidden"></canvas>
@@ -434,7 +429,7 @@
     <div class="modal">
         <div class="p-4 border-b flex justify-between items-center">
             <h3 class="text-lg font-bold">שאל את Gemini</h3>
-            <button id="gemini-close-btn" class="text-2xl">&times;</button>
+            <button id="gemini-close-btn" class="text-2xl">×</button>
         </div>
         <div class="p-4 flex-grow overflow-y-auto">
             <label for="gemini-prompt" class="block text-sm font-medium mb-1">הכנס שאלה או בקשה:</label>
@@ -464,15 +459,11 @@
 
 
 
-  <!-- Floating Nav -->
   <div id="floating-nav-container" class="md:hidden fixed bottom-0 left-0 right-0 z-40">
-      <!-- Plan Submenu -->
       <div id="plan-submenu" class="floating-submenu hidden fixed bottom-[68px] left-0 right-0 bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm p-2 rounded-t-2xl">
           <div class="grid grid-cols-3 gap-2 text-center text-sm" id="plan-submenu-links">
-              <!-- Links will be injected here -->
-          </div>
+              </div>
       </div>
-      <!-- Tools Submenu -->
       <div id="tools-submenu" class="floating-submenu hidden fixed bottom-[68px] left-0 right-0 bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm p-2 rounded-t-2xl">
           <div class="grid grid-cols-3 gap-2 text-center text-sm">
               <a href="#weather-tool" class="p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700">מזג אוויר</a>
@@ -589,19 +580,19 @@
     
     const kosherData = {
       restaurants: [
-        { name: "Denzel", type: 'dining', style: "בשרי", address: "Via Giorgio Washington, 9, 20146 Milano MI", phone: "+390248519326", website: "https://www.denzel.it/", hours: "א'-ה' 12:00-15:00, 19:00-23:00; ו' 12:00-15:00", coords: { lat: 45.4654, lon: 9.1555 } },
+        { name: "Denzel", type: 'dining', style: "בשרי", logo: "https://static.wixstatic.com/media/c6595a_0d9d7bb6473548d69681f09d18ff4247.png", address: "Via Giorgio Washington, 9, 20146 Milano MI", phone: "+390248519326", website: "https://www.denzel.it/", hours: "א'-ה' 12:00-15:00, 19:00-23:00; ו' 12:00-15:00", coords: { lat: 45.4654, lon: 9.1555 } },
         { name: "Ba'Ghetto", type: 'dining', style: "בשרי", address: "Via Sardegna, 45, 20146 Milano MI", phone: "+39024694643", website: "https://www.baghetto.com/en/", hours: "א'-ה' 12:00-15:00, 19:00-23:00; ו' 12:00-15:00", coords: { lat: 45.4665, lon: 9.1461 } },
         { name: "Re Salomone", type: 'dining', style: "בשרי", address: "Via Sardegna, 42, 20146 Milano MI", phone: "+39024694643", website: "https://www.resalomone.it/", hours: "א'-ה' 12:00-14:30, 19:00-23:00; ו' 12:00-14:30", coords: { lat: 45.4665, lon: 9.1458 } },
         { name: "La's Kebab", type: 'dining', style: "בשרי", address: "Viale Misurata, 19, 20146 Milano MI", phone: "+393288865576", website: "https://laskebab.eatbu.com/", hours: "א'-ה' 12:00-15:00, 18:00-23:00", coords: { lat: 45.4586, lon: 9.1517 } },
         { name: "Carmel", type: 'dining', style: "חלבי", address: "Viale S. Gimignano, 10, 20146 Milano MI", phone: "+3902416368", website: "https://carmelkosher.it/", hours: "א'-ה' 12:00-15:00, 19:00-22:30", coords: { lat: 45.4593, lon: 9.1328 } },
-        { name: "MyKafe", type: 'dining', style: "חלבי", address: "Via Luigi Soderini, 44, 20146 Milano MI", phone: "+390238232748", website: "https://www.instagram.com/mykafe2020/", hours: "א'-ה' 07:30-19:30; ו' 07:30-16:00", coords: { lat: 45.4578, lon: 9.1337 } },
+        { name: "MyKafe", type: 'dining', style: "חלבי", logo: "https://dynamic-media-cdn.tripadvisor.com/media/photo-o/11/a2/1f/a2/my-kafe.jpg", address: "Via Luigi Soderini, 44, 20146 Milano MI", phone: "+390238232748", website: "https://www.instagram.com/mykafe2020/", hours: "א'-ה' 07:30-19:30; ו' 07:30-16:00", coords: { lat: 45.4578, lon: 9.1337 } },
         { name: "Bet-El", type: 'dining', style: "חלבי", address: "Viale S. Gimignano, 2, 20146 Milano MI", phone: "+39024151336", website: "http://www.betelkosher.com/", hours: "א'-ה' 12:00-14:30, 19:00-22:30", coords: { lat: 45.4607, lon: 9.1352 } },
-        { name: "Snubar", type: 'dining', style: "פלאפל/שווארמה", address: "Via Leone Tolstoi, 2, 20146 Milano MI", phone: "+39024236963", website: "https://www.snubar.it/it/", hours: "א'-ה' 12:00-22:00", coords: { lat: 45.4568, lon: 9.1565 } },
+        { name: "Snubar", type: 'dining', style: "פלאפל/שווארמה", logo: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQmYC-lcBrFV75_D371aWkrfk7yd1Qu3kEIcw&s", address: "Via Leone Tolstoi, 2, 20146 Milano MI", phone: "+39024236963", website: "https://www.snubar.it/it/", hours: "א'-ה' 12:00-22:00", coords: { lat: 45.4568, lon: 9.1565 } },
         { name: "Presto", type: 'dining', style: "טייק-אווי", address: "Via delle Forze Armate, 13, 20147 Milano MI", phone: "+39024045598", website: "https://www.presto-kosher.com/", hours: "א'-ה' 10:00-20:00; ו' 09:00-15:00", coords: { lat: 45.4667, lon: 9.1292 } },
       ],
       markets: [
         { name: "Kosher Paradise", type: 'dining', style: "מרכול", address: "Viale S. Gimignano, 13, 20146 Milano MI", phone: "+39024122855", website: "https://www.kosherparadise.it/", hours: "א'-ה' 09:00-19:30; ו' 09:00-15:00", coords: { lat: 45.4589, lon: 9.1325 } },
-        { name: "Denzel's Sweet Bakery", type: 'dining', style: "מאפייה", address: "Via Soderini, 55, 20146 Milano MI", phone: "+39024125166", website: "https://www.denzel.it/bakery", hours: "א'-ה' 07:30-19:30; ו' 07:30-15:00", coords: { lat: 45.4570, lon: 9.1329 } },
+        { name: "Denzel's Sweet Bakery", type: 'dining', style: "מאפייה", logo: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSVt6hxH7niOmeBunCjNdpow7Y_PfseIBonPQ&s", address: "Via Soderini, 55, 20146 Milano MI", phone: "+39024125166", website: "https://www.denzel.it/bakery", hours: "א'-ה' 07:30-19:30; ו' 07:30-15:00", coords: { lat: 45.4570, lon: 9.1329 } },
         { name: "Kosher King", type: 'dining', style: "מרכול", address: "Piazza Napoli, 15, 20146 Milano MI", phone: "+390242296773", website: "https://www.facebook.com/kosherkingmilan/", hours: "א'-ה' 08:30-19:30; ו' 08:30-16:00", coords: { lat: 45.4563, lon: 9.1492 } },
       ]
     };
@@ -745,7 +736,7 @@
         const hotelHtml = `<div class="bg-gray-50 dark:bg-gray-800/50 p-4 rounded-lg space-y-2">
             <h3 class="font-bold text-lg"><i class="fa-solid fa-hotel mr-2"></i>מלון</h3>
             <p><b>${hotel.name}</b></p>
-            <div class="flex gap-2"><a href="${hotel.tel}" class="btn btn-ghost"><i class="fa fa-phone"></i> חיוג</a><a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(hotel.address)}" target="_blank" class="btn btn-ghost"><i class="fa fa-map-location-dot"></i> ניווט</a></div>
+            <div class="flex gap-2"><a href="${hotel.tel}" class="btn btn-ghost"><i class="fa fa-phone"></i> חיוג</a><a href="https://maps.google.com/?q=${encodeURIComponent(hotel.address)}" target="_blank" class="btn btn-ghost"><i class="fa fa-map-location-dot"></i> ניווט</a></div>
         </div>`;
         const contactsHtml = `<div class="bg-gray-50 dark:bg-gray-800/50 p-4 rounded-lg space-y-2">
             <h3 class="font-bold text-lg"><i class="fa-solid fa-address-book mr-2"></i>טלפונים חשובים</h3>
@@ -849,10 +840,10 @@
         if (activity.info) links.push(`<a href="${activity.info}" target="_blank" class="btn btn-ghost"><i class="fa-solid fa-circle-info"></i> מידע</a>`);
         if (activity.address) {
             links.push(`<a href="https://waze.com/ul?q=${encodeURIComponent(activity.address)}" target="_blank" class="btn btn-ghost" title="Waze"><i class="fa-brands fa-waze"></i></a>`);
-            links.push(`<a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(activity.address)}" target="_blank" class="btn btn-ghost" title="Google Maps"><i class="fa-brands fa-google"></i></a>`);
+            links.push(`<a href="https://maps.google.com/?q=${encodeURIComponent(activity.address)}" target="_blank" class="btn btn-ghost" title="Google Maps"><i class="fa-brands fa-google"></i></a>`);
         }
         if (previousActivity && previousActivity.address && activity.address) {
-            const transitUrl = `https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(previousActivity.address)}&destination=${encodeURIComponent(activity.address)}&travelmode=transit`;
+            const transitUrl = `https://maps.google.com/?saddr=${encodeURIComponent(previousActivity.address)}&daddr=${encodeURIComponent(activity.address)}&travelmode=transit`;
             links.push(`<a href="${transitUrl}" target="_blank" class="btn btn-ghost" title="ניווט בתחב״צ"><i class="fa-solid fa-route"></i></a>`);
         }
         if(!isDining && activity.coords) {
@@ -861,7 +852,7 @@
 
         const imgHTML = activity.img ? `<div class="image-carousel" data-images='${JSON.stringify(activity.img)}' data-index="0">
             <img loading="lazy" src="${activity.img[0]}" alt="${activity.name}" class="thumb" onerror="this.style.display='none'">
-            ${(activity.img.length || 0) > 1 ? `<button class="carousel-prev" onclick="window.navigateCarousel(this, -1)">&lt;</button><button class="carousel-next" onclick="window.navigateCarousel(this, 1)">&gt;</button>` : ''}
+            ${(activity.img.length || 0) > 1 ? `<button class="carousel-prev" onclick="window.navigateCarousel(this, -1)"><</button><button class="carousel-next" onclick="window.navigateCarousel(this, 1)">></button>` : ''}
         </div>` : '';
         
         const moveButtons = `
@@ -903,7 +894,7 @@
                 <td data-label="פעולות" class="p-3">
                     <div class="flex flex-wrap gap-2 justify-end">
                         <button onclick="window.openAddToDayModal('${s.id}')" class="btn btn-primary btn-sm"><i class="fa-solid fa-plus"></i> הוסף</button>
-                        <a href="https://www.google.com/maps/search/?api=1&query=${s.coords.lat},${s.coords.lon}" target="_blank" class="btn btn-ghost btn-sm"><i class="fa-solid fa-map-location-dot"></i> מפה</a>
+                        <a href="https://maps.google.com/?q=${s.coords.lat},${s.coords.lon}" target="_blank" class="btn btn-ghost btn-sm"><i class="fa-solid fa-map-location-dot"></i> מפה</a>
                     </div>
                 </td>
             </tr>
@@ -1064,7 +1055,7 @@
                     <button onclick="window.openAddToDayModal('${r.name}', 'kosher')" class="btn btn-primary btn-sm" title="הוסף ליום"><i class="fa-solid fa-plus"></i></button>
                     ${r.phone ? `<a title="התקשר" href="tel:${r.phone}" class="btn btn-ghost btn-sm"><i class="fa-solid fa-phone"></i></a>`:''}
                     <a title="Waze" href="https://waze.com/ul?q=${encodeURIComponent(r.address)}" target="_blank" class="btn btn-ghost btn-sm"><i class="fa-brands fa-waze"></i></a>
-                    <a title="Google Maps" href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(r.address)}" target="_blank" class="btn btn-ghost btn-sm"><i class="fa-brands fa-google"></i></a>
+                    <a title="Google Maps" href="https://maps.google.com/?q=${encodeURIComponent(r.address)}" target="_blank" class="btn btn-ghost btn-sm"><i class="fa-brands fa-google"></i></a>
                     ${r.menu ? `<a href="${r.menu}" target="_blank" class="btn btn-ghost btn-sm" title="תפריט"><i class="fa-solid fa-utensils"></i></a>`:''}
                     ${r.website ? `<a href="${r.website}" target="_blank" class="btn btn-ghost btn-sm" title="אתר"><i class="fa-solid fa-globe"></i></a>`:''}
                     ${r.instagram ? `<a title="אינסטגרם" href="${r.instagram}" target="_blank" class="btn btn-ghost btn-sm"><i class="fa-brands fa-instagram"></i></a>`:''}
@@ -1085,7 +1076,7 @@
                     <button onclick="window.openAddToDayModal('${m.name}', 'kosher')" class="btn btn-primary btn-sm" title="הוסף ליום"><i class="fa-solid fa-plus"></i></button>
                     ${m.phone ? `<a title="התקשר" href="tel:${m.phone}" class="btn btn-ghost btn-sm"><i class="fa-solid fa-phone"></i></a>`:''}
                     <a title="Waze" href="https://waze.com/ul?q=${encodeURIComponent(m.address)}" target="_blank" class="btn btn-ghost btn-sm"><i class="fa-brands fa-waze"></i></a>
-                    <a title="Google Maps" href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(m.address)}" target="_blank" class="btn btn-ghost btn-sm"><i class="fa-brands fa-google"></i></a>
+                    <a title="Google Maps" href="https://maps.google.com/?q=${encodeURIComponent(m.address)}" target="_blank" class="btn btn-ghost btn-sm"><i class="fa-brands fa-google"></i></a>
                     ${m.website ? `<a href="${m.website}" target="_blank" class="btn btn-ghost btn-sm" title="אתר"><i class="fa-solid fa-globe"></i></a>`:''}
                     ${m.instagram ? `<a title="אינסטגרם" href="${m.instagram}" target="_blank" class="btn btn-ghost btn-sm"><i class="fa-brands fa-instagram"></i></a>`:''}
                 </div>
@@ -1180,7 +1171,7 @@
                     <i class="fa-solid fa-file-pdf fa-3x text-red-500"></i>
                     <span class="text-xs mt-2 break-all">${doc.name}</span>
                 </a>
-                <button class="delete-btn" onclick="window.removeDocument('${doc.id}')">&times;</button>
+                <button class="delete-btn" onclick="window.removeDocument('${doc.id}')">×</button>
             </div>`).join('');
     }
 
@@ -1188,7 +1179,7 @@
         const grid = $('#gallery-grid');
         grid.innerHTML = gallery.map(img => `<div class="relative aspect-square">
             <img src="${img.dataUrl}" class="w-full h-full object-cover rounded-lg">
-            <button class="delete-btn" onclick="window.removeImage('${img.id}')">&times;</button>
+            <button class="delete-btn" onclick="window.removeImage('${img.id}')">×</button>
         </div>`).join('');
     }
 
@@ -1365,13 +1356,13 @@
         if (navigator.geolocation) {
             navigator.geolocation.getCurrentPosition(position => {
                 const { latitude, longitude } = position.coords;
-                window.open(`https://www.google.com/maps/search/tourist+attractions/@${latitude},${longitude},14z`, '_blank');
+                window.open(`https://www.google.com/maps/search/point+of+interest/@${latitude},${longitude},14z`, '_blank');
             }, () => {
                 showAlert('שגיאת מיקום', 'לא ניתן היה לקבל את מיקומך. נפתח מפה כללית של מילאנו.');
-                window.open('https://www.google.com/maps/search/tourist+attractions+in+milan', '_blank');
+                window.open('https://www.google.com/maps/place/Milan', '_blank');
             });
         } else {
-             window.open('https://www.google.com/maps/search/tourist+attractions+in+milan', '_blank');
+             window.open('https://www.google.com/maps/place/Milan', '_blank');
         }
     }
     window.findNearbyKosher = (btn) => {
@@ -1888,4 +1879,3 @@
   </script>
 </body>
 </html>
-
