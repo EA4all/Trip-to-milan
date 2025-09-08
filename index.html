@@ -1561,7 +1561,7 @@
         translateImage(base64ImageData, 'image/jpeg');
     }
 
-    // --- Gemini Translation ---
+    // --- Gemini API Call ---
     async function callGemini(payload, prompt, useSearch = false) {
         const apiKey = GEMINI_API_KEY;
         if (apiKey.includes("החלף אותי") || apiKey.includes("הכנס כאן")) {
@@ -1570,12 +1570,13 @@
         
         payload.contents[0].parts[0].text = prompt;
         if (useSearch) {
-            payload.tools = [{ "google_search_retrieval": {} }]; // <-- FIX #1
+            payload.tools = [{ "google_search_retrieval": {} }];
         } else {
             delete payload.tools;
         }
 
-        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${apiKey}`; // <-- FIX #2
+        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${apiKey}`;
+        console.log("Calling Gemini API with URL:", apiUrl); // For debugging
         
         try {
             const response = await fetch(apiUrl, {
@@ -1614,7 +1615,6 @@
         const langCode = currentLang === 'he-it' ? 'it-IT' : 'he-IL';
         resultContainer.innerHTML = `<span>${responseText}</span> <button onclick="window.speakText('${responseText.replace(/'/g, "\\'")}', '${langCode}')" class="btn btn-ghost p-1 h-auto"><i class="fa-solid fa-volume-high"></i></button>`;
         
-        // Add to history if translation was successful
         if (!responseText.startsWith("שגיאה:")) {
             const newEntry = { id: Date.now().toString(), sourceText: text, translatedText: responseText, lang: currentLang };
             const newHistory = [newEntry, ...(localTripData.translationHistory || [])].slice(0, 10);
@@ -1975,3 +1975,4 @@
   </script>
 </body>
 </html>
+
