@@ -204,6 +204,7 @@
             <button id="share-btn" class="btn btn-primary"><i class="fa-solid fa-share-alt mr-2"></i>שתף תוכנית</button>
             <button id="gemini-btn" class="btn btn-primary"><i class="fa-solid fa-wand-magic-sparkles mr-2"></i>שאל את Gemini</button>
             <button id="find-nearby-btn" class="btn btn-primary"><i class="fa-solid fa-location-crosshairs mr-2"></i>מצא מקומות קרובים אליי</button>
+            <button id="show-tip-btn" class="btn btn-primary"><i class="fa-solid fa-lightbulb mr-2"></i>הצג טיפ יומי</button>
         </div>
       </div>
       <div id="overview-cards" class="grid sm:grid-cols-2 lg:grid-cols-4 gap-6"></div>
@@ -707,14 +708,18 @@
         $('#alert-modal').classList.add('flex');
     }
     
+    function openTipModal() {
+        const tip = dailyTips[Math.floor(Math.random() * dailyTips.length)];
+        $('#daily-tip-body').textContent = tip;
+        $('#daily-tip-modal').classList.add('flex');
+    }
+
     function showDailyTip() {
         const lastTipDate = localStorage.getItem('lastTipDate');
         const today = new Date().toISOString().slice(0, 10);
 
         if (lastTipDate !== today) {
-            const tip = dailyTips[Math.floor(Math.random() * dailyTips.length)];
-            $('#daily-tip-body').textContent = tip;
-            $('#daily-tip-modal').classList.add('flex');
+            openTipModal();
             localStorage.setItem('lastTipDate', today);
         }
     }
@@ -918,13 +923,25 @@
         
         const now = new Date();
         const timeZone = 'Europe/Rome';
-        const milanTime = new Date(now.toLocaleString('en-US', { timeZone }));
-        const currentDay = milanTime.getDay(); // Sunday: 0, Monday: 1, ..., Saturday: 6
-        const currentHour = milanTime.getHours();
-        const currentMinute = milanTime.getMinutes();
+        
+        // More reliable way to get current time parts in Milan
+        const milanParts = new Intl.DateTimeFormat('en-US', {
+            timeZone,
+            weekday: 'short',
+            hour: 'numeric',
+            minute: 'numeric',
+            hour12: false,
+        }).formatToParts(now);
+
+        const milanDayStr = milanParts.find(p => p.type === 'weekday').value;
+        const currentHour = parseInt(milanParts.find(p => p.type === 'hour').value, 10);
+        const currentMinute = parseInt(milanParts.find(p => p.type === 'minute').value, 10);
+        
+        const dayMapEn = {'Sun': 0, 'Mon': 1, 'Tue': 2, 'Wed': 3, 'Thu': 4, 'Fri': 5, 'Sat': 6};
+        const currentDay = dayMapEn[milanDayStr];
         const currentTimeInMinutes = currentHour * 60 + currentMinute;
         
-        const dayMap = {'א': 0, 'ב': 1, 'ג': 2, 'ד': 3, 'ה': 4, 'ו': 5, 'ש': 6};
+        const dayMapHe = {'א': 0, 'ב': 1, 'ג': 2, 'ד': 3, 'ה': 4, 'ו': 5, 'ש': 6};
 
         try {
             const dayParts = hoursString.split(';').map(s => s.trim());
@@ -934,24 +951,33 @@
 
                 let days = [];
                 if (daySpec.includes('-')) {
-                    const [startDay, endDay] = daySpec.split('-').map(d => dayMap[d]);
-                    for (let i = startDay; i <= endDay; i++) {
-                        days.push(i);
+                    const [startDayChar, endDayChar] = daySpec.split('-');
+                    const startDay = dayMapHe[startDayChar];
+                    const endDay = dayMapHe[endDayChar];
+                    if (startDay !== undefined && endDay !== undefined) {
+                        for (let i = startDay; i <= endDay; i++) {
+                            days.push(i);
+                        }
                     }
                 } else {
-                    days = daySpec.split(',').map(d => dayMap[d]);
+                    days = daySpec.split(',').map(d => dayMapHe[d]).filter(d => d !== undefined);
                 }
                 
                 if (days.includes(currentDay)) {
                     const timeRanges = timeStr.split(',');
                     for (const range of timeRanges) {
-                        const [start, end] = range.split('-').map(t => {
-                            const [h, m] = t.split(':').map(Number);
-                            return h * 60 + (m || 0);
-                        });
+                        const [startStr, endStr] = range.split('-');
+                        if(startStr && endStr){
+                            const [startH, startM] = startStr.split(':').map(Number);
+                            const [endH, endM] = endStr.split(':').map(Number);
+                            const startTotalMinutes = startH * 60 + (startM || 0);
+                            let endTotalMinutes = endH * 60 + (endM || 0);
+                             // Handle cases like closing at midnight (24:00)
+                            if (endTotalMinutes === 0) endTotalMinutes = 24 * 60;
 
-                        if (currentTimeInMinutes >= start && currentTimeInMinutes < end) {
-                            return true;
+                            if (currentTimeInMinutes >= startTotalMinutes && currentTimeInMinutes < endTotalMinutes) {
+                                return true;
+                            }
                         }
                     }
                 }
@@ -1605,6 +1631,8 @@
             if(tripDocRef && isFirebaseConnected) await updateDoc(tripDocRef, { theme: isDark ? 'dark' : 'light' });
         });
         
+        $('#show-tip-btn').addEventListener('click', openTipModal);
+
         // --- Plan actions ---
         $('#collapse-all').addEventListener('click', () => {
             $$('#plan-content-container details').forEach(d => d.removeAttribute('open'));
