@@ -507,6 +507,20 @@
     import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
     import { getFirestore, doc, onSnapshot, setDoc, updateDoc, arrayUnion, arrayRemove, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
+    // --- CONFIGURATION ---
+    // יש להחליף את הטקסט בתוך הגרשיים במפתחות API אמיתיים
+    const FIREBASE_CONFIG = {
+      apiKey: "הכנס כאן את מפתח ה-API של Firebase",
+      authDomain: "trip-to-milan.firebaseapp.com",
+      projectId: "trip-to-milan",
+      storageBucket: "trip-to-milan.firebasestorage.app",
+      messagingSenderId: "305191186184",
+      appId: "1:305191186184:web:fff1488b64a06942dfc6bd",
+      measurementId: "G-P17LYZJ2H0"
+    };
+    const GEMINI_API_KEY = "הכנס כאן את מפתח ה-API של Gemini מ-Google AI Studio";
+
+
     // --- UTILS ---
     const $ = (s, p = document) => p.querySelector(s);
     const $$ = (s, p = document) => Array.from(p.querySelectorAll(s));
@@ -1539,6 +1553,11 @@
 
     // --- Gemini Translation ---
     async function callGemini(payload, prompt, useSearch = false) {
+        const apiKey = GEMINI_API_KEY;
+        if (apiKey.includes("הכנס כאן")) {
+            return "שגיאה: מפתח ה-API של Gemini אינו מוגדר. יש להגדיר אותו במשתנה GEMINI_API_KEY בקוד.";
+        }
+        
         payload.contents[0].parts[0].text = prompt;
         if (useSearch) {
             payload.tools = [{ "google_search": {} }];
@@ -1546,7 +1565,6 @@
             delete payload.tools;
         }
 
-        const apiKey = "AIzaSyB80v2xdhebJqhjyruJ5Ta0eyhJiq7DsI8"; 
         const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-preview-0514:generateContent?key=${apiKey}`;
         
         try {
@@ -1623,17 +1641,7 @@
     // --- INIT ---
     document.addEventListener('DOMContentLoaded', () => {
         // --- Firebase Initialization ---
-        const firebaseConfig = {
-          apiKey: "AIzaSyB80v2xdhebJqhjyruJ5Ta0eyhJiq7DsI8",
-          authDomain: "trip-to-milan.firebaseapp.com",
-          projectId: "trip-to-milan",
-          storageBucket: "trip-to-milan.firebasestorage.app",
-          messagingSenderId: "305191186184",
-          appId: "1:305191186184:web:fff1488b64a06942dfc6bd",
-          measurementId: "G-P17LYZJ2H0"
-        };
-        
-        const app = initializeApp(firebaseConfig);
+        const app = initializeApp(FIREBASE_CONFIG);
         auth = getAuth(app);
         db = getFirestore(app);
 
