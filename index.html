@@ -1560,12 +1560,12 @@
         
         payload.contents[0].parts[0].text = prompt;
         if (useSearch) {
-            payload.tools = [{ "google_search": {} }];
+          payload.tools = [{ "google_search": {} }];
         } else {
             delete payload.tools;
         }
 
-        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${apiKey}`;
+        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${apiKey}`;`
         
         try {
             const response = await fetch(apiUrl, {
