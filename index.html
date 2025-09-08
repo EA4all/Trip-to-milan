@@ -285,6 +285,7 @@
             <div id="weather-tool" class="bg-white dark:bg-gray-950 p-6 rounded-2xl shadow-lg scroll-mt-24">
                 <h3 class="text-xl font-bold mb-3"><i class="fa-solid fa-cloud-sun mr-2"></i>מזג אוויר</h3>
                 <div id="weather-forecast" class="space-y-3"><p>טוען תחזית...</p></div>
+                <div id="packing-suggestion" class="text-xs mt-3 p-2 bg-gray-50 dark:bg-gray-800 rounded-lg"></div>
             </div>
             <div id="budget-tool" class="bg-white dark:bg-gray-950 p-6 rounded-2xl shadow-lg flex flex-col scroll-mt-24 md:col-span-2 lg:col-span-2">
                 <h3 class="text-xl font-bold mb-3"><i class="fa-solid fa-euro-sign mr-2"></i>מעקב תקציב</h3>
@@ -356,7 +357,11 @@
                  <div id="translation-result-container" class="mt-2 p-3 bg-gray-100 dark:bg-gray-800 rounded-lg min-h-[60px] text-center flex items-center justify-center gap-3">
                     <span class="text-gray-500">התרגום יופיע כאן...</span>
                  </div>
-                 <div class="space-y-3 mt-4">
+                 <div class="mt-3">
+                    <h4 class="text-xs font-bold text-gray-500">היסטוריה</h4>
+                    <div id="translation-history" class="mt-1 text-sm space-y-1 max-h-24 overflow-y-auto"></div>
+                 </div>
+                 <div class="space-y-3 mt-auto pt-3">
                     <a href="https://www.facebook.com/groups/milan.for.travelers" target="_blank" class="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800"><i class="fa-brands fa-facebook fa-2x text-blue-600"></i> <div><div class="font-semibold">מילאנו למטיילים</div><div class="text-xs text-gray-500">קבוצת פייסבוק</div></div></a>
                     <a href="https://chat.whatsapp.com/your-group-invite" target="_blank" class="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800"><i class="fa-brands fa-whatsapp fa-2x text-green-500"></i> <div><div class="font-semibold">מטיילים במילאנו</div><div class="text-xs text-gray-500">קבוצת וואטסאפ</div></div></a>
                  </div>
@@ -652,6 +657,7 @@
                 { id: 'cat3', category: 'אלקטרוניקה', items: [{ id: 'c4', text: 'מטען נייד', done: true }, { id: 'c5', text: 'מתאם לחשמל', done: false }] }
             ],
             totalBudget: 1500, expenses: [], documents: [], gallery: [], journal: {}, theme: 'dark',
+            translationHistory: [],
             settings: { includeEstimatedCostsInBalance: true }
         };
     }
@@ -736,7 +742,7 @@
         const hotelHtml = `<div class="bg-gray-50 dark:bg-gray-800/50 p-4 rounded-lg space-y-2">
             <h3 class="font-bold text-lg"><i class="fa-solid fa-hotel mr-2"></i>מלון</h3>
             <p><b>${hotel.name}</b></p>
-            <div class="flex gap-2"><a href="${hotel.tel}" class="btn btn-ghost"><i class="fa fa-phone"></i> חיוג</a><a href="https://maps.google.com/?q=${encodeURIComponent(hotel.address)}" target="_blank" class="btn btn-ghost"><i class="fa fa-map-location-dot"></i> ניווט</a></div>
+            <div class="flex gap-2"><a href="${hotel.tel}" class="btn btn-ghost"><i class="fa fa-phone"></i> חיוג</a><a href="https://www.google.com/maps/dir/Piazza+del+Duomo,+Milano,+MI,+Italy/Sforzesco+Castle,+Piazza+Castello,+Milan,+MI,+Italy/@45.46688,9.18301,16z/data=!3m1!4b1!4m14!4m13!1m5!1m1!1s0x4786c6d1249ffe89:0x6c79a83355b2ce38!2m2!1d9.1915334!2d45.4642159!1m5!1m1!1s0x4786c14dc0570ebd:0x134c435607328238!2m2!1d9.179449!2d45.470556!3e2?entry=ttu5{encodeURIComponent(hotel.address)}" target="_blank" class="btn btn-ghost"><i class="fa fa-map-location-dot"></i> ניווט</a></div>
         </div>`;
         const contactsHtml = `<div class="bg-gray-50 dark:bg-gray-800/50 p-4 rounded-lg space-y-2">
             <h3 class="font-bold text-lg"><i class="fa-solid fa-address-book mr-2"></i>טלפונים חשובים</h3>
@@ -840,10 +846,10 @@
         if (activity.info) links.push(`<a href="${activity.info}" target="_blank" class="btn btn-ghost"><i class="fa-solid fa-circle-info"></i> מידע</a>`);
         if (activity.address) {
             links.push(`<a href="https://waze.com/ul?q=${encodeURIComponent(activity.address)}" target="_blank" class="btn btn-ghost" title="Waze"><i class="fa-brands fa-waze"></i></a>`);
-            links.push(`<a href="https://maps.google.com/?q=${encodeURIComponent(activity.address)}" target="_blank" class="btn btn-ghost" title="Google Maps"><i class="fa-brands fa-google"></i></a>`);
+            links.push(`<a href="https://www.google.com/maps/dir/Piazza+del+Duomo,+Milano,+MI,+Italy/Sforzesco+Castle,+Piazza+Castello,+Milan,+MI,+Italy/@45.46688,9.18301,16z/data=!3m1!4b1!4m14!4m13!1m5!1m1!1s0x4786c6d1249ffe89:0x6c79a83355b2ce38!2m2!1d9.1915334!2d45.4642159!1m5!1m1!1s0x4786c14dc0570ebd:0x134c435607328238!2m2!1d9.179449!2d45.470556!3e2?entry=ttu5{encodeURIComponent(activity.address)}" target="_blank" class="btn btn-ghost" title="Google Maps"><i class="fa-brands fa-google"></i></a>`);
         }
         if (previousActivity && previousActivity.address && activity.address) {
-            const transitUrl = `https://maps.google.com/?saddr=${encodeURIComponent(previousActivity.address)}&daddr=${encodeURIComponent(activity.address)}&travelmode=transit`;
+            const transitUrl = `https://www.google.com/maps/dir/Piazza+del+Duomo,+Milano,+MI,+Italy/Sforzesco+Castle,+Piazza+Castello,+Milan,+MI,+Italy/@45.46688,9.18301,16z/data=!3m1!4b1!4m14!4m13!1m5!1m1!1s0x4786c6d1249ffe89:0x6c79a83355b2ce38!2m2!1d9.1915334!2d45.4642159!1m5!1m1!1s0x4786c14dc0570ebd:0x134c435607328238!2m2!1d9.179449!2d45.470556!3e2?entry=ttu6{encodeURIComponent(previousActivity.address)}&daddr=${encodeURIComponent(activity.address)}&travelmode=transit`;
             links.push(`<a href="${transitUrl}" target="_blank" class="btn btn-ghost" title="ניווט בתחב״צ"><i class="fa-solid fa-route"></i></a>`);
         }
         if(!isDining && activity.coords) {
@@ -894,7 +900,7 @@
                 <td data-label="פעולות" class="p-3">
                     <div class="flex flex-wrap gap-2 justify-end">
                         <button onclick="window.openAddToDayModal('${s.id}')" class="btn btn-primary btn-sm"><i class="fa-solid fa-plus"></i> הוסף</button>
-                        <a href="https://maps.google.com/?q=${s.coords.lat},${s.coords.lon}" target="_blank" class="btn btn-ghost btn-sm"><i class="fa-solid fa-map-location-dot"></i> מפה</a>
+                        <a href="https://www.google.com/maps/dir/Piazza+del+Duomo,+Milano,+MI,+Italy/Sforzesco+Castle,+Piazza+Castello,+Milan,+MI,+Italy/@45.46688,9.18301,16z/data=!3m1!4b1!4m14!4m13!1m5!1m1!1s0x4786c6d1249ffe89:0x6c79a83355b2ce38!2m2!1d9.1915334!2d45.4642159!1m5!1m1!1s0x4786c14dc0570ebd:0x134c435607328238!2m2!1d9.179449!2d45.470556!3e2?entry=ttu5{s.coords.lat},${s.coords.lon}" target="_blank" class="btn btn-ghost btn-sm"><i class="fa-solid fa-map-location-dot"></i> מפה</a>
                     </div>
                 </td>
             </tr>
@@ -1055,7 +1061,7 @@
                     <button onclick="window.openAddToDayModal('${r.name}', 'kosher')" class="btn btn-primary btn-sm" title="הוסף ליום"><i class="fa-solid fa-plus"></i></button>
                     ${r.phone ? `<a title="התקשר" href="tel:${r.phone}" class="btn btn-ghost btn-sm"><i class="fa-solid fa-phone"></i></a>`:''}
                     <a title="Waze" href="https://waze.com/ul?q=${encodeURIComponent(r.address)}" target="_blank" class="btn btn-ghost btn-sm"><i class="fa-brands fa-waze"></i></a>
-                    <a title="Google Maps" href="https://maps.google.com/?q=${encodeURIComponent(r.address)}" target="_blank" class="btn btn-ghost btn-sm"><i class="fa-brands fa-google"></i></a>
+                    <a title="Google Maps" href="https://www.google.com/maps/dir/Piazza+del+Duomo,+Milano,+MI,+Italy/Sforzesco+Castle,+Piazza+Castello,+Milan,+MI,+Italy/@45.46688,9.18301,16z/data=!3m1!4b1!4m14!4m13!1m5!1m1!1s0x4786c6d1249ffe89:0x6c79a83355b2ce38!2m2!1d9.1915334!2d45.4642159!1m5!1m1!1s0x4786c14dc0570ebd:0x134c435607328238!2m2!1d9.179449!2d45.470556!3e2?entry=ttu5{encodeURIComponent(r.address)}" target="_blank" class="btn btn-ghost btn-sm"><i class="fa-brands fa-google"></i></a>
                     ${r.menu ? `<a href="${r.menu}" target="_blank" class="btn btn-ghost btn-sm" title="תפריט"><i class="fa-solid fa-utensils"></i></a>`:''}
                     ${r.website ? `<a href="${r.website}" target="_blank" class="btn btn-ghost btn-sm" title="אתר"><i class="fa-solid fa-globe"></i></a>`:''}
                     ${r.instagram ? `<a title="אינסטגרם" href="${r.instagram}" target="_blank" class="btn btn-ghost btn-sm"><i class="fa-brands fa-instagram"></i></a>`:''}
@@ -1076,7 +1082,7 @@
                     <button onclick="window.openAddToDayModal('${m.name}', 'kosher')" class="btn btn-primary btn-sm" title="הוסף ליום"><i class="fa-solid fa-plus"></i></button>
                     ${m.phone ? `<a title="התקשר" href="tel:${m.phone}" class="btn btn-ghost btn-sm"><i class="fa-solid fa-phone"></i></a>`:''}
                     <a title="Waze" href="https://waze.com/ul?q=${encodeURIComponent(m.address)}" target="_blank" class="btn btn-ghost btn-sm"><i class="fa-brands fa-waze"></i></a>
-                    <a title="Google Maps" href="https://maps.google.com/?q=${encodeURIComponent(m.address)}" target="_blank" class="btn btn-ghost btn-sm"><i class="fa-brands fa-google"></i></a>
+                    <a title="Google Maps" href="https://www.google.com/maps/dir/Piazza+del+Duomo,+Milano,+MI,+Italy/Sforzesco+Castle,+Piazza+Castello,+Milan,+MI,+Italy/@45.46688,9.18301,16z/data=!3m1!4b1!4m14!4m13!1m5!1m1!1s0x4786c6d1249ffe89:0x6c79a83355b2ce38!2m2!1d9.1915334!2d45.4642159!1m5!1m1!1s0x4786c14dc0570ebd:0x134c435607328238!2m2!1d9.179449!2d45.470556!3e2?entry=ttu5{encodeURIComponent(m.address)}" target="_blank" class="btn btn-ghost btn-sm"><i class="fa-brands fa-google"></i></a>
                     ${m.website ? `<a href="${m.website}" target="_blank" class="btn btn-ghost btn-sm" title="אתר"><i class="fa-solid fa-globe"></i></a>`:''}
                     ${m.instagram ? `<a title="אינסטגרם" href="${m.instagram}" target="_blank" class="btn btn-ghost btn-sm"><i class="fa-brands fa-instagram"></i></a>`:''}
                 </div>
@@ -1146,7 +1152,35 @@
                     <span><i class="fa-solid ${iconMap[data.daily.weathercode[i]] || 'fa-question-circle'}"></i></span>
                     <span>${Math.round(data.daily.temperature_2m_min[i])}°/${Math.round(data.daily.temperature_2m_max[i])}°</span>
                 </div>`).join('');
-        } catch (e) { $('#weather-forecast').innerHTML = `<p class="text-xs text-red-500">שגיאה בטעינת תחזית. ${e.message}</p>`; }
+            
+            getPackingSuggestion(data); // New function call
+        } catch (e) { 
+            $('#weather-forecast').innerHTML = `<p class="text-xs text-red-500">שגיאה בטעינת תחזית. ${e.message}</p>`; 
+        }
+    }
+
+    async function getPackingSuggestion(weatherData) {
+        const suggestionEl = $('#packing-suggestion');
+        const cacheKey = 'packingSuggestion';
+        const cached = localStorage.getItem(cacheKey);
+        
+        if (cached) {
+            const { suggestion, timestamp } = JSON.parse(cached);
+            if (Date.now() - timestamp < 6 * 60 * 60 * 1000) { // 6 hour cache
+                suggestionEl.innerHTML = `<i class="fa-solid fa-suitcase-rolling mr-2"></i> ${suggestion}`;
+                return;
+            }
+        }
+        
+        suggestionEl.innerHTML = `מכין המלצת אריזה... <i class="fa-solid fa-spinner fa-spin"></i>`;
+        
+        const summary = `Min temps: ${weatherData.daily.temperature_2m_min.map(Math.round).join(', ')} C. Max temps: ${weatherData.daily.temperature_2m_max.map(Math.round).join(', ')} C. Weather codes (WMO): ${weatherData.daily.weathercode.join(', ')}.`;
+        const prompt = `Based on this 7-day weather forecast summary for Milan: ${summary}. Provide a short, helpful packing recommendation in Hebrew (1-2 sentences). Mention key items like umbrella, light jacket, sweater, sunglasses, etc., as appropriate for the forecast.`;
+        const payload = { contents: [{ parts: [{ text: "" }] }] };
+        const suggestion = await callGemini(payload, prompt, false);
+        
+        suggestionEl.innerHTML = `<i class="fa-solid fa-suitcase-rolling mr-2"></i> ${suggestion}`;
+        localStorage.setItem(cacheKey, JSON.stringify({ suggestion, timestamp: Date.now() }));
     }
 
     async function fetchExchangeRate() {
@@ -1309,6 +1343,26 @@
         });
     }
 
+    function renderTranslationHistory(history = []) {
+        const container = $('#translation-history');
+        if (!container) return;
+        if (!history || history.length === 0) {
+            container.innerHTML = '';
+            return;
+        }
+        container.innerHTML = history.map(item => `
+            <div class="group flex items-center justify-between bg-gray-100 dark:bg-gray-800 p-2 rounded-md">
+                <button class="flex-grow text-right" onclick="window.rerunTranslation('${item.id}')">
+                    <span class="block">${item.sourceText}</span>
+                    <span class="block text-xs text-gray-500">${item.translatedText}</span>
+                </button>
+                <button class="text-red-400 hover:text-red-600 opacity-0 group-hover:opacity-100 transition-opacity ml-2" onclick="window.deleteHistoryItem('${item.id}')">
+                    <i class="fa fa-trash-alt fa-xs"></i>
+                </button>
+            </div>
+        `).join('');
+    }
+
 
     // --- State Modifiers (Write to Firestore) ---
     async function handleTransportChange(e) {
@@ -1356,13 +1410,13 @@
         if (navigator.geolocation) {
             navigator.geolocation.getCurrentPosition(position => {
                 const { latitude, longitude } = position.coords;
-                window.open(`https://www.google.com/maps/search/point+of+interest/@${latitude},${longitude},14z`, '_blank');
+                window.open(`https://www.google.com/maps/dir/Piazza+del+Duomo,+Milano,+MI,+Italy/Sforzesco+Castle,+Piazza+Castello,+Milan,+MI,+Italy/@45.46688,9.18301,16z/data=!3m1!4b1!4m14!4m13!1m5!1m1!1s0x4786c6d1249ffe89:0x6c79a83355b2ce38!2m2!1d9.1915334!2d45.4642159!1m5!1m1!1s0x4786c14dc0570ebd:0x134c435607328238!2m2!1d9.179449!2d45.470556!3e2?entry=ttu7{latitude},${longitude},14z`, '_blank');
             }, () => {
                 showAlert('שגיאת מיקום', 'לא ניתן היה לקבל את מיקומך. נפתח מפה כללית של מילאנו.');
-                window.open('https://www.google.com/maps/place/Milan', '_blank');
+                window.open('https://www.google.com/maps/dir/Piazza+del+Duomo,+Milano,+MI,+Italy/Sforzesco+Castle,+Piazza+Castello,+Milan,+MI,+Italy/@45.46688,9.18301,16z/data=!3m1!4b1!4m14!4m13!1m5!1m1!1s0x4786c6d1249ffe89:0x6c79a83355b2ce38!2m2!1d9.1915334!2d45.4642159!1m5!1m1!1s0x4786c14dc0570ebd:0x134c435607328238!2m2!1d9.179449!2d45.470556!3e2?entry=ttu8', '_blank');
             });
         } else {
-             window.open('https://www.google.com/maps/place/Milan', '_blank');
+             window.open('https://www.google.com/maps/dir/Piazza+del+Duomo,+Milano,+MI,+Italy/Sforzesco+Castle,+Piazza+Castello,+Milan,+MI,+Italy/@45.46688,9.18301,16z/data=!3m1!4b1!4m14!4m13!1m5!1m1!1s0x4786c6d1249ffe89:0x6c79a83355b2ce38!2m2!1d9.1915334!2d45.4642159!1m5!1m1!1s0x4786c14dc0570ebd:0x134c435607328238!2m2!1d9.179449!2d45.470556!3e2?entry=ttu8', '_blank');
         }
     }
     window.findNearbyKosher = (btn) => {
@@ -1420,11 +1474,26 @@
             await updateDoc(tripDocRef, { gallery: arrayRemove(imgToRemove) });
         }
     };
+    async function deleteHistoryItem(id) {
+        const itemToRemove = (localTripData.translationHistory || []).find(item => item.id === id);
+        if (itemToRemove) {
+            await updateDoc(tripDocRef, { translationHistory: arrayRemove(itemToRemove) });
+        }
+    }
+    function rerunTranslation(id) {
+        const item = (localTripData.translationHistory || []).find(item => item.id === id);
+        if (item) {
+            $('#dictionary-input').value = item.sourceText;
+            translateText(item.sourceText);
+        }
+    }
+
 
     // Assign functions to window scope so inline event handlers can find them
     Object.assign(window, {
       handleTransportChange, removeActivity, moveActivity, removeExpense, toggleChecklistItem,
-      removeChecklistItem, addJournalEntry, removeJournalEntry, removeDocument, removeImage
+      removeChecklistItem, addJournalEntry, removeJournalEntry, removeDocument, removeImage,
+      deleteHistoryItem, rerunTranslation
     });
 
     // --- Camera Functions ---
@@ -1516,6 +1585,11 @@
         responseText = responseText.replace(/[\*\_`]/g, '').trim();
         const langCode = currentLang === 'he-it' ? 'it-IT' : 'he-IL';
         resultContainer.innerHTML = `<span>${responseText}</span> <button onclick="window.speakText('${responseText.replace(/'/g, "\\'")}', '${langCode}')" class="btn btn-ghost p-1 h-auto"><i class="fa-solid fa-volume-high"></i></button>`;
+        
+        // Add to history
+        const newEntry = { id: Date.now().toString(), sourceText: text, translatedText: responseText, lang: currentLang };
+        const newHistory = [newEntry, ...(localTripData.translationHistory || [])].slice(0, 10);
+        if (tripDocRef) await updateDoc(tripDocRef, { translationHistory: newHistory });
     }
     
     async function translateImage(base64ImageData, mimeType) {
@@ -1580,6 +1654,7 @@
             renderBudget(localTripData);
             renderDocuments(localTripData.documents);
             renderGallery(localTripData.gallery);
+            renderTranslationHistory(localTripData.translationHistory);
             if (localTripData.theme === 'dark') document.documentElement.classList.add('dark');
         }
 
@@ -1617,6 +1692,7 @@
                 renderBudget(localTripData);
                 renderDocuments(localTripData.documents);
                 renderGallery(localTripData.gallery);
+                renderTranslationHistory(localTripData.translationHistory);
                 if (localTripData.theme === 'dark') document.documentElement.classList.add('dark'); else document.documentElement.classList.remove('dark');
             }, (error) => {
                 console.error("Firestore snapshot error:", error);
