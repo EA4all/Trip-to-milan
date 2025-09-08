@@ -8,7 +8,6 @@
   <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
   <meta name="theme-color" content="#0b1220" media="(prefers-color-scheme: dark)">
 
-  <!-- Tailwind CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
@@ -28,15 +27,12 @@
       }
     };
   </script>
-  <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Assistant:wght@300;400;600;700&display=swap" rel="stylesheet">
 
-  <!-- Font Awesome for icons -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" xintegrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+  <link rel="stylesheet" href="httpshttps://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
   
-  <!-- Chart.js CDN -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
   <style>
@@ -140,6 +136,11 @@
         #plan details[open] > div { display: block !important; }
         #plan-content-container { padding: 0 !important; }
         h2 { font-size: 24px !important; }
+        #plan details {
+            box-shadow: none !important;
+            border: 1px solid #ccc;
+            margin-bottom: 1rem;
+        }
     }
 
 
@@ -207,7 +208,7 @@
     <section id="plan" class="my-12 scroll-mt-24">
       <div class="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
         <h2 class="text-3xl font-bold text-center text-brand-900 dark:text-brand-300">תוכנית הטיול היומית</h2>
-        <div class="flex gap-2 flex-wrap justify-center">
+        <div class="flex gap-2 flex-wrap justify-center day-actions">
             <button id="collapse-all" class="btn btn-ghost btn-sm"><i class="fa-solid fa-compress mr-1"></i>כווץ הכל</button>
             <button id="expand-all" class="btn btn-ghost btn-sm"><i class="fa-solid fa-expand mr-1"></i>הרחב הכל</button>
             <button id="print-btn" class="btn btn-ghost btn-sm"><i class="fa-solid fa-print mr-1"></i>הדפס תוכנית</button>
@@ -393,7 +394,6 @@
 
   </main>
   
-  <!-- Modals -->
   <div id="add-to-day-modal" class="modal-backdrop">
     <div class="modal">
         <div class="p-4 border-b"><h3 class="text-lg font-bold">הוסף פעילות ליום...</h3></div>
@@ -405,7 +405,7 @@
   </div>
   <div id="camera-modal" class="modal-backdrop">
     <div class="modal">
-        <div class="p-4 border-b flex justify-between items-center"><h3 class="text-lg font-bold">תרגם מתמונה</h3><button id="camera-close-btn" class="text-2xl">&times;</button></div>
+        <div class="p-4 border-b flex justify-between items-center"><h3 class="text-lg font-bold">תרגם מתמונה</h3><button id="camera-close-btn" class="text-2xl">×</button></div>
         <div class="p-4 flex-grow relative">
             <video id="camera-feed" class="w-full h-full object-cover bg-black rounded-lg" playsinline autoplay></video>
             <canvas id="camera-canvas" class="hidden"></canvas>
@@ -428,7 +428,7 @@
     <div class="modal">
         <div class="p-4 border-b flex justify-between items-center">
             <h3 class="text-lg font-bold">שאל את Gemini</h3>
-            <button id="gemini-close-btn" class="text-2xl">&times;</button>
+            <button id="gemini-close-btn" class="text-2xl">×</button>
         </div>
         <div class="p-4 flex-grow overflow-y-auto">
             <label for="gemini-prompt" class="block text-sm font-medium mb-1">הכנס שאלה או בקשה:</label>
@@ -458,15 +458,11 @@
 
 
 
-  <!-- Floating Nav -->
   <div id="floating-nav-container" class="md:hidden fixed bottom-0 left-0 right-0 z-40">
-      <!-- Plan Submenu -->
       <div id="plan-submenu" class="floating-submenu hidden fixed bottom-[68px] left-0 right-0 bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm p-2 rounded-t-2xl">
           <div class="grid grid-cols-3 gap-2 text-center text-sm" id="plan-submenu-links">
-              <!-- Links will be injected here -->
-          </div>
+              </div>
       </div>
-      <!-- Tools Submenu -->
       <div id="tools-submenu" class="floating-submenu hidden fixed bottom-[68px] left-0 right-0 bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm p-2 rounded-t-2xl">
           <div class="grid grid-cols-3 gap-2 text-center text-sm">
               <a href="#weather-tool" class="p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700">מזג אוויר</a>
@@ -547,52 +543,61 @@
     
     // --- DATA ---
     const attractions = {
-      duomo: { name: "קתדרלת הדואומו", type: 'attraction', address: "Piazza del Duomo, 20122 Milano MI, Italy", img: ["https://www.metailimbaolam.com/wp-content/uploads/2020/08/italy-4695974_1280.jpg"], tickets: "https://www.duomomilano.it/en/buy-tickets/", description: "הלב הפועם של מילאנו. חובה לעלות לגג לתצפית פנורמית מרהיבה על העיר.", coords: { lat: 45.4642, lon: 9.1916 }, cost: 20 },
-      sanSiro: { name: "אצטדיון סן סירו", type: 'attraction', address: "Piazzale Angelo Moratti, 20151 Milano MI, Italy", img: ["https://www.xn--4dbkkmip.co.il/wp-content/uploads/2023/05/san-siro-1940307_640.jpg"], tickets: "https://www.sansirostadium.com/en/stadium-tour-museum/", description: "מקדש הכדורגל של מילאנו, ביתן של מילאן ואינטר. מומלץ לסיור או למשחק.", coords: { lat: 45.4780, lon: 9.1238 }, cost: 30 },
-      primark: { name: "פריימארק (ויה טורינו)", type: 'attraction', address: "Via Torino, 45, 20123 Milano MI, Italy", img: ["https://www.shutterstock.com/image-photo/bordeaux-france-07-17-2024-260nw-2490117199.jpg"], info: "https://www.primark.com/it/it/negozi/milano/via-torino-45", description: "סניף הדגל הענק של רשת האופנה הזולה, גן עדן לחובבי קניות.", coords: { lat: 45.4623, lon: 9.1861 }, cost: 0 },
+      duomo: { name: "קתדרלת הדואומו", type: 'attraction', address: "Piazza del Duomo, 20122 Milano MI, Italy", img: ["https://www.metailimbaolam.com/wp-content/uploads/2020/08/italy-4695974_1280.jpg"], tickets: "https://www.duomomilano.it/en/buy-tickets/", description: "הלב הפועם של מילאנו. חובה לעלות לגג לתצפית פנורמית מרהיבה על העיר.", coords: { lat: 45.4642, lon: 9.1916 }, cost: 20, hours: "כל יום, 09:00-19:00" },
+      sanSiro: { name: "אצטדיון סן סירו", type: 'attraction', address: "Piazzale Angelo Moratti, 20151 Milano MI, Italy", img: ["https://www.xn--4dbkkmip.co.il/wp-content/uploads/2023/05/san-siro-1940307_640.jpg"], tickets: "https://www.sansirostadium.com/en/stadium-tour-museum/", description: "מקדש הכדורגל של מילאנו, ביתן של מילאן ואינטר. מומלץ לסיור או למשחק.", coords: { lat: 45.4780, lon: 9.1238 }, cost: 30, hours: "כל יום, 09:30-19:00 (משתנה בימי משחק)" },
+      primark: { name: "פריימארק (ויה טורינו)", type: 'attraction', address: "Via Torino, 45, 20123 Milano MI, Italy", img: ["https://www.shutterstock.com/image-photo/bordeaux-france-07-17-2024-260nw-2490117199.jpg"], info: "https://www.primark.com/it/it/negozi/milano/via-torino-45", description: "סניף הדגל הענק של רשת האופנה הזולה, גן עדן לחובבי קניות.", coords: { lat: 45.4623, lon: 9.1861 }, cost: 0, hours: "כל יום, 09:00-22:00" },
       como: { name: "אגם קומו", type: 'attraction', address: "Varenna, Italy", img: ["https://www.travelonatimebudget.co.uk/wp-content/uploads/2022/01/varenna-dp.jpg"], description: "יום טיול לאחד האגמים היפים באיטליה. מומלץ לבקר בעיירות וארנה ובלאג'יו.", coords: { lat: 45.9863, lon: 9.2816 }, cost: 15 },
       berninaExpress: { name: "רכבת ברנינה לאלפים", type: 'attraction', address: "Tirano, Italy", img: ["https://www.civitatis.com/f/italia/milan/excursion-alpes-suizos-589x392.jpg"], tickets: "https://www.rhb.ch/en/panoramic-trains/bernina-express", description: "נסיעת רכבת פנורמית מדהימה דרך הרי האלפים לשוויץ.", coords: { lat: 46.4914, lon: 9.8683 }, cost: 70 },
-      laScala: { name: "תיאטרון לה סקאלה", type: 'attraction', address: "Via Filodrammatici, 2, 20121 Milano MI, Italy", img: ["https://www.hakolal.co.il/wp-content/uploads/2018/10/La-Scala.jpg"], tickets: "https://www.teatroallascala.org/en/visit-the-theatre/visits-to-the-theatre-museum.html", description: "אחד מבתי האופרה המפורסמים והיוקרתיים בעולם.", coords: { lat: 45.4675, lon: 9.1895 }, cost: 12 },
+      laScala: { name: "תיאטרון לה סקאלה", type: 'attraction', address: "Via Filodrammatici, 2, 20121 Milano MI, Italy", img: ["https://www.hakolal.co.il/wp-content/uploads/2018/10/La-Scala.jpg"], tickets: "https://www.teatroallascala.org/en/visit-the-theatre/visits-to-the-theatre-museum.html", description: "אחד מבתי האופרה המפורסמים והיוקרתיים בעולם.", coords: { lat: 45.4675, lon: 9.1895 }, cost: 12, hours: "מוזיאון: כל יום, 09:30-17:30" },
       navigli: { name: "רובע נבילי", type: 'attraction', address: "Ripa di Porta Ticinese, 20143 Milano MI, Italy", description: "רובע התעלות המקסים של מילאנו, מושלם לשעות הערב ולאפרטיבו.", coords: { lat: 45.4516, lon: 9.1758 }, cost: 0 },
-      ilCentro: { name: "קניון Il Centro", type: 'attraction', address: "Via Giuseppe Eugenio Luraghi, 11, 20044 Arese MI, Italy", img: ["https://architizer-prod.imgix.net/media/1461230538313IL_CENTRO_WEB_RESOLUTION_231.JPG"], info: "https://centroilcentro.it/en/", description: "אחד הקניונים הגדולים באירופה, נמצא מחוץ למילאנו.", coords: { lat: 45.5654, lon: 9.0681 }, cost: 5 },
-      sforza: { name: "טירת ספורצה", type: 'attraction', address: "Piazza Castello, 20121 Milano MI, Italy", description: "מצודה היסטורית מרשימה עם מספר מוזיאונים וגלריות אמנות.", info: "https://www.milanocastello.it/en", coords: { lat: 45.4705, lon: 9.1794 }, cost: 5 },
+      ilCentro: { name: "קניון Il Centro", type: 'attraction', address: "Via Giuseppe Eugenio Luraghi, 11, 20044 Arese MI, Italy", img: ["https://architizer-prod.imgix.net/media/1461230538313IL_CENTRO_WEB_RESOLUTION_231.JPG"], info: "https://centroilcentro.it/en/", description: "אחד הקניונים הגדולים באירופה, נמצא מחוץ למילאנו.", coords: { lat: 45.5654, lon: 9.0681 }, cost: 5, hours: "כל יום, 09:00-22:00" },
+      sforza: { name: "טירת ספורצה", type: 'attraction', address: "Piazza Castello, 20121 Milano MI, Italy", description: "מצודה היסטורית מרשימה עם מספר מוזיאונים וגלריות אמנות.", info: "https://www.milanocastello.it/en", coords: { lat: 45.4705, lon: 9.1794 }, cost: 5, hours: "חצרות: 07:00-19:30. מוזיאונים: ג'-א', 10:00-17:30 (סגור בב')" },
       brera: { name: "רובע בררה", type: 'attraction', address: "Via Brera, Milan", description: "רובע האמנים הציורי, 'המונמרטר של מילאנו', מלא בסמטאות, גלריות ובוטיקים.", coords: { lat: 45.4719, lon: 9.1879 }, cost: 0 },
-      lastSupper: { name: "הסעודה האחרונה", type: 'attraction', address: "Piazza di Santa Maria delle Grazie, 2, 20123 Milano MI", description: "ציור הקיר המפורסם של דה וינצ'י. חובה להזמין כרטיסים חודשים מראש!", tickets: "https://cenacolovinciano.org/en/", coords: { lat: 45.4659, lon: 9.1711 }, cost: 15 },
-      galleriaVittorio: { name: "גלריית ויטוריו אמנואלה", type: 'attraction', address: "Piazza del Duomo, 20123 Milano MI", description: "מרכז קניות היסטורי ומפואר, עם חנויות יוקרה, בתי קפה ומסעדות.", coords: { lat: 45.4656, lon: 9.1905 }, cost: 0 },
-      pinacotecaBrera: { name: "פינקוטקה די בררה", type: 'attraction', address: "Via Brera, 28, 20121 Milano MI", description: "אחד מגלריות האמנות החשובות באיטליה, מתמקד בציור איטלקי.", tickets: "https://pinacotecabrera.org/en/visit/", coords: { lat: 45.4719, lon: 9.1879 }, cost: 15 },
-      parcoSempione: { name: "פארק סמפיונה", type: 'attraction', address: "Piazza Sempione, 20154 Milano MI", description: "הריאה הירוקה הגדולה של מילאנו, מאחורי טירת ספורצה. מושלם להירגעות.", coords: { lat: 45.4723, lon: 9.1725 }, cost: 0 },
+      lastSupper: { name: "הסעודה האחרונה", type: 'attraction', address: "Piazza di Santa Maria delle Grazie, 2, 20123 Milano MI", description: "ציור הקיר המפורסם של דה וינצ'י. חובה להזמין כרטיסים חודשים מראש!", tickets: "https://cenacolovinciano.org/en/", coords: { lat: 45.4659, lon: 9.1711 }, cost: 15, hours: "ג'-א', 08:15-19:00 (סגור בב')" },
+      galleriaVittorio: { name: "גלריית ויטוריו אמנואלה", type: 'attraction', address: "Piazza del Duomo, 20123 Milano MI", description: "מרכז קניות היסטורי ומפואר, עם חנויות יוקרה, בתי קפה ומסעדות.", coords: { lat: 45.4656, lon: 9.1905 }, cost: 0, hours: "פתוח 24/7 (חנויות בשעות משתנות)" },
+      pinacotecaBrera: { name: "פינקוטקה די בררה", type: 'attraction', address: "Via Brera, 28, 20121 Milano MI", description: "אחד מגלריות האמנות החשובות באיטליה, מתמקד בציור איטלקי.", tickets: "https://pinacotecabrera.org/en/visit/", coords: { lat: 45.4719, lon: 9.1879 }, cost: 15, hours: "ג'-א', 08:30-19:15 (סגור בב')" },
+      parcoSempione: { name: "פארק סמפיונה", type: 'attraction', address: "Piazza Sempione, 20154 Milano MI", description: "הריאה הירוקה הגדולה של מילאנו, מאחורי טירת ספורצה. מושלם להירגעות.", coords: { lat: 45.4723, lon: 9.1725 }, cost: 0, hours: "כל יום, 06:30-21:00" },
       quadrilateroDellaModa: { name: "מרובע האופנה", type: 'attraction', address: "Via Monte Napoleone, 20121 Milano MI, Italy", description: "רובע הקניות היוקרתי של מילאנו, בית למותגי האופנה הגדולים בעולם.", coords: { lat: 45.4688, lon: 9.1950 }, cost: 0 },
-      daVinciMuseum: { name: "מוזיאון המדע דה וינצ'י", type: 'attraction', address: "Via San Vittore, 21, 20123 Milano MI, Italy", description: "מוזיאון המדע והטכנולוגיה הגדול באיטליה, מוקדש לדה וינצ'י כממציא.", tickets: "https://www.museoscienza.org/en/visit/tickets", coords: { lat: 45.4627, lon: 9.1715 }, cost: 10 },
+      daVinciMuseum: { name: "מוזיאון המדע דה וינצ'י", type: 'attraction', address: "Via San Vittore, 21, 20123 Milano MI, Italy", description: "מוזיאון המדע והטכנולוגיה הגדול באיטליה, מוקדש לדה וינצ'י כממציא.", tickets: "https://www.museoscienza.org/en/visit/tickets", coords: { lat: 45.4627, lon: 9.1715 }, cost: 10, hours: "ג'-ו' 09:30-17:00, ש'-א' 09:30-18:30 (סגור בב')" },
       boscoVerticale: { name: "בוסקו ורטיקלה", type: 'attraction', address: "Via Gaetano de Castillia, 11, 20124 Milano MI", description: "צמד מגדלי מגורים חדשניים המכוסים באלפי עצים וצמחים. פלא ארכיטקטוני.", coords: { lat: 45.4855, lon: 9.1901 }, cost: 0 },
-      cimiteroMonumentale: { name: "בית הקברות המונומנטלי", type: 'attraction', address: "Piazzale Cimitero Monumentale, 20154 Milano MI", description: "בית קברות שהוא גם מוזיאון פתוח, עם פסלים ומבנים ארכיטקטוניים מרשימים.", coords: { lat: 45.485, lon: 9.178 }, cost: 0 },
-      museoNovecento: { name: "מוזיאון נובצ'נטו", type: 'attraction', address: "Piazza del Duomo, 8, 20123 Milano MI", description: "מוזיאון לאמנות המאה ה-20 הממוקם בכיכר הדואומו, עם תצפית יפה על הקתדרלה.", tickets: "https://www.museodelnovecento.org/en/ biglietti-e-ingressi", coords: { lat: 45.463, lon: 9.190 }, cost: 10 },
+      cimiteroMonumentale: { name: "בית הקברות המונומנטלי", type: 'attraction', address: "Piazzale Cimitero Monumentale, 20154 Milano MI", description: "בית קברות שהוא גם מוזיאון פתוח, עם פסלים ומבנים ארכיטקטוניים מרשימים.", coords: { lat: 45.485, lon: 9.178 }, cost: 0, hours: "ג'-א' 08:00-18:00 (סגור בב')" },
+      museoNovecento: { name: "מוזיאון נובצ'נטו", type: 'attraction', address: "Piazza del Duomo, 8, 20123 Milano MI", description: "מוזיאון לאמנות המאה ה-20 הממוקם בכיכר הדואומו, עם תצפית יפה על הקתדרלה.", tickets: "https://www.museodelnovecento.org/en/ biglietti-e-ingressi", coords: { lat: 45.463, lon: 9.190 }, cost: 10, hours: "ג'-א' 10:00-19:30 (סגור בב')" },
       santAmbrogio: { name: "בזיליקת סנט'אמברוג'ו", type: 'attraction', address: "Piazza Sant'Ambrogio, 15, 20123 Milano MI", description: "אחת הכנסיות העתיקות והחשובות במילאנו, דוגמה מרהיבה לאדריכלות רומנסקית.", coords: { lat: 45.462, lon: 9.173 }, cost: 0 },
-      sanMaurizio: { name: "כנסיית סן מאוריציו", type: 'attraction', address: "Corso Magenta, 15, 20123 Milano MI", description: "מכונה 'הקפלה הסיסטינית של מילאנו' בזכות ציורי הקיר המדהימים שמכסים אותה לחלוטין.", tickets: "https://www.museoarcheologicomilano.it/en/collezioni/san-maurizio-al-monastero-maggiore", coords: { lat: 45.465, lon: 9.176 }, cost: 0 },
+      sanMaurizio: { name: "כנסיית סן מאוריציו", type: 'attraction', address: "Corso Magenta, 15, 20123 Milano MI", description: "מכונה 'הקפלה הסיסטינית של מילאנו' בזכות ציורי הקיר המדהימים שמכסים אותה לחלוטין.", tickets: "https://www.museoarcheologicomilano.it/en/collezioni/san-maurizio-al-monastero-maggiore", coords: { lat: 45.465, lon: 9.176 }, cost: 0, hours: "ג'-א' 10:00-17:30 (סגור בב')" },
       piazzaMercanti: { name: "פיאצה דיי מרקנטי", type: 'attraction', address: "Piazza dei Mercanti, 20123 Milano MI", description: "כיכר ימי-ביניימית קסומה ונסתרת, דקות הליכה מהדואומו.", coords: { lat: 45.465, lon: 9.188 }, cost: 0 },
-      leonardoVineyard: { name: "הכרם של לאונרדו", type: 'attraction', address: "Corso Magenta, 65, 20123 Milano MI", description: "שחזור של הכרם שהיה שייך ללאונרדו דה וינצ'י, מול 'הסעודה האחרונה'.", tickets: "https://www.vignadileonardo.com/en/", coords: { lat: 45.466, lon: 9.170 }, cost: 10 },
+      leonardoVineyard: { name: "הכרם של לאונרדו", type: 'attraction', address: "Corso Magenta, 65, 20123 Milano MI", description: "שחזור של הכרם שהיה שייך ללאונרדו דה וינצ'י, מול 'הסעודה האחרונה'.", tickets: "https://www.vignadileonardo.com/en/", coords: { lat: 45.466, lon: 9.170 }, cost: 10, hours: "ג'-א' 09:00-18:00 (סגור בב')" },
       piazzaGaeAulenti: { name: "פיאצה גאה אאולנטי", type: 'attraction', address: "Piazza Gae Aulenti, 20124 Milano MI", description: "הלב הפועם של מילאנו המודרנית. כיכר עתידנית מוקפת גורדי שחקים.", coords: { lat: 45.483, lon: 9.191 }, cost: 0 },
       corsoComo: { name: "10 קורסו קומו", type: 'attraction', address: "Corso Como, 10, 20154 Milano MI", description: "מתחם קונספט המשלב אופנה, עיצוב ואמנות. חווית קניות ובילוי ייחודית.", coords: { lat: 45.482, lon: 9.189 }, cost: 0 },
-      triennale: { name: "מוזיאון העיצוב טריאנלה", type: 'attraction', address: "Viale Emilio Alemagna, 6, 20121 Milano MI", description: "מוזיאון בינלאומי המוקדש לעיצוב, אדריכלות ואמנות חזותית בפארק סמפיונה.", tickets: "https://triennale.org/en/tickets", coords: { lat: 45.470, lon: 9.168 }, cost: 15 },
+      triennale: { name: "מוזיאון העיצוב טריאנלה", type: 'attraction', address: "Viale Emilio Alemagna, 6, 20121 Milano MI", description: "מוזיאון בינלאומי המוקדש לעיצוב, אדריכלות ואמנות חזותית בפארק סמפיונה.", tickets: "https://triennale.org/en/tickets", coords: { lat: 45.470, lon: 9.168 }, cost: 15, hours: "ג'-א' 11:00-20:00 (סגור בב')" },
       colonneSanLorenzo: { name: "עמודי סן לורנצו", type: 'attraction', address: "Corso di Porta Ticinese, 39, 20123 Milano MI", description: "שרידים רומיים עתיקים שהפכו למקום מפגש פופולרי ותוסס בערב.", coords: { lat: 45.458, lon: 9.181 }, cost: 0 },
-      qcTermemilano: { name: "QC Termemilano", type: 'attraction', address: "Piazzale Medaglie D'Oro, 2, 20135 Milano MI", tickets: "https://www.qcterme.com/en/milano/qc-termemilano", description: "ספא ומרחצאות יוקרתיים בלב העיר, חוויה מושלמת של פינוק ורגיעה.", coords: { lat: 45.4523, lon: 9.2004 }, cost: 60 },
-      interStore: { name: "חנות הדגל של אינטר", type: 'attraction', address: "Galleria Passarella, 2, 20122 Milano MI", info: "https://store.inter.it/", description: "חנות הדגל הרשמית של קבוצת הכדורגל אינטר מילאנו, בלב אזור הקניות.", coords: { lat: 45.465, lon: 9.194 }, cost: 0 },
-      casaMilan: { name: "קאזה מילאן (מוזיאון וחנות)", type: 'attraction', address: "Via Aldo Rossi, 8, 20149 Milano MI", tickets: "https://www.acmilan.com/en/club/casa-milan", description: "המטה הראשי של קבוצת מילאן, כולל מוזיאון מונדו מילאן, חנות רשמית ומסעדה.", coords: { lat: 45.489, lon: 9.155 }, cost: 15 },
-      torreBranca: { name: "מגדל בראנקה", type: 'attraction', address: "Viale Luigi Camoens, 2, 20121 Milano MI", info: "http://www.museobranca.it/torre-branca-parco-sempione-milano/", description: "מגדל תצפית בפארק סמפיונה המציע נוף פנורמי מרהיב של מילאנו.", coords: { lat: 45.472, lon: 9.171 }, cost: 6 },
-      pinacotecaAmbrosiana: { name: "פינקוטקה אמברוזיאנה", type: 'attraction', address: "Piazza Pio XI, 2, 20123 Milano MI", tickets: "https://www.ambrosiana.it/", description: "גלריית אמנות וספרייה היסטורית המכילה יצירות מופת של קאראווג'ו ודה וינצ'י.", coords: { lat: 45.464, lon: 9.186 }, cost: 15 }
+      qcTermemilano: { name: "QC Termemilano", type: 'attraction', address: "Piazzale Medaglie D'Oro, 2, 20135 Milano MI", tickets: "https://www.qcterme.com/en/milano/qc-termemilano", description: "ספא ומרחצאות יוקרתיים בלב העיר, חוויה מושלמת של פינוק ורגיעה.", coords: { lat: 45.4523, lon: 9.2004 }, cost: 60, hours: "כל יום, 09:00-23:00" },
+      interStore: { name: "חנות הדגל של אינטר", type: 'attraction', address: "Galleria Passarella, 2, 20122 Milano MI", info: "https://store.inter.it/", description: "חנות הדגל הרשמית של קבוצת הכדורגל אינטר מילאנו, בלב אזור הקניות.", coords: { lat: 45.465, lon: 9.194 }, cost: 0, hours: "כל יום 10:00-19:30" },
+      casaMilan: { name: "קאזה מילאן (מוזיאון וחנות)", type: 'attraction', address: "Via Aldo Rossi, 8, 20149 Milano MI", tickets: "https://www.acmilan.com/en/club/casa-milan", description: "המטה הראשי של קבוצת מילאן, כולל מוזיאון מונדו מילאן, חנות רשמית ומסעדה.", coords: { lat: 45.489, lon: 9.155 }, cost: 15, hours: "כל יום 10:00-19:00" },
+      torreBranca: { name: "מגדל בראנקה", type: 'attraction', address: "Viale Luigi Camoens, 2, 20121 Milano MI", info: "http://www.museobranca.it/torre-branca-parco-sempione-milano/", description: "מגדל תצפית בפארק סמפיונה המציע נוף פנורמי מרהיב של מילאנו.", coords: { lat: 45.472, lon: 9.171 }, cost: 6, hours: "משתנה לפי עונה, בדקו באתר" },
+      pinacotecaAmbrosiana: { name: "פינקוטקה אמברוזיאנה", type: 'attraction', address: "Piazza Pio XI, 2, 20123 Milano MI", tickets: "https://www.ambrosiana.it/", description: "גלריית אמנות וספרייה היסטורית המכילה יצירות מופת של קאראווג'ו ודה וינצ'י.", coords: { lat: 45.464, lon: 9.186 }, cost: 15, hours: "ג'-א' 10:00-18:00 (סגור בב')" }
     };
     
     const kosherData = {
       restaurants: [
-        { name: "Denzel", type: 'dining', style: "בשרי", address: "Via Giorgio Washington, 9", phone: "+390248519326", menu: "https://www.denzel.it/menu", website: "https://www.denzel.it/", logo: "https://static.wixstatic.com/media/c6595a_0d9d7bb6473548d69681f09d18ff4247.png", instagram: "https://www.instagram.com/denzelburger?igsh=bXRqcTNuZnlnMWF6", hours: "א'-ה' 12-15, 19-23; ו' 12-15", coords: { lat: 45.4654, lon: 9.1555 } },
-        { name: "Ba'Ghetto", type: 'dining', style: "בשרי", address: "Via Sardegna, 45", phone: "+39024694643", menu: "https://www.baghetto.com/en/menu/", website: "https://www.baghetto.com/en/", instagram: "https://www.instagram.com/baghettorestaurants?igsh=MTA3enRyMTdwMmF4dQ==", hours: "א'-ה' 12-15, 19-23; ו' 12-15", coords: { lat: 45.4665, lon: 9.1461 } },
-        { name: "Carmel", type: 'dining', style: "חלבי", address: "Viale S. Gimignano, 10", phone: "+3902416368", menu: "https://carmelkosher.it/wp-content/uploads/2022/10/menu-ing.pdf", website: "https://carmelkosher.it/", instagram: "https://www.instagram.com/carmelbylolita?igsh=MWZ2MXFseGVwYzlnZA==", hours: "א'-ה' 12-15, 19-22:30", coords: { lat: 45.4593, lon: 9.1328 } },
+        { name: "Denzel", type: 'dining', style: "בשרי", address: "Via Giorgio Washington, 9", phone: "+390248519326", menu: "https://www.denzel.it/menu", website: "https://www.denzel.it/", logo: "https://static.wixstatic.com/media/c6595a_0d9d7bb6473548d69681f09d18ff4247.png", instagram: "https://www.instagram.com/denzelburger?igsh=bXRqcTNuZnlnMWF6", hours: "א'-ה' 12:00-15:00, 19:00-23:00; ו' 12:00-15:00", coords: { lat: 45.4654, lon: 9.1555 } },
+        { name: "Ba'Ghetto", type: 'dining', style: "בשרי", address: "Via Sardegna, 45", phone: "+39024694643", menu: "https://www.baghetto.com/en/menu/", website: "https://www.baghetto.com/en/", instagram: "https://www.instagram.com/baghettorestaurants?igsh=MTA3enRyMTdwMmF4dQ==", hours: "א'-ה' 12:00-15:00, 19:00-23:00; ו' 12:00-15:00", coords: { lat: 45.4665, lon: 9.1461 } },
+        { name: "Carmel", type: 'dining', style: "חלבי", address: "Viale S. Gimignano, 10", phone: "+3902416368", menu: "https://carmelkosher.it/wp-content/uploads/2022/10/menu-ing.pdf", website: "https://carmelkosher.it/", instagram: "https://www.instagram.com/carmelbylolita?igsh=MWZ2MXFseGVwYzlnZA==", hours: "א'-ה' 12:00-15:00, 19:00-22:30", coords: { lat: 45.4593, lon: 9.1328 } },
         { name: "MyKafe", type: 'dining', style: "חלבי", address: "Via Luigi Soderini, 44", phone: "+390238232748", website: "https://www.instagram.com/mykafe2020/", logo: "https://dynamic-media-cdn.tripadvisor.com/media/photo-o/11/a2/1f/a2/my-kafe.jpg", instagram: "https://www.instagram.com/mykafe2020?igsh=OGl5N3R5YTVtaTRj", hours: "א'-ה' 07:30-19:30; ו' 07:30-16:00", coords: { lat: 45.4578, lon: 9.1337 } },
       ],
       markets: [
-        { name: "Kosher Paradise", type: 'dining', style: "מרכול", address: "Viale S. Gimignano, 13", phone: "+39024122855", website: "https://www.kosherparadise.it/", instagram: "https://www.instagram.com/kosherparadise_milano?igsh=MXU1eHlhdDhxNTFjMg==", hours: "א'-ה' 09-19:30; ו' 09-15", coords: { lat: 45.4589, lon: 9.1325 } },
-        { name: "Denzel's Sweet Bakery", type: 'dining', style: "מאפייה", address: "Via Soderini, 55", phone: "+39024125166", website: "https://www.denzel.it/bakery", logo: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSVt6hxH7niOmeBunCjNdpow7Y_PfseIBonPQ&s", instagram: "https://www.instagram.com/denzelsweetbakery?igsh=b2Fpa2x5dWc4anI5", hours: "א'-ה' 07:30-19:30; ו' 07:30-15", coords: { lat: 45.4570, lon: 9.1329 } },
+        { name: "Kosher Paradise", type: 'dining', style: "מרכול", address: "Viale S. Gimignano, 13", phone: "+39024122855", website: "https://www.kosherparadise.it/", instagram: "https://www.instagram.com/kosherparadise_milano?igsh=MXU1eHlhdDhxNTFjMg==", hours: "א'-ה' 09:00-19:30; ו' 09:00-15:00", coords: { lat: 45.4589, lon: 9.1325 } },
+        { name: "Denzel's Sweet Bakery", type: 'dining', style: "מאפייה", address: "Via Soderini, 55", phone: "+39024125166", website: "https://www.denzel.it/bakery", logo: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSVt6hxH7niOmeBunCjNdpow7Y_PfseIBonPQ&s", instagram: "https://www.instagram.com/denzelsweetbakery?igsh=b2Fpa2x5dWc4anI5", hours: "א'-ה' 07:30-19:30; ו' 07:30-15:00", coords: { lat: 45.4570, lon: 9.1329 } },
       ]
     };
+    
+    const dailyTips = [
+      "זכרו לתקף את כרטיס התחבורה הציבורית שלכם במכונות הצהובות לפני כל נסיעה במטרו, אוטובוס או טראם כדי למנוע קנסות.",
+      "אפרטיבו (Aperitivo) הוא מנהג איטלקי פופולרי. בין 18:00 ל-21:00, שלמו על משקה וקבלו גישה חופשית למזנון אכול כפי יכולתך. רובע נבילי הוא מקום מעולה לחוות זאת.",
+      "'Coperto' הוא חיוב שירות קבוע שרוב המסעדות מוסיפות לחשבון. זה לא טיפ, אלא תשלום על השירות והלחם. טיפ נוסף אינו חובה אך מוערך.",
+      "הרבה מוזיאונים וכנסיות דורשים לבוש צנוע (כתפיים וברכיים מכוסות). כדאי להחזיק צעיף קל בתיק למקרה הצורך.",
+      "מים מהברז במילאנו בטוחים וטובים לשתייה. חפשו ברזיות ציבוריות (fontanelle) כדי למלא את בקבוק המים שלכם ולחסוך כסף.",
+      "אם אתם מתכננים לראות את 'הסעודה האחרונה' של דה וינצ'י, חובה להזמין כרטיסים באינטרנט מספר חודשים מראש. הכניסה מוגבלת מאוד."
+    ];
 
     const tripMeta = {
         flights: {
@@ -692,6 +697,18 @@
         $('#alert-modal-body').textContent = message;
         $('#alert-modal').classList.add('flex');
     }
+    
+    function showDailyTip() {
+        const lastTipDate = localStorage.getItem('lastTipDate');
+        const today = new Date().toISOString().slice(0, 10);
+
+        if (lastTipDate !== today) {
+            const tip = dailyTips[Math.floor(Math.random() * dailyTips.length)];
+            $('#daily-tip-body').textContent = tip;
+            $('#daily-tip-modal').classList.add('flex');
+            localStorage.setItem('lastTipDate', today);
+        }
+    }
 
     // --- RENDER FUNCTIONS ---
     function renderOverview() {
@@ -708,7 +725,7 @@
         const hotelHtml = `<div class="bg-gray-50 dark:bg-gray-800/50 p-4 rounded-lg space-y-2">
             <h3 class="font-bold text-lg"><i class="fa-solid fa-hotel mr-2"></i>מלון</h3>
             <p><b>${hotel.name}</b></p>
-            <div class="flex gap-2"><a href="${hotel.tel}" class="btn btn-ghost"><i class="fa fa-phone"></i> חיוג</a><a href="https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(hotel.address)}" target="_blank" class="btn btn-ghost"><i class="fa fa-map-location-dot"></i> ניווט</a></div>
+            <div class="flex gap-2"><a href="${hotel.tel}" class="btn btn-ghost"><i class="fa fa-phone"></i> חיוג</a><a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(hotel.address)}" target="_blank" class="btn btn-ghost"><i class="fa fa-map-location-dot"></i> ניווט</a></div>
         </div>`;
         const contactsHtml = `<div class="bg-gray-50 dark:bg-gray-800/50 p-4 rounded-lg space-y-2">
             <h3 class="font-bold text-lg"><i class="fa-solid fa-address-book mr-2"></i>טלפונים חשובים</h3>
@@ -811,7 +828,7 @@
         if (activity.info) links.push(`<a href="${activity.info}" target="_blank" class="btn btn-ghost"><i class="fa-solid fa-circle-info"></i> מידע</a>`);
         if (activity.address) {
             links.push(`<a href="https://waze.com/ul?q=${encodeURIComponent(activity.address)}" target="_blank" class="btn btn-ghost" title="Waze"><i class="fa-brands fa-waze"></i></a>`);
-            links.push(`<a href="https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(activity.address)}" target="_blank" class="btn btn-ghost" title="Google Maps"><i class="fa-brands fa-google"></i></a>`);
+            links.push(`<a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(activity.address)}" target="_blank" class="btn btn-ghost" title="Google Maps"><i class="fa-brands fa-google"></i></a>`);
         }
         if (previousActivity && previousActivity.address && activity.address) {
             const transitUrl = `https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(previousActivity.address)}&destination=${encodeURIComponent(activity.address)}&travelmode=transit`;
@@ -823,7 +840,7 @@
 
         const imgHTML = activity.img ? `<div class="image-carousel" data-images='${JSON.stringify(activity.img)}' data-index="0">
             <img loading="lazy" src="${activity.img[0]}" alt="${activity.name}" class="thumb" onerror="this.style.display='none'">
-            ${(activity.img.length || 0) > 1 ? `<button class="carousel-prev" onclick="window.navigateCarousel(this, -1)">&lt;</button><button class="carousel-next" onclick="window.navigateCarousel(this, 1)">&gt;</button>` : ''}
+            ${(activity.img.length || 0) > 1 ? `<button class="carousel-prev" onclick="window.navigateCarousel(this, -1)"><</button><button class="carousel-next" onclick="window.navigateCarousel(this, 1)">></button>` : ''}
         </div>` : '';
         
         const moveButtons = `
@@ -844,6 +861,7 @@
             ${imgHTML}
             <div class="p-4 md:p-5 flex-grow">
               <p class="text-gray-700 dark:text-gray-300">${fmtBold(activity.description)}</p>
+              ${activity.hours ? `<p class="text-sm text-gray-500 dark:text-gray-400 mt-2"><i class="fa-solid fa-clock w-4 mr-1"></i> ${activity.hours}</p>` : ''}
               <div class="mt-4 flex flex-wrap items-center gap-2">${links.join('')}</div>
             </div>
           </div>
@@ -864,7 +882,7 @@
                 <td data-label="פעולות" class="p-3">
                     <div class="flex flex-wrap gap-2 justify-end">
                         <button onclick="window.openAddToDayModal('${s.id}')" class="btn btn-primary btn-sm"><i class="fa-solid fa-plus"></i> הוסף</button>
-                        <a href="https://www.google.com/maps/dir/?api=1&destination=${s.coords.lat},${s.coords.lon}" target="_blank" class="btn btn-ghost btn-sm"><i class="fa-solid fa-map-location-dot"></i> מפה</a>
+                        <a href="https://www.google.com/maps/search/?api=1&query=${s.coords.lat},${s.coords.lon}" target="_blank" class="btn btn-ghost btn-sm"><i class="fa-solid fa-map-location-dot"></i> מפה</a>
                     </div>
                 </td>
             </tr>
@@ -886,6 +904,57 @@
         `;
     }
 
+    function isCurrentlyOpen(hoursString) {
+        if (!hoursString) return false;
+        
+        const now = new Date();
+        const timeZone = 'Europe/Rome';
+        const milanTime = new Date(now.toLocaleString('en-US', { timeZone }));
+        const currentDay = milanTime.getDay(); // Sunday: 0, Monday: 1, ..., Saturday: 6
+        const currentHour = milanTime.getHours();
+        const currentMinute = milanTime.getMinutes();
+        const currentTimeInMinutes = currentHour * 60 + currentMinute;
+        
+        const dayMap = {'א': 0, 'ב': 1, 'ג': 2, 'ד': 3, 'ה': 4, 'ו': 5, 'ש': 6};
+
+        try {
+            const dayParts = hoursString.split(';').map(s => s.trim());
+            for (const part of dayParts) {
+                const [daySpec, ...timeSpecs] = part.split(' ');
+                const timeStr = timeSpecs.join('');
+
+                let days = [];
+                if (daySpec.includes('-')) {
+                    const [startDay, endDay] = daySpec.split('-').map(d => dayMap[d]);
+                    for (let i = startDay; i <= endDay; i++) {
+                        days.push(i);
+                    }
+                } else {
+                    days = daySpec.split(',').map(d => dayMap[d]);
+                }
+                
+                if (days.includes(currentDay)) {
+                    const timeRanges = timeStr.split(',');
+                    for (const range of timeRanges) {
+                        const [start, end] = range.split('-').map(t => {
+                            const [h, m] = t.split(':').map(Number);
+                            return h * 60 + (m || 0);
+                        });
+
+                        if (currentTimeInMinutes >= start && currentTimeInMinutes < end) {
+                            return true;
+                        }
+                    }
+                }
+            }
+        } catch (e) {
+            console.error("Error parsing hours string:", hoursString, e);
+            return false;
+        }
+
+        return false;
+    }
+
     function renderKosher(filter = 'all') {
         let allKosher = [...kosherData.restaurants, ...kosherData.markets];
         
@@ -897,20 +966,23 @@
         }
 
         const filtered = allKosher.filter(r => {
+            if (filter === 'open') return isCurrentlyOpen(r.hours);
             if (filter === 'all') return true;
             const style = r.style.toLowerCase();
             return style.includes(filter.toLowerCase());
         });
 
         const content = filtered.map(item => (item.style.includes('בשרי') || item.style.includes('חלבי') ? rowRestaurant(item) : rowMarket(item))).join('');
-        $('#kosher-results').innerHTML = `<table class="min-w-full text-sm responsive-table"><tbody>${content}</tbody></table>`;
+        $('#kosher-results').innerHTML = `<table class="min-w-full text-sm responsive-table"><tbody>${content || `<tr><td class="p-4 text-center">לא נמצאו תוצאות.</td></tr>`}</tbody></table>`;
     }
 
     function renderKosherFilters() {
-        const filters = ['all', 'בשרי', 'חלבי', 'מאפייה', 'מרכול'];
-        $('#kosher-filters').innerHTML = filters.map(f => `<button class="kosher-filter-btn btn btn-ghost" data-filter="${f}">${f === 'all' ? 'הכל' : f}</button>`).join('');
+        const filters = ['all', 'open', 'בשרי', 'חלבי', 'מאפייה', 'מרכול'];
+        const filterLabels = {'all': 'הכל', 'open': 'פתוח עכשיו', 'בשרי': 'בשרי', 'חלבי': 'חלבי', 'מאפייה': 'מאפייה', 'מרכול': 'מרכול'};
+        $('#kosher-filters').innerHTML = filters.map(f => `<button class="kosher-filter-btn btn btn-ghost" data-filter="${f}">${filterLabels[f]}</button>`).join('');
         $$('.kosher-filter-btn').forEach(btn => btn.addEventListener('click', e => {
-            renderKosher(e.target.dataset.filter);
+            const currentFilter = e.target.dataset.filter;
+            renderKosher(currentFilter);
             $$('.kosher-filter-btn').forEach(b => b.classList.remove('tab-active'));
             e.target.classList.add('tab-active');
         }));
@@ -924,13 +996,13 @@
             <td data-label="לוגו" class="p-3 logo-cell"><img class="logo" src="${logoSrc}" alt="${r.name}" onerror="this.onerror=null;this.src='${placeholderLogoUrl(r.name)}';"></td>
             <td data-label="שם" class="p-3 font-medium">${r.name} <span class="text-xs font-normal text-gray-500">${r.distance ? formatKm(r.distance) : ''}</span></td>
             <td data-label="סגנון" class="p-3">${r.style}</td>
-            <td data-label="כתובת" class="p-3 text-xs">${r.address}</td>
+            <td data-label="שעות" class="p-3 text-xs">${r.hours || ''}</td>
             <td data-label="פעולות" class="p-3">
                 <div class="flex flex-wrap gap-2">
                     <button onclick="window.openAddToDayModal('${r.name}', 'kosher')" class="btn btn-primary btn-sm" title="הוסף ליום"><i class="fa-solid fa-plus"></i></button>
                     ${r.phone ? `<a title="התקשר" href="tel:${r.phone}" class="btn btn-ghost btn-sm"><i class="fa-solid fa-phone"></i></a>`:''}
                     <a title="Waze" href="https://waze.com/ul?q=${encodeURIComponent(r.address)}" target="_blank" class="btn btn-ghost btn-sm"><i class="fa-brands fa-waze"></i></a>
-                    <a title="Google Maps" href="https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(r.address)}" target="_blank" class="btn btn-ghost btn-sm"><i class="fa-brands fa-google"></i></a>
+                    <a title="Google Maps" href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(r.address)}" target="_blank" class="btn btn-ghost btn-sm"><i class="fa-brands fa-google"></i></a>
                     ${r.menu ? `<a href="${r.menu}" target="_blank" class="btn btn-ghost btn-sm" title="תפריט"><i class="fa-solid fa-utensils"></i></a>`:''}
                     ${r.website ? `<a href="${r.website}" target="_blank" class="btn btn-ghost btn-sm" title="אתר"><i class="fa-solid fa-globe"></i></a>`:''}
                     ${r.instagram ? `<a title="אינסטגרם" href="${r.instagram}" target="_blank" class="btn btn-ghost btn-sm"><i class="fa-brands fa-instagram"></i></a>`:''}
@@ -945,13 +1017,13 @@
             <td data-label="לוגו" class="p-3 logo-cell"><img class="logo" src="${logoSrc}" alt="${m.name}" onerror="this.onerror=null;this.src='${placeholderLogoUrl(m.name)}';"></td>
             <td data-label="שם" class="p-3 font-medium">${m.name} <span class="text-xs font-normal text-gray-500">${m.distance ? formatKm(m.distance) : ''}</span></td>
             <td data-label="סוג" class="p-3">${m.style}</td>
-            <td data-label="כתובת" class="p-3 text-xs">${m.address}</td>
+            <td data-label="שעות" class="p-3 text-xs">${m.hours || ''}</td>
             <td data-label="פעולות" class="p-3">
                 <div class="flex flex-wrap gap-2">
                     <button onclick="window.openAddToDayModal('${m.name}', 'kosher')" class="btn btn-primary btn-sm" title="הוסף ליום"><i class="fa-solid fa-plus"></i></button>
                     ${m.phone ? `<a title="התקשר" href="tel:${m.phone}" class="btn btn-ghost btn-sm"><i class="fa-solid fa-phone"></i></a>`:''}
                     <a title="Waze" href="https://waze.com/ul?q=${encodeURIComponent(m.address)}" target="_blank" class="btn btn-ghost btn-sm"><i class="fa-brands fa-waze"></i></a>
-                    <a title="Google Maps" href="https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(m.address)}" target="_blank" class="btn btn-ghost btn-sm"><i class="fa-brands fa-google"></i></a>
+                    <a title="Google Maps" href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(m.address)}" target="_blank" class="btn btn-ghost btn-sm"><i class="fa-brands fa-google"></i></a>
                     ${m.website ? `<a href="${m.website}" target="_blank" class="btn btn-ghost btn-sm" title="אתר"><i class="fa-solid fa-globe"></i></a>`:''}
                     ${m.instagram ? `<a title="אינסטגרם" href="${m.instagram}" target="_blank" class="btn btn-ghost btn-sm"><i class="fa-brands fa-instagram"></i></a>`:''}
                 </div>
@@ -1046,7 +1118,7 @@
                     <i class="fa-solid fa-file-pdf fa-3x text-red-500"></i>
                     <span class="text-xs mt-2 break-all">${doc.name}</span>
                 </a>
-                <button class="delete-btn" onclick="window.removeDocument('${doc.id}')">&times;</button>
+                <button class="delete-btn" onclick="window.removeDocument('${doc.id}')">×</button>
             </div>`).join('');
     }
 
@@ -1054,7 +1126,7 @@
         const grid = $('#gallery-grid');
         grid.innerHTML = gallery.map(img => `<div class="relative aspect-square">
             <img src="${img.dataUrl}" class="w-full h-full object-cover rounded-lg">
-            <button class="delete-btn" onclick="window.removeImage('${img.id}')">&times;</button>
+            <button class="delete-btn" onclick="window.removeImage('${img.id}')">×</button>
         </div>`).join('');
     }
 
@@ -1228,7 +1300,17 @@
         carousel.dataset.index = index;
     };
     function findNearby() {
-        window.open('https://www.google.com/maps/search/points+of+interest+near+me', '_blank');
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(position => {
+                const { latitude, longitude } = position.coords;
+                window.open(`https://www.google.com/maps/search/tourist+attractions/@${latitude},${longitude},14z`, '_blank');
+            }, () => {
+                showAlert('שגיאת מיקום', 'לא ניתן היה לקבל את מיקומך. נפתח מפה כללית של מילאנו.');
+                window.open('https://www.google.com/maps/search/tourist+attractions+in+milan', '_blank');
+            });
+        } else {
+             window.open('https://www.google.com/maps/search/tourist+attractions+in+milan', '_blank');
+        }
     }
     window.findNearbyKosher = (btn) => {
         const lat = parseFloat(btn.dataset.lat), lon = parseFloat(btn.dataset.lon);
@@ -1343,7 +1425,7 @@
         }
 
         const apiKey = "AIzaSyB80v2xdhebJqhjyruJ5Ta0eyhJiq7DsI8"; 
-        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
+        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-preview-0514:generateContent?key=${apiKey}`;
         
         try {
             const response = await fetch(apiUrl, {
@@ -1455,7 +1537,7 @@
         
         onAuthStateChanged(auth, (user) => {
           if (user) {
-            tripDocRef = doc(db, "milantrip", tripId); // Corrected collection name
+            tripDocRef = doc(db, "milantrip", tripId);
             
             const unsubscribe = onSnapshot(tripDocRef, async (docSnap) => {
                 if (!isFirebaseConnected) {
@@ -1499,6 +1581,7 @@
         renderKosherFilters();
         fetchWeather();
         fetchExchangeRate();
+        showDailyTip();
         
         const ctx = document.getElementById('transportChart').getContext('2d');
         new Chart(ctx, {
@@ -1513,6 +1596,17 @@
             if(tripDocRef && isFirebaseConnected) await updateDoc(tripDocRef, { theme: isDark ? 'dark' : 'light' });
         });
         
+        // --- Plan actions ---
+        $('#collapse-all').addEventListener('click', () => {
+            $$('#plan-content-container details').forEach(d => d.removeAttribute('open'));
+        });
+        $('#expand-all').addEventListener('click', () => {
+            $$('#plan-content-container details').forEach(d => d.setAttribute('open', true));
+        });
+        $('#print-btn').addEventListener('click', () => {
+            window.print();
+        });
+
         $('#add-checklist-item-form').addEventListener('submit', async e => {
             e.preventDefault();
             if(!isFirebaseConnected) { showAlert('שגיאת סנכרון', 'אין חיבור למסד הנתונים. אנא בדוק את החיבור לאינטרנט.'); return; }
@@ -1624,6 +1718,7 @@
         $('#document-upload-btn').addEventListener('click', () => $('#document-upload').click());
         $('#image-upload-btn').addEventListener('click', () => $('#image-upload').click());
         $('#alert-modal-close').addEventListener('click', () => $('#alert-modal').classList.remove('flex'));
+        $('#daily-tip-close').addEventListener('click', () => $('#daily-tip-modal').classList.remove('flex'));
 
         $('#document-upload').addEventListener('change', (e) => {
             for (const file of e.target.files) {
@@ -1687,11 +1782,13 @@
             if (!localTripData.plan) return;
             Object.values(localTripData.plan).forEach(day => {
                 day.activities.forEach(act => {
-                    if(act.address && !locations.includes(act.address)) locations.push(encodeURIComponent(act.address));
+                    if(act.address && !locations.includes(act.address)) {
+                        locations.push(encodeURIComponent(`${act.name}, ${act.address}`));
+                    }
                 });
             });
             if (locations.length > 0) {
-                 const url = `https://www.google.com/maps/search/?api=1&query=${locations.join('|')}`;
+                 const url = `https://www.google.com/maps/dir/${locations.join('/')}`;
                  window.open(url, '_blank');
             } else { showAlert('שגיאה', 'אין מיקומים בתוכנית כדי להציג על המפה.'); }
         });
@@ -1727,4 +1824,3 @@
   </script>
 </body>
 </html>
-
