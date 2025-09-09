@@ -830,6 +830,15 @@
       });
     }
     
+    function generateDailyMapUrl(activities) {
+        if (!activities || activities.length < 2) return "";
+        const waypoints = activities
+            .map(act => act.address ? encodeURIComponent(act.address) : null)
+            .filter(Boolean); // Remove any activities without an address
+        if (waypoints.length < 2) return "";
+        return `https://www.google.com/maps/dir/${waypoints.join('/')}`;
+    }
+
     function renderPlanForDay(dayId, dayData) {
         const container = $(`#${dayId}`);
         if (!container) return;
@@ -845,7 +854,7 @@
                     <option value="transit" ${dayData.transport === 'transit' ? 'selected' : ''}>תחב"צ</option>
                 </select>
             </div>
-            <a href="${dailyMapUrl}" target="_blank" class="btn btn-ghost">הצג מפת מסלול ליום זה</a>
+            ${dailyMapUrl ? `<a href="${dailyMapUrl}" target="_blank" class="btn btn-ghost">הצג מפת מסלול ליום זה</a>` : ''}
         </div><div class="space-y-4">`;
 
         let previousActivity = null; 
