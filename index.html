@@ -840,6 +840,8 @@
         const container = $(`#${dayId}`);
         if (!container) return;
         
+        const dailyMapUrl = generateDailyMapUrl(dayData.activities);
+        
         let content = `<div class="p-4"><div class="flex items-center gap-4 mb-4">
             <div class="flex items-center gap-2">
                 <label class="font-semibold">מצב נסיעה:</label>
@@ -849,10 +851,7 @@
                     <option value="transit" ${dayData.transport === 'transit' ? 'selected' : ''}>תחב"צ</option>
                 </select>
             </div>
-            <button class="btn btn-ghost" onclick="this.nextElementSibling.classList.toggle('hidden')">הצג מפת מסלול ליום זה</button>
-            <div class="hidden mt-4 aspect-video">
-                <iframe class="w-full h-full border rounded-lg" loading="lazy" src="${generateDailyMapUrl(dayData.activities)}"></iframe>
-            </div>
+            <a href="${dailyMapUrl}" target="_blank" class="btn btn-ghost">הצג מפת מסלול ליום זה</a>
         </div><div class="space-y-4">`;
 
         let previousActivity = null; 
@@ -1631,35 +1630,6 @@
 
         responseContainer.textContent = responseText;
         submitBtn.disabled = false;
-    }
-
-    async function createTripSummary() {
-        const summaryModal = $('#summary-modal');
-        const responseContainer = $('#summary-response');
-        summaryModal.classList.add('flex');
-        responseContainer.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> יוצר סיכום קסום...`;
-
-        const { plan, expenses, journal } = localTripData;
-        const visitedPlaces = [...new Set(Object.values(plan).flatMap(day => day.activities.map(act => act.name)))].join(', ');
-        
-        const journalNotes = Object.values(journal).flat().map(entry => entry.text).slice(0, 2).join(' ');
-        
-        const categoryTotals = (expenses || []).reduce((acc, exp) => {
-            acc[exp.category] = (acc[exp.category] || 0) + exp.amount;
-            return acc;
-        }, {});
-        const topCategories = Object.entries(categoryTotals).sort((a,b) => b[1] - a[1]).slice(0,2).map(c => c[0]).join(', ');
-        
-        const prompt = `You are a travel blogger. Based on the following data from a trip to Milan, write a short, fun, and personal summary of the trip in Hebrew (2-3 sentences).
-        Data:
-        - Visited places: ${visitedPlaces}
-        - Top spending categories: ${topCategories}
-        - A personal note from the journal: "${journalNotes}"
-        Your entire response must be ONLY the Hebrew summary, with no other text.`;
-
-        const payload = { contents: [{ parts: [{ text: "" }] }] };
-        const summaryText = await callGemini(payload, prompt, false);
-        responseContainer.textContent = summaryText;
     }
     
     // --- INIT ---
