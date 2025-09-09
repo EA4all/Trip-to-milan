@@ -510,9 +510,9 @@
   
   <script type="module">
     // --- Firebase SDK ---
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-    import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-    import { getFirestore, doc, onSnapshot, setDoc, updateDoc, arrayUnion, arrayRemove, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-app.js";
+    import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-auth.js";
+    import { getFirestore, doc, onSnapshot, setDoc, updateDoc, arrayUnion, arrayRemove, getDoc } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js";
 
     // --- CONFIGURATION ---
     const FIREBASE_CONFIG = {
@@ -830,12 +830,6 @@
       });
     }
     
-    function generateDailyMapUrl(activities) {
-        if (!activities || activities.length === 0) return "";
-        const waypoints = activities.map(act => encodeURIComponent(act.address)).join('/');
-        return `https://www.google.com/maps/dir/${waypoints}`;
-    }
-
     function renderPlanForDay(dayId, dayData) {
         const container = $(`#${dayId}`);
         if (!container) return;
