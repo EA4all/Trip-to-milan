@@ -8,7 +8,6 @@
   <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
   <meta name="theme-color" content="#0b1220" media="(prefers-color-scheme: dark)">
 
-  <!-- Tailwind CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
@@ -28,15 +27,12 @@
       }
     };
   </script>
-  <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Assistant:wght@300;400;600;700&display=swap" rel="stylesheet">
 
-  <!-- Font Awesome for icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" xintegrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
   
-  <!-- Chart.js CDN -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
   <style>
@@ -205,6 +201,7 @@
             <button id="gemini-btn" class="btn btn-primary"><i class="fa-solid fa-wand-magic-sparkles mr-2"></i>שאל את Gemini</button>
             <button id="find-nearby-btn" class="btn btn-primary"><i class="fa-solid fa-location-crosshairs mr-2"></i>מצא מקומות קרובים אליי</button>
             <button id="show-tip-btn" class="btn btn-primary"><i class="fa-solid fa-lightbulb mr-2"></i>הצג טיפ יומי</button>
+            <button id="create-summary-btn" class="btn btn-primary"><i class="fa-solid fa-book-sparkles mr-2"></i>צור סיכום טיול</button>
         </div>
       </div>
       <div id="overview-cards" class="grid sm:grid-cols-2 lg:grid-cols-4 gap-6"></div>
@@ -314,16 +311,8 @@
                              </div>
                             <button type="submit" class="btn btn-primary w-full">הוסף הוצאה</button>
                         </form>
-                        <button id="calculate-estimated-btn" class="btn btn-primary w-full mt-2"><i class="fa-solid fa-calculator mr-2"></i>חשב עלות משוערת לאטרקציות</button>
                         <div id="expense-list" class="text-sm my-4 flex-grow max-h-40 overflow-y-auto pr-2"></div>
                         <div class="mt-auto pt-3 border-t font-bold space-y-2 text-md">
-                             <div class="flex justify-between items-center">
-                                <div class="flex items-center gap-2">
-                                    <span>עלות משוערת</span>
-                                    <input type="checkbox" id="include-estimated-costs" checked class="w-4 h-4 rounded text-brand-600 focus:ring-brand-500" title="כלול בחישוב היתרה">
-                                </div>
-                                <span id="estimated-costs">0.00€</span>
-                            </div>
                             <div class="flex justify-between text-red-600 dark:text-red-400"><span>הוצאות בפועל:</span> <span id="total-expenses">0.00</span>€</div>
                             <div class="flex justify-between text-green-600 dark:text-green-400"><span>יתרה:</span> <span id="budget-balance">0.00</span>€</div>
                         </div>
@@ -404,7 +393,6 @@
 
   </main>
   
-  <!-- Modals -->
   <div id="add-to-day-modal" class="modal-backdrop">
     <div class="modal">
         <div class="p-4 border-b"><h3 class="text-lg font-bold">הוסף פעילות ליום...</h3></div>
@@ -466,18 +454,28 @@
         </div>
     </div>
 </div>
+<div id="summary-modal" class="modal-backdrop">
+    <div class="modal">
+        <div class="p-4 border-b flex justify-between items-center">
+            <h3 class="text-lg font-bold">סיכום הטיול שלכם</h3>
+            <button id="summary-close-btn" class="text-2xl">×</button>
+        </div>
+        <div class="p-4 flex-grow overflow-y-auto">
+            <div id="summary-response" class="p-3 bg-gray-100 dark:bg-gray-800 rounded-lg min-h-[150px] whitespace-pre-wrap"></div>
+        </div>
+        <div class="p-4 border-t flex justify-end">
+            <button id="copy-summary-btn" class="btn btn-primary">העתק סיכום</button>
+        </div>
+    </div>
+</div>
 
 
 
-  <!-- Floating Nav -->
   <div id="floating-nav-container" class="md:hidden fixed bottom-0 left-0 right-0 z-40">
-      <!-- Plan Submenu -->
       <div id="plan-submenu" class="floating-submenu hidden fixed bottom-[68px] left-0 right-0 bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm p-2 rounded-t-2xl">
           <div class="grid grid-cols-3 gap-2 text-center text-sm" id="plan-submenu-links">
-              <!-- Links will be injected here -->
-          </div>
+              </div>
       </div>
-      <!-- Tools Submenu -->
       <div id="tools-submenu" class="floating-submenu hidden fixed bottom-[68px] left-0 right-0 bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm p-2 rounded-t-2xl">
           <div class="grid grid-cols-3 gap-2 text-center text-sm">
               <a href="#weather-tool" class="p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700">מזג אוויר</a>
@@ -764,7 +762,7 @@
         const hotelHtml = `<div class="bg-gray-50 dark:bg-gray-800/50 p-4 rounded-lg space-y-2">
             <h3 class="font-bold text-lg"><i class="fa-solid fa-hotel mr-2"></i>מלון</h3>
             <p><b>${hotel.name}</b></p>
-            <div class="flex gap-2"><a href="${hotel.tel}" class="btn btn-ghost"><i class="fa fa-phone"></i> חיוג</a><a href="https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(hotel.address)}" target="_blank" class="btn btn-ghost"><i class="fa fa-map-location-dot"></i> ניווט</a></div>
+            <div class="flex gap-2"><a href="${hotel.tel}" class="btn btn-ghost"><i class="fa fa-phone"></i> חיוג</a><a href="https://maps.google.com/?q=${encodeURIComponent(hotel.address)}" target="_blank" class="btn btn-ghost"><i class="fa fa-map-location-dot"></i> ניווט</a></div>
         </div>`;
         const contactsHtml = `<div class="bg-gray-50 dark:bg-gray-800/50 p-4 rounded-lg space-y-2">
             <h3 class="font-bold text-lg"><i class="fa-solid fa-address-book mr-2"></i>טלפונים חשובים</h3>
@@ -831,17 +829,30 @@
         });
       });
     }
+    
+    function generateDailyMapUrl(activities) {
+        if (!activities || activities.length === 0) return "";
+        const waypoints = activities.map(act => encodeURIComponent(act.address)).join('/');
+        return `https://www.google.com/maps/dir/${waypoints}`;
+    }
 
     function renderPlanForDay(dayId, dayData) {
         const container = $(`#${dayId}`);
         if (!container) return;
-        let content = `<div class="p-4"><div class="flex items-center gap-2 mb-4">
-            <label class="font-semibold">מצב נסיעה:</label>
-            <select class="p-2 rounded-lg border bg-white dark:bg-gray-800" data-day="${dayId}" onchange="window.handleTransportChange(event)">
-                <option value="walk" ${dayData.transport === 'walk' ? 'selected' : ''}>הליכה</option>
-                <option value="drive" ${dayData.transport === 'drive' ? 'selected' : ''}>רכב/מונית</option>
-                <option value="transit" ${dayData.transport === 'transit' ? 'selected' : ''}>תחב"צ</option>
-            </select>
+        
+        let content = `<div class="p-4"><div class="flex items-center gap-4 mb-4">
+            <div class="flex items-center gap-2">
+                <label class="font-semibold">מצב נסיעה:</label>
+                <select class="p-2 rounded-lg border bg-white dark:bg-gray-800" data-day="${dayId}" onchange="window.handleTransportChange(event)">
+                    <option value="walk" ${dayData.transport === 'walk' ? 'selected' : ''}>הליכה</option>
+                    <option value="drive" ${dayData.transport === 'drive' ? 'selected' : ''}>רכב/מונית</option>
+                    <option value="transit" ${dayData.transport === 'transit' ? 'selected' : ''}>תחב"צ</option>
+                </select>
+            </div>
+            <button class="btn btn-ghost" onclick="this.nextElementSibling.classList.toggle('hidden')">הצג מפת מסלול ליום זה</button>
+            <div class="hidden mt-4 aspect-video">
+                <iframe class="w-full h-full border rounded-lg" loading="lazy" src="${generateDailyMapUrl(dayData.activities)}"></iframe>
+            </div>
         </div><div class="space-y-4">`;
 
         let previousActivity = null; 
@@ -868,10 +879,10 @@
         if (activity.info) links.push(`<a href="${activity.info}" target="_blank" class="btn btn-ghost"><i class="fa-solid fa-circle-info"></i> מידע</a>`);
         if (activity.address) {
             links.push(`<a href="https://waze.com/ul?q=${encodeURIComponent(activity.address)}" target="_blank" class="btn btn-ghost" title="Waze"><i class="fa-brands fa-waze"></i></a>`);
-            links.push(`<a href="https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(activity.address)}" target="_blank" class="btn btn-ghost" title="Google Maps"><i class="fa-brands fa-google"></i></a>`);
+            links.push(`<a href="https://maps.google.com/?q=${encodeURIComponent(activity.address)}" target="_blank" class="btn btn-ghost" title="Google Maps"><i class="fa-brands fa-google"></i></a>`);
         }
         if (previousActivity && previousActivity.address && activity.address) {
-            const transitUrl = `https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(previousActivity.address)}&destination=${encodeURIComponent(activity.address)}&travelmode=transit`;
+            const transitUrl = `https://maps.google.com/?saddr=${encodeURIComponent(previousActivity.address)}&daddr=${encodeURIComponent(activity.address)}&travelmode=transit`;
             links.push(`<a href="${transitUrl}" target="_blank" class="btn btn-ghost" title="ניווט בתחב״צ"><i class="fa-solid fa-route"></i></a>`);
         }
         if(!isDining && activity.coords) {
@@ -922,7 +933,7 @@
                 <td data-label="פעולות" class="p-3">
                     <div class="flex flex-wrap gap-2 justify-end">
                         <button onclick="window.openAddToDayModal('${s.id}')" class="btn btn-primary btn-sm"><i class="fa-solid fa-plus"></i> הוסף</button>
-                        <a href="https://www.google.com/maps/search/?api=1&query=${s.coords.lat},${s.coords.lon}" target="_blank" class="btn btn-ghost btn-sm"><i class="fa-solid fa-map-location-dot"></i> מפה</a>
+                        <a href="https://maps.google.com/?q=${s.coords.lat},${s.coords.lon}" target="_blank" class="btn btn-ghost btn-sm"><i class="fa-solid fa-map-location-dot"></i> מפה</a>
                     </div>
                 </td>
             </tr>
@@ -1083,7 +1094,7 @@
                     <button onclick="window.openAddToDayModal('${r.name}', 'kosher')" class="btn btn-primary btn-sm" title="הוסף ליום"><i class="fa-solid fa-plus"></i></button>
                     ${r.phone ? `<a title="התקשר" href="tel:${r.phone}" class="btn btn-ghost btn-sm"><i class="fa-solid fa-phone"></i></a>`:''}
                     <a title="Waze" href="https://waze.com/ul?q=${encodeURIComponent(r.address)}" target="_blank" class="btn btn-ghost btn-sm"><i class="fa-brands fa-waze"></i></a>
-                    <a title="Google Maps" href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(r.address)}" target="_blank" class="btn btn-ghost btn-sm"><i class="fa-brands fa-google"></i></a>
+                    <a title="Google Maps" href="https://maps.google.com/?q=${encodeURIComponent(r.address)}" target="_blank" class="btn btn-ghost btn-sm"><i class="fa-brands fa-google"></i></a>
                     ${r.menu ? `<a href="${r.menu}" target="_blank" class="btn btn-ghost btn-sm" title="תפריט"><i class="fa-solid fa-utensils"></i></a>`:''}
                     ${r.website ? `<a href="${r.website}" target="_blank" class="btn btn-ghost btn-sm" title="אתר"><i class="fa-solid fa-globe"></i></a>`:''}
                     ${r.instagram ? `<a title="אינסטגרם" href="${r.instagram}" target="_blank" class="btn btn-ghost btn-sm"><i class="fa-brands fa-instagram"></i></a>`:''}
@@ -1104,7 +1115,7 @@
                     <button onclick="window.openAddToDayModal('${m.name}', 'kosher')" class="btn btn-primary btn-sm" title="הוסף ליום"><i class="fa-solid fa-plus"></i></button>
                     ${m.phone ? `<a title="התקשר" href="tel:${m.phone}" class="btn btn-ghost btn-sm"><i class="fa-solid fa-phone"></i></a>`:''}
                     <a title="Waze" href="https://waze.com/ul?q=${encodeURIComponent(m.address)}" target="_blank" class="btn btn-ghost btn-sm"><i class="fa-brands fa-waze"></i></a>
-                    <a title="Google Maps" href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(m.address)}" target="_blank" class="btn btn-ghost btn-sm"><i class="fa-brands fa-google"></i></a>
+                    <a title="Google Maps" href="https://maps.google.com/?q=${encodeURIComponent(m.address)}" target="_blank" class="btn btn-ghost btn-sm"><i class="fa-brands fa-google"></i></a>
                     ${m.website ? `<a href="${m.website}" target="_blank" class="btn btn-ghost btn-sm" title="אתר"><i class="fa-solid fa-globe"></i></a>`:''}
                     ${m.instagram ? `<a title="אינסטגרם" href="${m.instagram}" target="_blank" class="btn btn-ghost btn-sm"><i class="fa-brands fa-instagram"></i></a>`:''}
                 </div>
@@ -1174,35 +1185,7 @@
                     <span><i class="fa-solid ${iconMap[data.daily.weathercode[i]] || 'fa-question-circle'}"></i></span>
                     <span>${Math.round(data.daily.temperature_2m_min[i])}°/${Math.round(data.daily.temperature_2m_max[i])}°</span>
                 </div>`).join('');
-            
-            getPackingSuggestion(data);
-        } catch (e) { 
-            $('#weather-forecast').innerHTML = `<p class="text-xs text-red-500">שגיאה בטעינת תחזית. ${e.message}</p>`; 
-        }
-    }
-
-    async function getPackingSuggestion(weatherData) {
-        const suggestionEl = $('#packing-suggestion');
-        const cacheKey = 'packingSuggestion';
-        const cached = localStorage.getItem(cacheKey);
-        
-        if (cached) {
-            const { suggestion, timestamp } = JSON.parse(cached);
-            if (Date.now() - timestamp < 6 * 60 * 60 * 1000) { // 6 hour cache
-                suggestionEl.innerHTML = `<i class="fa-solid fa-suitcase-rolling mr-2"></i> ${suggestion}`;
-                return;
-            }
-        }
-        
-        suggestionEl.innerHTML = `מכין המלצת אריזה... <i class="fa-solid fa-spinner fa-spin"></i>`;
-        
-        const summary = `Min temps: ${weatherData.daily.temperature_2m_min.map(Math.round).join(', ')} C. Max temps: ${weatherData.daily.temperature_2m_max.map(Math.round).join(', ')} C. Weather codes (WMO): ${weatherData.daily.weathercode.join(', ')}.`;
-        const prompt = `Based on this 7-day weather forecast summary for Milan: ${summary}. Provide a short packing recommendation in Hebrew (1-2 sentences max). Give ONLY the Hebrew sentence, without any additional text, translation, or transliteration.`;
-        const payload = { contents: [{ parts: [{ text: "" }] }] };
-        const suggestion = await callGemini(payload, prompt, false);
-        
-        suggestionEl.innerHTML = `<i class="fa-solid fa-suitcase-rolling mr-2"></i> ${suggestion}`;
-        localStorage.setItem(cacheKey, JSON.stringify({ suggestion, timestamp: Date.now() }));
+        } catch (e) { $('#weather-forecast').innerHTML = `<p class="text-xs text-red-500">שגיאה בטעינת תחזית. ${e.message}</p>`; }
     }
 
     async function fetchExchangeRate() {
@@ -1573,8 +1556,10 @@
             delete payload.tools;
         }
 
-        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${apiKey}`;
-        console.log("Calling Gemini API with URL:", apiUrl); // For debugging
+        const modelName = 'gemini-1.5-flash-latest';
+        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`;
+        
+        console.log(`[DEBUG] Making API call. Prompt starts with: "${prompt.substring(0, 40)}...". Using model: "${modelName}"`);
         
         try {
             const response = await fetch(apiUrl, {
@@ -1646,6 +1631,35 @@
 
         responseContainer.textContent = responseText;
         submitBtn.disabled = false;
+    }
+
+    async function createTripSummary() {
+        const summaryModal = $('#summary-modal');
+        const responseContainer = $('#summary-response');
+        summaryModal.classList.add('flex');
+        responseContainer.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> יוצר סיכום קסום...`;
+
+        const { plan, expenses, journal } = localTripData;
+        const visitedPlaces = [...new Set(Object.values(plan).flatMap(day => day.activities.map(act => act.name)))].join(', ');
+        
+        const journalNotes = Object.values(journal).flat().map(entry => entry.text).slice(0, 2).join(' ');
+        
+        const categoryTotals = (expenses || []).reduce((acc, exp) => {
+            acc[exp.category] = (acc[exp.category] || 0) + exp.amount;
+            return acc;
+        }, {});
+        const topCategories = Object.entries(categoryTotals).sort((a,b) => b[1] - a[1]).slice(0,2).map(c => c[0]).join(', ');
+        
+        const prompt = `You are a travel blogger. Based on the following data from a trip to Milan, write a short, fun, and personal summary of the trip in Hebrew (2-3 sentences).
+        Data:
+        - Visited places: ${visitedPlaces}
+        - Top spending categories: ${topCategories}
+        - A personal note from the journal: "${journalNotes}"
+        Your entire response must be ONLY the Hebrew summary, with no other text.`;
+
+        const payload = { contents: [{ parts: [{ text: "" }] }] };
+        const summaryText = await callGemini(payload, prompt, false);
+        responseContainer.textContent = summaryText;
     }
     
     // --- INIT ---
@@ -1801,11 +1815,6 @@
             const include = e.target.checked;
             await updateDoc(tripDocRef, { 'settings.includeEstimatedCostsInBalance': include });
         });
-
-        $('#calculate-estimated-btn').addEventListener('click', () => {
-            const estimatedCosts = calculateEstimatedCosts(localTripData.plan);
-            showAlert('עלות משוערת', `העלות המשוערת לאטרקציות בתוכנית עבור זוג היא: €${estimatedCosts.toFixed(2)}.\nהסכום מופיע גם בסיכום התקציב.`);
-        });
         
         $('#toggle-suggestions-btn').addEventListener('click', e => {
             const container = $('#suggestions-container');
@@ -1868,6 +1877,13 @@
         $('#image-upload-btn').addEventListener('click', () => $('#image-upload').click());
         $('#alert-modal-close').addEventListener('click', () => $('#alert-modal').classList.remove('flex'));
         $('#daily-tip-close').addEventListener('click', () => $('#daily-tip-modal').classList.remove('flex'));
+        $('#summary-close-btn').addEventListener('click', () => $('#summary-modal').classList.remove('flex'));
+        $('#copy-summary-btn').addEventListener('click', () => {
+            const textToCopy = $('#summary-response').textContent;
+            navigator.clipboard.writeText(textToCopy).then(() => {
+                showAlert('הועתק!', 'סיכום הטיול הועתק ללוח.');
+            });
+        });
 
         $('#document-upload').addEventListener('change', (e) => {
             for (const file of e.target.files) {
@@ -1895,6 +1911,7 @@
         $('#gemini-btn').addEventListener('click', () => $('#gemini-modal').classList.add('flex'));
         $('#gemini-close-btn').addEventListener('click', () => $('#gemini-modal').classList.remove('flex'));
         $('#gemini-submit-btn').addEventListener('click', askGeneralGemini);
+        $('#create-summary-btn').addEventListener('click', createTripSummary);
 
         $('#share-btn').addEventListener('click', () => {
             const url = window.location.href;
