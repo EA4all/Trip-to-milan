@@ -7,7 +7,7 @@
   <meta name="description" content="דשבורד אינטראקטיבי ושיתופי לתכנון חופשה במילאנו: לוז יומי, אוכל כשר, מפה, מזג אוויר, מעקב תקציב, צ'קליסט וגלריית תמונות." />
   <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
   <meta name="theme-color" content="#0b1220" media="(prefers-color-scheme: dark)">
-
+  <!-- Tailwind CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
@@ -27,14 +27,15 @@
       }
     };
   </script>
+  <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Assistant:wght@300;400;600;700&display=swap" rel="stylesheet">
-
+  <!-- Font Awesome for icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" xintegrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
   
+  <!-- Chart.js CDN -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
   <style>
     :root{
       --bg: #f9fafb; --fg:#1f2937; --card:#ffffff; --muted:#6b7280;
@@ -59,7 +60,6 @@
         border-color: #374151;
     }
     .dark input::placeholder, .dark textarea::placeholder { color: var(--muted); }
-
     .btn{display:inline-flex;align-items:center;gap:.5rem;justify-content:center;border-radius:0.75rem;
          font-weight:600;font-size:.9rem;padding:.5rem .85rem;transition:.2s;border:1px solid transparent}
     .btn:disabled { opacity: 0.7; cursor: not-allowed; }
@@ -100,10 +100,8 @@
     .image-carousel button:hover { background-color: rgba(0,0,0,0.7); }
     .carousel-prev { left: 8px; }
     .carousel-next { right: 8px; }
-
     .countdown-number { font-size: 1.5rem; line-height: 1; }
     .countdown-label { font-size: 0.75rem; }
-
     .floating-submenu {
         transition: transform 0.3s ease-out, opacity 0.3s ease-out;
         transform: translateY(100%);
@@ -115,7 +113,6 @@
         opacity: 1;
         pointer-events: auto;
     }
-
     .delete-btn {
         position: absolute; top: 4px; right: 4px;
         background-color: rgba(239, 68, 68, 0.7);
@@ -126,41 +123,12 @@
         opacity: 0; transition: opacity 0.2s; z-index: 10;
     }
     .relative:hover .delete-btn { opacity: 1; }
-
-    #log-container {
-        position: fixed;
-        bottom: 10px;
-        left: 10px;
-        width: 300px;
-        max-height: 200px;
-        background: rgba(0,0,0,0.7);
-        color: #0f0;
-        font-family: monospace;
-        font-size: 10px;
-        border-radius: 8px;
-        z-index: 1000;
-        display: flex;
-        flex-direction: column;
-    }
-    #log-output {
-        padding: 5px;
-        overflow-y: auto;
-        flex-grow: 1;
-    }
-    #log-header {
-      background: #333;
-      padding: 2px 5px;
-      color: white;
-      font-weight: bold;
-      cursor: pointer;
-    }
-
     @media print {
         body * { visibility: hidden; }
         #plan, #plan * { visibility: visible; }
         #plan { position: absolute; left: 0; top: 0; width: 100%; }
         #plan details { page-break-inside: avoid; }
-        #plan summary, .nav-link, .btn, header, main > section:not(#plan), #floating-nav-container, .day-actions, #log-container { display: none !important; }
+        #plan summary, .nav-link, .btn, header, main > section:not(#plan), #floating-nav-container, .day-actions { display: none !important; }
         #plan details[open] > div { display: block !important; }
         #plan-content-container { padding: 0 !important; }
         h2 { font-size: 24px !important; }
@@ -170,8 +138,6 @@
             margin-bottom: 1rem;
         }
     }
-
-
     @media (max-width: 767px) {
       body { padding-bottom: 70px; } /* Add padding for floating nav */
       .responsive-table thead { display: none; }
@@ -193,7 +159,6 @@
   </style>
 </head>
 <body class="dark:bg-gray-900 dark:text-gray-100">
-
   <header id="site-header" class="backdrop-blur shadow-md sticky top-0 z-50">
     <nav class="container mx-auto px-4 sm:px-6 lg:px-8">
       <div class="flex items-center justify-between h-16">
@@ -218,9 +183,7 @@
       </div>
     </nav>
   </header>
-
   <main class="container mx-auto p-4 sm:p-6 lg:p-8">
-
     <section id="overview" class="my-12 scroll-mt-24">
       <div class="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
         <h2 class="text-3xl font-bold text-center text-brand-900 dark:text-brand-300">סקירה כללית</h2>
@@ -229,12 +192,10 @@
             <button id="gemini-btn" class="btn btn-primary"><i class="fa-solid fa-wand-magic-sparkles mr-2"></i>שאל את Gemini</button>
             <button id="find-nearby-btn" class="btn btn-primary"><i class="fa-solid fa-location-crosshairs mr-2"></i>מצא מקומות קרובים אליי</button>
             <button id="show-tip-btn" class="btn btn-primary"><i class="fa-solid fa-lightbulb mr-2"></i>הצג טיפ יומי</button>
-            <button id="create-summary-btn" class="btn btn-primary"><i class="fa-solid fa-book-sparkles mr-2"></i>צור סיכום טיול</button>
         </div>
       </div>
       <div id="overview-cards" class="grid sm:grid-cols-2 lg:grid-cols-4 gap-6"></div>
     </section>
-
     <section id="plan" class="my-12 scroll-mt-24">
       <div class="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
         <h2 class="text-3xl font-bold text-center text-brand-900 dark:text-brand-300">תוכנית הטיול היומית</h2>
@@ -251,7 +212,6 @@
         <div id="plan-content-container"></div>
       </div>
     </section>
-
     <section id="master-map-section" class="my-12 scroll-mt-24">
         <h2 class="text-3xl font-bold text-center text-brand-900 dark:text-brand-300 mb-6">מפה ראשית</h2>
         <div class="bg-white dark:bg-gray-950 p-6 rounded-2xl shadow-lg text-center">
@@ -259,7 +219,6 @@
             <button id="open-master-map-btn" class="btn btn-primary"><i class="fa-solid fa-map-marked-alt mr-2"></i>פתח מפה ראשית</button>
         </div>
     </section>
-
     <section id="suggestions" class="my-12 scroll-mt-24">
         <h2 class="text-3xl font-bold text-center text-brand-900 dark:text-brand-300 mb-6">מאגר הצעות</h2>
         <div class="text-center">
@@ -269,7 +228,6 @@
             <div id="suggestions-table-container"></div>
         </div>
     </section>
-
     <section id="transport-guide" class="my-12 scroll-mt-24">
         <h2 class="text-3xl font-bold text-center text-brand-900 dark:text-brand-300 mb-6">מדריך תחבורה</h2>
         <div class="grid md:grid-cols-2 gap-6">
@@ -293,7 +251,6 @@
             </div>
         </div>
     </section>
-
     <section id="kosher" class="my-12 scroll-mt-24">
       <h2 class="text-3xl font-bold text-center text-brand-900 dark:text-brand-300 mb-6">המדריך הקולינרי הכשר</h2>
       <div class="text-center">
@@ -339,8 +296,16 @@
                              </div>
                             <button type="submit" class="btn btn-primary w-full">הוסף הוצאה</button>
                         </form>
+                        <button id="calculate-estimated-btn" class="btn btn-primary w-full mt-2"><i class="fa-solid fa-calculator mr-2"></i>חשב עלות משוערת לאטרקציות</button>
                         <div id="expense-list" class="text-sm my-4 flex-grow max-h-40 overflow-y-auto pr-2"></div>
                         <div class="mt-auto pt-3 border-t font-bold space-y-2 text-md">
+                             <div class="flex justify-between items-center">
+                                <div class="flex items-center gap-2">
+                                    <span>עלות משוערת</span>
+                                    <input type="checkbox" id="include-estimated-costs" checked class="w-4 h-4 rounded text-brand-600 focus:ring-brand-500" title="כלול בחישוב היתרה">
+                                </div>
+                                <span id="estimated-costs">0.00€</span>
+                            </div>
                             <div class="flex justify-between text-red-600 dark:text-red-400"><span>הוצאות בפועל:</span> <span id="total-expenses">0.00</span>€</div>
                             <div class="flex justify-between text-green-600 dark:text-green-400"><span>יתרה:</span> <span id="budget-balance">0.00</span>€</div>
                         </div>
@@ -403,7 +368,6 @@
           </div>
         </div>
     </section>
-
     <section id="documents-and-gallery" class="my-12 scroll-mt-24 grid md:grid-cols-2 gap-6">
         <div class="bg-white dark:bg-gray-950 p-6 rounded-2xl shadow-lg">
             <h2 class="text-2xl font-bold mb-4"><i class="fa-solid fa-folder-open mr-2"></i>תיק מסמכים</h2>
@@ -418,9 +382,9 @@
             <div id="gallery-grid" class="grid grid-cols-2 sm:grid-cols-3 gap-4"></div>
         </div>
     </section>
-
   </main>
   
+  <!-- Modals -->
   <div id="add-to-day-modal" class="modal-backdrop">
     <div class="modal">
         <div class="p-4 border-b"><h3 class="text-lg font-bold">הוסף פעילות ליום...</h3></div>
@@ -482,32 +446,15 @@
         </div>
     </div>
 </div>
-<div id="summary-modal" class="modal-backdrop">
-    <div class="modal">
-        <div class="p-4 border-b flex justify-between items-center">
-            <h3 class="text-lg font-bold">סיכום הטיול שלכם</h3>
-            <button id="summary-close-btn" class="text-2xl">×</button>
-        </div>
-        <div class="p-4 flex-grow overflow-y-auto">
-            <div id="summary-response" class="p-3 bg-gray-100 dark:bg-gray-800 rounded-lg min-h-[150px] whitespace-pre-wrap"></div>
-        </div>
-        <div class="p-4 border-t flex justify-end">
-            <button id="copy-summary-btn" class="btn btn-primary">העתק סיכום</button>
-        </div>
-    </div>
-</div>
-
-  <div id="log-container">
-    <div id="log-header">יומן אבחון (לחץ להסתרה/הצגה)</div>
-    <pre id="log-output"></pre>
-  </div>
-
-
+  <!-- Floating Nav -->
   <div id="floating-nav-container" class="md:hidden fixed bottom-0 left-0 right-0 z-40">
+      <!-- Plan Submenu -->
       <div id="plan-submenu" class="floating-submenu hidden fixed bottom-[68px] left-0 right-0 bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm p-2 rounded-t-2xl">
           <div class="grid grid-cols-3 gap-2 text-center text-sm" id="plan-submenu-links">
-              </div>
+              <!-- Links will be injected here -->
+          </div>
       </div>
+      <!-- Tools Submenu -->
       <div id="tools-submenu" class="floating-submenu hidden fixed bottom-[68px] left-0 right-0 bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm p-2 rounded-t-2xl">
           <div class="grid grid-cols-3 gap-2 text-center text-sm">
               <a href="#weather-tool" class="p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700">מזג אוויר</a>
@@ -517,7 +464,6 @@
               <a href="#converter-tool" class="p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700">ממיר מטבע</a>
           </div>
       </div>
-
       <nav id="floating-nav" class="bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm shadow-[0_-2px_10px_rgba(0,0,0,0.1)] dark:shadow-[0_-2px_10px_rgba(0,0,0,0.3)] rounded-t-2xl">
         <div class="flex justify-around p-2 text-gray-700 dark:text-gray-300">
             <button id="floating-plan-btn" class="flex flex-col items-center text-xs gap-1 p-1 hover:text-brand-600 w-1/4">
@@ -542,11 +488,13 @@
   
   <script type="module">
     // --- Firebase SDK ---
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-app.js";
-    import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-auth.js";
-    import { getFirestore, doc, onSnapshot, setDoc, updateDoc, arrayUnion, arrayRemove } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js";
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+    import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+    import { getFirestore, doc, onSnapshot, setDoc, updateDoc, arrayUnion, arrayRemove, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
     // --- CONFIGURATION ---
+    // ⚠️ חשוב! יש להחליף את הטקסט בתוך הגרשיים במפתחות API אמיתיים
+    // ודא שהמפתח שהודבק נמצא *בתוך* המרכאות
     const FIREBASE_CONFIG = {
       apiKey: "AIzaSyD47-qHc8vmGQt4n4LluKW64LEMB-UYrfk",
       authDomain: "trip-to-milan.firebaseapp.com",
@@ -557,20 +505,9 @@
       measurementId: "G-P17LYZJ2H0"
     };
     const GEMINI_API_KEY = "AIzaSyB80v2xdhebJqhjyruJ5Ta0eyhJiq7DsI8";
-
-
     // --- UTILS ---
     const $ = (s, p = document) => p.querySelector(s);
     const $$ = (s, p = document) => Array.from(p.querySelectorAll(s));
-    
-    const logOutput = document.getElementById('log-output');
-    const log = (msg) => {
-      console.log(msg);
-      if (logOutput) {
-        logOutput.textContent = `${new Date().toLocaleTimeString()} - ${msg}\n` + logOutput.textContent;
-      }
-    };
-    
     function toRad(x) { return x * Math.PI / 180; }
     function haversineKm(lat1, lon1, lat2, lon2) {
         if ([lat1, lon1, lat2, lon2].some(c => c === undefined || c === null)) return NaN;
@@ -671,7 +608,6 @@
       "מים מהברז במילאנו בטוחים וטובים לשתייה. חפשו ברזיות ציבוריות (fontanelle) כדי למלא את בקבוק המים שלכם ולחסוך כסף.",
       "אם אתם מתכננים לראות את 'הסעודה האחרונה' של דה וינצ'י, חובה להזמין כרטיסים באינטרנט מספר חודשים מראש. הכניסה מוגבלת מאוד."
     ];
-
     const tripMeta = {
         flights: {
             inbound: { date: '2025-11-23', arrivalLocal: '11:15', flight: 'LY381' },
@@ -687,7 +623,6 @@
     };
     
     let currentLang = 'he-it'; // he-it or it-he
-
     function getInitialTripData() {
         const initialPlanKeys = ['duomo', 'primark', 'sanSiro', 'como', 'berninaExpress', 'laScala', 'navigli', 'ilCentro'];
         return {
@@ -722,7 +657,6 @@
             settings: { includeEstimatedCostsInBalance: true }
         };
     }
-
     // --- MODAL ---
     let activityToModify = null;
     const modal = $('#add-to-day-modal');
@@ -736,7 +670,6 @@
         }
         
         if (!activityToModify) return;
-
         const opts = $('#modal-day-options');
         opts.innerHTML = Object.entries(localTripData.plan).sort((a,b) => a[0].localeCompare(b[0])).map(([dayId, dayData]) => 
             `<button class="btn btn-primary" onclick="window.addActivityToDay('${dayId}', '${type}')">${dayData.name}</button>`
@@ -765,7 +698,6 @@
         closeModal();
     };
     window.openAddToDayModal = openAddToDayModal;
-
     function showAlert(title, message) {
         $('#alert-modal-title').textContent = title;
         $('#alert-modal-body').textContent = message;
@@ -777,17 +709,14 @@
         $('#daily-tip-body').textContent = tip;
         $('#daily-tip-modal').classList.add('flex');
     }
-
     function showDailyTip() {
         const lastTipDate = localStorage.getItem('lastTipDate');
         const today = new Date().toISOString().slice(0, 10);
-
         if (lastTipDate !== today) {
             openTipModal();
             localStorage.setItem('lastTipDate', today);
         }
     }
-
     // --- RENDER FUNCTIONS ---
     function renderOverview() {
         const { hotel, flights, contacts } = tripMeta;
@@ -803,7 +732,7 @@
         const hotelHtml = `<div class="bg-gray-50 dark:bg-gray-800/50 p-4 rounded-lg space-y-2">
             <h3 class="font-bold text-lg"><i class="fa-solid fa-hotel mr-2"></i>מלון</h3>
             <p><b>${hotel.name}</b></p>
-            <div class="flex gap-2"><a href="${hotel.tel}" class="btn btn-ghost"><i class="fa fa-phone"></i> חיוג</a><a href="https://maps.google.com/?q=${encodeURIComponent(hotel.address)}" target="_blank" class="btn btn-ghost"><i class="fa fa-map-location-dot"></i> ניווט</a></div>
+            <div class="flex gap-2"><a href="${hotel.tel}" class="btn btn-ghost"><i class="fa fa-phone"></i> חיוג</a><a href="https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(hotel.address)}" target="_blank" class="btn btn-ghost"><i class="fa fa-map-location-dot"></i> ניווט</a></div>
         </div>`;
         const contactsHtml = `<div class="bg-gray-50 dark:bg-gray-800/50 p-4 rounded-lg space-y-2">
             <h3 class="font-bold text-lg"><i class="fa-solid fa-address-book mr-2"></i>טלפונים חשובים</h3>
@@ -812,7 +741,6 @@
         $('#overview-cards').innerHTML = countdownHtml + flightsHtml + hotelHtml + contactsHtml;
         startCountdown();
     }
-
     function startCountdown() {
         const targetDate = new Date(`${tripMeta.flights.inbound.date}T00:00:00`).getTime();
         const countdownEl = $('#countdown');
@@ -821,18 +749,15 @@
         const interval = setInterval(() => {
             const now = new Date().getTime();
             const distance = targetDate - now;
-
             if (distance < 0) {
                 clearInterval(interval);
                 countdownEl.innerHTML = "<div class='text-lg font-bold w-full'>הטיול התחיל! תהנו!</div>";
                 return;
             }
-
             const days = Math.floor(distance / (1000 * 60 * 60 * 24));
             const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
             const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
             const seconds = Math.floor((distance % (1000 * 60)) / 1000);
-
             countdownEl.innerHTML = `
                 <div><div class="countdown-number">${days}</div><div class="countdown-label">ימים</div></div>
                 <div><div class="countdown-number">${hours}</div><div class="countdown-label">שעות</div></div>
@@ -841,7 +766,6 @@
             `;
         }, 1000);
     }
-
     function renderAllPlans(planData) {
       if (!planData) return;
       const nav = $('#day-tabs-nav'), content = $('#plan-content-container');
@@ -856,7 +780,6 @@
         renderPlanForDay(dayId, dayData);
       });
       submenu.innerHTML += `<a href="#suggestions" class="p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 col-span-3">הצעות</a>`;
-
       $$('#day-tabs-nav .tab-button').forEach(b => b.addEventListener('click', (e) => {
         $$('#day-tabs-nav .tab-button').forEach(btn => btn.classList.remove('tab-active'));
         e.currentTarget.classList.add('tab-active');
@@ -870,34 +793,17 @@
         });
       });
     }
-    
-    function generateDailyMapUrl(activities) {
-        if (!activities || activities.length < 2) return "";
-        const waypoints = activities
-            .map(act => act.address ? encodeURIComponent(act.address) : null)
-            .filter(Boolean); // Remove any activities without an address
-        if (waypoints.length < 2) return "";
-        return `https://www.google.com/maps/dir/${waypoints.join('/')}`;
-    }
-
     function renderPlanForDay(dayId, dayData) {
         const container = $(`#${dayId}`);
         if (!container) return;
-        
-        const dailyMapUrl = generateDailyMapUrl(dayData.activities);
-        
-        let content = `<div class="p-4"><div class="flex items-center gap-4 mb-4">
-            <div class="flex items-center gap-2">
-                <label class="font-semibold">מצב נסיעה:</label>
-                <select class="p-2 rounded-lg border bg-white dark:bg-gray-800" data-day="${dayId}" onchange="window.handleTransportChange(event)">
-                    <option value="walk" ${dayData.transport === 'walk' ? 'selected' : ''}>הליכה</option>
-                    <option value="drive" ${dayData.transport === 'drive' ? 'selected' : ''}>רכב/מונית</option>
-                    <option value="transit" ${dayData.transport === 'transit' ? 'selected' : ''}>תחב"צ</option>
-                </select>
-            </div>
-            ${dailyMapUrl ? `<a href="${dailyMapUrl}" target="_blank" class="btn btn-ghost">הצג מפת מסלול ליום זה</a>` : ''}
+        let content = `<div class="p-4"><div class="flex items-center gap-2 mb-4">
+            <label class="font-semibold">מצב נסיעה:</label>
+            <select class="p-2 rounded-lg border bg-white dark:bg-gray-800" data-day="${dayId}" onchange="window.handleTransportChange(event)">
+                <option value="walk" ${dayData.transport === 'walk' ? 'selected' : ''}>הליכה</option>
+                <option value="drive" ${dayData.transport === 'drive' ? 'selected' : ''}>רכב/מונית</option>
+                <option value="transit" ${dayData.transport === 'transit' ? 'selected' : ''}>תחב"צ</option>
+            </select>
         </div><div class="space-y-4">`;
-
         let previousActivity = null; 
         dayData.activities.forEach((act, i) => {
             const dist = haversineKm(previousActivity?.coords?.lat, previousActivity?.coords?.lon, act.coords?.lat, act.coords?.lon);
@@ -922,16 +828,15 @@
         if (activity.info) links.push(`<a href="${activity.info}" target="_blank" class="btn btn-ghost"><i class="fa-solid fa-circle-info"></i> מידע</a>`);
         if (activity.address) {
             links.push(`<a href="https://waze.com/ul?q=${encodeURIComponent(activity.address)}" target="_blank" class="btn btn-ghost" title="Waze"><i class="fa-brands fa-waze"></i></a>`);
-            links.push(`<a href="https://maps.google.com/?q=${encodeURIComponent(activity.address)}" target="_blank" class="btn btn-ghost" title="Google Maps"><i class="fa-brands fa-google"></i></a>`);
+            links.push(`<a href="https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(activity.address)}" target="_blank" class="btn btn-ghost" title="Google Maps"><i class="fa-brands fa-google"></i></a>`);
         }
         if (previousActivity && previousActivity.address && activity.address) {
-            const transitUrl = `https://maps.google.com/?saddr=${encodeURIComponent(previousActivity.address)}&daddr=${encodeURIComponent(activity.address)}&travelmode=transit`;
+            const transitUrl = `https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(previousActivity.address)}&destination=${encodeURIComponent(activity.address)}&travelmode=transit`;
             links.push(`<a href="${transitUrl}" target="_blank" class="btn btn-ghost" title="ניווט בתחב״צ"><i class="fa-solid fa-route"></i></a>`);
         }
         if(!isDining && activity.coords) {
              links.push(`<button onclick="window.findNearbyKosher(this)" data-lat="${activity.coords.lat}" data-lon="${activity.coords.lon}" data-name="${activity.name}" class="btn btn-ghost"><i class="fa-solid fa-utensils"></i> מסעדות</button>`);
         }
-
         const imgHTML = activity.img ? `<div class="image-carousel" data-images='${JSON.stringify(activity.img)}' data-index="0">
             <img loading="lazy" src="${activity.img[0]}" alt="${activity.name}" class="thumb" onerror="this.style.display='none'">
             ${(activity.img.length || 0) > 1 ? `<button class="carousel-prev" onclick="window.navigateCarousel(this, -1)"><</button><button class="carousel-next" onclick="window.navigateCarousel(this, 1)">></button>` : ''}
@@ -941,7 +846,6 @@
             <button class="p-1 ${index === 0 ? 'opacity-25' : ''}" ${index === 0 ? 'disabled' : ''} onclick="window.moveActivity('${dayId}', '${activity.id}', -1)"><i class="fa-solid fa-arrow-up"></i></button>
             <button class="p-1 ${index === total - 1 ? 'opacity-25' : ''}" ${index === total - 1 ? 'disabled' : ''} onclick="window.moveActivity('${dayId}', '${activity.id}', 1)"><i class="fa-solid fa-arrow-down"></i></button>
         `;
-
         return `<details class="bg-gray-50 dark:bg-gray-900 rounded-xl shadow-md overflow-hidden relative" open>
           <summary class="cursor-pointer list-none flex items-center justify-between p-4">
             <h4 class="font-bold text-lg">${isDining ? '<i class="fa-solid fa-utensils mr-2"></i>' : ''}${activity.time ? activity.time + ' - ' : ''}${activity.name}</h4>
@@ -968,7 +872,6 @@
             container.innerHTML = `<div class="text-center text-gray-500">כל הכבוד! כל הפעילויות שובצו בתוכנית.</div>`;
             return;
         }
-
         const tableRows = suggestions.map(s => `
             <tr class="border-b dark:border-gray-800">
                 <td data-label="שם" class="p-3 font-medium">${s.name}</td>
@@ -976,12 +879,11 @@
                 <td data-label="פעולות" class="p-3">
                     <div class="flex flex-wrap gap-2 justify-end">
                         <button onclick="window.openAddToDayModal('${s.id}')" class="btn btn-primary btn-sm"><i class="fa-solid fa-plus"></i> הוסף</button>
-                        <a href="https://maps.google.com/?q=${s.coords.lat},${s.coords.lon}" target="_blank" class="btn btn-ghost btn-sm"><i class="fa-solid fa-map-location-dot"></i> מפה</a>
+                        <a href="https://www.google.com/maps/search/?api=1&query=${s.coords.lat},${s.coords.lon}" target="_blank" class="btn btn-ghost btn-sm"><i class="fa-solid fa-map-location-dot"></i> מפה</a>
                     </div>
                 </td>
             </tr>
         `).join('');
-
         container.innerHTML = `
             <table class="w-full text-sm responsive-table">
                 <thead class="text-right bg-gray-50 dark:bg-gray-800">
@@ -997,7 +899,6 @@
             </table>
         `;
     }
-
     function isCurrentlyOpen(hoursString) {
         if (!hoursString) return false;
         
@@ -1011,7 +912,6 @@
             minute: 'numeric',
             hour12: false,
         }).formatToParts(now);
-
         const milanDayStr = milanParts.find(p => p.type === 'weekday')?.value;
         const hourPart = milanParts.find(p => p.type === 'hour')?.value;
         const minutePart = milanParts.find(p => p.type === 'minute')?.value;
@@ -1020,10 +920,8 @@
              console.error("Could not determine Milan time");
              return false;
         }
-
         let currentHour = parseInt(hourPart, 10);
         if (currentHour === 24) currentHour = 0;
-
         const currentMinute = parseInt(minutePart, 10);
         
         const dayMapEn = {'Sun': 0, 'Mon': 1, 'Tue': 2, 'Wed': 3, 'Thu': 4, 'Fri': 5, 'Sat': 6};
@@ -1031,16 +929,13 @@
         const currentTimeInMinutes = currentHour * 60 + currentMinute;
         
         const dayMapHe = {'א': 0, 'ב': 1, 'ג': 2, 'ד': 3, 'ה': 4, 'ו': 5, 'ש': 6};
-
         try {
             const dayEntries = hoursString.split(';').map(s => s.trim());
             for (const entry of dayEntries) {
                 const firstSpaceIndex = entry.indexOf(' ');
                 if (firstSpaceIndex === -1) continue;
-
                 const daySpec = entry.substring(0, firstSpaceIndex);
                 const timeSpec = entry.substring(firstSpaceIndex + 1);
-
                 let applicableDays = [];
                 const cleanedDaySpec = daySpec.replace(/'/g, '');
                 if (cleanedDaySpec.includes('-')) {
@@ -1057,11 +952,9 @@
                 }
                 
                 const timeRanges = timeSpec.split(',').map(r => r.trim());
-
                 for (const range of timeRanges) {
                     const [startStr, endStr] = range.split('-');
                     if (!startStr || !endStr) continue;
-
                     const [startH, startM] = startStr.split(':').map(Number);
                     const [endH, endM] = endStr.split(':').map(Number);
                     const startTotalMinutes = startH * 60 + (startM || 0);
@@ -1086,10 +979,8 @@
             console.error("Error parsing hours string:", hoursString, e);
             return false;
         }
-
         return false;
     }
-
     function renderKosher(filter = 'all') {
         let allKosher = [...kosherData.restaurants, ...kosherData.markets];
         
@@ -1099,18 +990,15 @@
         } else {
             allKosher.forEach(k => delete k.distance);
         }
-
         const filtered = allKosher.filter(r => {
             if (filter === 'open') return isCurrentlyOpen(r.hours);
             if (filter === 'all') return true;
             const style = r.style.toLowerCase();
             return style.includes(filter.toLowerCase());
         });
-
         const content = filtered.map(item => (item.style.includes('בשרי') || item.style.includes('חלבי') || item.style.includes('פלאפל') || item.style.includes('טייק-אווי') ? rowRestaurant(item) : rowMarket(item))).join('');
         $('#kosher-results').innerHTML = `<table class="min-w-full text-sm responsive-table"><tbody>${content || `<tr><td class="p-4 text-center">לא נמצאו תוצאות.</td></tr>`}</tbody></table>`;
     }
-
     function renderKosherFilters() {
         const filters = ['all', 'open', 'בשרי', 'חלבי', 'מאפייה', 'מרכול'];
         const filterLabels = {'all': 'הכל', 'open': 'פתוח עכשיו', 'בשרי': 'בשרי', 'חלבי': 'חלבי', 'מאפייה': 'מאפייה', 'מרכול': 'מרכול'};
@@ -1123,7 +1011,6 @@
         }));
         $('.kosher-filter-btn[data-filter="all"]').classList.add('tab-active');
     }
-
     const rowRestaurant = r => {
         const logoSrc = r.logo || placeholderLogoUrl(r.name);
         return `
@@ -1137,7 +1024,7 @@
                     <button onclick="window.openAddToDayModal('${r.name}', 'kosher')" class="btn btn-primary btn-sm" title="הוסף ליום"><i class="fa-solid fa-plus"></i></button>
                     ${r.phone ? `<a title="התקשר" href="tel:${r.phone}" class="btn btn-ghost btn-sm"><i class="fa-solid fa-phone"></i></a>`:''}
                     <a title="Waze" href="https://waze.com/ul?q=${encodeURIComponent(r.address)}" target="_blank" class="btn btn-ghost btn-sm"><i class="fa-brands fa-waze"></i></a>
-                    <a title="Google Maps" href="https://maps.google.com/?q=${encodeURIComponent(r.address)}" target="_blank" class="btn btn-ghost btn-sm"><i class="fa-brands fa-google"></i></a>
+                    <a title="Google Maps" href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(r.address)}" target="_blank" class="btn btn-ghost btn-sm"><i class="fa-brands fa-google"></i></a>
                     ${r.menu ? `<a href="${r.menu}" target="_blank" class="btn btn-ghost btn-sm" title="תפריט"><i class="fa-solid fa-utensils"></i></a>`:''}
                     ${r.website ? `<a href="${r.website}" target="_blank" class="btn btn-ghost btn-sm" title="אתר"><i class="fa-solid fa-globe"></i></a>`:''}
                     ${r.instagram ? `<a title="אינסטגרם" href="${r.instagram}" target="_blank" class="btn btn-ghost btn-sm"><i class="fa-brands fa-instagram"></i></a>`:''}
@@ -1158,14 +1045,13 @@
                     <button onclick="window.openAddToDayModal('${m.name}', 'kosher')" class="btn btn-primary btn-sm" title="הוסף ליום"><i class="fa-solid fa-plus"></i></button>
                     ${m.phone ? `<a title="התקשר" href="tel:${m.phone}" class="btn btn-ghost btn-sm"><i class="fa-solid fa-phone"></i></a>`:''}
                     <a title="Waze" href="https://waze.com/ul?q=${encodeURIComponent(m.address)}" target="_blank" class="btn btn-ghost btn-sm"><i class="fa-brands fa-waze"></i></a>
-                    <a title="Google Maps" href="https://maps.google.com/?q=${encodeURIComponent(m.address)}" target="_blank" class="btn btn-ghost btn-sm"><i class="fa-brands fa-google"></i></a>
+                    <a title="Google Maps" href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(m.address)}" target="_blank" class="btn btn-ghost btn-sm"><i class="fa-brands fa-google"></i></a>
                     ${m.website ? `<a href="${m.website}" target="_blank" class="btn btn-ghost btn-sm" title="אתר"><i class="fa-solid fa-globe"></i></a>`:''}
                     ${m.instagram ? `<a title="אינסטגרם" href="${m.instagram}" target="_blank" class="btn btn-ghost btn-sm"><i class="fa-brands fa-instagram"></i></a>`:''}
                 </div>
             </td>
         </tr>`;
     };
-
     function renderChecklist(checklistData) {
         const container = $('#checklist-container');
         const categorySelect = $('#category-select');
@@ -1184,7 +1070,6 @@
             container.innerHTML += catHtml + '</div>';
         });
     }
-
     function renderJournal(dayId, entries = []) {
         const entriesHtml = entries.sort((a,b) => a.timestamp - b.timestamp).map(entry => `
             <div class="bg-blue-50 dark:bg-blue-900/30 p-3 rounded-lg relative group">
@@ -1228,9 +1113,37 @@
                     <span><i class="fa-solid ${iconMap[data.daily.weathercode[i]] || 'fa-question-circle'}"></i></span>
                     <span>${Math.round(data.daily.temperature_2m_min[i])}°/${Math.round(data.daily.temperature_2m_max[i])}°</span>
                 </div>`).join('');
-        } catch (e) { $('#weather-forecast').innerHTML = `<p class="text-xs text-red-500">שגיאה בטעינת תחזית. ${e.message}</p>`; }
-    }
 
+            getPackingSuggestion(data); // New function call
+            getPackingSuggestion(data);
+        } catch (e) { 
+            $('#weather-forecast').innerHTML = `<p class="text-xs text-red-500">שגיאה בטעינת תחזית. ${e.message}</p>`; 
+        }
+    }
+    async function getPackingSuggestion(weatherData) {
+        const suggestionEl = $('#packing-suggestion');
+        const cacheKey = 'packingSuggestion';
+        const cached = localStorage.getItem(cacheKey);
+        
+        if (cached) {
+            const { suggestion, timestamp } = JSON.parse(cached);
+            if (Date.now() - timestamp < 6 * 60 * 60 * 1000) { // 6 hour cache
+                suggestionEl.innerHTML = `<i class="fa-solid fa-suitcase-rolling mr-2"></i> ${suggestion}`;
+                return;
+            }
+        }
+        
+        suggestionEl.innerHTML = `מכין המלצת אריזה... <i class="fa-solid fa-spinner fa-spin"></i>`;
+
+        const summary = `Min temps: ${weatherData.daily.temperature_2m_min.map(Math.round).join(', ')} C. Max temps: ${weatherData.daily.temperature_2m_max.map(Math.round).join(', ')} C. Weather codes (WMO): ${weatherData.daily.weathercode.join(', ')}.`;
+        const prompt = `Based on this 7-day weather forecast summary for Milan: ${summary}. Provide a short, helpful packing recommendation in Hebrew (1-2 sentences). Mention key items like umbrella, light jacket, sweater, sunglasses, etc., as appropriate for the forecast.`;
+        const prompt = `Based on this 7-day weather forecast summary for Milan: ${summary}. Provide a short packing recommendation in Hebrew (1-2 sentences max). Give ONLY the Hebrew sentence, without any additional text, translation, or transliteration.`;
+        const payload = { contents: [{ parts: [{ text: "" }] }] };
+        const suggestion = await callGemini(payload, prompt, false);
+
+        suggestionEl.innerHTML = `<i class="fa-solid fa-suitcase-rolling mr-2"></i> ${suggestion}`;
+        localStorage.setItem(cacheKey, JSON.stringify({ suggestion, timestamp: Date.now() }));
+    }
     async function fetchExchangeRate() {
         try {
             const response = await fetch('https://api.exchangerate-api.com/v4/latest/EUR');
@@ -1256,7 +1169,6 @@
                 <button class="delete-btn" onclick="window.removeDocument('${doc.id}')">×</button>
             </div>`).join('');
     }
-
     function renderGallery(gallery = []) {
         const grid = $('#gallery-grid');
         grid.innerHTML = gallery.map(img => `<div class="relative aspect-square">
@@ -1264,7 +1176,6 @@
             <button class="delete-btn" onclick="window.removeImage('${img.id}')">×</button>
         </div>`).join('');
     }
-
     function calculateEstimatedCosts(plan) {
         let totalCost = 0;
         if (!plan) return 0;
@@ -1277,7 +1188,6 @@
         });
         return totalCost * 2; // For a couple
     }
-
     function renderBudget(data) {
         const { totalBudget = 0, expenses = [], plan, settings = { includeEstimatedCostsInBalance: true } } = data;
         
@@ -1285,18 +1195,14 @@
         if (document.activeElement !== totalBudgetInput) {
              totalBudgetInput.value = totalBudget || '';
         }
-
         const includeEstimated = $('#include-estimated-costs');
-        if (includeEstimated) { // Check if element exists before accessing properties
-          includeEstimated.checked = settings.includeEstimatedCostsInBalance;
-        }
-
+        includeEstimated.checked = settings.includeEstimatedCostsInBalance;
         const totalExpenses = expenses.reduce((sum, exp) => sum + exp.amount, 0);
-        const balance = totalBudget - totalExpenses;
-
+        const estimatedCosts = calculateEstimatedCosts(plan);
+        const balance = totalBudget - totalExpenses - (includeEstimated.checked ? estimatedCosts : 0);
         $('#total-expenses').textContent = totalExpenses.toFixed(2) + '€';
+        $('#estimated-costs').textContent = estimatedCosts.toFixed(2) + '€';
         $('#budget-balance').textContent = balance.toFixed(2) + '€';
-
         $('#expense-list').innerHTML = expenses.map(exp => 
             `<div class="flex justify-between items-center py-1 group">
                 <span>${exp.desc} <span class="text-xs text-gray-400">${exp.category}</span></span>
@@ -1317,17 +1223,14 @@
         const placeholder = $('#budget-chart-placeholder');
         const legendContainer = $('#budget-chart-legend');
         if (!ctx) return;
-
         const categoryTotals = (expenses || []).reduce((acc, exp) => {
             acc[exp.category] = (acc[exp.category] || 0) + exp.amount;
             return acc;
         }, {});
-
         const totalExpenses = (expenses || []).reduce((sum, exp) => sum + exp.amount, 0);
         const labels = Object.keys(categoryTotals);
         const data = Object.values(categoryTotals);
         const backgroundColors = ['#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#8b5cf6'];
-
         if (budgetChartInstance) {
             budgetChartInstance.destroy();
         }
@@ -1338,7 +1241,6 @@
             return;
         }
         placeholder.classList.add('hidden');
-
         budgetChartInstance = new Chart(ctx, {
             type: 'doughnut',
             data: {
@@ -1372,7 +1274,6 @@
                 }
             }
         });
-
         // Generate custom legend
         legendContainer.innerHTML = `<h4 class="text-center font-bold mb-2">פירוט הוצאות</h4>`;
         labels.forEach((label, index) => {
@@ -1390,7 +1291,6 @@
             `;
         });
     }
-
     function renderTranslationHistory(history = []) {
         const container = $('#translation-history');
         if (!container) return;
@@ -1410,8 +1310,6 @@
             </div>
         `).join('');
     }
-
-
     // --- State Modifiers (Write to Firestore) ---
     async function handleTransportChange(e) {
         const dayId = e.target.dataset.day;
@@ -1535,15 +1433,12 @@
             translateText(item.sourceText);
         }
     }
-
-
     // Assign functions to window scope so inline event handlers can find them
     Object.assign(window, {
       handleTransportChange, removeActivity, moveActivity, removeExpense, toggleChecklistItem,
       removeChecklistItem, addJournalEntry, removeJournalEntry, removeDocument, removeImage,
       deleteHistoryItem, rerunTranslation
     });
-
     // --- Camera Functions ---
     async function startCamera() {
         const video = $('#camera-feed');
@@ -1561,14 +1456,12 @@
             showAlert("מצלמה לא נתמכת", "מצטערים, הדפדפן שלך לא תומך בגישה למצלמה.");
         }
     }
-
     function stopCamera() {
         if (cameraStream) {
             cameraStream.getTracks().forEach(track => track.stop());
         }
         $('#camera-modal').classList.remove('flex');
     }
-
     function captureFrameAndTranslate() {
         const video = $('#camera-feed');
         const canvas = $('#camera-canvas');
@@ -1584,7 +1477,6 @@
         stopCamera();
         translateImage(base64ImageData, 'image/jpeg');
     }
-
     // --- Gemini API Call ---
     async function callGemini(payload, prompt, useSearch = false) {
         const apiKey = GEMINI_API_KEY;
@@ -1598,11 +1490,8 @@
         } else {
             delete payload.tools;
         }
-
-        const modelName = 'gemini-1.5-flash-latest';
-        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`;
-        
-        log(`Calling Gemini with model: ${modelName}. Search: ${useSearch}`);
+        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${apiKey}`;
+        console.log("Calling Gemini API with URL:", apiUrl); // For debugging
         
         try {
             const response = await fetch(apiUrl, {
@@ -1615,12 +1504,9 @@
                 throw new Error(error.error.message || `שגיאת רשת: ${response.status}`);
             }
             const result = await response.json();
-            log("Gemini response received successfully.");
             const text = result.candidates?.[0]?.content?.parts?.[0]?.text;
             return text || "לא התקבלה תשובה מ-Gemini.";
-
         } catch (error) {
-            log(`[ERROR] Gemini API Error: ${error.message}`);
             console.error("Gemini API Error:", error);
             return `שגיאה: ${error.message}`;
         }
@@ -1631,7 +1517,6 @@
         utterance.lang = lang;
         speechSynthesis.speak(utterance);
     }
-
     async function translateText(text) {
         const resultContainer = $('#translation-result-container');
         resultContainer.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i>`;
@@ -1661,45 +1546,33 @@
         const langCode = currentLang === 'he-it' ? 'it-IT' : 'he-IL';
         resultContainer.innerHTML = `<span>${responseText}</span> <button onclick="window.speakText('${responseText.replace(/'/g, "\\'")}', '${langCode}')" class="btn btn-ghost p-1 h-auto"><i class="fa-solid fa-volume-high"></i></button>`;
     }
-
     async function askGeneralGemini() {
         const prompt = $('#gemini-prompt').value;
         if (!prompt) return;
-
         const responseContainer = $('#gemini-response');
         const submitBtn = $('#gemini-submit-btn');
         submitBtn.disabled = true;
         responseContainer.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> חושב...`;
-
         const payload = { contents: [{ parts: [{ text: "" }] }] };
         const responseText = await callGemini(payload, prompt, true);
-
         responseContainer.textContent = responseText;
         submitBtn.disabled = false;
     }
     
     // --- INIT ---
-    log("Script start. Waiting for DOMContentLoaded.");
-
     document.addEventListener('DOMContentLoaded', () => {
-        log("DOMContentLoaded event fired.");
         // --- Firebase Initialization ---
         const app = initializeApp(FIREBASE_CONFIG);
         auth = getAuth(app);
         db = getFirestore(app);
-        log("Firebase Initialized.");
-
         // --- Caching and Sharing Logic ---
         let tripId = window.location.hash.substring(1);
         if (!tripId) {
             tripId = Math.random().toString(36).substring(2, 12);
             window.location.hash = tripId;
         }
-        log(`Using tripId: ${tripId}`);
-
         const cachedData = localStorage.getItem(`tripData_${tripId}`);
         if (cachedData) {
-            log("Found cached data. Rendering UI from cache.");
             localTripData = JSON.parse(cachedData);
             renderAllPlans(localTripData.plan);
             renderSuggestions(localTripData.suggestions);
@@ -1710,23 +1583,17 @@
             renderGallery(localTripData.gallery);
             renderTranslationHistory(localTripData.translationHistory);
             if (localTripData.theme === 'dark') document.documentElement.classList.add('dark');
-        } else {
-          log("No cached data found.");
         }
-
         signInAnonymously(auth).catch((error) => {
             console.error("Anonymous sign-in failed:", error);
-            log(`[ERROR] Anonymous sign-in failed: ${error.message}`);
             showAlert("שגיאת התחברות ל-Firebase", `ההתחברות האנונימית נכשלה. ייתכן שצריך לאשר את הדומיין הזה בהגדרות ה-Authentication.\n\n${error.message}`);
         });
         
         onAuthStateChanged(auth, (user) => {
           if (user) {
-            log(`onAuthStateChanged: User signed in with UID: ${user.uid}`);
             tripDocRef = doc(db, "milantrip", tripId);
             
             const unsubscribe = onSnapshot(tripDocRef, async (docSnap) => {
-                log("onSnapshot triggered.");
                 if (!isFirebaseConnected) {
                     const statusIcon = $('#sync-status i');
                     const statusText = $('#sync-status span');
@@ -1734,15 +1601,11 @@
                     statusIcon.classList.add('text-green-500');
                     statusText.textContent = 'מחובר';
                     isFirebaseConnected = true;
-                    log("Firebase connection status updated to 'Connected'.");
                 }
-
                 if (docSnap.exists()) {
-                    log("Document exists in Firestore. Updating local data.");
                     localTripData = docSnap.data();
                     localStorage.setItem(`tripData_${tripId}`, JSON.stringify(localTripData));
                 } else if(!cachedData) {
-                    log("Document does not exist. Creating initial document.");
                     localTripData = getInitialTripData();
                     await setDoc(tripDocRef, localTripData);
                 }
@@ -1758,7 +1621,6 @@
                 if (localTripData.theme === 'dark') document.documentElement.classList.add('dark'); else document.documentElement.classList.remove('dark');
             }, (error) => {
                 console.error("Firestore snapshot error:", error);
-                log(`[ERROR] Firestore snapshot error: ${error.message}`);
                 const statusIcon = $('#sync-status i');
                 const statusText = $('#sync-status span');
                 statusIcon.classList.remove('text-green-500', 'text-yellow-500');
@@ -1766,11 +1628,8 @@
                 statusText.textContent = 'בעיית סנכרון';
                 showAlert('בעיית סנכרון', `לא ניתן להתחבר למסד הנתונים.\nודא שחוקי האבטחה (Rules) ב-Firestore מוגדרים כראוי.\n\n${error.message}`);
             });
-          } else {
-            log("onAuthStateChanged: User is signed out.");
           }
         });
-
         renderOverview();
         renderKosherFilters();
         fetchWeather();
@@ -1783,8 +1642,6 @@
             data: { labels: ['נסיעה בודדת', 'כרטיס יומי', 'כרטיס ל-3 ימים'], datasets: [{ label: 'עלות באירו', data: [2.20, 7.60, 15.50], backgroundColor: ['rgba(59,130,246,.6)','rgba(37,99,235,.6)','rgba(29,78,216,.6)'], borderColor: ['#3b82f6','#2563eb','#1d4ed8'], borderWidth: 1 }] },
             options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true } }, plugins: { legend: { display: false } } }
         });
-        log("Chart initialized.");
-
         // --- Event Listeners ---
         $('#theme-toggle').addEventListener('click', async () => {
             const isDark = document.documentElement.classList.toggle('dark');
@@ -1792,7 +1649,6 @@
         });
         
         $('#show-tip-btn').addEventListener('click', openTipModal);
-
         // --- Plan actions ---
         $('#collapse-all').addEventListener('click', () => {
             $$('#plan-content-container details').forEach(d => d.removeAttribute('open'));
@@ -1803,7 +1659,6 @@
         $('#print-btn').addEventListener('click', () => {
             window.print();
         });
-
         $('#add-checklist-item-form').addEventListener('submit', async e => {
             e.preventDefault();
             if(!isFirebaseConnected) { showAlert('שגיאת סנכרון', 'אין חיבור למסד הנתונים. אנא בדוק את החיבור לאינטרנט.'); return; }
@@ -1843,11 +1698,14 @@
             const newTotalBudget = parseFloat(e.target.value) || 0;
             if (tripDocRef) await updateDoc(tripDocRef, { totalBudget: newTotalBudget });
         });
-
         $('#include-estimated-costs').addEventListener('change', async (e) => {
             if(!isFirebaseConnected) { return; }
             const include = e.target.checked;
             await updateDoc(tripDocRef, { 'settings.includeEstimatedCostsInBalance': include });
+        });
+        $('#calculate-estimated-btn').addEventListener('click', () => {
+            const estimatedCosts = calculateEstimatedCosts(localTripData.plan);
+            showAlert('עלות משוערת', `העלות המשוערת לאטרקציות בתוכנית עבור זוג היא: €${estimatedCosts.toFixed(2)}.\nהסכום מופיע גם בסיכום התקציב.`);
         });
         
         $('#toggle-suggestions-btn').addEventListener('click', e => {
@@ -1855,13 +1713,11 @@
             const isHidden = container.classList.toggle('hidden');
             e.target.textContent = isHidden ? 'הצג הצעות נוספות' : 'הסתר הצעות';
         });
-
         $('#toggle-kosher-btn').addEventListener('click', e => {
             const container = $('#kosher-container');
             const isHidden = container.classList.toggle('hidden');
             e.target.textContent = isHidden ? 'הצג מדריך כשרות' : 'הסתר מדריך כשרות';
         });
-
         $('#eur-input').addEventListener('input', e => {
             const eur = parseFloat(e.target.value);
             $('#ils-input').value = isNaN(eur) ? '' : (eur * eurToIlsRate).toFixed(2);
@@ -1870,7 +1726,6 @@
             const ils = parseFloat(e.target.value);
             $('#eur-input').value = isNaN(ils) ? '' : (ils / eurToIlsRate).toFixed(2);
         });
-
         $('#plan-content-container').addEventListener('submit', (e) => {
             if (e.target.matches('form[id^="journal-form-"]')) {
                 e.preventDefault();
@@ -1899,7 +1754,6 @@
         $('#translate-camera-btn').addEventListener('click', startCamera);
         $('#camera-close-btn').addEventListener('click', stopCamera);
         $('#capture-btn').addEventListener('click', captureFrameAndTranslate);
-
         $('#image-translate-upload').addEventListener('change', (e) => {
             const file = e.target.files[0]; if (!file) return;
             const reader = new FileReader();
@@ -1911,14 +1765,6 @@
         $('#image-upload-btn').addEventListener('click', () => $('#image-upload').click());
         $('#alert-modal-close').addEventListener('click', () => $('#alert-modal').classList.remove('flex'));
         $('#daily-tip-close').addEventListener('click', () => $('#daily-tip-modal').classList.remove('flex'));
-        $('#summary-close-btn').addEventListener('click', () => $('#summary-modal').classList.remove('flex'));
-        $('#copy-summary-btn').addEventListener('click', () => {
-            const textToCopy = $('#summary-response').textContent;
-            navigator.clipboard.writeText(textToCopy).then(() => {
-                showAlert('הועתק!', 'סיכום הטיול הועתק ללוח.');
-            });
-        });
-
         $('#document-upload').addEventListener('change', (e) => {
             for (const file of e.target.files) {
                 const reader = new FileReader();
@@ -1929,7 +1775,6 @@
                 reader.readAsDataURL(file);
             }
         });
-
         $('#image-upload').addEventListener('change', (e) => {
             for (const file of e.target.files) {
                 const reader = new FileReader();
@@ -1945,8 +1790,6 @@
         $('#gemini-btn').addEventListener('click', () => $('#gemini-modal').classList.add('flex'));
         $('#gemini-close-btn').addEventListener('click', () => $('#gemini-modal').classList.remove('flex'));
         $('#gemini-submit-btn').addEventListener('click', askGeneralGemini);
-        $('#create-summary-btn').addEventListener('click', createTripSummary);
-
         $('#share-btn').addEventListener('click', () => {
             const url = window.location.href;
             const shareData = {
@@ -1976,7 +1819,6 @@
                 document.body.removeChild(textArea);
             }
         });
-
         $('#open-master-map-btn').addEventListener('click', () => {
             const locations = [];
             if (!localTripData.plan) return;
@@ -1992,11 +1834,6 @@
                  window.open(url, '_blank');
             } else { showAlert('שגיאה', 'אין מיקומים בתוכנית כדי להציג על המפה.'); }
         });
-        
-        $('#log-header').addEventListener('click', () => {
-          $('#log-container').style.display = $('#log-container').style.display === 'none' ? 'flex' : 'none';
-        });
-
         // Floating Nav Logic
         const planBtn = $('#floating-plan-btn'); const toolsBtn = $('#floating-tools-btn');
         const planSubmenu = $('#plan-submenu'); const toolsSubmenu = $('#tools-submenu');
@@ -2028,4 +1865,3 @@
   </script>
 </body>
 </html>
-
