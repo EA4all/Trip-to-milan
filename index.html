@@ -71,6 +71,9 @@
     .dark .btn-ghost:hover{background:rgba(255,255,255,.06)}
     .tab-button{padding:.5rem .75rem;font-weight:700;border-bottom:2px solid transparent;border-radius:.5rem .5rem 0 0;}
     .tab-active{color:var(--btn);background:var(--card);border-color:var(--btn)}
+    #gemini-tabs-nav .tab-button { border-color: transparent; }
+    #gemini-tabs-nav .tab-active { border-color: var(--btn); color: var(--btn); }
+
     .content-section{display:none}
     .content-section.active{display:block}
     .thumb{width:100%;height:14rem;object-fit:cover}
@@ -199,7 +202,8 @@
         <h2 class="text-3xl font-bold text-center text-brand-900 dark:text-brand-300">סקירה כללית</h2>
         <div class="flex gap-2 flex-wrap justify-center">
             <button id="share-btn" class="btn btn-primary"><i class="fa-solid fa-share-alt mr-2"></i>שתף תוכנית</button>
-            <button id="smart-advisor-btn" class="btn btn-primary"><i class="fa-solid fa-robot mr-2"></i>יועץ חכם</button>
+            <button id="gemini-btn" class="btn btn-primary"><i class="fa-solid fa-wand-magic-sparkles mr-2"></i>שאל את Gemini</button>
+            <button id="find-nearby-btn" class="btn btn-primary"><i class="fa-solid fa-location-crosshairs mr-2"></i>מצא מקומות קרובים</button>
             <button id="show-tip-btn" class="btn btn-primary"><i class="fa-solid fa-lightbulb mr-2"></i>טיפ יומי</button>
             <button id="create-summary-btn" class="btn btn-primary bg-green-600 hover:bg-green-700"><i class="fa-solid fa-book-open mr-2"></i>צור סיכום טיול</button>
         </div>
@@ -454,25 +458,38 @@
         </div>
     </div>
   </div>
-  <div id="gemini-modal" class="modal-backdrop">
-    <div class="modal">
-        <div class="p-4 border-b flex justify-between items-center">
-            <h3 class="text-lg font-bold">שאל את Gemini</h3>
-            <button id="gemini-close-btn" class="text-2xl">×</button>
-        </div>
-        <div class="p-4 flex-grow overflow-y-auto">
-            <label for="gemini-prompt" class="block text-sm font-medium mb-1">הכנס שאלה או בקשה:</label>
-            <textarea id="gemini-prompt" class="w-full p-2 rounded-lg border bg-white dark:bg-gray-800" rows="4" placeholder="לדוגמה: תן לי 3 הצעות למסעדות רומנטיות בערב באזור נבילי."></textarea>
-            <div class="mt-4">
-                <h4 class="font-semibold mb-2">תשובה:</h4>
-                <div id="gemini-response" class="p-3 bg-gray-100 dark:bg-gray-800 rounded-lg min-h-[100px] whitespace-pre-wrap"></div>
-            </div>
-        </div>
-        <div class="p-4 border-t flex justify-end">
-            <button id="gemini-submit-btn" class="btn btn-primary">שלח שאילתה</button>
-        </div>
+    <div id="gemini-modal" class="modal-backdrop">
+      <div class="modal">
+          <div class="p-4 border-b flex justify-between items-center">
+              <h3 class="text-lg font-bold">שאל את Gemini</h3>
+              <button id="gemini-close-btn" class="text-2xl">×</button>
+          </div>
+          <div class="border-b border-gray-200 dark:border-gray-800">
+              <nav class="-mb-px flex justify-center gap-4" id="gemini-tabs-nav">
+                  <button class="py-3 px-4 font-semibold border-b-2 tab-button tab-active" data-content="gemini-advisor-tab">יועץ חכם</button>
+                  <button class="py-3 px-4 font-semibold border-b-2 tab-button" data-content="gemini-free-text-tab">שאלה חופשית</button>
+              </nav>
+          </div>
+          <div class="p-4 flex-grow overflow-y-auto flex flex-col">
+              <!-- Smart Advisor Tab -->
+              <div id="gemini-advisor-tab" class="content-section active text-center">
+                  <p class="mb-4">קבל המלצה חכמה ומותאמת אישית על סמך השעה, מזג האוויר והתקציב שלך.</p>
+                  <button id="get-smart-advice-btn" class="btn btn-primary"><i class="fa-solid fa-robot mr-2"></i>תן לי המלצה חכמה</button>
+              </div>
+              <!-- Free Text Tab -->
+              <div id="gemini-free-text-tab" class="content-section">
+                  <label for="gemini-prompt" class="block text-sm font-medium mb-1">הכנס שאלה או בקשה:</label>
+                  <textarea id="gemini-prompt" class="w-full p-2 rounded-lg border bg-white dark:bg-gray-800" rows="3" placeholder="לדוגמה: תן לי 3 הצעות למסעדות רומנטיות בערב באזור נבילי."></textarea>
+                   <button id="gemini-submit-btn" class="btn btn-primary w-full mt-2">שלח שאילתה</button>
+              </div>
+              
+              <div class="mt-4 flex-grow flex flex-col">
+                  <h4 class="font-semibold mb-2">תשובה:</h4>
+                  <div id="gemini-response" class="p-3 bg-gray-100 dark:bg-gray-800 rounded-lg min-h-[100px] whitespace-pre-wrap flex-grow"></div>
+              </div>
+          </div>
+      </div>
     </div>
-</div>
 <div id="daily-tip-modal" class="modal-backdrop">
     <div class="modal">
         <div class="p-4 border-b flex items-center gap-3">
@@ -530,7 +547,7 @@
     // --- Firebase SDK ---
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
     import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-    import { getFirestore, doc, onSnapshot, setDoc, updateDoc, arrayUnion, arrayRemove, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+    import { getFirestore, doc, onSnapshot, setDoc, updateDoc, arrayUnion, arrayRemove, getDoc, enableIndexedDbPersistence } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
     // --- UTILS ---
     const $ = (s, p = document) => p.querySelector(s);
@@ -1606,7 +1623,7 @@
         }
 
         const apiKey = "AIzaSyB80v2xdhebJqhjyruJ5Ta0eyhJiq7DsI8"; 
-        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
+        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-preview-0514:generateContent?key=${apiKey}`;
         
         try {
             const response = await fetch(apiUrl, {
@@ -1816,7 +1833,10 @@
     };
     
     async function getSmartAdvice() {
-        showAlert('חושב...', 'היועץ החכם בודק את הנתונים ומכין המלצה מותאמת אישית...');
+        const responseContainer = $('#gemini-response');
+        const submitBtn = $('#get-smart-advice-btn');
+        submitBtn.disabled = true;
+        responseContainer.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> היועץ החכם בודק את הנתונים...`;
         
         const remainingBudget = (localTripData.totalBudget || 0) - (localTripData.expenses || []).reduce((sum, exp) => sum + exp.amount, 0);
         let weatherInfo = "No weather data available.";
@@ -1839,7 +1859,8 @@
 
         const payload = { contents: [{ parts: [{ text: "" }] }] };
         const advice = await callGemini(payload, prompt, false);
-        showAlert('המלצה מהיועץ החכם', advice, true);
+        responseContainer.textContent = advice;
+        submitBtn.disabled = false;
     }
     
     // --- INIT ---
@@ -1907,6 +1928,13 @@
         const app = initializeApp(firebaseConfig);
         auth = getAuth(app);
         db = getFirestore(app);
+        enableIndexedDbPersistence(db).catch((err) => {
+            if (err.code == 'failed-precondition') {
+                console.warn('Firestore persistence failed: Multiple tabs open');
+            } else if (err.code == 'unimplemented') {
+                console.warn('Firestore persistence failed: Browser not supported');
+            }
+        });
 
         // --- Caching and Sharing Logic ---
         let tripId = window.location.hash.substring(1);
@@ -1999,7 +2027,8 @@
         $('#show-tip-btn').addEventListener('click', openTipModal);
         $('#create-summary-btn').addEventListener('click', generateTripSummary);
         $('#refresh-warnings-btn').addEventListener('click', fetchSafetyWarnings);
-        $('#smart-advisor-btn').addEventListener('click', getSmartAdvice);
+        $('#find-nearby-btn').addEventListener('click', findNearby);
+
         
         // --- Plan actions ---
         $('#collapse-all').addEventListener('click', () => {
@@ -2159,10 +2188,25 @@
             }
         });
         
-        $('#find-nearby-btn').addEventListener('click', findNearby);
-        $('#gemini-btn').addEventListener('click', () => $('#gemini-modal').classList.add('flex'));
-        $('#gemini-close-btn').addEventListener('click', () => $('#gemini-modal').classList.remove('flex'));
+        // Gemini Modal Logic
+        const geminiModal = $('#gemini-modal');
+        $('#gemini-btn').addEventListener('click', () => geminiModal.classList.add('flex'));
+        $('#gemini-close-btn').addEventListener('click', () => {
+            geminiModal.classList.remove('flex');
+            $('#gemini-response').innerHTML = '';
+        });
+
+        $$('#gemini-tabs-nav .tab-button').forEach(b => b.addEventListener('click', (e) => {
+            $$('#gemini-tabs-nav .tab-button').forEach(btn => btn.classList.remove('tab-active'));
+            e.currentTarget.classList.add('tab-active');
+            $$('#gemini-modal .content-section').forEach(s => s.classList.remove('active'));
+            $(`#${e.currentTarget.dataset.content}`).classList.add('active');
+            $('#gemini-response').innerHTML = '';
+        }));
+        
+        $('#get-smart-advice-btn').addEventListener('click', getSmartAdvice);
         $('#gemini-submit-btn').addEventListener('click', askGeneralGemini);
+
 
         $('#share-btn').addEventListener('click', () => {
             const url = window.location.href;
