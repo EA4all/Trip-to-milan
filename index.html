@@ -384,13 +384,20 @@
         <div id="customs-info-tool" class="bg-white dark:bg-gray-950 p-6 rounded-2xl shadow-lg scroll-mt-24 md:col-span-2 lg:col-span-2">
             <h3 class="text-xl font-bold mb-3"><i class="fa-solid fa-suitcase-rolling mr-2"></i>מידע על מכס וכבודה</h3>
             <div class="text-sm space-y-2">
-                <p><b><i class="fa-solid fa-plane-departure"></i> כבודה מותרת (בדרך כלל):</b> מזוודה עד 23 ק"ג, טרולי עד 8 ק"ג. יש לבדוק תמיד מול חברת התעופה.</p>
                 <p><b><i class="fa-solid fa-right-to-bracket"></i> מכס בכניסה לאיטליה (לנוסע, מחוץ לאיחוד):</b></p>
                 <ul class="list-disc list-inside text-gray-600 dark:text-gray-400 text-xs">
                     <li><b>טבק:</b> 200 סיגריות או 50 סיגרים.</li>
                     <li><b>אלכוהול:</b> 1 ליטר של אלכוהול מעל 22% (כמו וודקה) או 2 ליטר יין.</li>
                     <li><b>מזומן:</b> יש להצהיר על סכומים מעל 10,000 אירו.</li>
                     <li><b>איסורים:</b> אסור להכניס מוצרי בשר וחלב מחוץ לאיחוד האירופי.</li>
+                </ul>
+                <p class="mt-3"><b><i class="fa-solid fa-left-to-bracket"></i> מכס בחזרה לישראל (לנוסע):</b></p>
+                <ul class="list-disc list-inside text-gray-600 dark:text-gray-400 text-xs">
+                    <li><b>פטור אישי:</b> ניתן להכניס מתנות וחפצים אישיים בשווי כולל של עד 200$ לנוסע (מעל גיל שנתיים).</li>
+                    <li><b>מזון:</b> עד 3 ק"ג מזון, בתנאי שכל פריט לא שוקל יותר מ-1 ק"ג.</li>
+                    <li><b>טבק (מעל גיל 18):</b> 200 סיגריות (פֿקט אחד) או 250 גרם מוצרי טבק אחרים.</li>
+                    <li><b>אלכוהול (מעל גיל 18):</b> 1 ליטר של משקה חריף ו-2 ליטר יין.</li>
+                    <li><b>חשוב:</b> הפטור הוא אישי ולא ניתן לצבירה למספר אנשים.</li>
                 </ul>
             </div>
         </div>
@@ -632,7 +639,7 @@
 
     const tripMeta = {
         flights: {
-            inbound: { date: '2025-11-23', flight: 'LY381', departureTime: '07:30', arrivalTime: '11:15', terminal: '3', baggage: 'מזוודה 23 ק"ג + טרולי 8 ק"ג' },
+            inbound: { date: '2025-11-23', flight: 'LY381', departureTime: '07:30', arrivalTime: '11:15', terminal: '3', baggage: 'טרולי עד 8 ק"ג' },
             outbound: { date: '2025-11-26', flight: 'LY382', departureTime: '18:00', arrivalTime: '22:15', terminal: '1 (MXP)', baggage: 'מזוודה 23 ק"ג + טרולי 8 ק"ג' }
         },
         hotel: {
@@ -1580,9 +1587,8 @@
             delete payload.tools;
         }
 
-        // IMPORTANT: The user provided a working key, so I am using it directly.
         const apiKey = "AIzaSyB80v2xdhebJqhjyruJ5Ta0eyhJiq7DsI8"; 
-        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-preview-0514:generateContent?key=${apiKey}`;
+        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
         
         try {
             const response = await fetch(apiUrl, {
@@ -2050,3 +2056,4 @@
   </script>
 </body>
 </html>
+
