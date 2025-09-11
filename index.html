@@ -7,6 +7,7 @@
   <meta name="description" content="דשבורד אינטראקטיבי ושיתופי לתכנון חופשה במילאנו: לוז יומי, מפות, מזג אוויר, סיכום טיול חכם, מעקב תקציב ועוד." />
   <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
   <meta name="theme-color" content="#0b1220" media="(prefers-color-scheme: dark)">
+  <link rel="manifest" id="manifest-link">
 
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
@@ -198,8 +199,7 @@
         <h2 class="text-3xl font-bold text-center text-brand-900 dark:text-brand-300">סקירה כללית</h2>
         <div class="flex gap-2 flex-wrap justify-center">
             <button id="share-btn" class="btn btn-primary"><i class="fa-solid fa-share-alt mr-2"></i>שתף תוכנית</button>
-            <button id="gemini-btn" class="btn btn-primary"><i class="fa-solid fa-wand-magic-sparkles mr-2"></i>שאל את Gemini</button>
-            <button id="find-nearby-btn" class="btn btn-primary"><i class="fa-solid fa-location-crosshairs mr-2"></i>מצא מקומות קרובים</button>
+            <button id="smart-advisor-btn" class="btn btn-primary"><i class="fa-solid fa-robot mr-2"></i>יועץ חכם</button>
             <button id="show-tip-btn" class="btn btn-primary"><i class="fa-solid fa-lightbulb mr-2"></i>טיפ יומי</button>
             <button id="create-summary-btn" class="btn btn-primary bg-green-600 hover:bg-green-700"><i class="fa-solid fa-book-open mr-2"></i>צור סיכום טיול</button>
         </div>
@@ -572,6 +572,7 @@
     let userCoords = null;
     let isFirebaseConnected = false;
     let translationHistory = [];
+    let lastWeatherAPIData = null;
     
     // --- DATA ---
     const attractions = {
@@ -864,7 +865,9 @@
                     <option value="transit" ${dayData.transport === 'transit' ? 'selected' : ''}>תחב"צ</option>
                 </select>
             </div>
-            <button class="btn btn-primary" onclick="window.openDayMap('${dayId}')"><i class="fa-solid fa-map-route mr-2"></i>הצג מפת מסלול ליום זה</button>
+            <button class="btn btn-primary" onclick="window.openDayMap('${dayId}')"><i class="fa-solid fa-map-route mr-2"></i>מפת יום</button>
+            <button class="btn btn-ghost" onclick="window.optimizeDayRoute('${dayId}')"><i class="fa-solid fa-wand-magic-sparkles mr-2"></i>סדר לי את היום</button>
+            <button class="btn btn-ghost" onclick="window.generateIcsFile('${dayId}')"><i class="fa-solid fa-calendar-plus mr-2"></i>הוסף ליומן</button>
         </div><div class="space-y-4">`;
 
         let previousActivity = null; 
@@ -1179,6 +1182,7 @@
             const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=45.46&longitude=9.19&daily=weathercode,temperature_2m_max,temperature_2m_min&timezone=Europe/Berlin&forecast_days=7`);
             const data = await res.json();
             if (data.error) throw new Error(data.reason);
+            lastWeatherAPIData = data; // Cache weather data
              const iconMap = {
                 0: 'fa-sun', 1: 'fa-cloud-sun', 2: 'fa-cloud-sun', 3: 'fa-cloud',
                 45: 'fa-smog', 48: 'fa-smog',
@@ -1551,12 +1555,6 @@
         window.open(url, '_blank');
     };
 
-    // Assign functions to window scope so inline event handlers can find them
-    Object.assign(window, {
-      handleTransportChange, removeActivity, moveActivity, removeExpense, toggleChecklistItem,
-      removeChecklistItem, addJournalEntry, removeJournalEntry, removeDocument, removeImage
-    });
-
     // --- Camera Functions ---
     async function startCamera() {
         const video = $('#camera-feed');
@@ -1733,9 +1731,168 @@
         
         showAlert('סיכום הטיול שלכם!', summaryText, true);
     }
+
+    // --- NEW PWA & Smart Features ---
+    window.optimizeDayRoute = async (dayId) => {
+        const day = localTripData.plan[dayId];
+        if (!day || !day.activities || day.activities.length < 2) {
+            showAlert('לא ניתן לבצע אופטימיזציה', 'צריך לפחות שתי פעילויות ביום כדי לייעל את המסלול.');
+            return;
+        }
+
+        showAlert('מבצע אופטימיזציה...', 'מסדר מחדש את הפעילויות כדי לחסוך לך זמן...');
+        
+        let activities = [...day.activities];
+        let optimizedRoute = [activities.shift()]; // Start with the first activity
+        
+        while (activities.length > 0) {
+            let lastPoint = optimizedRoute[optimizedRoute.length - 1];
+            let nearestIndex = -1;
+            let minDistance = Infinity;
+
+            activities.forEach((activity, index) => {
+                const distance = haversineKm(lastPoint.coords?.lat, lastPoint.coords?.lon, activity.coords?.lat, activity.coords?.lon);
+                if (distance < minDistance) {
+                    minDistance = distance;
+                    nearestIndex = index;
+                }
+            });
+
+            if (nearestIndex > -1) {
+                optimizedRoute.push(activities.splice(nearestIndex, 1)[0]);
+            } else {
+                break; // Should not happen if activities array is not empty
+            }
+        }
+        
+        await updateDoc(tripDocRef, { [`plan.${dayId}.activities`]: optimizedRoute });
+        showAlert('המסלול עבר אופטימיזציה!', 'סדר הפעילויות עודכן ליום זה.');
+    };
+
+    window.generateIcsFile = (dayId) => {
+        const day = localTripData.plan[dayId];
+        const dayIndex = Object.keys(localTripData.plan).sort((a,b) => a.localeCompare(b[0])).indexOf(dayId);
+        const tripStartDate = new Date(tripMeta.flights.inbound.date);
+        const eventDate = new Date(tripStartDate.setDate(tripStartDate.getDate() + dayIndex));
+        const eventDateStr = eventDate.toISOString().split('T')[0].replace(/-/g, '');
+
+        const timeMap = { 'בוקר': '090000', 'צהריים': '140000', 'ערב': '190000' };
+        const durationMap = { 'בוקר': 3, 'צהריים': 4, 'ערב': 4 };
+
+        let icsContent = [
+            'BEGIN:VCALENDAR',
+            'VERSION:2.0',
+            'PRODID:-//MilanTrip/Planner//EN',
+        ];
+
+        day.activities.forEach(activity => {
+            const startTime = timeMap[activity.time] || '120000';
+            const durationHours = durationMap[activity.time] || 2;
+            const startDateTime = `${eventDateStr}T${startTime}`;
+            const endHour = parseInt(startTime.substring(0, 2), 10) + durationHours;
+            const endDateTime = `${eventDateStr}T${String(endHour).padStart(2, '0')}0000`;
+
+            icsContent.push(
+                'BEGIN:VEVENT',
+                `UID:${activity.id}@milantrip.app`,
+                `DTSTAMP:${new Date().toISOString().replace(/[-:.]/g, '')}Z`,
+                `DTSTART;TZID=Europe/Rome:${startDateTime}`,
+                `DTEND;TZID=Europe/Rome:${endDateTime}`,
+                `SUMMARY:${activity.name}`,
+                `DESCRIPTION:${activity.description || ''}`,
+                `LOCATION:${activity.address || ''}`,
+                'END:VEVENT'
+            );
+        });
+        icsContent.push('END:VCALENDAR');
+
+        const blob = new Blob([icsContent.join('\r\n')], { type: 'text/calendar' });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = `${day.name}.ics`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    };
+    
+    async function getSmartAdvice() {
+        showAlert('חושב...', 'היועץ החכם בודק את הנתונים ומכין המלצה מותאמת אישית...');
+        
+        const remainingBudget = (localTripData.totalBudget || 0) - (localTripData.expenses || []).reduce((sum, exp) => sum + exp.amount, 0);
+        let weatherInfo = "No weather data available.";
+        if(lastWeatherAPIData) {
+            weatherInfo = `Today's forecast is a high of ${lastWeatherAPIData.daily.temperature_2m_max[0]}°C and a low of ${lastWeatherAPIData.daily.temperature_2m_min[0]}°C. Weather code: ${lastWeatherAPIData.daily.weathercode[0]}.`
+        }
+        
+        const milanTime = new Date().toLocaleTimeString('en-US', { timeZone: 'Europe/Rome', hour: '2-digit', minute: '2-digit', hour12: false });
+        
+        const prompt = `
+            As a smart travel advisor for a trip to Milan, provide a short, actionable recommendation in Hebrew based on the following context. Be friendly and helpful.
+            
+            Context:
+            - Current time in Milan: ${milanTime}
+            - Current weather situation: ${weatherInfo} (Weather codes: 0-3=Clear/Cloudy, 51-67=Rain, 71-86=Snow, 95+=Thunderstorm)
+            - Remaining trip budget: €${remainingBudget.toFixed(0)}
+            
+            Based on this context, what is one useful suggestion you can give me right now? For example, if it's evening and raining, suggest an indoor attraction or a specific type of restaurant. If the budget is low, suggest a free activity.
+        `;
+
+        const payload = { contents: [{ parts: [{ text: "" }] }] };
+        const advice = await callGemini(payload, prompt, false);
+        showAlert('המלצה מהיועץ החכם', advice, true);
+    }
     
     // --- INIT ---
     document.addEventListener('DOMContentLoaded', () => {
+        // --- PWA Setup ---
+        const manifestContent = {
+          "name": "מתכנן טיול למילאנו",
+          "short_name": "טיול מילאנו",
+          "start_url": ".",
+          "display": "standalone",
+          "background_color": "#0b1220",
+          "theme_color": "#1d4ed8",
+          "description": "הדשבורד האישי שלך לתכנון החופשה במילאנו.",
+          "icons": [
+            {"src": "https://placehold.co/192x192/1d4ed8/ffffff?text=MTP", "sizes": "192x192", "type": "image/png"},
+            {"src": "https://placehold.co/512x512/1d4ed8/ffffff?text=MTP", "sizes": "512x512", "type": "image/png"}
+          ]
+        };
+        const manifestString = JSON.stringify(manifestContent);
+        const manifestBlob = new Blob([manifestString], {type: 'application/json'});
+        const manifestUrl = URL.createObjectURL(manifestBlob);
+        document.querySelector('#manifest-link').setAttribute('href', manifestUrl);
+
+        if ('serviceWorker' in navigator) {
+            const swCode = `
+                const CACHE_NAME = 'milan-trip-cache-v1';
+                const urlsToCache = [
+                    '/',
+                    'https://cdn.tailwindcss.com',
+                    'https://fonts.googleapis.com/css2?family=Assistant:wght@300;400;600;700&display=swap',
+                    'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css',
+                    'https://cdn.jsdelivr.net/npm/chart.js'
+                ];
+                self.addEventListener('install', event => {
+                    event.waitUntil(
+                        caches.open(CACHE_NAME).then(cache => cache.addAll(urlsToCache))
+                    );
+                });
+                self.addEventListener('fetch', event => {
+                    event.respondWith(
+                        caches.match(event.request).then(response => {
+                            return response || fetch(event.request);
+                        })
+                    );
+                });
+            `;
+            const swBlob = new Blob([swCode], {type: 'application/javascript'});
+            const swUrl = URL.createObjectURL(swBlob);
+            navigator.serviceWorker.register(swUrl)
+                .then(reg => console.log('Service worker registered.', reg))
+                .catch(err => console.error('Service worker registration failed:', err));
+        }
+
         // --- Firebase Initialization ---
         const firebaseConfig = {
           apiKey: "AIzaSyB80v2xdhebJqhjyruJ5Ta0eyhJiq7DsI8",
@@ -1842,7 +1999,8 @@
         $('#show-tip-btn').addEventListener('click', openTipModal);
         $('#create-summary-btn').addEventListener('click', generateTripSummary);
         $('#refresh-warnings-btn').addEventListener('click', fetchSafetyWarnings);
-
+        $('#smart-advisor-btn').addEventListener('click', getSmartAdvice);
+        
         // --- Plan actions ---
         $('#collapse-all').addEventListener('click', () => {
             $$('#plan-content-container details').forEach(d => d.removeAttribute('open'));
