@@ -1397,9 +1397,14 @@
             return;
         }
         container.innerHTML = translationHistory.map((item, index) => `
-            <div class="p-1.5 bg-gray-100 dark:bg-gray-800 rounded-md cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-700" onclick="window.reuseTranslation(${index})">
-                <div class="font-medium">${item.sourceText}</div>
-                <div class="text-gray-500">${item.translatedText}</div>
+            <div class="p-1.5 bg-gray-100 dark:bg-gray-800 rounded-md flex justify-between items-center group">
+                <div class="cursor-pointer flex-grow" onclick="window.reuseTranslation(${index})">
+                    <div class="font-medium">${item.sourceText}</div>
+                    <div class="text-gray-500">${item.translatedText}</div>
+                </div>
+                <button class="text-red-400 hover:text-red-600 opacity-0 group-hover:opacity-100 transition-opacity ml-2 p-1" onclick="window.removeTranslationHistoryItem(event, ${index})">
+                    <i class="fa-solid fa-trash-alt fa-xs"></i>
+                </button>
             </div>
         `).join('');
     }
@@ -1522,6 +1527,11 @@
             $('#dictionary-form').requestSubmit();
         }
     };
+    window.removeTranslationHistoryItem = (event, index) => {
+        event.stopPropagation(); // Prevent reuseTranslation from firing
+        translationHistory.splice(index, 1);
+        renderTranslationHistory();
+    };
     window.openDayMap = (dayId) => {
         const day = localTripData.plan[dayId];
         if (!day || !day.activities || day.activities.length === 0) {
@@ -1598,7 +1608,7 @@
         }
 
         const apiKey = "AIzaSyB80v2xdhebJqhjyruJ5Ta0eyhJiq7DsI8"; 
-        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-preview-0514:generateContent?key=${apiKey}`;
+        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
         
         try {
             const response = await fetch(apiUrl, {
@@ -2066,5 +2076,4 @@
   </script>
 </body>
 </html>
-"
 
