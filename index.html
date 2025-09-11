@@ -1202,11 +1202,21 @@
             const todayTempMax = data.daily.temperature_2m_max[0];
             const todayWeatherCode = data.daily.weathercode[0];
             let recommendation = '';
-            if (todayWeatherCode >= 51 && todayWeatherCode <= 67) {
-                recommendation = 'צפוי גשם, מומלץ לקחת מטריה ומעיל גשם.';
-            } else if (todayWeatherCode >= 71) {
-                recommendation = 'צפוי שלג, התלבשו חם מאוד!';
-            } else if (todayTempMax > 28) {
+
+            // Check for snow/freezing conditions ONLY if temperature is low
+            if (((todayWeatherCode >= 71 && todayWeatherCode <= 86) || (todayWeatherCode >= 56 && todayWeatherCode <= 67)) && todayTempMax < 5) {
+                recommendation = 'צפוי שלג/מזג אוויר קפוא. התלבשו חם מאוד!';
+            } 
+            // Check for rain conditions
+            else if ((todayWeatherCode >= 51 && todayWeatherCode <= 67) || (todayWeatherCode >= 80 && todayWeatherCode <= 82)) {
+                recommendation = 'צפוי גשם. מומלץ לקחת מטריה ועליונית.';
+            } 
+            // Check for thunderstorms
+            else if (todayWeatherCode >= 95) {
+                 recommendation = 'צפויה סופת רעמים. מומלץ למצוא מחסה.';
+            }
+            // If no significant precipitation, base on temperature
+            else if (todayTempMax > 28) {
                 recommendation = 'חם! מומלץ לבוש קצר, כובע והרבה מים.';
             } else if (todayTempMax > 20) {
                 recommendation = 'מזג אוויר נעים, לבוש קצר או ארוך ודק יתאים.';
@@ -1588,7 +1598,7 @@
         }
 
         const apiKey = "AIzaSyB80v2xdhebJqhjyruJ5Ta0eyhJiq7DsI8"; 
-        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
+        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-preview-0514:generateContent?key=${apiKey}`;
         
         try {
             const response = await fetch(apiUrl, {
@@ -2056,4 +2066,5 @@
   </script>
 </body>
 </html>
+"
 
