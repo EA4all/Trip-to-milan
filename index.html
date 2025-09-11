@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>תוכנית טיול שיתופית למילאנו</title>
-  <meta name="description" content="דשבורד אינטראקטיבי ושיתופי לתכנון חופשה במילאנו: לוז יומי, אוכל כשר, מפה, מזג אוויר, מעקב תקציב, צ'קליסט וגלריית תמונות." />
+  <meta name="description" content="דשבורד אינטראקטיבי ושיתופי לתכנון חופשה במילאנו: לוז יומי, מפות, מזג אוויר, סיכום טיול חכם, מעקב תקציב ועוד." />
   <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
   <meta name="theme-color" content="#0b1220" media="(prefers-color-scheme: dark)">
 
@@ -199,8 +199,9 @@
         <div class="flex gap-2 flex-wrap justify-center">
             <button id="share-btn" class="btn btn-primary"><i class="fa-solid fa-share-alt mr-2"></i>שתף תוכנית</button>
             <button id="gemini-btn" class="btn btn-primary"><i class="fa-solid fa-wand-magic-sparkles mr-2"></i>שאל את Gemini</button>
-            <button id="find-nearby-btn" class="btn btn-primary"><i class="fa-solid fa-location-crosshairs mr-2"></i>מצא מקומות קרובים אליי</button>
-            <button id="show-tip-btn" class="btn btn-primary"><i class="fa-solid fa-lightbulb mr-2"></i>הצג טיפ יומי</button>
+            <button id="find-nearby-btn" class="btn btn-primary"><i class="fa-solid fa-location-crosshairs mr-2"></i>מצא מקומות קרובים</button>
+            <button id="show-tip-btn" class="btn btn-primary"><i class="fa-solid fa-lightbulb mr-2"></i>טיפ יומי</button>
+            <button id="create-summary-btn" class="btn btn-primary bg-green-600 hover:bg-green-700"><i class="fa-solid fa-book-open mr-2"></i>צור סיכום טיול</button>
         </div>
       </div>
       <div id="overview-cards" class="grid sm:grid-cols-2 lg:grid-cols-4 gap-6"></div>
@@ -281,10 +282,11 @@
     
     <section id="tools" class="my-12 scroll-mt-24">
         <h2 class="text-3xl font-bold text-center text-brand-900 dark:text-brand-300 mb-6">כלים ומידע שימושי</h2>
-        <div class="grid md:grid-cols-2 lg:grid-cols-5 gap-6">
-            <div id="weather-tool" class="bg-white dark:bg-gray-950 p-6 rounded-2xl shadow-lg scroll-mt-24">
+        <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div id="weather-tool" class="bg-white dark:bg-gray-950 p-6 rounded-2xl shadow-lg scroll-mt-24 lg:col-span-1">
                 <h3 class="text-xl font-bold mb-3"><i class="fa-solid fa-cloud-sun mr-2"></i>מזג אוויר</h3>
                 <div id="weather-forecast" class="space-y-3"><p>טוען תחזית...</p></div>
+                <div id="weather-attire-recommendation" class="mt-4 pt-3 border-t border-gray-200 dark:border-gray-700 text-sm text-center"></div>
             </div>
             <div id="budget-tool" class="bg-white dark:bg-gray-950 p-6 rounded-2xl shadow-lg flex flex-col scroll-mt-24 md:col-span-2 lg:col-span-2">
                 <h3 class="text-xl font-bold mb-3"><i class="fa-solid fa-euro-sign mr-2"></i>מעקב תקציב</h3>
@@ -332,7 +334,7 @@
                     </div>
                 </div>
             </div>
-            <div id="checklist-section-tool" class="bg-white dark:bg-gray-950 p-6 rounded-2xl shadow-lg scroll-mt-24">
+            <div id="checklist-section-tool" class="bg-white dark:bg-gray-950 p-6 rounded-2xl shadow-lg scroll-mt-24 lg:col-span-1">
                 <h3 class="text-xl font-bold mb-3"><i class="fa-solid fa-list-check mr-2"></i>צ'ק-ליסט</h3>
                 <form id="add-checklist-item-form" class="grid sm:grid-cols-3 gap-2 mb-4">
                     <input type="text" id="new-item-text" placeholder="פריט חדש" class="sm:col-span-2 w-full p-2 rounded-lg border" required>
@@ -342,39 +344,56 @@
                 </form>
                 <div id="checklist-container" class="space-y-4 max-h-96 overflow-y-auto"></div>
             </div>
-             <div id="translator-tool" class="bg-white dark:bg-gray-950 p-6 rounded-2xl shadow-lg flex flex-col scroll-mt-24">
-                <h3 class="text-xl font-bold mb-3"><i class="fa-solid fa-language mr-2"></i>תרגום וקהילה</h3>
-                 <div class="text-xs text-center text-gray-500 mb-2" id="lang-direction-label">עברית <i class="fa-solid fa-arrow-right-long"></i> איטלקית</div>
-                 <form id="dictionary-form" class="grid grid-cols-4 gap-2 mb-3">
-                    <input type="text" id="dictionary-input" placeholder="הקלד לתרגום..." class="col-span-4 w-full p-2 rounded-lg border">
-                    <button type="button" id="swap-lang-btn" class="btn btn-ghost" title="החלף שפות"><i class="fa-solid fa-exchange-alt"></i></button>
-                    <button type="submit" class="btn btn-primary col-span-1">תרגם</button>
-                    <button type="button" id="translate-upload-btn" class="btn btn-ghost" title="העלה תמונה"><i class="fa-solid fa-file-image"></i></button>
-                    <button type="button" id="translate-camera-btn" class="btn btn-ghost" title="פתח מצלמה"><i class="fa-solid fa-camera"></i></button>
-                    <input type="file" id="image-translate-upload" class="hidden" accept="image/*">
-                 </form>
-                 <div id="translation-result-container" class="mt-2 p-3 bg-gray-100 dark:bg-gray-800 rounded-lg min-h-[60px] text-center flex items-center justify-center gap-3">
-                    <span class="text-gray-500">התרגום יופיע כאן...</span>
+            <div id="translator-tool" class="bg-white dark:bg-gray-950 p-6 rounded-2xl shadow-lg flex flex-col scroll-mt-24 lg:col-span-1">
+                <h3 class="text-xl font-bold mb-3"><i class="fa-solid fa-language mr-2"></i>תרגומון</h3>
+                <div class="text-xs text-center text-gray-500 mb-2" id="lang-direction-label">עברית <i class="fa-solid fa-arrow-right-long"></i> איטלקית</div>
+                <form id="dictionary-form" class="grid grid-cols-4 gap-2 mb-3">
+                   <input type="text" id="dictionary-input" placeholder="הקלד לתרגום..." class="col-span-4 w-full p-2 rounded-lg border">
+                   <button type="button" id="swap-lang-btn" class="btn btn-ghost" title="החלף שפות"><i class="fa-solid fa-exchange-alt"></i></button>
+                   <button type="submit" class="btn btn-primary col-span-1">תרגם</button>
+                   <button type="button" id="translate-upload-btn" class="btn btn-ghost" title="העלה תמונה"><i class="fa-solid fa-file-image"></i></button>
+                   <button type="button" id="translate-camera-btn" class="btn btn-ghost" title="פתח מצלמה"><i class="fa-solid fa-camera"></i></button>
+                   <input type="file" id="image-translate-upload" class="hidden" accept="image/*">
+                </form>
+                <div id="translation-result-container" class="mt-2 p-3 bg-gray-100 dark:bg-gray-800 rounded-lg min-h-[60px] text-center flex items-center justify-center gap-3">
+                   <span class="text-gray-500">התרגום יופיע כאן...</span>
+                </div>
+                <div id="translation-history" class="mt-3 pt-3 border-t text-xs space-y-2 max-h-24 overflow-y-auto">
+                    <div class="text-center text-gray-400">היסטוריית תרגומים</div>
+                </div>
+           </div>
+           <div id="converter-tool" class="bg-white dark:bg-gray-950 p-6 rounded-2xl shadow-lg flex flex-col scroll-mt-24 lg:col-span-1">
+             <h3 class="text-xl font-bold mb-3"><i class="fa-solid fa-right-left mr-2"></i>ממיר מטבע</h3>
+             <div class="space-y-4">
+                 <div>
+                     <label for="eur-input" class="block text-sm font-medium">אירו (€)</label>
+                     <input type="number" id="eur-input" placeholder="EUR" class="w-full p-2 mt-1 rounded-xl border">
                  </div>
-                 <div class="space-y-3 mt-4">
-                    <a href="https://www.facebook.com/groups/milan.for.travelers" target="_blank" class="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800"><i class="fa-brands fa-facebook fa-2x text-blue-600"></i> <div><div class="font-semibold">מילאנו למטיילים</div><div class="text-xs text-gray-500">קבוצת פייסבוק</div></div></a>
-                    <a href="https://chat.whatsapp.com/your-group-invite" target="_blank" class="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800"><i class="fa-brands fa-whatsapp fa-2x text-green-500"></i> <div><div class="font-semibold">מטיילים במילאנו</div><div class="text-xs text-gray-500">קבוצת וואטסאפ</div></div></a>
+                 <div>
+                     <label for="ils-input" class="block text-sm font-medium">שקל (₪)</label>
+                     <input type="number" id="ils-input" placeholder="ILS" class="w-full p-2 mt-1 rounded-xl border">
                  </div>
+             </div>
+             <p id="exchange-rate-display" class="text-xs text-gray-500 mt-auto pt-3 text-center">טוען שער חליפין...</p>
+         </div>
+         <div id="safety-warnings-tool" class="bg-white dark:bg-gray-950 p-6 rounded-2xl shadow-lg scroll-mt-24 lg:col-span-1">
+            <h3 class="text-xl font-bold mb-3"><i class="fa-solid fa-triangle-exclamation mr-2"></i>אזהרות ועדכונים</h3>
+            <div id="safety-warnings-content" class="text-sm space-y-2 max-h-48 overflow-y-auto">טוען מידע...</div>
+            <button id="refresh-warnings-btn" class="btn btn-ghost w-full mt-3">רענן מידע</button>
+        </div>
+        <div id="customs-info-tool" class="bg-white dark:bg-gray-950 p-6 rounded-2xl shadow-lg scroll-mt-24 md:col-span-2 lg:col-span-2">
+            <h3 class="text-xl font-bold mb-3"><i class="fa-solid fa-suitcase-rolling mr-2"></i>מידע על מכס וכבודה</h3>
+            <div class="text-sm space-y-2">
+                <p><b><i class="fa-solid fa-plane-departure"></i> כבודה מותרת (בדרך כלל):</b> מזוודה עד 23 ק"ג, טרולי עד 8 ק"ג. יש לבדוק תמיד מול חברת התעופה.</p>
+                <p><b><i class="fa-solid fa-right-to-bracket"></i> מכס בכניסה לאיטליה (לנוסע, מחוץ לאיחוד):</b></p>
+                <ul class="list-disc list-inside text-gray-600 dark:text-gray-400 text-xs">
+                    <li><b>טבק:</b> 200 סיגריות או 50 סיגרים.</li>
+                    <li><b>אלכוהול:</b> 1 ליטר של אלכוהול מעל 22% (כמו וודקה) או 2 ליטר יין.</li>
+                    <li><b>מזומן:</b> יש להצהיר על סכומים מעל 10,000 אירו.</li>
+                    <li><b>איסורים:</b> אסור להכניס מוצרי בשר וחלב מחוץ לאיחוד האירופי.</li>
+                </ul>
             </div>
-            <div id="converter-tool" class="bg-white dark:bg-gray-950 p-6 rounded-2xl shadow-lg flex flex-col scroll-mt-24">
-              <h3 class="text-xl font-bold mb-3"><i class="fa-solid fa-right-left mr-2"></i>ממיר מטבע</h3>
-              <div class="space-y-4">
-                  <div>
-                      <label for="eur-input" class="block text-sm font-medium">אירו (€)</label>
-                      <input type="number" id="eur-input" placeholder="EUR" class="w-full p-2 mt-1 rounded-xl border">
-                  </div>
-                  <div>
-                      <label for="ils-input" class="block text-sm font-medium">שקל (₪)</label>
-                      <input type="number" id="ils-input" placeholder="ILS" class="w-full p-2 mt-1 rounded-xl border">
-                  </div>
-              </div>
-              <p id="exchange-rate-display" class="text-xs text-gray-500 mt-auto pt-3 text-center">טוען שער חליפין...</p>
-          </div>
+        </div>
         </div>
     </section>
 
@@ -418,8 +437,11 @@
   </div>
   <div id="alert-modal" class="modal-backdrop">
     <div class="modal">
-        <div class="p-4 border-b"><h3 id="alert-modal-title" class="text-lg font-bold"></h3></div>
-        <div id="alert-modal-body" class="p-6 text-center whitespace-pre-wrap"></div>
+        <div class="p-4 border-b flex justify-between items-center">
+            <h3 id="alert-modal-title" class="text-lg font-bold"></h3>
+            <button id="alert-modal-copy-btn" class="btn btn-ghost btn-sm hidden"><i class="fa-solid fa-copy mr-1"></i>העתק</button>
+        </div>
+        <div id="alert-modal-body" class="p-6 whitespace-pre-wrap max-h-[50vh] overflow-y-auto"></div>
         <div class="p-4 border-t flex justify-end">
             <button id="alert-modal-close" class="btn btn-primary">הבנתי</button>
         </div>
@@ -471,6 +493,7 @@
               <a href="#checklist-section-tool" class="p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700">צ'קליסט</a>
               <a href="#translator-tool" class="p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700">תרגום</a>
               <a href="#converter-tool" class="p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700">ממיר מטבע</a>
+              <a href="#safety-warnings-tool" class="p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700">אזהרות</a>
           </div>
       </div>
 
@@ -541,6 +564,7 @@
     let eurToIlsRate = 4.0; // Default rate
     let userCoords = null;
     let isFirebaseConnected = false;
+    let translationHistory = [];
     
     // --- DATA ---
     const attractions = {
@@ -608,8 +632,8 @@
 
     const tripMeta = {
         flights: {
-            inbound: { date: '2025-11-23', arrivalLocal: '11:15', flight: 'LY381' },
-            outbound: { date: '2025-11-26', departureLocal: '18:00', flight: 'LY382' }
+            inbound: { date: '2025-11-23', flight: 'LY381', departureTime: '07:30', arrivalTime: '11:15', terminal: '3', baggage: 'מזוודה 23 ק"ג + טרולי 8 ק"ג' },
+            outbound: { date: '2025-11-26', flight: 'LY382', departureTime: '18:00', arrivalTime: '22:15', terminal: '1 (MXP)', baggage: 'מזוודה 23 ק"ג + טרולי 8 ק"ג' }
         },
         hotel: {
             name: 'Hotel Glam Milano', phone: '+39 02 839 840', tel: 'tel:+3902839840', address: 'Piazza Duca d\'Aosta, 4/6, 20124 Milano MI'
@@ -699,9 +723,17 @@
     };
     window.openAddToDayModal = openAddToDayModal;
 
-    function showAlert(title, message) {
+    function showAlert(title, message, isCopyable = false) {
         $('#alert-modal-title').textContent = title;
         $('#alert-modal-body').textContent = message;
+        
+        const copyBtn = $('#alert-modal-copy-btn');
+        if(isCopyable) {
+            copyBtn.classList.remove('hidden');
+        } else {
+            copyBtn.classList.add('hidden');
+        }
+
         $('#alert-modal').classList.add('flex');
     }
     
@@ -728,10 +760,19 @@
             <h3 class="font-bold text-lg mb-2">הזמן שנותר לטיול</h3>
             <div id="countdown" class="flex flex-row-reverse justify-around font-mono"></div>
         </div>`;
-        const flightsHtml = `<div class="bg-gray-50 dark:bg-gray-800/50 p-4 rounded-lg space-y-2">
-            <h3 class="font-bold text-lg"><i class="fa-solid fa-plane-departure mr-2"></i>טיסות</h3>
-            <p><b>הלוך:</b> ${flights.inbound.date} | ${flights.inbound.flight} | נחיתה: <b>${flights.inbound.arrivalLocal}</b></p>
-            <p><b>חזור:</b> ${flights.outbound.date} | ${flights.outbound.flight} | המראה: <b>${flights.outbound.departureLocal}</b></p>
+        const flightsHtml = `<div class="bg-gray-50 dark:bg-gray-800/50 p-4 rounded-lg space-y-2 col-span-1 sm:col-span-2">
+            <h3 class="font-bold text-lg"><i class="fa-solid fa-plane-departure mr-2"></i>פרטי טיסות</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-2 text-sm">
+                <div><b class="font-semibold">הלוך:</b> ${flights.inbound.date} | ${flights.inbound.flight}</div>
+                <div><b>המראה:</b> ${flights.inbound.departureTime} | <b>נחיתה:</b> ${flights.inbound.arrivalTime}</div>
+                <div><b>טרמינל (נתב"ג):</b> ${flights.inbound.terminal}</div>
+                <div><b>כבודה:</b> ${flights.inbound.baggage}</div>
+                <hr class="md:col-span-2 my-1">
+                <div><b class="font-semibold">חזור:</b> ${flights.outbound.date} | ${flights.outbound.flight}</div>
+                <div><b>המראה:</b> ${flights.outbound.departureTime} | <b>נחיתה:</b> ${flights.outbound.arrivalTime}</div>
+                <div><b>טרמינל (מילאנו):</b> ${flights.outbound.terminal}</div>
+                <div><b>כבודה:</b> ${flights.outbound.baggage}</div>
+            </div>
         </div>`;
         const hotelHtml = `<div class="bg-gray-50 dark:bg-gray-800/50 p-4 rounded-lg space-y-2">
             <h3 class="font-bold text-lg"><i class="fa-solid fa-hotel mr-2"></i>מלון</h3>
@@ -807,13 +848,16 @@
     function renderPlanForDay(dayId, dayData) {
         const container = $(`#${dayId}`);
         if (!container) return;
-        let content = `<div class="p-4"><div class="flex items-center gap-2 mb-4">
-            <label class="font-semibold">מצב נסיעה:</label>
-            <select class="p-2 rounded-lg border bg-white dark:bg-gray-800" data-day="${dayId}" onchange="window.handleTransportChange(event)">
-                <option value="walk" ${dayData.transport === 'walk' ? 'selected' : ''}>הליכה</option>
-                <option value="drive" ${dayData.transport === 'drive' ? 'selected' : ''}>רכב/מונית</option>
-                <option value="transit" ${dayData.transport === 'transit' ? 'selected' : ''}>תחב"צ</option>
-            </select>
+        let content = `<div class="p-4"><div class="flex flex-wrap items-center gap-4 mb-4">
+            <div class="flex items-center gap-2">
+                <label class="font-semibold">מצב נסיעה:</label>
+                <select class="p-2 rounded-lg border bg-white dark:bg-gray-800" data-day="${dayId}" onchange="window.handleTransportChange(event)">
+                    <option value="walk" ${dayData.transport === 'walk' ? 'selected' : ''}>הליכה</option>
+                    <option value="drive" ${dayData.transport === 'drive' ? 'selected' : ''}>רכב/מונית</option>
+                    <option value="transit" ${dayData.transport === 'transit' ? 'selected' : ''}>תחב"צ</option>
+                </select>
+            </div>
+            <button class="btn btn-primary" onclick="window.openDayMap('${dayId}')"><i class="fa-solid fa-map-route mr-2"></i>הצג מפת מסלול ליום זה</button>
         </div><div class="space-y-4">`;
 
         let previousActivity = null; 
@@ -1140,12 +1184,32 @@
                 85: 'fa-snowflake', 86: 'fa-snowflake',
                 95: 'fa-cloud-bolt', 96: 'fa-cloud-bolt', 99: 'fa-cloud-bolt'
             };
-            $('#weather-forecast').innerHTML = data.daily.time.map((day, i) => `
+            $('#weather-forecast').innerHTML = data.daily.time.slice(0, 5).map((day, i) => `
                 <div class="flex justify-between items-center text-sm">
-                    <span>${new Date(day).toLocaleDateString('he-IL', { weekday: 'long' })}</span>
+                    <span>${new Date(day).toLocaleDateString('he-IL', { weekday: 'short' })}</span>
                     <span><i class="fa-solid ${iconMap[data.daily.weathercode[i]] || 'fa-question-circle'}"></i></span>
                     <span>${Math.round(data.daily.temperature_2m_min[i])}°/${Math.round(data.daily.temperature_2m_max[i])}°</span>
                 </div>`).join('');
+            
+            // Attire recommendation logic
+            const todayTempMax = data.daily.temperature_2m_max[0];
+            const todayWeatherCode = data.daily.weathercode[0];
+            let recommendation = '';
+            if (todayWeatherCode >= 51 && todayWeatherCode <= 67) {
+                recommendation = 'צפוי גשם, מומלץ לקחת מטריה ומעיל גשם.';
+            } else if (todayWeatherCode >= 71) {
+                recommendation = 'צפוי שלג, התלבשו חם מאוד!';
+            } else if (todayTempMax > 28) {
+                recommendation = 'חם! מומלץ לבוש קצר, כובע והרבה מים.';
+            } else if (todayTempMax > 20) {
+                recommendation = 'מזג אוויר נעים, לבוש קצר או ארוך ודק יתאים.';
+            } else if (todayTempMax > 12) {
+                recommendation = 'קריר, מומלץ לבוש ארוך ועליונית / ז׳קט קל.';
+            } else {
+                recommendation = 'קר, מומלץ להתלבש חם עם מעיל וכובע.';
+            }
+            $('#weather-attire-recommendation').innerHTML = `<i class="fa-solid fa-shirt mr-2"></i> ${recommendation}`;
+
         } catch (e) { $('#weather-forecast').innerHTML = `<p class="text-xs text-red-500">שגיאה בטעינת תחזית. ${e.message}</p>`; }
     }
 
@@ -1309,6 +1373,20 @@
         });
     }
 
+    function renderTranslationHistory() {
+        const container = $('#translation-history');
+        if (translationHistory.length === 0) {
+            container.innerHTML = `<div class="text-center text-gray-400">היסטוריית תרגומים</div>`;
+            return;
+        }
+        container.innerHTML = translationHistory.map((item, index) => `
+            <div class="p-1.5 bg-gray-100 dark:bg-gray-800 rounded-md cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-700" onclick="window.reuseTranslation(${index})">
+                <div class="font-medium">${item.sourceText}</div>
+                <div class="text-gray-500">${item.translatedText}</div>
+            </div>
+        `).join('');
+    }
+
 
     // --- State Modifiers (Write to Firestore) ---
     async function handleTransportChange(e) {
@@ -1420,6 +1498,31 @@
             await updateDoc(tripDocRef, { gallery: arrayRemove(imgToRemove) });
         }
     };
+    window.reuseTranslation = (index) => {
+        const item = translationHistory[index];
+        if (item) {
+            $('#dictionary-input').value = item.sourceText;
+            $('#dictionary-form').requestSubmit();
+        }
+    };
+    window.openDayMap = (dayId) => {
+        const day = localTripData.plan[dayId];
+        if (!day || !day.activities || day.activities.length === 0) {
+            showAlert('אין מיקומים', 'אין פעילויות עם כתובות ביום זה כדי להציג על המפה.');
+            return;
+        }
+        const locations = day.activities
+            .map(act => act.address)
+            .filter(address => address); 
+        
+        if (locations.length < 1) {
+             showAlert('אין מיקומים', 'אין פעילויות עם כתובות ביום זה כדי להציג על המפה.');
+             return;
+        }
+
+        const url = `https://www.google.com/maps/dir/${locations.map(encodeURIComponent).join('/')}`;
+        window.open(url, '_blank');
+    };
 
     // Assign functions to window scope so inline event handlers can find them
     Object.assign(window, {
@@ -1468,7 +1571,7 @@
         translateImage(base64ImageData, 'image/jpeg');
     }
 
-    // --- Gemini Translation ---
+    // --- Gemini Calls ---
     async function callGemini(payload, prompt, useSearch = false) {
         payload.contents[0].parts[0].text = prompt;
         if (useSearch) {
@@ -1477,6 +1580,7 @@
             delete payload.tools;
         }
 
+        // IMPORTANT: The user provided a working key, so I am using it directly.
         const apiKey = "AIzaSyB80v2xdhebJqhjyruJ5Ta0eyhJiq7DsI8"; 
         const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-preview-0514:generateContent?key=${apiKey}`;
         
@@ -1516,6 +1620,11 @@
         responseText = responseText.replace(/[\*\_`]/g, '').trim();
         const langCode = currentLang === 'he-it' ? 'it-IT' : 'he-IL';
         resultContainer.innerHTML = `<span>${responseText}</span> <button onclick="window.speakText('${responseText.replace(/'/g, "\\'")}', '${langCode}')" class="btn btn-ghost p-1 h-auto"><i class="fa-solid fa-volume-high"></i></button>`;
+        
+        // Add to history
+        translationHistory.unshift({ sourceText: text, translatedText: responseText });
+        if (translationHistory.length > 5) translationHistory.pop(); // Keep last 5
+        renderTranslationHistory();
     }
     
     async function translateImage(base64ImageData, mimeType) {
@@ -1544,6 +1653,59 @@
 
         responseContainer.textContent = responseText;
         submitBtn.disabled = false;
+    }
+    
+    async function fetchSafetyWarnings() {
+        const container = $('#safety-warnings-content');
+        container.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> מאתר מידע עדכני...`;
+        
+        const today = new Date().toLocaleDateString('en-CA');
+        const prompt = `Are there any significant demonstrations, public transport strikes, or specific areas tourists should avoid in Milan, Italy for today, ${today}? Provide a concise summary in Hebrew. If there are no specific warnings, state that clearly.`;
+        const payload = { contents: [{ parts: [{ text: "" }] }] };
+        const responseText = await callGemini(payload, prompt, true);
+        
+        container.textContent = responseText;
+    }
+
+    async function generateTripSummary() {
+        showAlert('יוצר סיכום...', 'אוסף את כל החוויות והנתונים כדי ליצור סיכום אישי... זה עשוי לקחת רגע.', false);
+        
+        const { plan, expenses, journal } = localTripData;
+        
+        let placesVisited = [];
+        if(plan) {
+            Object.values(plan).forEach(day => {
+                day.activities.forEach(act => {
+                    if (!placesVisited.includes(act.name)) placesVisited.push(act.name);
+                });
+            });
+        }
+        
+        const totalExpenses = (expenses || []).reduce((sum, exp) => sum + exp.amount, 0);
+        
+        let journalEntries = [];
+        if(journal) {
+            Object.values(journal).forEach(dayEntries => {
+                dayEntries.forEach(entry => journalEntries.push(entry.text));
+            });
+        }
+        
+        const prompt = `
+            Act as a creative travel blogger writing a personal trip summary. Based on the following data from a trip to Milan, create a warm, engaging, and experiential summary in Hebrew.
+            The summary should feel like a personal memory, not just a list. Use paragraphs and an enthusiastic tone.
+            
+            Data:
+            - Places Visited: ${placesVisited.join(', ')}.
+            - Total Spent: Approximately ${totalExpenses.toFixed(0)} euros.
+            - Personal Journal Notes: ${journalEntries.join('; ')}.
+            
+            Please generate the summary now.
+        `;
+        
+        const payload = { contents: [{ parts: [{ text: "" }] }] };
+        const summaryText = await callGemini(payload, prompt, false);
+        
+        showAlert('סיכום הטיול שלכם!', summaryText, true);
     }
     
     // --- INIT ---
@@ -1635,6 +1797,8 @@
         fetchWeather();
         fetchExchangeRate();
         showDailyTip();
+        fetchSafetyWarnings();
+        renderTranslationHistory();
         
         const ctx = document.getElementById('transportChart').getContext('2d');
         new Chart(ctx, {
@@ -1650,6 +1814,8 @@
         });
         
         $('#show-tip-btn').addEventListener('click', openTipModal);
+        $('#create-summary-btn').addEventListener('click', generateTripSummary);
+        $('#refresh-warnings-btn').addEventListener('click', fetchSafetyWarnings);
 
         // --- Plan actions ---
         $('#collapse-all').addEventListener('click', () => {
@@ -1772,7 +1938,19 @@
         
         $('#document-upload-btn').addEventListener('click', () => $('#document-upload').click());
         $('#image-upload-btn').addEventListener('click', () => $('#image-upload').click());
-        $('#alert-modal-close').addEventListener('click', () => $('#alert-modal').classList.remove('flex'));
+        
+        $('#alert-modal-close').addEventListener('click', () => {
+             $('#alert-modal').classList.remove('flex');
+             $('#alert-modal-copy-btn').classList.add('hidden');
+        });
+        $('#alert-modal-copy-btn').addEventListener('click', (e) => {
+            const textToCopy = $('#alert-modal-body').textContent;
+            navigator.clipboard.writeText(textToCopy).then(() => {
+                e.target.textContent = 'הועתק!';
+                setTimeout(() => { e.target.innerHTML = '<i class="fa-solid fa-copy mr-1"></i>העתק'; }, 2000);
+            }).catch(err => console.error('Copy failed', err));
+        });
+
         $('#daily-tip-close').addEventListener('click', () => $('#daily-tip-modal').classList.remove('flex'));
 
         $('#document-upload').addEventListener('change', (e) => {
@@ -1817,18 +1995,11 @@
                     }
                 });
             } else {
-                const textArea = document.createElement("textarea");
-                textArea.value = url;
-                document.body.appendChild(textArea);
-                textArea.focus();
-                textArea.select();
-                try {
-                    document.execCommand('copy');
+                navigator.clipboard.writeText(url).then(() => {
                     showAlert('הקישור הועתק!', 'לא נמצאה אפשרות שיתוף. הקישור הועתק ללוח.');
-                } catch (err) {
-                    showAlert('שגיאה', 'לא ניתן היה להעתיק את הקישור.');
-                }
-                document.body.removeChild(textArea);
+                }).catch(err => {
+                     showAlert('שגיאה', 'לא ניתן היה להעתיק את הקישור.');
+                });
             }
         });
 
@@ -1837,8 +2008,8 @@
             if (!localTripData.plan) return;
             Object.values(localTripData.plan).forEach(day => {
                 day.activities.forEach(act => {
-                    if(act.address && !locations.includes(act.address)) {
-                        locations.push(encodeURIComponent(`${act.name}, ${act.address}`));
+                    if(act.address && !locations.some(l => l.includes(act.address))) {
+                        locations.push(encodeURIComponent(act.address));
                     }
                 });
             });
