@@ -1617,7 +1617,7 @@
     async function callGemini(payload, prompt, useSearch = false) {
         payload.contents[0].parts[0].text = prompt;
         if (useSearch) {
-            payload.tools = [{ "google_search": {} }];
+            payload.tools = [{ "google_search_retrieval": {} }];
         } else {
             delete payload.tools;
         }
@@ -1858,7 +1858,7 @@
         `;
 
         const payload = { contents: [{ parts: [{ text: "" }] }] };
-        const advice = await callGemini(payload, prompt, false);
+        const advice = await callGemini(payload, false);
         responseContainer.textContent = advice;
         submitBtn.disabled = false;
     }
