@@ -1681,16 +1681,21 @@
     }
 
     async function askGeneralGemini() {
-        const prompt = $('#gemini-prompt').value;
-        if (!prompt) return;
+        const userPrompt = $('#gemini-prompt').value;
+        if (!userPrompt) return;
 
         const responseContainer = $('#gemini-response');
         const submitBtn = $('#gemini-submit-btn');
         submitBtn.disabled = true;
         responseContainer.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> חושב...`;
+        
+        const containsHebrew = /[\u0590-\u05FF]/.test(userPrompt);
+        const finalPrompt = containsHebrew 
+            ? `${userPrompt}\n\n(Please provide the answer in Hebrew)`
+            : userPrompt;
 
         const payload = { contents: [{ parts: [{ text: "" }] }] };
-        const responseText = await callGemini(payload, prompt, true);
+        const responseText = await callGemini(payload, finalPrompt, true);
 
         responseContainer.textContent = responseText;
         submitBtn.disabled = false;
@@ -1858,7 +1863,7 @@
         `;
 
         const payload = { contents: [{ parts: [{ text: "" }] }] };
-        const advice = await callGemini(payload, false);
+        const advice = await callGemini(payload, prompt, false);
         responseContainer.textContent = advice;
         submitBtn.disabled = false;
     }
