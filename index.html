@@ -1573,11 +1573,11 @@ function renderJournal(dayId, entries = []) {
         }).filter(cat => cat.items.length > 0);
         await updateDoc(tripDocRef, { checklist: updatedChecklist });
     };
-// מצא את הפונקציה הזו והחלף אותה
+// הדבק את הגרסה החדשה הזו במקום הישנה
 async function addJournalEntry(dayId, text) {
     if (!tripDocRef) return;
 
-    // קודם כל, קרא את המצב הנוכחי של המסמך
+    // קודם כל, קרא את המצב הנוכחי של המסמך ממסד הנתונים
     const docSnap = await getDoc(tripDocRef);
     if (!docSnap.exists()) {
         console.error("Document does not exist!");
@@ -1591,26 +1591,26 @@ async function addJournalEntry(dayId, text) {
     const newEntry = {
         id: Date.now().toString(),
         text: text,
-        timestamp: serverTimestamp() // Firestore יקבע את הזמן
+        timestamp: serverTimestamp() // תן לשרת לקבוע את הזמן המדויק
     };
 
-    // צור מערך חדש ועדכן את המסמך
+    // צור מערך חדש עם הרשומה החדשה ועדכן את מסד הנתונים
     const updatedEntries = [...dayEntries, newEntry];
     await updateDoc(tripDocRef, {
         [`journal.${dayId}`]: updatedEntries
     });
 }
-// מצא את הפונקציה הזו והחלף אותה
+// הדבק את הגרסה החדשה הזו במקום הישנה
 async function removeJournalEntry(dayId, entryId) {
     if (!tripDocRef) return;
-    
-    // קח את מערך הרשומות הנוכחי מהמידע המקומי המעודכן שלנו
+
+    // השתמש במידע העדכני ביותר שיש לנו
     const currentEntries = (localTripData.journal && localTripData.journal[dayId]) ? localTripData.journal[dayId] : [];
-    
-    // צור מערך חדש שלא כולל את הרשומה שאנחנו רוצים למחוק
+
+    // צור מערך חדש שאינו כולל את הרשומה למחיקה
     const updatedEntries = currentEntries.filter(entry => entry.id !== entryId);
-    
-    // עדכן את מסד הנתונים על ידי דריסה של כל המערך של אותו יום
+
+    // עדכן את מסד הנתונים עם המערך החדש - זו הדרך הבטוחה ביותר
     await updateDoc(tripDocRef, {
         [`journal.${dayId}`]: updatedEntries
     });
