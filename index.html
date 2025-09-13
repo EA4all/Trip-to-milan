@@ -1216,25 +1216,31 @@
         });
     }
 
-    function renderJournal(dayId, entries = []) {
-        const entriesHtml = entries.sort((a,b) => a.timestamp - b.timestamp).map(entry => `
+    function renderJournal(dayId, entries = []) function renderJournal(dayId, entries = []) {
+    const entriesHtml = entries
+        .filter(entry => entry.timestamp) // 1. מסנן רשומות שהשרת עוד לא אישר
+        .sort((a, b) => b.timestamp.toMillis() - a.timestamp.toMillis()) // 2. ממיין נכון לפי זמן (חדש למעלה)
+        .map(entry => {
+            const dateString = new Date(entry.timestamp.toDate()).toLocaleString('he-IL', {day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit'});
+            return `
             <div class="bg-blue-50 dark:bg-blue-900/30 p-3 rounded-lg relative group">
                 <p class="text-sm">${entry.text}</p>
-                <div class="text-xs text-gray-500 dark:text-gray-400 mt-1">${new Date(entry.timestamp.toDate()).toLocaleString('he-IL', {day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit'})}</div>
+                <div class="text-xs text-gray-500 dark:text-gray-400 mt-1">${dateString}</div>
                 <button class="absolute top-2 left-2 text-red-400 hover:text-red-600 opacity-0 group-hover:opacity-100 transition-opacity" onclick="window.removeJournalEntry('${dayId}', '${entry.id}')">
                     <i class="fa-solid fa-trash-alt fa-xs"></i>
                 </button>
-            </div>
-        `).join('');
-        return `<div class="mt-6 border-t pt-4">
-            <h4 class="font-bold text-lg mb-2">יומן מסע</h4>
-            <div id="journal-entries-${dayId}" class="space-y-3 mb-3">${entriesHtml}</div>
-            <form id="journal-form-${dayId}" class="flex gap-2">
-                <input type="text" id="journal-text-${dayId}" placeholder="הוסף חוויה מהיום..." class="w-full p-2 rounded-lg border">
-                <button type="submit" class="btn btn-primary">שלח</button>
-            </form>
-        </div>`;
-    }
+            </div>`;
+    }).join('');
+
+    return `<div class="mt-6 border-t pt-4">
+        <h4 class="font-bold text-lg mb-2">יומן מסע</h4>
+        <div id="journal-entries-${dayId}" class="space-y-3 mb-3">${entriesHtml}</div>
+        <form id="journal-form-${dayId}" class="flex gap-2">
+            <input type="text" id="journal-text-${dayId}" placeholder="הוסף חוויה מהיום..." class="w-full p-2 rounded-lg border">
+            <button type="submit" class="btn btn-primary">שלח</button>
+        </form>
+    </div>`;
+}
     
     async function fetchWeather() {
         try {
