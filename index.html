@@ -1215,8 +1215,7 @@
             container.innerHTML += catHtml + '</div>';
         });
     }
-
-    function renderJournal(dayId, entries = []) function renderJournal(dayId, entries = []) {
+function renderJournal(dayId, entries = []) {
     const entriesHtml = entries
         .filter(entry => entry.timestamp) // 1. מסנן רשומות שהשרת עוד לא אישר
         .sort((a, b) => b.timestamp.toMillis() - a.timestamp.toMillis()) // 2. ממיין נכון לפי זמן (חדש למעלה)
