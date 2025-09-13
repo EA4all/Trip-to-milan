@@ -1574,10 +1574,10 @@ function renderJournal(dayId, entries = []) {
         await updateDoc(tripDocRef, { checklist: updatedChecklist });
     };
 // הדבק את הגרסה החדשה הזו במקום הישנה
+
 async function addJournalEntry(dayId, text) {
     if (!tripDocRef) return;
 
-    // קודם כל, קרא את המצב הנוכחי של המסמך ממסד הנתונים
     const docSnap = await getDoc(tripDocRef);
     if (!docSnap.exists()) {
         console.error("Document does not exist!");
@@ -1591,30 +1591,35 @@ async function addJournalEntry(dayId, text) {
     const newEntry = {
         id: Date.now().toString(),
         text: text,
-        timestamp: serverTimestamp() // תן לשרת לקבוע את הזמן המדויק
+        timestamp: serverTimestamp()
     };
 
-    // צור מערך חדש עם הרשומה החדשה ועדכן את מסד הנתונים
     const updatedEntries = [...dayEntries, newEntry];
     await updateDoc(tripDocRef, {
         [`journal.${dayId}`]: updatedEntries
     });
 }
-// הדבק את הגרסה החדשה הזו במקום הישנה
+
 async function removeJournalEntry(dayId, entryId) {
     if (!tripDocRef) return;
 
-    // השתמש במידע העדכני ביותר שיש לנו
-    const currentEntries = (localTripData.journal && localTripData.journal[dayId]) ? localTripData.journal[dayId] : [];
+    const docSnap = await getDoc(tripDocRef);
+    if (!docSnap.exists()) {
+        console.error("Document does not exist!");
+        return;
+    }
 
-    // צור מערך חדש שאינו כולל את הרשומה למחיקה
-    const updatedEntries = currentEntries.filter(entry => entry.id !== entryId);
+    const data = docSnap.data();
+    const currentJournal = data.journal || {};
+    const dayEntries = currentJournal[dayId] || [];
 
-    // עדכן את מסד הנתונים עם המערך החדש - זו הדרך הבטוחה ביותר
+    const updatedEntries = dayEntries.filter(entry => entry.id !== entryId);
+
     await updateDoc(tripDocRef, {
         [`journal.${dayId}`]: updatedEntries
     });
 }
+
     async function removeExpense(id) {
         const expenseToRemove = localTripData.expenses.find(exp => exp.id === id);
         if (expenseToRemove) {
