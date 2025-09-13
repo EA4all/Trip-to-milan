@@ -1581,12 +1581,21 @@ function renderJournal(dayId, entries = []) {
         const newEntry = { id: Date.now().toString(), text, timestamp: serverTimestamp() };
         await updateDoc(tripDocRef, { [`journal.${dayId}`]: arrayUnion(newEntry) });
     }
-    async function removeJournalEntry(dayId, entryId) {
-        const entryToRemove = (localTripData.journal[dayId] || []).find(e => e.id === entryId);
-        if (entryToRemove) {
-            await updateDoc(tripDocRef, { [`journal.${dayId}`]: arrayRemove(entryToRemove) });
-        }
-    };
+async function removeJournalEntry(dayId, entryId) {
+    if (!tripDocRef) return;
+
+    // קח את מערך הרשומות הנוכחי מהמידע המקומי שלנו
+    const currentEntries = localTripData.journal[dayId] || [];
+
+    // צור מערך חדש שלא כולל את הרשומה שאנחנו רוצים למחוק
+    const updatedEntries = currentEntries.filter(entry => entry.id !== entryId);
+
+    // עדכן את מסד הנתונים על ידי דריסה של כל המערך של אותו יום
+    // זוהי דרך בטוחה יותר שלא גורמת לבעיות התאמה
+    await updateDoc(tripDocRef, {
+        [`journal.${dayId}`]: updatedEntries
+    });
+}
     async function removeExpense(id) {
         const expenseToRemove = localTripData.expenses.find(exp => exp.id === id);
         if (expenseToRemove) {
