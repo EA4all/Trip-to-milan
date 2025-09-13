@@ -1574,29 +1574,19 @@ function renderJournal(dayId, entries = []) {
         await updateDoc(tripDocRef, { checklist: updatedChecklist });
     };
 // הדבק את הגרסה החדשה הזו במקום הישנה
-
+// --- הדבק את הקוד הזה במקום הגרסה הישנה ---
 async function addJournalEntry(dayId, text) {
     if (!tripDocRef) return;
-
-    const docSnap = await getDoc(tripDocRef);
-    if (!docSnap.exists()) {
-        console.error("Document does not exist!");
-        return;
-    }
-
-    const data = docSnap.data();
-    const currentJournal = data.journal || {};
-    const dayEntries = currentJournal[dayId] || [];
 
     const newEntry = {
         id: Date.now().toString(),
         text: text,
-        timestamp: serverTimestamp()
+        timestamp: serverTimestamp() // תן לשרת לקבוע את הזמן
     };
 
-    const updatedEntries = [...dayEntries, newEntry];
+    // זוהי הדרך הנכונה והיציבה להוסיף פריט למערך ב-Firestore
     await updateDoc(tripDocRef, {
-        [`journal.${dayId}`]: updatedEntries
+        [`journal.${dayId}`]: arrayUnion(newEntry)
     });
 }
 
