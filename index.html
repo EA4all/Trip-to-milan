@@ -1216,9 +1216,14 @@
         });
     }
 function renderJournal(dayId, entries = []) {
-    const entriesHtml = entries
-        .filter(entry => entry.timestamp) // 1. מסנן רשומות שהשרת עוד לא אישר
-        .sort((a, b) => b.timestamp.toMillis() - a.timestamp.toMillis()) // 2. ממיין נכון לפי זמן (חדש למעלה)
+    // ודא שאנחנו תמיד עובדים עם מערך תקין
+    const validEntries = Array.isArray(entries) ? entries : [];
+
+    const entriesHtml = validEntries
+        // סנן החוצה רשומות שעדיין אין להן חותמת זמן תקינה מהשרת
+        .filter(entry => entry && entry.timestamp && typeof entry.timestamp.toDate === 'function')
+        // מיין לפי חותמת הזמן, מהחדש ביותר לישן ביותר
+        .sort((a, b) => b.timestamp.toMillis() - a.timestamp.toMillis())
         .map(entry => {
             const dateString = new Date(entry.timestamp.toDate()).toLocaleString('he-IL', {day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit'});
             return `
@@ -1229,7 +1234,7 @@ function renderJournal(dayId, entries = []) {
                     <i class="fa-solid fa-trash-alt fa-xs"></i>
                 </button>
             </div>`;
-    }).join('');
+        }).join('');
 
     return `<div class="mt-6 border-t pt-4">
         <h4 class="font-bold text-lg mb-2">יומן מסע</h4>
