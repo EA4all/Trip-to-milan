@@ -580,9 +580,7 @@
   <script type="module">
     // --- Firebase SDK ---
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-    import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-    import { getFirestore, doc, onSnapshot, setDoc, updateDoc, arrayUnion, arrayRemove, getDoc, enableIndexedDbPersistence, collection, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-
+    import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";import { getFirestore, doc, onSnapshot, setDoc, updateDoc, arrayUnion, arrayRemove, getDoc, enableIndexedDbPersistence, collection, serverTimestamp, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
     // --- UTILS ---
     const $ = (s, p = document) => p.querySelector(s);
     const $$ = (s, p = document) => Array.from(p.querySelectorAll(s));
@@ -1215,14 +1213,12 @@
             container.innerHTML += catHtml + '</div>';
         });
     }
+// מצא את הפונקציה הזו והחלף אותה
 function renderJournal(dayId, entries = []) {
-    // ודא שאנחנו תמיד עובדים עם מערך תקין
     const validEntries = Array.isArray(entries) ? entries : [];
 
     const entriesHtml = validEntries
-        // סנן החוצה רשומות שעדיין אין להן חותמת זמן תקינה מהשרת
         .filter(entry => entry && entry.timestamp && typeof entry.timestamp.toDate === 'function')
-        // מיין לפי חותמת הזמן, מהחדש ביותר לישן ביותר
         .sort((a, b) => b.timestamp.toMillis() - a.timestamp.toMillis())
         .map(entry => {
             const dateString = new Date(entry.timestamp.toDate()).toLocaleString('he-IL', {day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit'});
@@ -1234,7 +1230,7 @@ function renderJournal(dayId, entries = []) {
                     <i class="fa-solid fa-trash-alt fa-xs"></i>
                 </button>
             </div>`;
-        }).join('');
+    }).join('');
 
     return `<div class="mt-6 border-t pt-4">
         <h4 class="font-bold text-lg mb-2">יומן מסע</h4>
@@ -1577,21 +1573,44 @@ function renderJournal(dayId, entries = []) {
         }).filter(cat => cat.items.length > 0);
         await updateDoc(tripDocRef, { checklist: updatedChecklist });
     };
-    async function addJournalEntry(dayId, text) {
-        const newEntry = { id: Date.now().toString(), text, timestamp: serverTimestamp() };
-        await updateDoc(tripDocRef, { [`journal.${dayId}`]: arrayUnion(newEntry) });
-    }
-async function removeJournalEntry(dayId, entryId) {
+// מצא את הפונקציה הזו והחלף אותה
+async function addJournalEntry(dayId, text) {
     if (!tripDocRef) return;
 
-    // קח את מערך הרשומות הנוכחי מהמידע המקומי שלנו
-    const currentEntries = localTripData.journal[dayId] || [];
+    // קודם כל, קרא את המצב הנוכחי של המסמך
+    const docSnap = await getDoc(tripDocRef);
+    if (!docSnap.exists()) {
+        console.error("Document does not exist!");
+        return;
+    }
 
+    const data = docSnap.data();
+    const currentJournal = data.journal || {};
+    const dayEntries = currentJournal[dayId] || [];
+
+    const newEntry = {
+        id: Date.now().toString(),
+        text: text,
+        timestamp: serverTimestamp() // Firestore יקבע את הזמן
+    };
+
+    // צור מערך חדש ועדכן את המסמך
+    const updatedEntries = [...dayEntries, newEntry];
+    await updateDoc(tripDocRef, {
+        [`journal.${dayId}`]: updatedEntries
+    });
+}
+// מצא את הפונקציה הזו והחלף אותה
+async function removeJournalEntry(dayId, entryId) {
+    if (!tripDocRef) return;
+    
+    // קח את מערך הרשומות הנוכחי מהמידע המקומי המעודכן שלנו
+    const currentEntries = (localTripData.journal && localTripData.journal[dayId]) ? localTripData.journal[dayId] : [];
+    
     // צור מערך חדש שלא כולל את הרשומה שאנחנו רוצים למחוק
     const updatedEntries = currentEntries.filter(entry => entry.id !== entryId);
-
+    
     // עדכן את מסד הנתונים על ידי דריסה של כל המערך של אותו יום
-    // זוהי דרך בטוחה יותר שלא גורמת לבעיות התאמה
     await updateDoc(tripDocRef, {
         [`journal.${dayId}`]: updatedEntries
     });
@@ -1993,31 +2012,37 @@ async function removeJournalEntry(dayId, entryId) {
         });
     }
 
-    function toggleLocationSharing() {
-        const btn = $('#toggle-location-sharing-btn');
-        const status = $('#location-status');
-        if (watchingLocation) {
-            navigator.geolocation.clearWatch(watchId);
-            watchingLocation = false;
-            watchId = null;
-            btn.innerHTML = '<i class="fa-solid fa-tower-broadcast mr-2"></i>הפעל שיתוף מיקום';
-            btn.classList.remove('bg-red-600', 'hover:bg-red-700');
-            status.textContent = 'שיתוף מיקום כבוי.';
+// מצא את הפונקציה הזו והחלף אותה
+async function toggleLocationSharing() {
+    const btn = $('#toggle-location-sharing-btn');
+    const status = $('#location-status');
+    if (watchingLocation) {
+        navigator.geolocation.clearWatch(watchId);
+        watchingLocation = false;
+        watchId = null;
+        btn.innerHTML = '<i class="fa-solid fa-tower-broadcast mr-2"></i>הפעל שיתוף מיקום';
+        btn.classList.remove('bg-red-600', 'hover:bg-red-700');
+        status.textContent = 'שיתוף מיקום כבוי.';
+        // החלק החשוב: מחיקת המיקום ממסד הנתונים
+        if (currentUserId) {
+            const userLocationDocRef = doc(locationsColRef, currentUserId);
+            await deleteDoc(userLocationDocRef);
+        }
+    } else {
+        if (navigator.geolocation) {
+            watchId = navigator.geolocation.watchPosition(updateLocationInFirestore, (error) => {
+                console.error("Error getting location:", error);
+                showAlert("שגיאת מיקום", "לא ניתן היה לקבל את מיקומך. ודא שאישרת הרשאות מיקום לדפדפן.");
+            }, { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 });
+            watchingLocation = true;
+            btn.innerHTML = '<i class="fa-solid fa-stop-circle mr-2"></i>הפסק שיתוף מיקום';
+            btn.classList.add('bg-red-600', 'hover:bg-red-700');
+            status.textContent = 'משתף מיקום...';
         } else {
-            if (navigator.geolocation) {
-                watchId = navigator.geolocation.watchPosition(updateLocationInFirestore, (error) => {
-                    console.error("Error getting location:", error);
-                    showAlert("שגיאת מיקום", "לא ניתן היה לקבל את מיקומך. ודא שאישרת הרשאות מיקום לדפדפן.");
-                }, { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 });
-                watchingLocation = true;
-                btn.innerHTML = '<i class="fa-solid fa-stop-circle mr-2"></i>הפסק שיתוף מיקום';
-                btn.classList.add('bg-red-600', 'hover:bg-red-700');
-                status.textContent = 'משתף מיקום...';
-            } else {
-                showAlert("לא נתמך", "הדפדפן שלך אינו תומך בשיתוף מיקום.");
-            }
+            showAlert("לא נתמך", "הדפדפן שלך אינו תומך בשיתוף מיקום.");
         }
     }
+}
 
 
     // --- INIT ---
@@ -2458,6 +2483,16 @@ window.removeImage = removeImage;
             }
         });
         $$('#plan-submenu a, #tools-submenu a').forEach(link => link.addEventListener('click', () => toggleSubmenu(null, null)));
+		// הוסף את הקוד הזה לפני סוף האירוע DOMContentLoaded
+window.addEventListener('beforeunload', (event) => {
+    // אם המשתמש משתף כרגע את מיקומו, נקה אותו מהמפה
+    if (watchingLocation && currentUserId) {
+        const userLocationDocRef = doc(locationsColRef, currentUserId);
+        // הערה: זו קריאה "שלח ושכח", ייתכן שלא תמיד תספיק להסתיים
+        // אבל זה הניסיון הכי טוב שאפשר לעשות בצד הלקוח
+        deleteDoc(userLocationDocRef);
+    }
+});
     });
   </script>
 </body>
