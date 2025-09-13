@@ -580,7 +580,9 @@
   <script type="module">
     // --- Firebase SDK ---
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-    import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";import { getFirestore, doc, onSnapshot, setDoc, updateDoc, arrayUnion, arrayRemove, getDoc, enableIndexedDbPersistence, collection, serverTimestamp, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+    import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+    import { getFirestore, doc, onSnapshot, setDoc, updateDoc, arrayUnion, arrayRemove, getDoc, enableIndexedDbPersistence, collection, serverTimestamp, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+    
     // --- UTILS ---
     const $ = (s, p = document) => p.querySelector(s);
     const $$ = (s, p = document) => Array.from(p.querySelectorAll(s));
@@ -1189,7 +1191,7 @@
                     <a title="Waze" href="https://waze.com/ul?q=${encodeURIComponent(m.address)}" target="_blank" class="btn btn-ghost btn-sm"><i class="fa-brands fa-waze"></i></a>
                     <a title="Google Maps" href="https://maps.google.com/?q=${encodeURIComponent(m.address)}" target="_blank" class="btn btn-ghost btn-sm"><i class="fa-brands fa-google"></i></a>
                     ${m.website ? `<a href="${m.website}" target="_blank" class="btn btn-ghost btn-sm" title="אתר"><i class="fa-solid fa-globe"></i></a>`:''}
-                    ${m.instagram ? `<a title="אינסטגרם" href="${m.instagram}" target="_blank" class="btn btn-ghost btn-sm"><i class="fa-brands fa-instagram"></i></a>`:''}
+                    ${m.instagram ? `<a title="אינסטגרם" href="${r.instagram}" target="_blank" class="btn btn-ghost btn-sm"><i class="fa-brands fa-instagram"></i></a>`:''}
                 </div>
             </td>
         </tr>`;
@@ -1213,35 +1215,7 @@
             container.innerHTML += catHtml + '</div>';
         });
     }
-// מצא את הפונקציה הזו והחלף אותה
-function renderJournal(dayId, entries = []) {
-    const validEntries = Array.isArray(entries) ? entries : [];
 
-    const entriesHtml = validEntries
-        .filter(entry => entry && entry.timestamp && typeof entry.timestamp.toDate === 'function')
-        .sort((a, b) => b.timestamp.toMillis() - a.timestamp.toMillis())
-        .map(entry => {
-            const dateString = new Date(entry.timestamp.toDate()).toLocaleString('he-IL', {day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit'});
-            return `
-            <div class="bg-blue-50 dark:bg-blue-900/30 p-3 rounded-lg relative group">
-                <p class="text-sm">${entry.text}</p>
-                <div class="text-xs text-gray-500 dark:text-gray-400 mt-1">${dateString}</div>
-                <button class="absolute top-2 left-2 text-red-400 hover:text-red-600 opacity-0 group-hover:opacity-100 transition-opacity" onclick="window.removeJournalEntry('${dayId}', '${entry.id}')">
-                    <i class="fa-solid fa-trash-alt fa-xs"></i>
-                </button>
-            </div>`;
-    }).join('');
-
-    return `<div class="mt-6 border-t pt-4">
-        <h4 class="font-bold text-lg mb-2">יומן מסע</h4>
-        <div id="journal-entries-${dayId}" class="space-y-3 mb-3">${entriesHtml}</div>
-        <form id="journal-form-${dayId}" class="flex gap-2">
-            <input type="text" id="journal-text-${dayId}" placeholder="הוסף חוויה מהיום..." class="w-full p-2 rounded-lg border">
-            <button type="submit" class="btn btn-primary">שלח</button>
-        </form>
-    </div>`;
-}
-    
     async function fetchWeather() {
         try {
             const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=45.46&longitude=9.19&daily=weathercode,temperature_2m_max,temperature_2m_min&timezone=Europe/Berlin&forecast_days=7`);
@@ -1478,6 +1452,59 @@ function renderJournal(dayId, entries = []) {
         `).join('');
     }
 
+    // --- JOURNAL FUNCTIONS (BLOCK TO REPLACE) ---
+    async function addJournalEntry(dayId, text) {
+        if (!tripDocRef) return;
+        const newEntry = {
+            id: Date.now().toString(),
+            text: text,
+            timestamp: serverTimestamp()
+        };
+        await updateDoc(tripDocRef, {
+            [`journal.${dayId}`]: arrayUnion(newEntry)
+        });
+    }
+
+    async function removeJournalEntry(dayId, entryId) {
+        if (!tripDocRef) return;
+        const docSnap = await getDoc(tripDocRef);
+        if (!docSnap.exists()) return;
+        const data = docSnap.data();
+        const currentJournal = data.journal || {};
+        const dayEntries = currentJournal[dayId] || [];
+        const updatedEntries = dayEntries.filter(entry => entry.id !== entryId);
+        await updateDoc(tripDocRef, {
+            [`journal.${dayId}`]: updatedEntries
+        });
+    }
+
+    function renderJournal(dayId, entries = []) {
+        const validEntries = Array.isArray(entries) ? entries : [];
+        const entriesHtml = validEntries
+            .filter(entry => entry && entry.timestamp && typeof entry.timestamp.toDate === 'function')
+            .sort((a, b) => b.timestamp.toMillis() - a.timestamp.toMillis())
+            .map(entry => {
+                const dateString = new Date(entry.timestamp.toDate()).toLocaleString('he-IL', {day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit'});
+                return `
+                <div class="bg-blue-50 dark:bg-blue-900/30 p-3 rounded-lg relative group">
+                    <p class="text-sm">${entry.text}</p>
+                    <div class="text-xs text-gray-500 dark:text-gray-400 mt-1">${dateString}</div>
+                    <button class="absolute top-2 left-2 text-red-400 hover:text-red-600 opacity-0 group-hover:opacity-100 transition-opacity" onclick="window.removeJournalEntry('${dayId}', '${entry.id}')">
+                        <i class="fa-solid fa-trash-alt fa-xs"></i>
+                    </button>
+                </div>`;
+        }).join('');
+
+        return `<div class="mt-6 border-t pt-4">
+            <h4 class="font-bold text-lg mb-2">יומן מסע</h4>
+            <div id="journal-entries-${dayId}" class="space-y-3 mb-3">${entriesHtml}</div>
+            <form id="journal-form-${dayId}" class="flex gap-2">
+                <input type="text" id="journal-text-${dayId}" placeholder="הוסף חוויה מהיום..." class="w-full p-2 rounded-lg border">
+                <button type="submit" class="btn btn-primary">שלח</button>
+            </form>
+        </div>`;
+    }
+    // --- (END OF BLOCK) ---
 
     // --- State Modifiers (Write to Firestore) ---
     async function handleTransportChange(e) {
@@ -1573,43 +1600,7 @@ function renderJournal(dayId, entries = []) {
         }).filter(cat => cat.items.length > 0);
         await updateDoc(tripDocRef, { checklist: updatedChecklist });
     };
-// הדבק את הגרסה החדשה הזו במקום הישנה
-// --- הדבק את הקוד הזה במקום הגרסה הישנה ---
-async function addJournalEntry(dayId, text) {
-    if (!tripDocRef) return;
-
-    const newEntry = {
-        id: Date.now().toString(),
-        text: text,
-        timestamp: serverTimestamp() // תן לשרת לקבוע את הזמן
-    };
-
-    // זוהי הדרך הנכונה והיציבה להוסיף פריט למערך ב-Firestore
-    await updateDoc(tripDocRef, {
-        [`journal.${dayId}`]: arrayUnion(newEntry)
-    });
-}
-
-async function removeJournalEntry(dayId, entryId) {
-    if (!tripDocRef) return;
-
-    const docSnap = await getDoc(tripDocRef);
-    if (!docSnap.exists()) {
-        console.error("Document does not exist!");
-        return;
-    }
-
-    const data = docSnap.data();
-    const currentJournal = data.journal || {};
-    const dayEntries = currentJournal[dayId] || [];
-
-    const updatedEntries = dayEntries.filter(entry => entry.id !== entryId);
-
-    await updateDoc(tripDocRef, {
-        [`journal.${dayId}`]: updatedEntries
-    });
-}
-
+    
     async function removeExpense(id) {
         const expenseToRemove = localTripData.expenses.find(exp => exp.id === id);
         if (expenseToRemove) {
@@ -1793,7 +1784,7 @@ async function removeJournalEntry(dayId, entryId) {
         container.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> מאתר מידע עדכני...`;
         
         const today = new Date().toLocaleDateString('en-CA');
-        const prompt = `Are there any significant demonstrations, public transport strikes, or specific areas tourists should avoid in Milan, Italy for today, ${today}? Provide a concise summary in Hebrew. If there are no specific warnings, state that clearly.`;
+        const prompt = `As a safety advisor, check for any significant demonstrations, public transport strikes, or specific safety warnings for tourists in Milan, Italy, specifically for today's date: ${today}. Provide a concise summary in Hebrew. If your web search finds no specific warnings, state that clearly and mention that the information is current as of today.`;
         const payload = { contents: [{ parts: [{ text: "" }] }] };
         const responseText = await callGemini(payload, prompt, true);
         
@@ -2007,51 +1998,49 @@ async function removeJournalEntry(dayId, entryId) {
         });
     }
 
-// מצא את הפונקציה הזו והחלף אותה
-async function toggleLocationSharing() {
-    const btn = $('#toggle-location-sharing-btn');
-    const status = $('#location-status');
-    if (watchingLocation) {
-        navigator.geolocation.clearWatch(watchId);
-        watchingLocation = false;
-        watchId = null;
-        btn.innerHTML = '<i class="fa-solid fa-tower-broadcast mr-2"></i>הפעל שיתוף מיקום';
-        btn.classList.remove('bg-red-600', 'hover:bg-red-700');
-        status.textContent = 'שיתוף מיקום כבוי.';
-        // החלק החשוב: מחיקת המיקום ממסד הנתונים
-        if (currentUserId) {
-            const userLocationDocRef = doc(locationsColRef, currentUserId);
-            await deleteDoc(userLocationDocRef);
-        }
-    } else {
-        if (navigator.geolocation) {
-            watchId = navigator.geolocation.watchPosition(updateLocationInFirestore, (error) => {
-                console.error("Error getting location:", error);
-                showAlert("שגיאת מיקום", "לא ניתן היה לקבל את מיקומך. ודא שאישרת הרשאות מיקום לדפדפן.");
-            }, { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 });
-            watchingLocation = true;
-            btn.innerHTML = '<i class="fa-solid fa-stop-circle mr-2"></i>הפסק שיתוף מיקום';
-            btn.classList.add('bg-red-600', 'hover:bg-red-700');
-            status.textContent = 'משתף מיקום...';
+    async function toggleLocationSharing() {
+        const btn = $('#toggle-location-sharing-btn');
+        const status = $('#location-status');
+        if (watchingLocation) {
+            navigator.geolocation.clearWatch(watchId);
+            watchingLocation = false;
+            watchId = null;
+            btn.innerHTML = '<i class="fa-solid fa-tower-broadcast mr-2"></i>הפעל שיתוף מיקום';
+            btn.classList.remove('bg-red-600', 'hover:bg-red-700');
+            status.textContent = 'שיתוף מיקום כבוי.';
+            // The important part: delete the location from the database
+            if (currentUserId) {
+                const userLocationDocRef = doc(locationsColRef, currentUserId);
+                await deleteDoc(userLocationDocRef);
+            }
         } else {
-            showAlert("לא נתמך", "הדפדפן שלך אינו תומך בשיתוף מיקום.");
+            if (navigator.geolocation) {
+                watchId = navigator.geolocation.watchPosition(updateLocationInFirestore, (error) => {
+                    console.error("Error getting location:", error);
+                    showAlert("שגיאת מיקום", "לא ניתן היה לקבל את מיקומך. ודא שאישרת הרשאות מיקום לדפדפן.");
+                }, { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 });
+                watchingLocation = true;
+                btn.innerHTML = '<i class="fa-solid fa-stop-circle mr-2"></i>הפסק שיתוף מיקום';
+                btn.classList.add('bg-red-600', 'hover:bg-red-700');
+                status.textContent = 'משתף מיקום...';
+            } else {
+                showAlert("לא נתמך", "הדפדפן שלך אינו תומך בשיתוף מיקום.");
+            }
         }
     }
-}
-
 
     // --- INIT ---
     document.addEventListener('DOMContentLoaded', () => {
-// --- Expose functions to window for onclick attributes ---
-window.handleTransportChange = handleTransportChange;
-window.removeActivity = removeActivity;
-window.moveActivity = moveActivity;
-window.toggleChecklistItem = toggleChecklistItem;
-window.removeChecklistItem = removeChecklistItem;
-window.removeJournalEntry = removeJournalEntry;
-window.removeExpense = removeExpense;
-window.removeDocument = removeDocument;
-window.removeImage = removeImage;
+        // --- Expose functions to window for onclick attributes ---
+        window.handleTransportChange = handleTransportChange;
+        window.removeActivity = removeActivity;
+        window.moveActivity = moveActivity;
+        window.toggleChecklistItem = toggleChecklistItem;
+        window.removeChecklistItem = removeChecklistItem;
+        window.removeJournalEntry = removeJournalEntry;
+        window.removeExpense = removeExpense;
+        window.removeDocument = removeDocument;
+        window.removeImage = removeImage;
 
         // --- PWA Setup ---
         const manifestContent = {
@@ -2478,17 +2467,15 @@ window.removeImage = removeImage;
             }
         });
         $$('#plan-submenu a, #tools-submenu a').forEach(link => link.addEventListener('click', () => toggleSubmenu(null, null)));
-		// הוסף את הקוד הזה לפני סוף האירוע DOMContentLoaded
-window.addEventListener('beforeunload', (event) => {
-    // אם המשתמש משתף כרגע את מיקומו, נקה אותו מהמפה
-    if (watchingLocation && currentUserId) {
-        const userLocationDocRef = doc(locationsColRef, currentUserId);
-        // הערה: זו קריאה "שלח ושכח", ייתכן שלא תמיד תספיק להסתיים
-        // אבל זה הניסיון הכי טוב שאפשר לעשות בצד הלקוח
-        deleteDoc(userLocationDocRef);
-    }
-});
+
+        window.addEventListener('beforeunload', (event) => {
+            if (watchingLocation && currentUserId) {
+                const userLocationDocRef = doc(locationsColRef, currentUserId);
+                deleteDoc(userLocationDocRef);
+            }
+        });
     });
   </script>
 </body>
 </html>
+
