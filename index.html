@@ -2003,15 +2003,16 @@
 
     // --- INIT ---
     document.addEventListener('DOMContentLoaded', () => {
-        // --- Expose functions to window for onclick attributes ---
-        window.moveActivity = moveActivity;
-        window.toggleChecklistItem = toggleChecklistItem;
-        window.removeChecklistItem = removeChecklistItem;
-        window.addJournalEntry = addJournalEntry;
-        window.removeJournalEntry = removeJournalEntry;
-        window.removeExpense = removeExpense;
-        window.removeDocument = removeDocument;
-        window.removeImage = removeImage;
+// --- Expose functions to window for onclick attributes ---
+window.handleTransportChange = handleTransportChange;
+window.removeActivity = removeActivity;
+window.moveActivity = moveActivity;
+window.toggleChecklistItem = toggleChecklistItem;
+window.removeChecklistItem = removeChecklistItem;
+window.removeJournalEntry = removeJournalEntry;
+window.removeExpense = removeExpense;
+window.removeDocument = removeDocument;
+window.removeImage = removeImage;
 
         // --- PWA Setup ---
         const manifestContent = {
