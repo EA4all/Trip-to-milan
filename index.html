@@ -1985,6 +1985,17 @@
     // --- INIT ---
     document.addEventListener('DOMContentLoaded', () => {
         // --- Expose functions to window for onclick attributes ---
+      // --- PWA Service Worker Registration ---
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('/sw.js')
+                .then(registration => {
+                    console.log('Service Worker registered with scope:', registration.scope);
+                }).catch(error => {
+                    console.log('Service Worker registration failed:', error);
+                });
+        });
+    }
         window.handleTransportChange = handleTransportChange;
         window.removeActivity = removeActivity;
         window.moveActivity = moveActivity;
@@ -2407,19 +2418,7 @@
     });
   </script>
   
-  <script>
-    // PWA Service Worker Registration Script - Placed outside the module
-    if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-            navigator.serviceWorker.register('/sw.js')
-                .then(registration => {
-                    console.log('Service Worker registered with scope:', registration.scope);
-                }).catch(error => {
-                    console.log('Service Worker registration failed:', error);
-                });
-        });
-    }
-  </script>
+
 
 </body>
 </html>
