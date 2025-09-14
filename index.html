@@ -5,9 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>תוכנית טיול שיתופית למילאנו</title>
   <meta name="description" content="דשבורד אינטראקטיבי ושיתופי לתכנון חופשה במילאנו: לוז יומי, מפות, מזג אוויר, סיכום טיול חכם, מעקב תקציב ועוד." />
-  <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
-  <meta name="theme-color" content="#0b1220" media="(prefers-color-scheme: dark)">
-  <link rel="manifest" id="manifest-link">
+  <meta name="theme-color" content="#1d4ed8">
+  <link rel="manifest" href="manifest.json">
 
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
@@ -197,10 +196,7 @@
         <div class="hidden md:flex md:items-center md:gap-1 flex-wrap">
           <a href="#overview" class="nav-link px-3 py-2 rounded-md text-sm font-medium">סקירה</a>
           <a href="#plan" class="nav-link px-3 py-2 rounded-md text-sm font-medium">תוכנית</a>
-          <a href="#live-location-section" class="nav-link px-3 py-2 rounded-md text-sm font-medium">מיקום חי</a>
           <a href="#suggestions" class="nav-link px-3 py-2 rounded-md text-sm font-medium">הצעות</a>
-          <a href="#travel-journal" class="nav-link px-3 py-2 rounded-md text-sm font-medium">יומן מסע</a>
-          <a href="#transport-guide" class="nav-link px-3 py-2 rounded-md text-sm font-medium">תחבורה</a>
           <a href="#kosher" class="nav-link px-3 py-2 rounded-md text-sm font-medium">אוכל כשר</a>
           <a href="#tools" class="nav-link px-3 py-2 rounded-md text-sm font-medium">כלים</a>
         </div>
@@ -246,28 +242,7 @@
         <div id="plan-content-container"></div>
       </div>
     </section>
-
-    <section id="live-location-section" class="my-12 scroll-mt-24">
-        <h2 class="text-3xl font-bold text-center text-brand-900 dark:text-brand-300 mb-6">מפת מיקום חי</h2>
-        <div class="bg-white dark:bg-gray-950 p-4 sm:p-6 rounded-2xl shadow-lg text-center">
-            <p class="mb-4">כל משתמש עם הלינק יכול לראות את מיקום המטיילים בזמן אמת. רק המטיילים צריכים ללחוץ על "שתף מיקום".</p>
-            <div id="live-location-map" class="mb-4"></div>
-            <div class="flex flex-col sm:flex-row gap-2 justify-center">
-                <button id="toggle-location-sharing-btn" class="btn btn-primary"><i class="fa-solid fa-tower-broadcast mr-2"></i>הפעל שיתוף מיקום</button>
-                <input type="text" id="user-name-input" placeholder="הכנס את שמך (לזיהוי)" class="p-2 rounded-lg border text-center">
-            </div>
-            <p id="location-status" class="text-xs text-gray-500 mt-2 h-4"></p>
-        </div>
-    </section>
-
-    <section id="master-map-section" class="my-12 scroll-mt-24">
-        <h2 class="text-3xl font-bold text-center text-brand-900 dark:text-brand-300 mb-6">מפה ראשית</h2>
-        <div class="bg-white dark:bg-gray-950 p-6 rounded-2xl shadow-lg text-center">
-            <p class="mb-4">פתח מפה ויזואלית עם כל האתרים המרכזיים בתוכנית שלך.</p>
-            <button id="open-master-map-btn" class="btn btn-primary"><i class="fa-solid fa-map-marked-alt mr-2"></i>פתח מפה ראשית</button>
-        </div>
-    </section>
-
+    
     <section id="suggestions" class="my-12 scroll-mt-24">
         <h2 class="text-3xl font-bold text-center text-brand-900 dark:text-brand-300 mb-6">מאגר הצעות</h2>
         <div class="text-center">
@@ -275,44 +250,6 @@
         </div>
         <div id="suggestions-container" class="hidden mt-6 bg-white dark:bg-gray-950 p-4 sm:p-6 rounded-2xl shadow-lg">
             <div id="suggestions-table-container"></div>
-        </div>
-    </section>
-
-    <section id="travel-journal" class="my-12 scroll-mt-24">
-      <h2 class="text-3xl font-bold text-center text-brand-900 dark:text-brand-300 mb-6">יומן מסע</h2>
-      <div class="bg-white dark:bg-gray-950 p-6 rounded-2xl shadow-lg">
-        <form id="journal-form" class="space-y-3">
-          <textarea id="journal-input" rows="4" class="w-full p-3 rounded-lg border bg-white dark:bg-gray-800" placeholder="כתוב כאן חוויות, מחשבות וזכרונות מהטיול..."></textarea>
-          <button type="submit" class="btn btn-primary w-full">הוסף רשומה ליומן</button>
-        </form>
-        <div id="journal-entries-container" class="mt-6 space-y-4">
-            <!-- Journal entries will be rendered here by JavaScript -->
-            <p class="text-center text-gray-500">טוען רשומות מהיומן...</p>
-        </div>
-      </div>
-    </section>
-
-    <section id="transport-guide" class="my-12 scroll-mt-24">
-        <h2 class="text-3xl font-bold text-center text-brand-900 dark:text-brand-300 mb-6">מדריך תחבורה</h2>
-        <div class="grid md:grid-cols-2 gap-6">
-            <div class="bg-white dark:bg-gray-950 p-6 rounded-2xl shadow-lg">
-                <h3 class="text-2xl font-bold text-brand-800 dark:text-brand-200 mb-3">תחבורה ציבורית (ATM)</h3>
-                <ul class="space-y-3 list-disc list-inside text-gray-700 dark:text-gray-300">
-                    <li><span class="font-semibold">איפה קונים:</span> במכונות האוטומטיות בכל תחנת מטרו, בקיוסקים (Tabacchi), או באפליקציה הרשמית <a href="https://www.atm.it/it/Pagine/default.aspx" target="_blank" class="text-brand-600 dark:text-brand-400 hover:underline">ATM Milano</a>.</li>
-                    <li><span class="font-semibold">המלצה:</span> כרטיס ל-3 ימים (72 שעות) הוא המשתלם ביותר לשהייה שלכם.</li>
-                </ul>
-                <div class="relative h-[280px] mt-4">
-                    <canvas id="transportChart"></canvas>
-                </div>
-            </div>
-            <div class="bg-white dark:bg-gray-950 p-6 rounded-2xl shadow-lg">
-                <h3 class="text-2xl font-bold text-brand-800 dark:text-brand-200 mb-3">רכבות לטיולי יום</h3>
-                <ul class="space-y-3 list-disc list-inside text-gray-700 dark:text-gray-300">
-                    <li><span class="font-semibold">איפה קונים:</span> מומלץ להזמין מראש באינטרנט כדי להבטיח מקום ומחיר טוב.</li>
-                    <li><span class="font-semibold">אתרים מומלצים:</span> <a href="https://www.trenitalia.com/en.html" target="_blank" class="text-brand-600 dark:text-brand-400 hover:underline">Trenitalia</a> (רשמי) או <a href="https://www.italotreno.it/en" target="_blank" class="text-brand-600 dark:text-brand-400 hover:underline">Italo</a> (פרטי).</li>
-                    <li><span class="font-semibold">תחנת יציאה:</span> כל הרכבות לאגמים יוצאות מתחנת **Milano Centrale**.</li>
-                </ul>
-            </div>
         </div>
     </section>
 
@@ -333,6 +270,44 @@
     <section id="tools" class="my-12 scroll-mt-24">
         <h2 class="text-3xl font-bold text-center text-brand-900 dark:text-brand-300 mb-6">כלים ומידע שימושי</h2>
         <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            
+            <div id="live-location-tool" class="bg-white dark:bg-gray-950 p-6 rounded-2xl shadow-lg scroll-mt-24 lg:col-span-3">
+                <h3 class="text-xl font-bold mb-3 text-center"><i class="fa-solid fa-map-location-dot mr-2"></i>מפת מיקום חי</h3>
+                <div class="text-center">
+                    <p class="mb-4">כל משתמש עם הלינק יכול לראות את מיקום המטיילים בזמן אמת. רק המטיילים צריכים ללחוץ על "שתף מיקום".</p>
+                    <div id="live-location-map" class="mb-4"></div>
+                    <div class="flex flex-col sm:flex-row gap-2 justify-center">
+                        <button id="toggle-location-sharing-btn" class="btn btn-primary"><i class="fa-solid fa-tower-broadcast mr-2"></i>הפעל שיתוף מיקום</button>
+                        <input type="text" id="user-name-input" placeholder="הכנס את שמך (לזיהוי)" class="p-2 rounded-lg border text-center">
+                    </div>
+                    <p id="location-status" class="text-xs text-gray-500 mt-2 h-4"></p>
+                </div>
+            </div>
+
+            <div id="transport-tool" class="bg-white dark:bg-gray-950 p-6 rounded-2xl shadow-lg scroll-mt-24 lg:col-span-3">
+                <h3 class="text-xl font-bold mb-3 text-center"><i class="fa-solid fa-bus mr-2"></i>מדריך תחבורה</h3>
+                <div class="grid md:grid-cols-2 gap-6">
+                    <div>
+                        <h4 class="text-lg font-bold text-brand-800 dark:text-brand-200 mb-3">תחבורה ציבורית (ATM)</h4>
+                        <ul class="space-y-3 list-disc list-inside text-gray-700 dark:text-gray-300">
+                            <li><span class="font-semibold">איפה קונים:</span> במכונות האוטומטיות בכל תחנת מטרו, בקיוסקים (Tabacchi), או באפליקציה הרשמית <a href="https://www.atm.it/it/Pagine/default.aspx" target="_blank" class="text-brand-600 dark:text-brand-400 hover:underline">ATM Milano</a>.</li>
+                            <li><span class="font-semibold">המלצה:</span> כרטיס ל-3 ימים (72 שעות) הוא המשתלם ביותר לשהייה שלכם.</li>
+                        </ul>
+                        <div class="relative h-[280px] mt-4">
+                            <canvas id="transportChart"></canvas>
+                        </div>
+                    </div>
+                    <div>
+                        <h4 class="text-lg font-bold text-brand-800 dark:text-brand-200 mb-3">רכבות לטיולי יום</h4>
+                        <ul class="space-y-3 list-disc list-inside text-gray-700 dark:text-gray-300">
+                            <li><span class="font-semibold">איפה קונים:</span> מומלץ להזמין מראש באינטרנט כדי להבטיח מקום ומחיר טוב.</li>
+                            <li><span class="font-semibold">אתרים מומלצים:</span> <a href="https://www.trenitalia.com/en.html" target="_blank" class="text-brand-600 dark:text-brand-400 hover:underline">Trenitalia</a> (רשמי) או <a href="https://www.italotreno.it/en" target="_blank" class="text-brand-600 dark:text-brand-400 hover:underline">Italo</a> (פרטי).</li>
+                            <li><span class="font-semibold">תחנת יציאה:</span> כל הרכבות לאגמים יוצאות מתחנת **Milano Centrale**.</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            
             <div id="weather-tool" class="bg-white dark:bg-gray-950 p-6 rounded-2xl shadow-lg scroll-mt-24 lg:col-span-1">
                 <h3 class="text-xl font-bold mb-3"><i class="fa-solid fa-cloud-sun mr-2"></i>מזג אוויר</h3>
                 <div id="weather-forecast" class="space-y-3"><p>טוען תחזית...</p></div>
@@ -558,6 +533,9 @@
       </div>
       <div id="tools-submenu" class="floating-submenu hidden fixed bottom-[68px] left-0 right-0 bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm p-2 rounded-t-2xl">
           <div class="grid grid-cols-3 gap-2 text-center text-sm">
+              <a href="#overview" class="p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 col-span-3 font-bold text-brand-600">חזור לסקירה</a>
+              <a href="#live-location-tool" class="p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700">מיקום חי</a>
+              <a href="#transport-tool" class="p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700">תחבורה</a>
               <a href="#weather-tool" class="p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700">מזג אוויר</a>
               <a href="#budget-tool" class="p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700">תקציב</a>
               <a href="#checklist-section-tool" class="p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700">צ'קליסט</a>
@@ -577,9 +555,9 @@
                 <i class="fa-solid fa-utensils fa-lg"></i>
                 <span>כשר</span>
             </a>
-            <a href="#transport-guide" class="flex flex-col items-center text-xs gap-1 p-1 hover:text-brand-600 w-1/4">
-                <i class="fa-solid fa-bus fa-lg"></i>
-                <span>תחבורה</span>
+            <a href="#travel-journal" class="flex flex-col items-center text-xs gap-1 p-1 hover:text-brand-600 w-1/4">
+                <i class="fa-solid fa-book-journal-whills fa-lg"></i>
+                <span>יומן מסע</span>
             </a>
             <button id="floating-tools-btn" class="flex flex-col items-center text-xs gap-1 p-1 hover:text-brand-600 w-1/4">
                 <i class="fa-solid fa-screwdriver-wrench fa-lg"></i>
@@ -630,7 +608,7 @@
     const placeholderLogoUrl = (name) => `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&size=80&rounded=true&background=e0e7ff&color=1e40af`;
     
     // --- Global State ---
-    let db, auth, tripDocRef, locationsColRef, journalColRef;
+    let db, auth, tripDocRef, locationsColRef;
     let localTripData = {}; 
     let budgetChartInstance = null;
     let cameraStream = null;
@@ -757,7 +735,7 @@
                 { id: 'cat2', category: 'ביגוד', items: [{ id: 'c3', text: 'מעיל גשם', done: false }] },
                 { id: 'cat3', category: 'אלקטרוניקה', items: [{ id: 'c4', text: 'מטען נייד', done: true }, { id: 'c5', text: 'מתאם לחשמל', done: false }] }
             ],
-            totalBudget: 1500, expenses: [], documents: [], gallery: [],
+            totalBudget: 1500, expenses: [], documents: [], gallery: [], journal: {},
             theme: 'dark',
             settings: { includeEstimatedCostsInBalance: true }
         };
@@ -958,7 +936,7 @@
             previousActivity = act;
         });
         
-        content += `</div></div>`; // Removed renderJournal from here
+        content += `</div></div>`;
         container.innerHTML = content;
     }
     
@@ -1756,7 +1734,7 @@
     async function generateTripSummary() {
         showAlert('יוצר סיכום...', 'אוסף את כל החוויות והנתונים כדי ליצור סיכום אישי... זה עשוי לקחת רגע.', false);
         
-        const { plan, expenses, journal } = localTripData;
+        const { plan, expenses } = localTripData;
         
         let placesVisited = [];
         if(plan) {
@@ -1770,11 +1748,13 @@
         const totalExpenses = (expenses || []).reduce((sum, exp) => sum + exp.amount, 0);
         
         let journalEntries = [];
-        const q = query(journalColRef, orderBy("createdAt", "desc"));
-        const querySnapshot = await getDocs(q);
-        querySnapshot.forEach((doc) => {
-            journalEntries.push(doc.data().text);
-        });
+        if (journalColRef) {
+            const q = query(journalColRef, orderBy("createdAt", "desc"));
+            const querySnapshot = await getDocs(q);
+            querySnapshot.forEach((doc) => {
+                journalEntries.push(doc.data().text);
+            });
+        }
 
         const prompt = `
             Act as a creative travel blogger writing a personal trip summary. Based on the following data from a trip to Milan, create a warm, engaging, and experiential summary in Hebrew.
@@ -2014,58 +1994,7 @@
         window.removeExpense = removeExpense;
         window.removeDocument = removeDocument;
         window.removeImage = removeImage;
-
-        // --- PWA Setup ---
-        const manifestContent = {
-          "name": "מתכנן טיול למילאנו",
-          "short_name": "טיול מילאנו",
-          "start_url": ".",
-          "display": "standalone",
-          "background_color": "#0b1220",
-          "theme_color": "#1d4ed8",
-          "description": "הדשבורד האישי שלך לתכנון החופשה במילאנו.",
-          "icons": [
-            {"src": "https://placehold.co/192x192/1d4ed8/ffffff?text=MTP", "sizes": "192x192", "type": "image/png"},
-            {"src": "https://placehold.co/512x512/1d4ed8/ffffff?text=MTP", "sizes": "512x512", "type": "image/png"}
-          ]
-        };
-        const manifestString = JSON.stringify(manifestContent);
-        const manifestBlob = new Blob([manifestString], {type: 'application/json'});
-        const manifestUrl = URL.createObjectURL(manifestBlob);
-        document.querySelector('#manifest-link').setAttribute('href', manifestUrl);
-
-        if ('serviceWorker' in navigator) {
-            const swCode = `
-                const CACHE_NAME = 'milan-trip-cache-v1';
-                const urlsToCache = [
-                    '/',
-                    'https://cdn.tailwindcss.com',
-                    'https://fonts.googleapis.com/css2?family=Assistant:wght@300;400;600;700&display=swap',
-                    'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css',
-                    'https://cdn.jsdelivr.net/npm/chart.js',
-                    'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css',
-                    'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js'
-                ];
-                self.addEventListener('install', event => {
-                    event.waitUntil(
-                        caches.open(CACHE_NAME).then(cache => cache.addAll(urlsToCache))
-                    );
-                });
-                self.addEventListener('fetch', event => {
-                    event.respondWith(
-                        caches.match(event.request).then(response => {
-                            return response || fetch(event.request);
-                        })
-                    );
-                });
-            `;
-            const swBlob = new Blob([swCode], {type: 'application/javascript'});
-            const swUrl = URL.createObjectURL(swBlob);
-            navigator.serviceWorker.register(swUrl)
-                .then(reg => console.log('Service worker registered.', reg))
-                .catch(err => console.error('Service worker registration failed:', err));
-        }
-
+        
         // --- Firebase Initialization ---
         const firebaseConfig = {
           apiKey: "AIzaSyB80v2xdhebJqhjyruJ5Ta0eyhJiq7DsI8",
@@ -2452,7 +2381,7 @@
                 sm.classList.remove('active');
                 sm.classList.add('hidden');
             });
-            $$('#floating-nav button').forEach(btn => btn.classList.remove('text-brand-600'));
+            $$('#floating-nav button, #floating-nav a').forEach(btn => btn.classList.remove('text-brand-600'));
             
             if (submenuToToggle && !isAlreadyActive) {
                 submenuToToggle.classList.remove('hidden');
@@ -2477,6 +2406,21 @@
         });
     });
   </script>
+  
+  <script>
+    // PWA Service Worker Registration Script - Placed outside the module
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('/sw.js')
+                .then(registration => {
+                    console.log('Service Worker registered with scope:', registration.scope);
+                }).catch(error => {
+                    console.log('Service Worker registration failed:', error);
+                });
+        });
+    }
+  </script>
+
 </body>
 </html>
 
