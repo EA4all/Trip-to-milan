@@ -527,11 +527,12 @@
 
 
   <div id="floating-nav-container" class="md:hidden fixed bottom-0 left-0 right-0 z-40">
-      <div id="plan-submenu" class="floating-submenu hidden fixed bottom-[68px] left-0 right-0 bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm p-2 rounded-t-2xl">
+      <!-- FIX 3: Removed 'hidden' class from submenus for better animation handling -->
+      <div id="plan-submenu" class="floating-submenu fixed bottom-[68px] left-0 right-0 bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm p-2 rounded-t-2xl">
           <div class="grid grid-cols-3 gap-2 text-center text-sm" id="plan-submenu-links">
               </div>
       </div>
-      <div id="tools-submenu" class="floating-submenu hidden fixed bottom-[68px] left-0 right-0 bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm p-2 rounded-t-2xl">
+      <div id="tools-submenu" class="floating-submenu fixed bottom-[68px] left-0 right-0 bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm p-2 rounded-t-2xl">
           <div class="grid grid-cols-3 gap-2 text-center text-sm">
               <a href="#overview" class="p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 col-span-3 font-bold text-brand-600">חזור לסקירה</a>
               <a href="#live-location-tool" class="p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700">מיקום חי</a>
@@ -1631,7 +1632,8 @@
     async function callGemini(payload, prompt, useSearch = false) {
         payload.contents[0].parts[0].text = prompt;
         if (useSearch) {
-            payload.tools = [{ "google_search": {} }];
+            // FIX 4: Changed 'google_search' to 'google_search_retrieval'
+            payload.tools = [{ "google_search_retrieval": {} }];
         } else {
             delete payload.tools;
         }
@@ -1965,7 +1967,7 @@
         }
     }
     
-    // --- JOURNAL FUNCTIONS (FINAL, CORRECTED BLOCK) ---
+    // --- FIX 1 & 2: CORRECTED JOURNAL FUNCTIONS BLOCK ---
     async function addJournalEntry(dayId, text) {
         if (!tripDocRef) return;
         const newEntry = {
@@ -1979,24 +1981,38 @@
     }
 
     async function removeJournalEntry(dayId, entryId) {
+        if (!isFirebaseConnected) {
+            showAlert('אין חיבור', 'לא ניתן למחוק כעת. אנא המתן לסנכרון מלא עם השרת.');
+            return;
+        }
         if (!tripDocRef) return;
-        const entryToRemove = (localTripData.journal[dayId] || []).find(e => e.id === entryId);
+        
+        const journalForDay = localTripData.journal?.[dayId] || [];
+        const entryToRemove = journalForDay.find(e => e.id === entryId);
+
         if (entryToRemove) {
             await updateDoc(tripDocRef, {
                 [`journal.${dayId}`]: arrayRemove(entryToRemove)
             });
         } else {
-            console.error("Could not find journal entry to remove.");
+            console.error("Could not find journal entry to remove. This might happen if the data is not yet synced.");
         }
     }
 
     function renderJournal(dayId, entries = []) {
+        // This helper function safely converts a Firestore Timestamp or a plain object from localStorage into a Date object.
+        const getTimestampDate = (ts) => {
+            if (!ts) return new Date();
+            if (typeof ts.toDate === 'function') return ts.toDate(); // Handles live Firestore Timestamp
+            if (ts.seconds) return new Date(ts.seconds * 1000); // Handles object from JSON.parse(localStorage)
+            return new Date(); // Fallback
+        };
+
         const validEntries = Array.isArray(entries) ? entries : [];
         const entriesHtml = validEntries
-            .filter(entry => entry && entry.timestamp && typeof entry.timestamp.toDate === 'function')
-            .sort((a, b) => b.timestamp.toMillis() - a.timestamp.toMillis())
+            .sort((a, b) => getTimestampDate(b.timestamp).getTime() - getTimestampDate(a.timestamp).getTime())
             .map(entry => {
-                const dateString = new Date(entry.timestamp.toDate()).toLocaleString('he-IL', {day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit'});
+                const dateString = getTimestampDate(entry.timestamp).toLocaleString('he-IL', {day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit'});
                 return `
                 <div class="bg-blue-50 dark:bg-blue-900/30 p-3 rounded-lg relative group">
                     <p class="text-sm whitespace-pre-wrap">${entry.text}</p>
@@ -2389,7 +2405,7 @@
             } else { showAlert('שגיאה', 'אין מיקומים בתוכנית כדי להציג על המפה.'); }
         });
 
-        // Floating Nav Logic (Corrected)
+        // --- FIX 3: CORRECTED Floating Nav Logic ---
         const planBtn = $('#floating-plan-btn');
         const toolsBtn = $('#floating-tools-btn');
         const planSubmenu = $('#plan-submenu');
@@ -2398,18 +2414,13 @@
         function toggleSubmenu(submenuToToggle, buttonToHighlight) {
             const isAlreadyActive = submenuToToggle && submenuToToggle.classList.contains('active');
             
-            // First, hide all submenus
-            $$('.floating-submenu').forEach(sm => {
-                sm.classList.remove('active');
-                sm.classList.add('hidden');
-            });
-            // Then, remove the highlight from all main nav items
+            // First, hide all submenus and remove highlights
+            $$('.floating-submenu').forEach(sm => sm.classList.remove('active'));
             $$('#floating-nav button, #floating-nav a').forEach(btn => btn.classList.remove('text-brand-600'));
             
-            // If we need to show a new submenu, do it now
+            // If we are opening a new/different submenu, show it
             if (submenuToToggle && !isAlreadyActive) {
-                submenuToToggle.classList.remove('hidden');
-                setTimeout(() => submenuToToggle.classList.add('active'), 10);
+                submenuToToggle.classList.add('active');
                 buttonToHighlight.classList.add('text-brand-600');
             }
         }
@@ -2436,4 +2447,3 @@
 
 </body>
 </html>
-
