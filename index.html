@@ -1985,10 +1985,10 @@
     // --- INIT ---
     document.addEventListener('DOMContentLoaded', () => {
         // --- Expose functions to window for onclick attributes ---
-      // --- PWA Service Worker Registration ---
+// --- PWA Service Worker Registration ---
     if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
-            navigator.serviceWorker.register('/sw.js')
+            navigator.serviceWorker.register('sw.js')
                 .then(registration => {
                     console.log('Service Worker registered with scope:', registration.scope);
                 }).catch(error => {
@@ -2381,34 +2381,41 @@
             } else { showAlert('שגיאה', 'אין מיקומים בתוכנית כדי להציג על המפה.'); }
         });
 
-        // Floating Nav Logic
-        const planBtn = $('#floating-plan-btn'); const toolsBtn = $('#floating-tools-btn');
-        const planSubmenu = $('#plan-submenu'); const toolsSubmenu = $('#tools-submenu');
-        
-        function toggleSubmenu(submenuToToggle, buttonToHighlight) {
-            const isAlreadyActive = submenuToToggle && submenuToToggle.classList.contains('active');
-            
-            $$('.floating-submenu').forEach(sm => {
-                sm.classList.remove('active');
-                sm.classList.add('hidden');
-            });
-            $$('#floating-nav button, #floating-nav a').forEach(btn => btn.classList.remove('text-brand-600'));
-            
-            if (submenuToToggle && !isAlreadyActive) {
-                submenuToToggle.classList.remove('hidden');
-                setTimeout(() => submenuToToggle.classList.add('active'), 10);
-                buttonToHighlight.classList.add('text-brand-600');
-            }
-        }
-        planBtn.addEventListener('click', (e) => { e.stopPropagation(); toggleSubmenu(planSubmenu, planBtn); });
-        toolsBtn.addEventListener('click', (e) => { e.stopPropagation(); toggleSubmenu(toolsSubmenu, toolsBtn); });
-        document.addEventListener('click', (e) => { 
-            if (!e.target.closest('#floating-nav-container')) {
-                toggleSubmenu(null, null);
-            }
-        });
-        $$('#plan-submenu a, #tools-submenu a').forEach(link => link.addEventListener('click', () => toggleSubmenu(null, null)));
+// Floating Nav Logic
+    const planBtn = $('#floating-plan-btn');
+    const toolsBtn = $('#floating-tools-btn');
+    const planSubmenu = $('#plan-submenu');
+    const toolsSubmenu = $('#tools-submenu');
 
+    function toggleSubmenu(submenuToToggle, buttonToHighlight) {
+        const isAlreadyActive = submenuToToggle && submenuToToggle.classList.contains('active');
+
+        // First, hide all submenus
+        $$('.floating-submenu').forEach(sm => {
+            sm.classList.remove('active');
+            sm.classList.add('hidden');
+        });
+        // Then, remove the highlight from all main nav items
+        $$('#floating-nav button, #floating-nav a').forEach(btn => btn.classList.remove('text-brand-600'));
+
+        // If we need to show a new submenu, do it now
+        if (submenuToToggle && !isAlreadyActive) {
+            submenuToToggle.classList.remove('hidden');
+            setTimeout(() => submenuToToggle.classList.add('active'), 10);
+            buttonToHighlight.classList.add('text-brand-600');
+        }
+    }
+    planBtn.addEventListener('click', (e) => { e.stopPropagation(); toggleSubmenu(planSubmenu, planBtn); });
+    toolsBtn.addEventListener('click', (e) => { e.stopPropagation(); toggleSubmenu(toolsSubmenu, toolsBtn); });
+
+    // Close submenus when clicking anywhere else on the page
+    document.addEventListener('click', (e) => { 
+        if (!e.target.closest('#floating-nav-container')) {
+            toggleSubmenu(null, null);
+        }
+    });
+    // Close submenus when clicking a link inside them
+    $$('#plan-submenu a, #tools-submenu a').forEach(link => link.addEventListener('click', () => toggleSubmenu(null, null)));
         window.addEventListener('beforeunload', (event) => {
             if (watchingLocation && currentUserId) {
                 const userLocationDocRef = doc(locationsColRef, currentUserId);
