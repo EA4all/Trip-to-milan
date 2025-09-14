@@ -7,7 +7,7 @@
   <meta name="description" content="דשבורד אינטראקטיבי ושיתופי לתכנון חופשה במילאנו: לוז יומי, מפות, מזג אוויר, סיכום טיול חכם, מעקב תקציב ועוד." />
   <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
   <meta name="theme-color" content="#0b1220" media="(prefers-color-scheme: dark)">
-  <link rel="manifest" id="manifest-link">
+  <link rel="manifest" id="manifest.json">
 
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
@@ -453,18 +453,7 @@
             <div id="gallery-grid" class="grid grid-cols-2 sm:grid-cols-3 gap-4"></div>
         </div>
     </section>
-<section id="travel-journal" class="my-12 scroll-mt-24">
-  <h2 class="text-3xl font-bold text-center text-brand-900 dark:text-brand-300 mb-6">יומן מסע</h2>
-  <div class="bg-white dark:bg-gray-950 p-6 rounded-2xl shadow-lg">
-    <form id="journal-form" class="space-y-3">
-      <textarea id="journal-input" rows="3"
-        class="w-full p-3 rounded-lg border"
-        placeholder="כתוב כאן חוויה מהיום..."></textarea>
-      <button type="submit" class="btn btn-primary w-full">שמור ביומן</button>
-    </form>
-    <div id="journal-list" class="mt-6 space-y-3"></div>
-  </div>
-</section>
+
   </main>
   
   <div id="add-to-day-modal" class="modal-backdrop">
@@ -2492,88 +2481,13 @@
             }
         });
     });
-    // ========= יומן מסע =========
-
-// רפרנס לאוסף ביומן ב־Firestore
-import { addDoc, collection, serverTimestamp, deleteDoc, doc, onSnapshot, query, orderBy } 
-  from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-
-const journalCol = collection(db, "travelJournal");
-const journalForm = document.getElementById("journal-form");
-const journalInput = document.getElementById("journal-input");
-const journalList = document.getElementById("journal-list");
-
-// הוספת רשומה
-async function addJournalEntry(text) {
-  await addDoc(journalCol, {
-    text,
-    createdAt: serverTimestamp()
-  });
-}
-
-// מחיקת רשומה
-async function removeJournalEntry(id) {
-  const ref = doc(db, "travelJournal", id);
-  await deleteDoc(ref);
-}
-
-// רינדור הרשומות למסך
-function renderJournal(entries, container) {
-  container.innerHTML = "";
-
-  if (!entries || entries.length === 0) {
-    container.innerHTML = `<p class="text-center text-gray-500">עדיין לא נכתבו רשומות ביומן...</p>`;
-    return;
-  }
-
-  entries.forEach(entry => {
-    const div = document.createElement("div");
-    div.className = "relative p-4 rounded-lg bg-gray-100 dark:bg-gray-800 shadow";
-
-    // תוכן
-    const text = document.createElement("p");
-    text.className = "whitespace-pre-wrap";
-    text.textContent = entry.text;
-    div.appendChild(text);
-
-    // תאריך
-    if (entry.createdAt) {
-      const date = document.createElement("div");
-      date.className = "text-xs text-gray-500 mt-2";
-      const d = entry.createdAt.toDate ? entry.createdAt.toDate() : new Date(entry.createdAt);
-      date.textContent = d.toLocaleString("he-IL");
-      div.appendChild(date);
-    }
-
-    // כפתור מחיקה
-    const delBtn = document.createElement("button");
-    delBtn.innerHTML = `<i class="fa-solid fa-trash"></i>`;
-    delBtn.className = "delete-btn";
-    delBtn.onclick = async () => {
-      await removeJournalEntry(entry.id);
-    };
-    div.appendChild(delBtn);
-
-    container.appendChild(div);
-  });
-}
-
-// מאזין לשינויים ב־Firestore ומעדכן אוטומטית
-onSnapshot(query(journalCol, orderBy("createdAt", "desc")), (snapshot) => {
-  const entries = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
-  renderJournal(entries, journalList);
-});
-
-// טיפול בטופס
-journalForm.addEventListener("submit", async (e) => {
-  e.preventDefault();
-  const text = journalInput.value.trim();
-  if (!text) return;
-  await addJournalEntry(text);
-  journalInput.value = "";
-});
-
   </script>
+  <script>
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.register("sw.js")
+    .then(() => console.log("SW registered"))
+    .catch(err => console.error("SW fail", err));
+}
+</script>
 </body>
 </html>
-
