@@ -7,7 +7,7 @@
   <meta name="description" content="דשבורד אינטראקטיבי ושיתופי לתכנון חופשה במילאנו: לוז יומי, מפות, מזג אוויר, סיכום טיול חכם, מעקב תקציב ועוד." />
   <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
   <meta name="theme-color" content="#0b1220" media="(prefers-color-scheme: dark)">
-  <link rel="manifest" id=manifest.json>
+  <link rel="manifest" id="manifest-link">
 
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
@@ -1452,65 +1452,93 @@
         `).join('');
     }
 
-    // --- JOURNAL FUNCTIONS (FINAL, CORRECTED BLOCK) ---
-    async function addJournalEntry(dayId, text) {
-        if (!tripDocRef) return;
-        const newEntry = {
-            id: Date.now().toString(),
-            text: text,
-            timestamp: serverTimestamp()
-        };
-        // Use arrayUnion - it's efficient. The problem was elsewhere.
-        // This command atomically adds the new entry to the array.
-        await updateDoc(tripDocRef, {
-            [`journal.${dayId}`]: arrayUnion(newEntry)
-        });
+// --- JOURNAL FUNCTIONS (START OF FINAL BLOCK) ---
+
+// פונקציה להוספת רשומה חדשה ליומן
+async function addJournalEntry(dayId, text) {
+    if (!tripDocRef) return;
+
+    // שלב 1: קבל את המידע העדכני ביותר ישירות ממסד הנתונים
+    const docSnap = await getDoc(tripDocRef);
+    if (!docSnap.exists()) {
+        console.error("Document does not exist! Cannot add journal entry.");
+        return;
     }
 
-    async function removeJournalEntry(dayId, entryId) {
-        if (!tripDocRef) return;
-        
-        // This is the key: we must find the *exact* object to remove, including its timestamp.
-        // We get this from our local, synced data.
-        const entryToRemove = (localTripData.journal[dayId] || []).find(e => e.id === entryId);
+    // שלב 2: חלץ את המידע הקיים של היומן
+    const data = docSnap.data();
+    const currentJournal = data.journal || {};
+    const dayEntries = currentJournal[dayId] || [];
 
-        if (entryToRemove) {
-             // arrayRemove atomically removes the exact entry from the array.
-            await updateDoc(tripDocRef, {
-                [`journal.${dayId}`]: arrayRemove(entryToRemove)
-            });
-        } else {
-            console.error("Could not find journal entry to remove. It might have been already deleted.");
-        }
+    // שלב 3: צור את הרשומה החדשה
+    const newEntry = {
+        id: Date.now().toString(),
+        text: text,
+        timestamp: serverTimestamp() // תן לשרת לקבוע את הזמן
+    };
+
+    // שלב 4: צור מערך חדש ועדכן את המסמך כולו
+    const updatedEntries = [...dayEntries, newEntry];
+    await updateDoc(tripDocRef, {
+        [`journal.${dayId}`]: updatedEntries
+    });
+}
+
+// פונקציה למחיקת רשומה מהיומן
+async function removeJournalEntry(dayId, entryId) {
+    if (!tripDocRef) return;
+
+    // שלב 1: קבל את המידע העדכני ביותר ישירות ממסד הנתונים
+    const docSnap = await getDoc(tripDocRef);
+    if (!docSnap.exists()) {
+        console.error("Document does not exist! Cannot remove journal entry.");
+        return;
     }
 
-    function renderJournal(dayId, entries = []) {
-        const validEntries = Array.isArray(entries) ? entries : [];
-        const entriesHtml = validEntries
-            .filter(entry => entry && entry.timestamp && typeof entry.timestamp.toDate === 'function')
-            .sort((a, b) => b.timestamp.toMillis() - a.timestamp.toMillis())
-            .map(entry => {
-                const dateString = new Date(entry.timestamp.toDate()).toLocaleString('he-IL', {day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit'});
-                return `
-                <div class="bg-blue-50 dark:bg-blue-900/30 p-3 rounded-lg relative group">
-                    <p class="text-sm">${entry.text}</p>
-                    <div class="text-xs text-gray-500 dark:text-gray-400 mt-1">${dateString}</div>
-                    <button class="absolute top-2 left-2 text-red-400 hover:text-red-600 opacity-0 group-hover:opacity-100 transition-opacity" onclick="window.removeJournalEntry('${dayId}', '${entry.id}')">
-                        <i class="fa-solid fa-trash-alt fa-xs"></i>
-                    </button>
-                </div>`;
-        }).join('');
+    // שלב 2: חלץ את המידע הקיים
+    const data = docSnap.data();
+    const currentJournal = data.journal || {};
+    const dayEntries = currentJournal[dayId] || [];
 
-        return `<div class="mt-6 border-t pt-4">
-            <h4 class="font-bold text-lg mb-2">יומן מסע</h4>
-            <div id="journal-entries-${dayId}" class="space-y-3 mb-3">${entriesHtml}</div>
-            <form id="journal-form-${dayId}" class="flex gap-2">
-                <input type="text" id="journal-text-${dayId}" placeholder="הוסף חוויה מהיום..." class="w-full p-2 rounded-lg border">
-                <button type="submit" class="btn btn-primary">שלח</button>
-            </form>
-        </div>`;
-    }
-    // --- (END OF FINAL BLOCK) ---
+    // שלב 3: צור מערך חדש ללא הרשומה שנמחקה
+    const updatedEntries = dayEntries.filter(entry => entry.id !== entryId);
+
+    // שלב 4: עדכן את המסמך עם המערך החדש
+    await updateDoc(tripDocRef, {
+        [`journal.${dayId}`]: updatedEntries
+    });
+}
+
+// פונקציה להצגת היומן (זו הגרסה המתוקנת שכבר יש לך, כלולה כאן לשלמות)
+function renderJournal(dayId, entries = []) {
+    const validEntries = Array.isArray(entries) ? entries : [];
+
+    const entriesHtml = validEntries
+        .filter(entry => entry && entry.timestamp && typeof entry.timestamp.toDate === 'function')
+        .sort((a, b) => b.timestamp.toMillis() - a.timestamp.toMillis())
+        .map(entry => {
+            const dateString = new Date(entry.timestamp.toDate()).toLocaleString('he-IL', {day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit'});
+            return `
+            <div class="bg-blue-50 dark:bg-blue-900/30 p-3 rounded-lg relative group">
+                <p class="text-sm">${entry.text}</p>
+                <div class="text-xs text-gray-500 dark:text-gray-400 mt-1">${dateString}</div>
+                <button class="absolute top-2 left-2 text-red-400 hover:text-red-600 opacity-0 group-hover:opacity-100 transition-opacity" onclick="window.removeJournalEntry('${dayId}', '${entry.id}')">
+                    <i class="fa-solid fa-trash-alt fa-xs"></i>
+                </button>
+            </div>`;
+    }).join('');
+
+    return `<div class="mt-6 border-t pt-4">
+        <h4 class="font-bold text-lg mb-2">יומן מסע</h4>
+        <div id="journal-entries-${dayId}" class="space-y-3 mb-3">${entriesHtml}</div>
+        <form id="journal-form-${dayId}" class="flex gap-2">
+            <input type="text" id="journal-text-${dayId}" placeholder="הוסף חוויה מהיום..." class="w-full p-2 rounded-lg border">
+            <button type="submit" class="btn btn-primary">שלח</button>
+        </form>
+    </div>`;
+}
+
+// --- (END OF FINAL BLOCK) ---
 
     // --- State Modifiers (Write to Firestore) ---
     async function handleTransportChange(e) {
@@ -1701,7 +1729,7 @@
     async function callGemini(payload, prompt, useSearch = false) {
         payload.contents[0].parts[0].text = prompt;
         if (useSearch) {
-            payload.tools = [{ "google_search": {} }];
+            payload.tools = [{ "google_search_retrieval": {} }];
         } else {
             delete payload.tools;
         }
@@ -2482,12 +2510,5 @@
         });
     });
   </script>
-  <script>
-if ("serviceWorker" in navigator) {
-  navigator.serviceWorker.register("sw.js")
-    .then(() => console.log("SW registered"))
-    .catch(err => console.error("SW fail", err));
-}
-</script>
 </body>
 </html>
