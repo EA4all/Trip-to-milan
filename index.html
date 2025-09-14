@@ -555,10 +555,6 @@
                 <i class="fa-solid fa-utensils fa-lg"></i>
                 <span>כשר</span>
             </a>
-            <a href="#travel-journal" class="flex flex-col items-center text-xs gap-1 p-1 hover:text-brand-600 w-1/4">
-                <i class="fa-solid fa-book-journal-whills fa-lg"></i>
-                <span>יומן מסע</span>
-            </a>
             <button id="floating-tools-btn" class="flex flex-col items-center text-xs gap-1 p-1 hover:text-brand-600 w-1/4">
                 <i class="fa-solid fa-screwdriver-wrench fa-lg"></i>
                 <span>כלים</span>
@@ -936,7 +932,7 @@
             previousActivity = act;
         });
         
-        content += `</div></div>`;
+        content += `</div>${renderJournal(dayId, localTripData.journal ? localTripData.journal[dayId] : [])}</div>`;
         container.innerHTML = content;
     }
     
@@ -1734,7 +1730,7 @@
     async function generateTripSummary() {
         showAlert('יוצר סיכום...', 'אוסף את כל החוויות והנתונים כדי ליצור סיכום אישי... זה עשוי לקחת רגע.', false);
         
-        const { plan, expenses } = localTripData;
+        const { plan, expenses, journal } = localTripData;
         
         let placesVisited = [];
         if(plan) {
@@ -1748,11 +1744,9 @@
         const totalExpenses = (expenses || []).reduce((sum, exp) => sum + exp.amount, 0);
         
         let journalEntries = [];
-        if (journalColRef) {
-            const q = query(journalColRef, orderBy("createdAt", "desc"));
-            const querySnapshot = await getDocs(q);
-            querySnapshot.forEach((doc) => {
-                journalEntries.push(doc.data().text);
+        if (journal) {
+            Object.values(journal).forEach(dayEntries => {
+                dayEntries.forEach(entry => journalEntries.push(entry.text));
             });
         }
 
@@ -1970,41 +1964,83 @@
             }
         }
     }
+    
+    // --- JOURNAL FUNCTIONS (FINAL, CORRECTED BLOCK) ---
+    async function addJournalEntry(dayId, text) {
+        if (!tripDocRef) return;
+        const newEntry = {
+            id: Date.now().toString(),
+            text: text,
+            timestamp: serverTimestamp()
+        };
+        await updateDoc(tripDocRef, {
+            [`journal.${dayId}`]: arrayUnion(newEntry)
+        });
+    }
 
-    async function deleteJournalEntry(entryId) {
-        if (!journalColRef || !entryId) return;
-        try {
-            const entryDocRef = doc(db, "milantrip", tripId, "journal", entryId);
-            await deleteDoc(entryDocRef);
-        } catch (error) {
-            console.error("Error deleting journal entry: ", error);
-            showAlert('שגיאה', 'לא ניתן היה למחוק את הרשומה מהיומן.');
+    async function removeJournalEntry(dayId, entryId) {
+        if (!tripDocRef) return;
+        const entryToRemove = (localTripData.journal[dayId] || []).find(e => e.id === entryId);
+        if (entryToRemove) {
+            await updateDoc(tripDocRef, {
+                [`journal.${dayId}`]: arrayRemove(entryToRemove)
+            });
+        } else {
+            console.error("Could not find journal entry to remove.");
         }
+    }
+
+    function renderJournal(dayId, entries = []) {
+        const validEntries = Array.isArray(entries) ? entries : [];
+        const entriesHtml = validEntries
+            .filter(entry => entry && entry.timestamp && typeof entry.timestamp.toDate === 'function')
+            .sort((a, b) => b.timestamp.toMillis() - a.timestamp.toMillis())
+            .map(entry => {
+                const dateString = new Date(entry.timestamp.toDate()).toLocaleString('he-IL', {day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit'});
+                return `
+                <div class="bg-blue-50 dark:bg-blue-900/30 p-3 rounded-lg relative group">
+                    <p class="text-sm whitespace-pre-wrap">${entry.text}</p>
+                    <div class="text-xs text-gray-500 dark:text-gray-400 mt-1">${dateString}</div>
+                    <button class="absolute top-2 left-2 text-red-400 hover:text-red-600 opacity-0 group-hover:opacity-100 transition-opacity" onclick="window.removeJournalEntry('${dayId}', '${entry.id}')">
+                        <i class="fa-solid fa-trash-alt fa-xs"></i>
+                    </button>
+                </div>`;
+        }).join('');
+
+        return `<div class="mt-6 border-t pt-4">
+            <h4 class="font-bold text-lg mb-2">יומן מסע</h4>
+            <div id="journal-entries-${dayId}" class="space-y-3 mb-3">${entriesHtml}</div>
+            <form id="journal-form-${dayId}" class="flex gap-2">
+                <input type="text" id="journal-text-${dayId}" placeholder="הוסף חוויה מהיום..." class="w-full p-2 rounded-lg border">
+                <button type="submit" class="btn btn-primary">שלח</button>
+            </form>
+        </div>`;
     }
 
     // --- INIT ---
     document.addEventListener('DOMContentLoaded', () => {
         // --- Expose functions to window for onclick attributes ---
-// --- PWA Service Worker Registration ---
-    if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-            navigator.serviceWorker.register('sw.js')
-                .then(registration => {
-                    console.log('Service Worker registered with scope:', registration.scope);
-                }).catch(error => {
-                    console.log('Service Worker registration failed:', error);
-                });
-        });
-    }
         window.handleTransportChange = handleTransportChange;
         window.removeActivity = removeActivity;
         window.moveActivity = moveActivity;
         window.toggleChecklistItem = toggleChecklistItem;
         window.removeChecklistItem = removeChecklistItem;
-        window.deleteJournalEntry = deleteJournalEntry; // Expose the new delete function
+        window.removeJournalEntry = removeJournalEntry;
         window.removeExpense = removeExpense;
         window.removeDocument = removeDocument;
         window.removeImage = removeImage;
+        
+        // --- PWA Service Worker Registration ---
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('sw.js')
+                    .then(registration => {
+                        console.log('Service Worker registered with scope:', registration.scope);
+                    }).catch(error => {
+                        console.log('Service Worker registration failed:', error);
+                    });
+            });
+        }
         
         // --- Firebase Initialization ---
         const firebaseConfig = {
@@ -2061,32 +2097,9 @@
             currentUserId = user.uid;
             tripDocRef = doc(db, "milantrip", tripId);
             locationsColRef = collection(db, "milantrip", tripId, "locations");
-            journalColRef = collection(db, "milantrip", tripId, "journal");
             
             initLiveMap();
             listenForLocationUpdates();
-            
-            // New, separate listener for the journal
-            const q = query(journalColRef, orderBy("createdAt", "desc"));
-            onSnapshot(q, (snapshot) => {
-                const container = $('#journal-entries-container');
-                if (snapshot.empty) {
-                    container.innerHTML = '<p class="text-center text-gray-500">עדיין אין רשומות ביומן. כתבו משהו!</p>';
-                    return;
-                }
-                container.innerHTML = snapshot.docs.map(doc => {
-                    const entry = doc.data();
-                    const date = entry.createdAt ? new Date(entry.createdAt.toDate()).toLocaleString('he-IL', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) : '...';
-                    return `
-                    <div class="bg-blue-50 dark:bg-blue-900/30 p-3 rounded-lg relative group">
-                        <p class="text-sm whitespace-pre-wrap">${entry.text}</p>
-                        <div class="text-xs text-gray-500 dark:text-gray-400 mt-1">${date}</div>
-                        <button class="absolute top-2 left-2 text-red-400 hover:text-red-600 opacity-0 group-hover:opacity-100 transition-opacity" onclick="window.deleteJournalEntry('${doc.id}')">
-                            <i class="fa-solid fa-trash-alt fa-xs"></i>
-                        </button>
-                    </div>`;
-                }).join('');
-            });
 
             const unsubscribe = onSnapshot(tripDocRef, async (docSnap) => {
                 if (!isFirebaseConnected) {
@@ -2236,22 +2249,17 @@
             $('#eur-input').value = isNaN(ils) ? '' : (ils / eurToIlsRate).toFixed(2);
         });
 
-        // New Journal Form Listener
-        const journalForm = $('#journal-form');
-        journalForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const input = $('#journal-input');
-            const text = input.value.trim();
-            if (text && journalColRef) {
-                try {
-                    await addDoc(journalColRef, {
-                        text: text,
-                        createdAt: serverTimestamp()
-                    });
-                    input.value = '';
-                } catch (error) {
-                    console.error("Error adding journal entry: ", error);
-                    showAlert('שגיאה', 'לא ניתן היה לשמור את הרשומה ביומן.');
+        $('#plan-content-container').addEventListener('submit', (e) => {
+            if (e.target.matches('form[id^="journal-form-"]')) {
+                e.preventDefault();
+                if(!isFirebaseConnected) { showAlert('שגיאת סנכרון', 'אין חיבור למסד הנתונים. אנא בדוק את החיבור לאינטרנט.'); return; }
+                const form = e.target;
+                const dayId = form.id.replace('journal-form-', '');
+                const textInput = form.querySelector('input[type="text"]');
+                const text = textInput.value.trim();
+                if (text) {
+                    addJournalEntry(dayId, text);
+                    textInput.value = '';
                 }
             }
         });
@@ -2381,41 +2389,42 @@
             } else { showAlert('שגיאה', 'אין מיקומים בתוכנית כדי להציג על המפה.'); }
         });
 
-// Floating Nav Logic
-    const planBtn = $('#floating-plan-btn');
-    const toolsBtn = $('#floating-tools-btn');
-    const planSubmenu = $('#plan-submenu');
-    const toolsSubmenu = $('#tools-submenu');
+        // Floating Nav Logic (Corrected)
+        const planBtn = $('#floating-plan-btn');
+        const toolsBtn = $('#floating-tools-btn');
+        const planSubmenu = $('#plan-submenu');
+        const toolsSubmenu = $('#tools-submenu');
 
-    function toggleSubmenu(submenuToToggle, buttonToHighlight) {
-        const isAlreadyActive = submenuToToggle && submenuToToggle.classList.contains('active');
+        function toggleSubmenu(submenuToToggle, buttonToHighlight) {
+            const isAlreadyActive = submenuToToggle && submenuToToggle.classList.contains('active');
+            
+            // First, hide all submenus
+            $$('.floating-submenu').forEach(sm => {
+                sm.classList.remove('active');
+                sm.classList.add('hidden');
+            });
+            // Then, remove the highlight from all main nav items
+            $$('#floating-nav button, #floating-nav a').forEach(btn => btn.classList.remove('text-brand-600'));
+            
+            // If we need to show a new submenu, do it now
+            if (submenuToToggle && !isAlreadyActive) {
+                submenuToToggle.classList.remove('hidden');
+                setTimeout(() => submenuToToggle.classList.add('active'), 10);
+                buttonToHighlight.classList.add('text-brand-600');
+            }
+        }
+        planBtn.addEventListener('click', (e) => { e.stopPropagation(); toggleSubmenu(planSubmenu, planBtn); });
+        toolsBtn.addEventListener('click', (e) => { e.stopPropagation(); toggleSubmenu(toolsSubmenu, toolsBtn); });
 
-        // First, hide all submenus
-        $$('.floating-submenu').forEach(sm => {
-            sm.classList.remove('active');
-            sm.classList.add('hidden');
+        // Close submenus when clicking anywhere else on the page
+        document.addEventListener('click', (e) => { 
+            if (!e.target.closest('#floating-nav-container')) {
+                toggleSubmenu(null, null);
+            }
         });
-        // Then, remove the highlight from all main nav items
-        $$('#floating-nav button, #floating-nav a').forEach(btn => btn.classList.remove('text-brand-600'));
+        // Close submenus when clicking a link inside them
+        $$('#plan-submenu a, #tools-submenu a').forEach(link => link.addEventListener('click', () => toggleSubmenu(null, null)));
 
-        // If we need to show a new submenu, do it now
-        if (submenuToToggle && !isAlreadyActive) {
-            submenuToToggle.classList.remove('hidden');
-            setTimeout(() => submenuToToggle.classList.add('active'), 10);
-            buttonToHighlight.classList.add('text-brand-600');
-        }
-    }
-    planBtn.addEventListener('click', (e) => { e.stopPropagation(); toggleSubmenu(planSubmenu, planBtn); });
-    toolsBtn.addEventListener('click', (e) => { e.stopPropagation(); toggleSubmenu(toolsSubmenu, toolsBtn); });
-
-    // Close submenus when clicking anywhere else on the page
-    document.addEventListener('click', (e) => { 
-        if (!e.target.closest('#floating-nav-container')) {
-            toggleSubmenu(null, null);
-        }
-    });
-    // Close submenus when clicking a link inside them
-    $$('#plan-submenu a, #tools-submenu a').forEach(link => link.addEventListener('click', () => toggleSubmenu(null, null)));
         window.addEventListener('beforeunload', (event) => {
             if (watchingLocation && currentUserId) {
                 const userLocationDocRef = doc(locationsColRef, currentUserId);
@@ -2424,8 +2433,6 @@
         });
     });
   </script>
-  
-
 
 </body>
 </html>
