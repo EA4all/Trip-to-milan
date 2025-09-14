@@ -199,6 +199,7 @@
           <a href="#plan" class="nav-link px-3 py-2 rounded-md text-sm font-medium">תוכנית</a>
           <a href="#live-location-section" class="nav-link px-3 py-2 rounded-md text-sm font-medium">מיקום חי</a>
           <a href="#suggestions" class="nav-link px-3 py-2 rounded-md text-sm font-medium">הצעות</a>
+          <a href="#travel-journal" class="nav-link px-3 py-2 rounded-md text-sm font-medium">יומן מסע</a>
           <a href="#transport-guide" class="nav-link px-3 py-2 rounded-md text-sm font-medium">תחבורה</a>
           <a href="#kosher" class="nav-link px-3 py-2 rounded-md text-sm font-medium">אוכל כשר</a>
           <a href="#tools" class="nav-link px-3 py-2 rounded-md text-sm font-medium">כלים</a>
@@ -275,6 +276,20 @@
         <div id="suggestions-container" class="hidden mt-6 bg-white dark:bg-gray-950 p-4 sm:p-6 rounded-2xl shadow-lg">
             <div id="suggestions-table-container"></div>
         </div>
+    </section>
+
+    <section id="travel-journal" class="my-12 scroll-mt-24">
+      <h2 class="text-3xl font-bold text-center text-brand-900 dark:text-brand-300 mb-6">יומן מסע</h2>
+      <div class="bg-white dark:bg-gray-950 p-6 rounded-2xl shadow-lg">
+        <form id="journal-form" class="space-y-3">
+          <textarea id="journal-input" rows="4" class="w-full p-3 rounded-lg border bg-white dark:bg-gray-800" placeholder="כתוב כאן חוויות, מחשבות וזכרונות מהטיול..."></textarea>
+          <button type="submit" class="btn btn-primary w-full">הוסף רשומה ליומן</button>
+        </form>
+        <div id="journal-entries-container" class="mt-6 space-y-4">
+            <!-- Journal entries will be rendered here by JavaScript -->
+            <p class="text-center text-gray-500">טוען רשומות מהיומן...</p>
+        </div>
+      </div>
     </section>
 
     <section id="transport-guide" class="my-12 scroll-mt-24">
@@ -581,7 +596,7 @@
     // --- Firebase SDK ---
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
     import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-    import { getFirestore, doc, onSnapshot, setDoc, updateDoc, arrayUnion, arrayRemove, getDoc, enableIndexedDbPersistence, collection, serverTimestamp, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+    import { getFirestore, doc, onSnapshot, setDoc, updateDoc, arrayUnion, arrayRemove, getDoc, enableIndexedDbPersistence, collection, serverTimestamp, deleteDoc, addDoc, query, orderBy } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
     
     // --- UTILS ---
     const $ = (s, p = document) => p.querySelector(s);
@@ -615,7 +630,7 @@
     const placeholderLogoUrl = (name) => `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&size=80&rounded=true&background=e0e7ff&color=1e40af`;
     
     // --- Global State ---
-    let db, auth, tripDocRef, locationsColRef;
+    let db, auth, tripDocRef, locationsColRef, journalColRef;
     let localTripData = {}; 
     let budgetChartInstance = null;
     let cameraStream = null;
@@ -742,7 +757,8 @@
                 { id: 'cat2', category: 'ביגוד', items: [{ id: 'c3', text: 'מעיל גשם', done: false }] },
                 { id: 'cat3', category: 'אלקטרוניקה', items: [{ id: 'c4', text: 'מטען נייד', done: true }, { id: 'c5', text: 'מתאם לחשמל', done: false }] }
             ],
-            totalBudget: 1500, expenses: [], documents: [], gallery: [], journal: {}, theme: 'dark',
+            totalBudget: 1500, expenses: [], documents: [], gallery: [],
+            theme: 'dark',
             settings: { includeEstimatedCostsInBalance: true }
         };
     }
@@ -942,7 +958,7 @@
             previousActivity = act;
         });
         
-        content += `</div>${renderJournal(dayId, localTripData.journal ? localTripData.journal[dayId] : [])}</div>`;
+        content += `</div></div>`; // Removed renderJournal from here
         container.innerHTML = content;
     }
     
@@ -1452,94 +1468,6 @@
         `).join('');
     }
 
-// --- JOURNAL FUNCTIONS (START OF FINAL BLOCK) ---
-
-// פונקציה להוספת רשומה חדשה ליומן
-async function addJournalEntry(dayId, text) {
-    if (!tripDocRef) return;
-
-    // שלב 1: קבל את המידע העדכני ביותר ישירות ממסד הנתונים
-    const docSnap = await getDoc(tripDocRef);
-    if (!docSnap.exists()) {
-        console.error("Document does not exist! Cannot add journal entry.");
-        return;
-    }
-
-    // שלב 2: חלץ את המידע הקיים של היומן
-    const data = docSnap.data();
-    const currentJournal = data.journal || {};
-    const dayEntries = currentJournal[dayId] || [];
-
-    // שלב 3: צור את הרשומה החדשה
-    const newEntry = {
-        id: Date.now().toString(),
-        text: text,
-        timestamp: serverTimestamp() // תן לשרת לקבוע את הזמן
-    };
-
-    // שלב 4: צור מערך חדש ועדכן את המסמך כולו
-    const updatedEntries = [...dayEntries, newEntry];
-    await updateDoc(tripDocRef, {
-        [`journal.${dayId}`]: updatedEntries
-    });
-}
-
-// פונקציה למחיקת רשומה מהיומן
-async function removeJournalEntry(dayId, entryId) {
-    if (!tripDocRef) return;
-
-    // שלב 1: קבל את המידע העדכני ביותר ישירות ממסד הנתונים
-    const docSnap = await getDoc(tripDocRef);
-    if (!docSnap.exists()) {
-        console.error("Document does not exist! Cannot remove journal entry.");
-        return;
-    }
-
-    // שלב 2: חלץ את המידע הקיים
-    const data = docSnap.data();
-    const currentJournal = data.journal || {};
-    const dayEntries = currentJournal[dayId] || [];
-
-    // שלב 3: צור מערך חדש ללא הרשומה שנמחקה
-    const updatedEntries = dayEntries.filter(entry => entry.id !== entryId);
-
-    // שלב 4: עדכן את המסמך עם המערך החדש
-    await updateDoc(tripDocRef, {
-        [`journal.${dayId}`]: updatedEntries
-    });
-}
-
-// פונקציה להצגת היומן (זו הגרסה המתוקנת שכבר יש לך, כלולה כאן לשלמות)
-function renderJournal(dayId, entries = []) {
-    const validEntries = Array.isArray(entries) ? entries : [];
-
-    const entriesHtml = validEntries
-        .filter(entry => entry && entry.timestamp && typeof entry.timestamp.toDate === 'function')
-        .sort((a, b) => b.timestamp.toMillis() - a.timestamp.toMillis())
-        .map(entry => {
-            const dateString = new Date(entry.timestamp.toDate()).toLocaleString('he-IL', {day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit'});
-            return `
-            <div class="bg-blue-50 dark:bg-blue-900/30 p-3 rounded-lg relative group">
-                <p class="text-sm">${entry.text}</p>
-                <div class="text-xs text-gray-500 dark:text-gray-400 mt-1">${dateString}</div>
-                <button class="absolute top-2 left-2 text-red-400 hover:text-red-600 opacity-0 group-hover:opacity-100 transition-opacity" onclick="window.removeJournalEntry('${dayId}', '${entry.id}')">
-                    <i class="fa-solid fa-trash-alt fa-xs"></i>
-                </button>
-            </div>`;
-    }).join('');
-
-    return `<div class="mt-6 border-t pt-4">
-        <h4 class="font-bold text-lg mb-2">יומן מסע</h4>
-        <div id="journal-entries-${dayId}" class="space-y-3 mb-3">${entriesHtml}</div>
-        <form id="journal-form-${dayId}" class="flex gap-2">
-            <input type="text" id="journal-text-${dayId}" placeholder="הוסף חוויה מהיום..." class="w-full p-2 rounded-lg border">
-            <button type="submit" class="btn btn-primary">שלח</button>
-        </form>
-    </div>`;
-}
-
-// --- (END OF FINAL BLOCK) ---
-
     // --- State Modifiers (Write to Firestore) ---
     async function handleTransportChange(e) {
         const dayId = e.target.dataset.day;
@@ -1729,7 +1657,7 @@ function renderJournal(dayId, entries = []) {
     async function callGemini(payload, prompt, useSearch = false) {
         payload.contents[0].parts[0].text = prompt;
         if (useSearch) {
-            payload.tools = [{ "google_search_retrieval": {} }];
+            payload.tools = [{ "google_search": {} }];
         } else {
             delete payload.tools;
         }
@@ -1842,12 +1770,12 @@ function renderJournal(dayId, entries = []) {
         const totalExpenses = (expenses || []).reduce((sum, exp) => sum + exp.amount, 0);
         
         let journalEntries = [];
-        if(journal) {
-            Object.values(journal).forEach(dayEntries => {
-                dayEntries.forEach(entry => journalEntries.push(entry.text));
-            });
-        }
-        
+        const q = query(journalColRef, orderBy("createdAt", "desc"));
+        const querySnapshot = await getDocs(q);
+        querySnapshot.forEach((doc) => {
+            journalEntries.push(doc.data().text);
+        });
+
         const prompt = `
             Act as a creative travel blogger writing a personal trip summary. Based on the following data from a trip to Milan, create a warm, engaging, and experiential summary in Hebrew.
             The summary should feel like a personal memory, not just a list. Use paragraphs and an enthusiastic tone.
@@ -2063,6 +1991,17 @@ function renderJournal(dayId, entries = []) {
         }
     }
 
+    async function deleteJournalEntry(entryId) {
+        if (!journalColRef || !entryId) return;
+        try {
+            const entryDocRef = doc(db, "milantrip", tripId, "journal", entryId);
+            await deleteDoc(entryDocRef);
+        } catch (error) {
+            console.error("Error deleting journal entry: ", error);
+            showAlert('שגיאה', 'לא ניתן היה למחוק את הרשומה מהיומן.');
+        }
+    }
+
     // --- INIT ---
     document.addEventListener('DOMContentLoaded', () => {
         // --- Expose functions to window for onclick attributes ---
@@ -2071,7 +2010,7 @@ function renderJournal(dayId, entries = []) {
         window.moveActivity = moveActivity;
         window.toggleChecklistItem = toggleChecklistItem;
         window.removeChecklistItem = removeChecklistItem;
-        window.removeJournalEntry = removeJournalEntry;
+        window.deleteJournalEntry = deleteJournalEntry; // Expose the new delete function
         window.removeExpense = removeExpense;
         window.removeDocument = removeDocument;
         window.removeImage = removeImage;
@@ -2182,10 +2121,33 @@ function renderJournal(dayId, entries = []) {
             currentUserId = user.uid;
             tripDocRef = doc(db, "milantrip", tripId);
             locationsColRef = collection(db, "milantrip", tripId, "locations");
+            journalColRef = collection(db, "milantrip", tripId, "journal");
             
             initLiveMap();
             listenForLocationUpdates();
             
+            // New, separate listener for the journal
+            const q = query(journalColRef, orderBy("createdAt", "desc"));
+            onSnapshot(q, (snapshot) => {
+                const container = $('#journal-entries-container');
+                if (snapshot.empty) {
+                    container.innerHTML = '<p class="text-center text-gray-500">עדיין אין רשומות ביומן. כתבו משהו!</p>';
+                    return;
+                }
+                container.innerHTML = snapshot.docs.map(doc => {
+                    const entry = doc.data();
+                    const date = entry.createdAt ? new Date(entry.createdAt.toDate()).toLocaleString('he-IL', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) : '...';
+                    return `
+                    <div class="bg-blue-50 dark:bg-blue-900/30 p-3 rounded-lg relative group">
+                        <p class="text-sm whitespace-pre-wrap">${entry.text}</p>
+                        <div class="text-xs text-gray-500 dark:text-gray-400 mt-1">${date}</div>
+                        <button class="absolute top-2 left-2 text-red-400 hover:text-red-600 opacity-0 group-hover:opacity-100 transition-opacity" onclick="window.deleteJournalEntry('${doc.id}')">
+                            <i class="fa-solid fa-trash-alt fa-xs"></i>
+                        </button>
+                    </div>`;
+                }).join('');
+            });
+
             const unsubscribe = onSnapshot(tripDocRef, async (docSnap) => {
                 if (!isFirebaseConnected) {
                     const statusIcon = $('#sync-status i');
@@ -2334,17 +2296,22 @@ function renderJournal(dayId, entries = []) {
             $('#eur-input').value = isNaN(ils) ? '' : (ils / eurToIlsRate).toFixed(2);
         });
 
-        $('#plan-content-container').addEventListener('submit', (e) => {
-            if (e.target.matches('form[id^="journal-form-"]')) {
-                e.preventDefault();
-                if(!isFirebaseConnected) { showAlert('שגיאת סנכרון', 'אין חיבור למסד הנתונים. אנא בדוק את החיבור לאינטרנט.'); return; }
-                const form = e.target;
-                const dayId = form.id.replace('journal-form-', '');
-                const textInput = form.querySelector('input[type="text"]');
-                const text = textInput.value.trim();
-                if (text) {
-                    addJournalEntry(dayId, text);
-                    textInput.value = '';
+        // New Journal Form Listener
+        const journalForm = $('#journal-form');
+        journalForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const input = $('#journal-input');
+            const text = input.value.trim();
+            if (text && journalColRef) {
+                try {
+                    await addDoc(journalColRef, {
+                        text: text,
+                        createdAt: serverTimestamp()
+                    });
+                    input.value = '';
+                } catch (error) {
+                    console.error("Error adding journal entry: ", error);
+                    showAlert('שגיאה', 'לא ניתן היה לשמור את הרשומה ביומן.');
                 }
             }
         });
@@ -2512,3 +2479,4 @@ function renderJournal(dayId, entries = []) {
   </script>
 </body>
 </html>
+
