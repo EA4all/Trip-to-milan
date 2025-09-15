@@ -1,10 +1,10 @@
-<!-- Version 1.1 - Unified and Fixed -->
+<!-- Version 1.2 - Unified and Journal Fix -->
 <!DOCTYPE html>
 <html lang="he" dir="rtl" class="scroll-smooth dark">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>תוכנית טיול שיתופית למילאנו (v1.1)</title>
+  <title>תוכנית טיול שיתופית למילאנו (v1.2)</title>
   <meta name="description" content="דשבורד אינטראקטיבי ושיתופי לתכנון חופשה במילאנו: לוז יומי, מפות, מזג אוויר, סיכום טיול חכם, מעקב תקציב ועוד." />
   <meta name="theme-color" content="#1d4ed8">
   <link rel="manifest" href="manifest.json">
@@ -267,7 +267,6 @@
         </div>
       </div>
     </section>
-
     <section id="tools" class="my-12 scroll-mt-24">
         <h2 class="text-3xl font-bold text-center text-brand-900 dark:text-brand-300 mb-6">כלים ומידע שימושי</h2>
         <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -525,8 +524,6 @@
     </div>
 </div>
 
-
-
   <div id="floating-nav-container" class="md:hidden fixed bottom-0 left-0 right-0 z-40">
       <div id="plan-submenu" class="floating-submenu fixed bottom-[68px] left-0 right-0 bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm p-2 rounded-t-2xl">
           <div class="grid grid-cols-3 gap-2 text-center text-sm" id="plan-submenu-links">
@@ -566,14 +563,14 @@
   
   <!-- LeafletJS for Live Map -->
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
-  
+
   <script type="module">
     // --- Firebase SDK ---
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
     import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-    import { getFirestore, doc, onSnapshot, setDoc, updateDoc, arrayUnion, arrayRemove, getDoc, enableIndexedDbPersistence, collection, serverTimestamp, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+    import { getFirestore, doc, onSnapshot, setDoc, updateDoc, arrayUnion, arrayRemove, getDoc, enableIndexedDbPersistence, collection, serverTimestamp, deleteDoc, addDoc, query, orderBy } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
     
-    console.log("LOG: Script start. Initializing variables.");
+    console.log("LOG: Script execution started.");
 
     // --- UTILS ---
     const $ = (s, p = document) => p.querySelector(s);
@@ -623,8 +620,6 @@
     let watchingLocation = false;
     let watchId = null;
     let currentUserId = null;
-
-    console.log("LOG: Global variables and utility functions defined.");
 
 
     // --- DATA ---
@@ -707,10 +702,8 @@
     
     let currentLang = 'he-it'; // he-it or it-he
 
-    console.log("LOG: Static data (attractions, kosher, etc.) loaded.");
-
     function getInitialTripData() {
-        console.log("LOG: getInitialTripData() called. Generating default trip structure.");
+        console.log("LOG: getInitialTripData called. Generating default trip structure.");
         const initialPlanKeys = ['duomo', 'primark', 'sanSiro', 'como', 'berninaExpress', 'laScala', 'navigli', 'ilCentro'];
         return {
             plan: {
@@ -759,7 +752,7 @@
         }
         
         if (!activityToModify) {
-            console.error(`ERROR: Could not find activity to modify with id: ${activityId}`);
+            console.error("LOG: Activity to modify not found.");
             return;
         }
 
@@ -796,7 +789,7 @@
     window.openAddToDayModal = openAddToDayModal;
 
     function showAlert(title, message, isCopyable = false) {
-        console.log(`LOG: showAlert called. Title: ${title}, Message: ${message.substring(0, 50)}...`);
+        console.log(`LOG: showAlert called with title: ${title}`);
         $('#alert-modal-title').textContent = title;
         $('#alert-modal-body').textContent = message;
         
@@ -818,12 +811,11 @@
     }
 
     function showDailyTip() {
-        console.log("LOG: showDailyTip called, checking if tip should be displayed.");
         const lastTipDate = localStorage.getItem('lastTipDate');
         const today = new Date().toISOString().slice(0, 10);
 
         if (lastTipDate !== today) {
-            console.log("LOG: Displaying daily tip.");
+            console.log("LOG: Showing daily tip for the first time today.");
             openTipModal();
             localStorage.setItem('lastTipDate', today);
         } else {
@@ -867,13 +859,9 @@
     }
 
     function startCountdown() {
-        console.log("LOG: startCountdown called.");
         const targetDate = new Date(`${tripMeta.flights.inbound.date}T00:00:00`).getTime();
         const countdownEl = $('#countdown');
-        if (!countdownEl) {
-            console.error("ERROR: Countdown element not found.");
-            return;
-        }
+        if (!countdownEl) return;
         
         const interval = setInterval(() => {
             const now = new Date().getTime();
@@ -902,8 +890,8 @@
     function renderAllPlans(planData) {
       console.log("LOG: renderAllPlans called.");
       if (!planData) {
-          console.warn("WARN: renderAllPlans called with no planData.");
-          return;
+        console.warn("LOG: renderAllPlans - No plan data provided.");
+        return;
       }
       const nav = $('#day-tabs-nav'), content = $('#plan-content-container');
       const submenu = $('#plan-submenu-links');
@@ -927,20 +915,17 @@
       }));
       $$('#plan-submenu-links a[data-day-index]').forEach(link => {
         link.addEventListener('click', (e) => {
+            console.log(`LOG: Mobile day link clicked: Index ${e.currentTarget.dataset.dayIndex}`);
             const dayIndex = parseInt(e.currentTarget.dataset.dayIndex, 10);
-            console.log(`LOG: Mobile day link clicked for day index: ${dayIndex}`);
             $$('#day-tabs-nav .tab-button')[dayIndex].click();
         });
       });
     }
 
     function renderPlanForDay(dayId, dayData) {
-        console.log(`LOG: renderPlanForDay called for ${dayId}`);
+        console.log(`LOG: renderPlanForDay called for dayId: ${dayId}`);
         const container = $(`#${dayId}`);
-        if (!container) {
-            console.error(`ERROR: Container for day ${dayId} not found.`);
-            return;
-        }
+        if (!container) return;
         let content = `<div class="p-4"><div class="flex flex-wrap items-center gap-4 mb-4">
             <div class="flex items-center gap-2">
                 <label class="font-semibold">מצב נסיעה:</label>
@@ -970,25 +955,6 @@
         
         content += `</div>${renderJournal(dayId, localTripData.journal ? localTripData.journal[dayId] : [])}</div>`;
         container.innerHTML = content;
-        
-        // Add event listener to the newly created journal form
-        const journalForm = $(`#journal-form-${dayId}`);
-        if (journalForm) {
-            journalForm.addEventListener('submit', (e) => {
-                e.preventDefault();
-                console.log(`LOG: Journal form submitted for day: ${dayId}`);
-                if(!isFirebaseConnected) { 
-                    showAlert('שגיאת סנכרון', 'אין חיבור למסד הנתונים. אנא בדוק את החיבור לאינטרנט.');
-                    return; 
-                }
-                const textInput = $(`#journal-text-${dayId}`);
-                const text = textInput.value.trim();
-                if (text) {
-                    addJournalEntry(dayId, text);
-                    textInput.value = '';
-                }
-            });
-        }
     }
     
     function renderActivityCard(dayId, activity, index, total, previousActivity) {
@@ -1273,7 +1239,6 @@
             const data = await res.json();
             if (data.error) throw new Error(data.reason);
             lastWeatherAPIData = data; // Cache weather data
-            console.log("LOG: Weather data fetched successfully.");
              const iconMap = {
                 0: 'fa-sun', 1: 'fa-cloud-sun', 2: 'fa-cloud-sun', 3: 'fa-cloud',
                 45: 'fa-smog', 48: 'fa-smog',
@@ -1293,18 +1258,24 @@
                     <span>${Math.round(data.daily.temperature_2m_min[i])}°/${Math.round(data.daily.temperature_2m_max[i])}°</span>
                 </div>`).join('');
             
+            // Attire recommendation logic
             const todayTempMax = data.daily.temperature_2m_max[0];
             const todayWeatherCode = data.daily.weathercode[0];
             let recommendation = '';
+
+            // Check for snow/freezing conditions ONLY if temperature is low
             if (((todayWeatherCode >= 71 && todayWeatherCode <= 86) || (todayWeatherCode >= 56 && todayWeatherCode <= 67)) && todayTempMax < 5) {
                 recommendation = 'צפוי שלג/מזג אוויר קפוא. התלבשו חם מאוד!';
             } 
+            // Check for rain conditions
             else if ((todayWeatherCode >= 51 && todayWeatherCode <= 67) || (todayWeatherCode >= 80 && todayWeatherCode <= 82)) {
                 recommendation = 'צפוי גשם. מומלץ לקחת מטריה ועליונית.';
             } 
+            // Check for thunderstorms
             else if (todayWeatherCode >= 95) {
                  recommendation = 'צפויה סופת רעמים. מומלץ למצוא מחסה.';
             }
+            // If no significant precipitation, base on temperature
             else if (todayTempMax > 28) {
                 recommendation = 'חם! מומלץ לבוש קצר, כובע והרבה מים.';
             } else if (todayTempMax > 20) {
@@ -1317,7 +1288,7 @@
             $('#weather-attire-recommendation').innerHTML = `<i class="fa-solid fa-shirt mr-2"></i> ${recommendation}`;
 
         } catch (e) { 
-            console.error("ERROR: Failed to fetch weather.", e);
+            console.error("LOG: fetchWeather failed:", e);
             $('#weather-forecast').innerHTML = `<p class="text-xs text-red-500">שגיאה בטעינת תחזית. ${e.message}</p>`; 
         }
     }
@@ -1330,10 +1301,9 @@
             if(data && data.rates && data.rates.ILS) {
                 eurToIlsRate = data.rates.ILS;
                 $('#exchange-rate-display').textContent = `שער נוכחי: 1€ = ${eurToIlsRate.toFixed(3)}₪`;
-                console.log(`LOG: Exchange rate updated: 1 EUR = ${eurToIlsRate} ILS`);
             }
         } catch (error) {
-            console.error("ERROR: Could not fetch exchange rate:", error);
+            console.error("LOG: Could not fetch exchange rate:", error);
              $('#exchange-rate-display').textContent = 'שגיאה בטעינת שער חליפין.';
         }
     }
@@ -1341,7 +1311,7 @@
     function renderDocuments(documents = []) {
         console.log("LOG: renderDocuments called.");
         const grid = $('#documents-grid');
-        grid.innerHTML = (documents || []).map(doc => `
+        grid.innerHTML = documents.map(doc => `
             <div class="relative bg-gray-100 dark:bg-gray-800 rounded-lg flex flex-col items-center justify-center p-2 text-center">
                  <a href="${doc.dataUrl}" download="${doc.name}" class="flex flex-col items-center justify-center w-full h-full">
                     <i class="fa-solid fa-file-pdf fa-3x text-red-500"></i>
@@ -1354,7 +1324,7 @@
     function renderGallery(gallery = []) {
         console.log("LOG: renderGallery called.");
         const grid = $('#gallery-grid');
-        grid.innerHTML = (gallery || []).map(img => `<div class="relative aspect-square">
+        grid.innerHTML = gallery.map(img => `<div class="relative aspect-square">
             <img src="${img.dataUrl}" class="w-full h-full object-cover rounded-lg">
             <button class="delete-btn" onclick="window.removeImage('${img.id}')">×</button>
         </div>`).join('');
@@ -1375,7 +1345,7 @@
 
     function renderBudget(data) {
         console.log("LOG: renderBudget called.");
-        const { totalBudget = 0, expenses = [], plan, settings = { includeEstimatedCostsInBalance: true } } = data || {};
+        const { totalBudget = 0, expenses = [], plan, settings = { includeEstimatedCostsInBalance: true } } = data;
         
         const totalBudgetInput = $('#total-budget');
         if (document.activeElement !== totalBudgetInput) {
@@ -1385,7 +1355,7 @@
         const includeEstimated = $('#include-estimated-costs');
         includeEstimated.checked = settings.includeEstimatedCostsInBalance;
 
-        const totalExpenses = (expenses || []).reduce((sum, exp) => sum + exp.amount, 0);
+        const totalExpenses = expenses.reduce((sum, exp) => sum + exp.amount, 0);
         const estimatedCosts = calculateEstimatedCosts(plan);
         const balance = totalBudget - totalExpenses - (includeEstimated.checked ? estimatedCosts : 0);
 
@@ -1393,7 +1363,7 @@
         $('#estimated-costs').textContent = estimatedCosts.toFixed(2) + '€';
         $('#budget-balance').textContent = balance.toFixed(2) + '€';
 
-        $('#expense-list').innerHTML = (expenses || []).map(exp => 
+        $('#expense-list').innerHTML = expenses.map(exp => 
             `<div class="flex justify-between items-center py-1 group">
                 <span>${exp.desc} <span class="text-xs text-gray-400">${exp.category}</span></span>
                 <span class="flex items-center gap-2">
@@ -1509,13 +1479,13 @@
 
     // --- State Modifiers (Write to Firestore) ---
     async function handleTransportChange(e) {
+        console.log("LOG: handleTransportChange called.");
         const dayId = e.target.dataset.day;
         const newTransportMode = e.target.value;
-        console.log(`LOG: handleTransportChange called for ${dayId}, new mode: ${newTransportMode}`);
         await updateDoc(tripDocRef, { [`plan.${dayId}.transport`]: newTransportMode });
     };
     async function removeActivity(dayId, actId) {
-        console.log(`LOG: removeActivity called for day ${dayId}, activity ${actId}`);
+        console.log(`LOG: removeActivity called for dayId: ${dayId}, actId: ${actId}`);
         const day = localTripData.plan[dayId];
         const activityIndex = day.activities.findIndex(a => a.id === actId);
         if (activityIndex > -1) {
@@ -1535,7 +1505,7 @@
         }
     };
     async function moveActivity(dayId, actId, direction) {
-        console.log(`LOG: moveActivity called for ${actId} in day ${dayId}, direction ${direction}`);
+        console.log(`LOG: moveActivity called for dayId: ${dayId}, actId: ${actId}, direction: ${direction}`);
         const day = localTripData.plan[dayId];
         const index = day.activities.findIndex(a => a.id === actId);
         if ((direction === -1 && index > 0) || (direction === 1 && index < day.activities.length - 1)) {
@@ -1553,7 +1523,7 @@
         carousel.dataset.index = index;
     };
     function findNearby() {
-        console.log("LOG: findNearby button clicked.");
+        console.log("LOG: findNearby called.");
         if (navigator.geolocation) {
             navigator.geolocation.getCurrentPosition(position => {
                 const { latitude, longitude } = position.coords;
@@ -1567,28 +1537,29 @@
         }
     }
     window.findNearbyKosher = (btn) => {
+        console.log("LOG: findNearbyKosher called.");
         const lat = parseFloat(btn.dataset.lat), lon = parseFloat(btn.dataset.lon);
-        console.log(`LOG: findNearbyKosher called for ${btn.dataset.name} at ${lat}, ${lon}`);
         $('#kosher-subtitle').innerHTML = `מציג מקומות קרובים ל: <strong>${btn.dataset.name}</strong>`;
         userCoords = {lat, lon}; // Temporarily set user location
         renderKosher();
         userCoords = null; // Reset it
         $('#kosher').scrollIntoView({ behavior: 'smooth' });
-        if ($('#kosher-container').classList.contains('hidden')) {
-            $('#toggle-kosher-btn').click();
-        }
+        $('#toggle-kosher-btn').click();
     };
     async function toggleChecklistItem(e) {
-        const itemId = e.target.dataset.id;
-        const isDone = e.target.checked;
-        console.log(`LOG: toggleChecklistItem called for item ${itemId}, new status: ${isDone}`);
-        const labelSpan = e.target.nextElementSibling;
-        if (isDone) {
+        console.log("LOG: toggleChecklistItem called.");
+        // Immediate UI feedback for responsiveness
+        const checkbox = e.target;
+        const labelSpan = checkbox.nextElementSibling;
+        if (checkbox.checked) {
             labelSpan.classList.add('line-through', 'text-gray-500');
         } else {
             labelSpan.classList.remove('line-through', 'text-gray-500');
         }
 
+        // Update data in Firestore
+        const itemId = checkbox.dataset.id;
+        const isDone = checkbox.checked;
         const updatedChecklist = localTripData.checklist.map(cat => ({
             ...cat,
             items: cat.items.map(item => item.id === itemId ? { ...item, done: isDone } : item)
@@ -1598,7 +1569,7 @@
         }
     };
     async function removeChecklistItem(catId, itemId) {
-        console.log(`LOG: removeChecklistItem called for item ${itemId} in category ${catId}`);
+        console.log(`LOG: removeChecklistItem called for catId: ${catId}, itemId: ${itemId}`);
         const updatedChecklist = localTripData.checklist.map(cat => {
             if (cat.id === catId) {
                 return { ...cat, items: cat.items.filter(i => i.id !== itemId) };
@@ -1609,28 +1580,28 @@
     };
     
     async function removeExpense(id) {
-        console.log(`LOG: removeExpense called for id ${id}`);
-        const expenseToRemove = (localTripData.expenses || []).find(exp => exp.id === id);
+        console.log(`LOG: removeExpense called for id: ${id}`);
+        const expenseToRemove = localTripData.expenses.find(exp => exp.id === id);
         if (expenseToRemove) {
             await updateDoc(tripDocRef, { expenses: arrayRemove(expenseToRemove) });
         }
     };
     async function removeDocument(id) {
-        console.log(`LOG: removeDocument called for id ${id}`);
-        const docToRemove = (localTripData.documents || []).find(doc => doc.id === id);
+        console.log(`LOG: removeDocument called for id: ${id}`);
+        const docToRemove = localTripData.documents.find(doc => doc.id === id);
         if (docToRemove) {
             await updateDoc(tripDocRef, { documents: arrayRemove(docToRemove) });
         }
     };
     async function removeImage(id) {
-        console.log(`LOG: removeImage called for id ${id}`);
-        const imgToRemove = (localTripData.gallery || []).find(img => img.id === id);
+        console.log(`LOG: removeImage called for id: ${id}`);
+        const imgToRemove = localTripData.gallery.find(img => img.id === id);
         if (imgToRemove) {
             await updateDoc(tripDocRef, { gallery: arrayRemove(imgToRemove) });
         }
     };
     window.reuseTranslation = (index) => {
-        console.log(`LOG: Reusing translation history item at index ${index}`);
+        console.log(`LOG: reuseTranslation called for index: ${index}`);
         const item = translationHistory[index];
         if (item) {
             $('#dictionary-input').value = item.sourceText;
@@ -1638,13 +1609,13 @@
         }
     };
     window.removeTranslationHistoryItem = (event, index) => {
-        event.stopPropagation(); 
-        console.log(`LOG: Removing translation history item at index ${index}`);
+        console.log(`LOG: removeTranslationHistoryItem called for index: ${index}`);
+        event.stopPropagation(); // Prevent reuseTranslation from firing
         translationHistory.splice(index, 1);
         renderTranslationHistory();
     };
     window.openDayMap = (dayId) => {
-        console.log(`LOG: openDayMap called for ${dayId}`);
+        console.log(`LOG: openDayMap called for dayId: ${dayId}`);
         const day = localTripData.plan[dayId];
         if (!day || !day.activities || day.activities.length === 0) {
             showAlert('אין מיקומים', 'אין פעילויות עם כתובות ביום זה כדי להציג על המפה.');
@@ -1674,7 +1645,7 @@
                 video.play();
                 $('#camera-modal').classList.add('flex');
             } catch (err) {
-                console.error("ERROR: Error accessing camera: ", err);
+                console.error("LOG: Error accessing camera: ", err);
                 showAlert("שגיאת מצלמה", "לא ניתן לגשת למצלמה. ודא שהענקת הרשאות לדפדפן.");
             }
         } else {
@@ -1709,13 +1680,12 @@
 
     // --- Gemini Calls ---
     async function callGemini(payload, prompt, useSearch = false) {
-        console.log(`LOG: callGemini called. Use search: ${useSearch}. Prompt: ${prompt.substring(0, 100)}...`);
+        console.log("LOG: callGemini called. useSearch:", useSearch);
         payload.contents[0].parts[0].text = prompt;
         if (useSearch) {
-            // FIX 4: Changed 'google_search' to 'tools' with 'google_search_retrieval'
             payload.tools = [{ "google_search_retrieval": {} }];
         } else {
-           if(payload.tools) delete payload.tools;
+            delete payload.tools;
         }
 
         const apiKey = "AIzaSyB80v2xdhebJqhjyruJ5Ta0eyhJiq7DsI8"; 
@@ -1727,22 +1697,22 @@
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)
             });
-            const result = await response.json();
             if (!response.ok) {
-                console.error("ERROR: Gemini API response not OK.", result);
-                throw new Error(result.error?.message || `שגיאת רשת: ${response.status}`);
+                const error = await response.json();
+                console.error("LOG: Gemini API HTTP Error:", error);
+                throw new Error(error.error.message || `שגיאת רשת: ${response.status}`);
             }
-            console.log("LOG: Gemini API call successful.");
+            const result = await response.json();
             const text = result.candidates?.[0]?.content?.parts?.[0]?.text;
             return text || "לא התקבלה תשובה מ-Gemini.";
 
         } catch (error) {
-            console.error("ERROR: Gemini API Error:", error);
+            console.error("LOG: Gemini API Fetch/Catch Error:", error);
             return `שגיאה: ${error.message}`;
         }
     }
     window.speakText = (text, lang) => {
-        console.log(`LOG: speakText called for lang ${lang}. Text: ${text}`);
+        console.log(`LOG: speakText called for lang: ${lang}`);
         speechSynthesis.cancel();
         const utterance = new SpeechSynthesisUtterance(text);
         utterance.lang = lang;
@@ -1750,7 +1720,7 @@
     }
 
     async function translateText(text) {
-        console.log(`LOG: translateText called for text: ${text}`);
+        console.log("LOG: translateText called.");
         const resultContainer = $('#translation-result-container');
         resultContainer.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i>`;
         const targetLang = currentLang === 'he-it' ? 'Italian' : 'Hebrew';
@@ -1761,13 +1731,14 @@
         const langCode = currentLang === 'he-it' ? 'it-IT' : 'he-IL';
         resultContainer.innerHTML = `<span>${responseText}</span> <button onclick="window.speakText('${responseText.replace(/'/g, "\\'")}', '${langCode}')" class="btn btn-ghost p-1 h-auto"><i class="fa-solid fa-volume-high"></i></button>`;
         
+        // Add to history
         translationHistory.unshift({ sourceText: text, translatedText: responseText });
         if (translationHistory.length > 5) translationHistory.pop(); // Keep last 5
         renderTranslationHistory();
     }
     
     async function translateImage(base64ImageData, mimeType) {
-        console.log(`LOG: translateImage called for mimeType: ${mimeType}`);
+        console.log("LOG: translateImage called.");
         const resultContainer = $('#translation-result-container');
         resultContainer.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i>`;
         const targetLang = currentLang === 'he-it' ? 'Italian' : 'Hebrew';
@@ -1823,7 +1794,7 @@
         let placesVisited = [];
         if(plan) {
             Object.values(plan).forEach(day => {
-                (day.activities || []).forEach(act => {
+                day.activities.forEach(act => {
                     if (!placesVisited.includes(act.name)) placesVisited.push(act.name);
                 });
             });
@@ -1834,7 +1805,7 @@
         let journalEntries = [];
         if (journal) {
             Object.values(journal).forEach(dayEntries => {
-                (dayEntries || []).forEach(entry => journalEntries.push(entry.text));
+                dayEntries.forEach(entry => journalEntries.push(entry.text));
             });
         }
 
@@ -1858,7 +1829,7 @@
 
     // --- NEW PWA & Smart Features ---
     window.optimizeDayRoute = async (dayId) => {
-        console.log(`LOG: optimizeDayRoute called for ${dayId}`);
+        console.log(`LOG: optimizeDayRoute called for dayId: ${dayId}`);
         const day = localTripData.plan[dayId];
         if (!day || !day.activities || day.activities.length < 2) {
             showAlert('לא ניתן לבצע אופטימיזציה', 'צריך לפחות שתי פעילויות ביום כדי לייעל את המסלול.');
@@ -1886,7 +1857,7 @@
             if (nearestIndex > -1) {
                 optimizedRoute.push(activities.splice(nearestIndex, 1)[0]);
             } else {
-                break; 
+                break; // Should not happen if activities array is not empty
             }
         }
         
@@ -1895,7 +1866,7 @@
     };
 
     window.generateIcsFile = (dayId) => {
-        console.log(`LOG: generateIcsFile called for ${dayId}`);
+        console.log(`LOG: generateIcsFile called for dayId: ${dayId}`);
         const day = localTripData.plan[dayId];
         const dayIndex = Object.keys(localTripData.plan).sort((a,b) => a.localeCompare(b[0])).indexOf(dayId);
         const tripStartDate = new Date(tripMeta.flights.inbound.date);
@@ -1989,7 +1960,6 @@
         const userName = $('#user-name-input').value.trim() || `משתמש ${currentUserId.substring(0,4)}`;
         const userLocationDocRef = doc(locationsColRef, currentUserId);
         
-        console.log(`LOG: Updating location for ${userName} in Firestore.`);
         await setDoc(userLocationDocRef, {
             lat: latitude,
             lng: longitude,
@@ -2000,9 +1970,9 @@
     }
 
     function listenForLocationUpdates() {
-        console.log("LOG: Setting up listener for location updates.");
+        console.log("LOG: listenForLocationUpdates called.");
         onSnapshot(locationsColRef, (snapshot) => {
-            console.log("LOG: Received location snapshot update.");
+            console.log("LOG: Received location updates from Firestore.");
             snapshot.docs.forEach(doc => {
                 const locData = doc.data();
                 const uid = doc.id;
@@ -2034,7 +2004,6 @@
         const btn = $('#toggle-location-sharing-btn');
         const status = $('#location-status');
         if (watchingLocation) {
-            console.log("LOG: Stopping location sharing.");
             navigator.geolocation.clearWatch(watchId);
             watchingLocation = false;
             watchId = null;
@@ -2046,10 +2015,9 @@
                 await deleteDoc(userLocationDocRef);
             }
         } else {
-            console.log("LOG: Starting location sharing.");
             if (navigator.geolocation) {
                 watchId = navigator.geolocation.watchPosition(updateLocationInFirestore, (error) => {
-                    console.error("ERROR: Error getting location:", error);
+                    console.error("LOG: Error getting location:", error);
                     showAlert("שגיאת מיקום", "לא ניתן היה לקבל את מיקומך. ודא שאישרת הרשאות מיקום לדפדפן.");
                 }, { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 });
                 watchingLocation = true;
@@ -2062,13 +2030,10 @@
         }
     }
     
-    // --- FIX 1 & 2: REWRITTEN JOURNAL FUNCTIONS ---
+    // --- JOURNAL FUNCTIONS ---
     async function addJournalEntry(dayId, text) {
-        console.log(`LOG: addJournalEntry called for day ${dayId}`);
-        if (!tripDocRef) {
-            console.error("ERROR: tripDocRef is not initialized. Cannot add journal entry.");
-            return;
-        }
+        console.log(`LOG: addJournalEntry called for dayId: ${dayId}`);
+        if (!tripDocRef) return;
         const newEntry = {
             id: Date.now().toString(),
             text: text,
@@ -2080,39 +2045,40 @@
     }
 
     async function removeJournalEntry(dayId, entryId) {
-        console.log(`LOG: removeJournalEntry called for entry ${entryId} in day ${dayId}`);
+        console.log(`LOG: removeJournalEntry called for dayId: ${dayId}, entryId: ${entryId}`);
         if (!isFirebaseConnected) {
             showAlert('אין חיבור', 'לא ניתן למחוק כעת. אנא המתן לסנכרון מלא עם השרת.');
             return;
         }
-        if (!tripDocRef) {
-             console.error("ERROR: tripDocRef is not initialized. Cannot remove journal entry.");
-            return;
-        }
+        if (!tripDocRef) return;
         
-        const journalForDay = localTripData.journal?.[dayId] || [];
-        
-        // This is the critical part: Firestore's arrayRemove needs the *exact* object to remove.
-        // We find the object in our local data based on the unique ID.
+        // This is a robust way to find the entry, even if localTripData is slightly out of sync.
+        // It fetches the document once to ensure it has the latest data for removal.
+        const docSnap = await getDoc(tripDocRef);
+        if (!docSnap.exists()) return;
+
+        const currentData = docSnap.data();
+        const journalForDay = currentData.journal?.[dayId] || [];
         const entryToRemove = journalForDay.find(e => e.id === entryId);
 
         if (entryToRemove) {
-             console.log("LOG: Found entry to remove locally, attempting to remove from Firestore.");
+             console.log("LOG: Found journal entry to remove. Updating Firestore.");
             await updateDoc(tripDocRef, {
                 [`journal.${dayId}`]: arrayRemove(entryToRemove)
             });
         } else {
-            console.error("ERROR: Could not find journal entry to remove. This might happen if the data is not yet synced.");
+            console.error("LOG: Could not find journal entry to remove. It might have been already deleted.");
         }
     }
 
     function renderJournal(dayId, entries = []) {
-        console.log(`LOG: renderJournal called for day ${dayId}`);
+        console.log(`LOG: renderJournal called for dayId: ${dayId}`);
+        // This helper function safely converts a Firestore Timestamp or a plain object from localStorage into a Date object.
         const getTimestampDate = (ts) => {
             if (!ts) return new Date();
-            if (typeof ts.toDate === 'function') return ts.toDate(); 
-            if (ts.seconds) return new Date(ts.seconds * 1000); 
-            return new Date(); 
+            if (typeof ts.toDate === 'function') return ts.toDate(); // Handles live Firestore Timestamp
+            if (ts.seconds) return new Date(ts.seconds * 1000); // Handles object from JSON.parse(localStorage)
+            return new Date(); // Fallback
         };
 
         const validEntries = Array.isArray(entries) ? entries : [];
@@ -2142,7 +2108,7 @@
 
     // --- INIT ---
     document.addEventListener('DOMContentLoaded', () => {
-        console.log("LOG: DOMContentLoaded event fired. Initializing app.");
+        console.log("LOG: DOMContentLoaded event fired.");
         // --- Expose functions to window for onclick attributes ---
         window.handleTransportChange = handleTransportChange;
         window.removeActivity = removeActivity;
@@ -2161,7 +2127,7 @@
                     .then(registration => {
                         console.log('LOG: Service Worker registered with scope:', registration.scope);
                     }).catch(error => {
-                        console.log('ERROR: Service Worker registration failed:', error);
+                        console.log('LOG: Service Worker registration failed:', error);
                     });
             });
         }
@@ -2177,12 +2143,15 @@
           measurementId: "G-P17LYZJ2H0"
         };
         
-        console.log("LOG: Initializing Firebase app.");
         const app = initializeApp(firebaseConfig);
         auth = getAuth(app);
         db = getFirestore(app);
         enableIndexedDbPersistence(db).catch((err) => {
-            console.warn(`WARN: Firestore persistence failed. Code: ${err.code}`);
+            if (err.code == 'failed-precondition') {
+                console.warn('LOG: Firestore persistence failed: Multiple tabs open');
+            } else if (err.code == 'unimplemented') {
+                console.warn('LOG: Firestore persistence failed: Browser not supported');
+            }
         });
 
         // --- Caching and Sharing Logic ---
@@ -2190,41 +2159,33 @@
         if (!tripId) {
             tripId = Math.random().toString(36).substring(2, 12);
             window.location.hash = tripId;
-            console.log(`LOG: No tripId in hash, generated new one: ${tripId}`);
-        } else {
-            console.log(`LOG: Found tripId in hash: ${tripId}`);
         }
+        localStorage.setItem('userName', $('#user-name-input').value);
         $('#user-name-input').value = localStorage.getItem('userName') || '';
+
 
         const cachedData = localStorage.getItem(`tripData_${tripId}`);
         if (cachedData) {
-            console.log("LOG: Found cached data in localStorage. Rendering from cache.");
-            try {
-                localTripData = JSON.parse(cachedData);
-                // Initial render from cache for faster perceived load
-                renderAllPlans(localTripData.plan);
-                renderSuggestions(localTripData.suggestions);
-                renderKosher();
-                renderChecklist(localTripData.checklist);
-                renderBudget(localTripData);
-                renderDocuments(localTripData.documents);
-                renderGallery(localTripData.gallery);
-                if (localTripData.theme === 'dark') document.documentElement.classList.add('dark');
-            } catch(e) {
-                 console.error("ERROR: Failed to parse cached data.", e);
-                 localStorage.removeItem(`tripData_${tripId}`);
-            }
+            console.log("LOG: Loading data from localStorage cache.");
+            localTripData = JSON.parse(cachedData);
+            renderAllPlans(localTripData.plan);
+            renderSuggestions(localTripData.suggestions);
+            renderKosher();
+            renderChecklist(localTripData.checklist);
+            renderBudget(localTripData);
+            renderDocuments(localTripData.documents);
+            renderGallery(localTripData.gallery);
+            if (localTripData.theme === 'dark') document.documentElement.classList.add('dark');
         }
 
-        console.log("LOG: Signing in anonymously.");
         signInAnonymously(auth).catch((error) => {
-            console.error("ERROR: Anonymous sign-in failed:", error);
+            console.error("LOG: Anonymous sign-in failed:", error);
             showAlert("שגיאת התחברות ל-Firebase", `ההתחברות האנונימית נכשלה. ייתכן שצריך לאשר את הדומיין הזה בהגדרות ה-Authentication.\n\n${error.message}`);
         });
         
         onAuthStateChanged(auth, (user) => {
           if (user) {
-            console.log(`LOG: Auth state changed. User signed in with UID: ${user.uid}`);
+            console.log("LOG: Firebase Auth state changed. User is signed in:", user.uid);
             currentUserId = user.uid;
             tripDocRef = doc(db, "milantrip", tripId);
             locationsColRef = collection(db, "milantrip", tripId, "locations");
@@ -2232,9 +2193,8 @@
             initLiveMap();
             listenForLocationUpdates();
 
-            console.log("LOG: Setting up Firestore onSnapshot listener.");
             const unsubscribe = onSnapshot(tripDocRef, async (docSnap) => {
-                console.log("LOG: Firestore onSnapshot listener triggered.");
+                console.log("LOG: Firestore onSnapshot triggered.");
                 if (!isFirebaseConnected) {
                     const statusIcon = $('#sync-status i');
                     const statusText = $('#sync-status span');
@@ -2242,20 +2202,18 @@
                     statusIcon.classList.add('text-green-500');
                     statusText.textContent = 'מחובר';
                     isFirebaseConnected = true;
-                    console.log("LOG: Firebase connection established.");
                 }
 
                 if (docSnap.exists()) {
                     console.log("LOG: Document exists in Firestore. Updating local data.");
                     localTripData = docSnap.data();
                     localStorage.setItem(`tripData_${tripId}`, JSON.stringify(localTripData));
-                } else {
-                    console.log("LOG: Document does not exist in Firestore. Creating new one.");
+                } else if(!cachedData) {
+                    console.log("LOG: Document does not exist. Creating initial document in Firestore.");
                     localTripData = getInitialTripData();
                     await setDoc(tripDocRef, localTripData);
                 }
                 
-                console.log("LOG: Re-rendering all components with fresh data from Firestore.");
                 renderAllPlans(localTripData.plan);
                 renderSuggestions(localTripData.suggestions);
                 renderKosher();
@@ -2265,7 +2223,7 @@
                 renderGallery(localTripData.gallery);
                 if (localTripData.theme === 'dark') document.documentElement.classList.add('dark'); else document.documentElement.classList.remove('dark');
             }, (error) => {
-                console.error("ERROR: Firestore snapshot error:", error);
+                console.error("LOG: Firestore snapshot error:", error);
                 const statusIcon = $('#sync-status i');
                 const statusText = $('#sync-status span');
                 statusIcon.classList.remove('text-green-500', 'text-yellow-500');
@@ -2274,11 +2232,10 @@
                 showAlert('בעיית סנכרון', `לא ניתן להתחבר למסד הנתונים.\nודא שחוקי האבטחה (Rules) ב-Firestore מוגדרים כראוי.\n\n${error.message}`);
             });
           } else {
-              console.log("LOG: Auth state changed. User is signed out.");
+             console.log("LOG: Firebase Auth state changed. User is signed out.");
           }
         });
 
-        console.log("LOG: Performing initial renders and fetches.");
         renderOverview();
         renderKosherFilters();
         fetchWeather();
@@ -2295,17 +2252,16 @@
         });
 
         // --- Event Listeners ---
-        console.log("LOG: Adding main event listeners.");
         $('#theme-toggle').addEventListener('click', async () => {
-            console.log("LOG: Theme toggle clicked.");
+            console.log("LOG: Theme toggle button clicked.");
             const isDark = document.documentElement.classList.toggle('dark');
             if(tripDocRef && isFirebaseConnected) await updateDoc(tripDocRef, { theme: isDark ? 'dark' : 'light' });
         });
         
-        $('#show-tip-btn').addEventListener('click', openTipModal);
-        $('#create-summary-btn').addEventListener('click', generateTripSummary);
-        $('#refresh-warnings-btn').addEventListener('click', fetchSafetyWarnings);
-        $('#find-nearby-btn').addEventListener('click', findNearby);
+        $('#show-tip-btn').addEventListener('click', () => { console.log("LOG: Show tip button clicked."); openTipModal(); });
+        $('#create-summary-btn').addEventListener('click', () => { console.log("LOG: Create summary button clicked."); generateTripSummary(); });
+        $('#refresh-warnings-btn').addEventListener('click', () => { console.log("LOG: Refresh warnings button clicked."); fetchSafetyWarnings(); });
+        $('#find-nearby-btn').addEventListener('click', () => { console.log("LOG: Find nearby button clicked."); findNearby(); });
 
         
         // --- Plan actions ---
@@ -2317,10 +2273,7 @@
             console.log("LOG: Expand all button clicked.");
             $$('#plan-content-container details').forEach(d => d.setAttribute('open', true));
         });
-        $('#print-btn').addEventListener('click', () => {
-            console.log("LOG: Print button clicked.");
-            window.print();
-        });
+        $('#print-btn').addEventListener('click', () => { console.log("LOG: Print button clicked."); window.print(); });
 
         $('#add-checklist-item-form').addEventListener('submit', async e => {
             e.preventDefault();
@@ -2359,16 +2312,16 @@
         });
         
         $('#total-budget').addEventListener('input', async e => {
+            console.log("LOG: Total budget input changed.");
             if(!isFirebaseConnected) { return; }
             const newTotalBudget = parseFloat(e.target.value) || 0;
-            console.log(`LOG: Total budget input changed to: ${newTotalBudget}`);
             if (tripDocRef) await updateDoc(tripDocRef, { totalBudget: newTotalBudget });
         });
 
         $('#include-estimated-costs').addEventListener('change', async (e) => {
+            console.log("LOG: Include estimated costs checkbox changed.");
             if(!isFirebaseConnected) { return; }
             const include = e.target.checked;
-            console.log(`LOG: 'Include estimated costs' checkbox changed to: ${include}`);
             await updateDoc(tripDocRef, { 'settings.includeEstimatedCostsInBalance': include });
         });
 
@@ -2379,16 +2332,16 @@
         });
         
         $('#toggle-suggestions-btn').addEventListener('click', e => {
+            console.log("LOG: Toggle suggestions button clicked.");
             const container = $('#suggestions-container');
             const isHidden = container.classList.toggle('hidden');
-            console.log(`LOG: Toggle suggestions button clicked. Now ${isHidden ? 'hidden' : 'visible'}.`);
             e.target.textContent = isHidden ? 'הצג הצעות נוספות' : 'הסתר הצעות';
         });
 
         $('#toggle-kosher-btn').addEventListener('click', e => {
+            console.log("LOG: Toggle kosher button clicked.");
             const container = $('#kosher-container');
             const isHidden = container.classList.toggle('hidden');
-             console.log(`LOG: Toggle kosher button clicked. Now ${isHidden ? 'hidden' : 'visible'}.`);
             e.target.textContent = isHidden ? 'הצג מדריך כשרות' : 'הסתר מדריך כשרות';
         });
 
@@ -2401,8 +2354,25 @@
             $('#eur-input').value = isNaN(ils) ? '' : (ils / eurToIlsRate).toFixed(2);
         });
         
-        $('#dictionary-form').addEventListener('submit', async e => { e.preventDefault(); const input = $('#dictionary-input').value.trim(); if (input) await translateText(input); });
+        // --- FIX 1 & 2: JOURNAL EVENT LISTENER FIX ---
+        // Using event delegation for dynamically created forms. This is more robust.
+        $('#plan-content-container').addEventListener('submit', (e) => {
+            if (e.target.matches('form[id^="journal-form-"]')) {
+                e.preventDefault();
+                console.log("LOG: Journal form submitted via delegation.");
+                if(!isFirebaseConnected) { showAlert('שגיאת סנכרון', 'אין חיבור למסד הנתונים. אנא בדוק את החיבור לאינטרנט.'); return; }
+                const form = e.target;
+                const dayId = form.id.replace('journal-form-', '');
+                const textInput = form.querySelector('input[type="text"]');
+                const text = textInput.value.trim();
+                if (text) {
+                    addJournalEntry(dayId, text);
+                    textInput.value = '';
+                }
+            }
+        });
         
+        $('#dictionary-form').addEventListener('submit', async e => { e.preventDefault(); console.log("LOG: Dictionary form submitted."); const input = $('#dictionary-input').value.trim(); if (input) await translateText(input); });
         $('#swap-lang-btn').addEventListener('click', () => {
             console.log("LOG: Swap language button clicked.");
             const inputEl = $('#dictionary-input'); const labelEl = $('#lang-direction-label');
@@ -2412,36 +2382,41 @@
             inputEl.value = '';
         });
         
-        $('#translate-upload-btn').addEventListener('click', () => { console.log("LOG: Translate from image upload button clicked."); $('#image-translate-upload').click(); });
-        $('#translate-camera-btn').addEventListener('click', startCamera);
+        $('#translate-upload-btn').addEventListener('click', () => { console.log("LOG: Translate from upload button clicked."); $('#image-translate-upload').click(); });
+        $('#translate-camera-btn').addEventListener('click', () => { console.log("LOG: Translate from camera button clicked."); startCamera(); });
         $('#camera-close-btn').addEventListener('click', stopCamera);
         $('#capture-btn').addEventListener('click', captureFrameAndTranslate);
 
         $('#image-translate-upload').addEventListener('change', (e) => {
+            console.log("LOG: Image selected for translation.");
             const file = e.target.files[0]; if (!file) return;
-            console.log(`LOG: Image selected for translation: ${file.name}`);
             const reader = new FileReader();
             reader.onload = (event) => { const base64String = event.target.result.split(',')[1]; translateImage(base64String, file.type); };
             reader.readAsDataURL(file);
         });
         
         $('#document-upload-btn').addEventListener('click', () => { console.log("LOG: Document upload button clicked."); $('#document-upload').click(); });
-        $('#image-upload-btn').addEventListener('click', () => { console.log("LOG: Gallery image upload button clicked."); $('#image-upload').click(); });
+        $('#image-upload-btn').addEventListener('click', () => { console.log("LOG: Image upload button clicked."); $('#image-upload').click(); });
         
-        $('#alert-modal-close').addEventListener('click', () => $('#alert-modal').classList.remove('flex'));
+        $('#alert-modal-close').addEventListener('click', () => {
+             console.log("LOG: Alert modal closed.");
+             $('#alert-modal').classList.remove('flex');
+             $('#alert-modal-copy-btn').classList.add('hidden');
+        });
         $('#alert-modal-copy-btn').addEventListener('click', (e) => {
+            console.log("LOG: Copy button in alert modal clicked.");
             const textToCopy = $('#alert-modal-body').textContent;
             navigator.clipboard.writeText(textToCopy).then(() => {
                 e.target.textContent = 'הועתק!';
                 setTimeout(() => { e.target.innerHTML = '<i class="fa-solid fa-copy mr-1"></i>העתק'; }, 2000);
-            }).catch(err => console.error('Copy failed', err));
+            }).catch(err => console.error('LOG: Copy failed', err));
         });
 
-        $('#daily-tip-close').addEventListener('click', () => $('#daily-tip-modal').classList.remove('flex'));
+        $('#daily-tip-close').addEventListener('click', () => { console.log("LOG: Daily tip modal closed."); $('#daily-tip-modal').classList.remove('flex'); });
 
         $('#document-upload').addEventListener('change', (e) => {
+            console.log("LOG: Files selected for document upload.");
             for (const file of e.target.files) {
-                console.log(`LOG: Document selected for upload: ${file.name}`);
                 const reader = new FileReader();
                 reader.onload = async (ev) => {
                     const newDoc = { id: Date.now().toString(), name: file.name, dataUrl: ev.target.result };
@@ -2452,8 +2427,8 @@
         });
 
         $('#image-upload').addEventListener('change', (e) => {
+            console.log("LOG: Images selected for gallery upload.");
             for (const file of e.target.files) {
-                 console.log(`LOG: Gallery image selected for upload: ${file.name}`);
                 const reader = new FileReader();
                 reader.onload = async (ev) => {
                     const newImg = { id: Date.now().toString(), name: file.name, dataUrl: ev.target.result };
@@ -2465,14 +2440,15 @@
         
         // Gemini Modal Logic
         const geminiModal = $('#gemini-modal');
-        $('#gemini-btn').addEventListener('click', () => { console.log("LOG: Gemini button clicked."); geminiModal.classList.add('flex'); });
+        $('#gemini-btn').addEventListener('click', () => { console.log("LOG: Open Gemini modal button clicked."); geminiModal.classList.add('flex'); });
         $('#gemini-close-btn').addEventListener('click', () => {
+            console.log("LOG: Gemini modal closed.");
             geminiModal.classList.remove('flex');
             $('#gemini-response').innerHTML = '';
         });
 
         $$('#gemini-tabs-nav .tab-button').forEach(b => b.addEventListener('click', (e) => {
-            console.log(`LOG: Gemini tab clicked: ${e.currentTarget.dataset.content}`);
+            console.log(`LOG: Gemini tab changed to: ${e.currentTarget.dataset.content}`);
             $$('#gemini-tabs-nav .tab-button').forEach(btn => btn.classList.remove('tab-active'));
             e.currentTarget.classList.add('tab-active');
             $$('#gemini-modal .content-section').forEach(s => s.classList.remove('active'));
@@ -2480,8 +2456,8 @@
             $('#gemini-response').innerHTML = '';
         }));
         
-        $('#get-smart-advice-btn').addEventListener('click', getSmartAdvice);
-        $('#gemini-submit-btn').addEventListener('click', askGeneralGemini);
+        $('#get-smart-advice-btn').addEventListener('click', () => { console.log("LOG: Get smart advice button clicked."); getSmartAdvice(); });
+        $('#gemini-submit-btn').addEventListener('click', () => { console.log("LOG: Gemini free text submit button clicked."); askGeneralGemini(); });
 
         $('#share-btn').addEventListener('click', () => {
             console.log("LOG: Share button clicked.");
@@ -2494,7 +2470,7 @@
             if (navigator.share) {
                 navigator.share(shareData).catch((err) => {
                     if (err.name !== 'AbortError') {
-                        console.error('Share failed:', err);
+                        console.error('LOG: Share failed:', err);
                         showAlert('שגיאת שיתוף', `לא ניתן היה לשתף: ${err.message}`);
                     }
                 });
@@ -2508,20 +2484,21 @@
         });
         
         // Live Location Listener
-        $('#toggle-location-sharing-btn').addEventListener('click', toggleLocationSharing);
+        $('#toggle-location-sharing-btn').addEventListener('click', () => { console.log("LOG: Toggle location sharing button clicked."); toggleLocationSharing(); });
         $('#user-name-input').addEventListener('input', (e) => {
             localStorage.setItem('userName', e.target.value);
         });
-        
-        // --- FIX 3: CORRECTED Floating Nav Logic ---
+
+        // --- Floating Nav Logic ---
         const planBtn = $('#floating-plan-btn');
         const toolsBtn = $('#floating-tools-btn');
         const planSubmenu = $('#plan-submenu');
         const toolsSubmenu = $('#tools-submenu');
 
         function toggleSubmenu(submenuToToggle, buttonToHighlight) {
+            console.log("LOG: toggleSubmenu called.");
             const isAlreadyActive = submenuToToggle && submenuToToggle.classList.contains('active');
-            console.log(`LOG: toggleSubmenu called. Is already active: ${isAlreadyActive}`);
+             console.log("LOG: toggleSubmenu called. Is already active:", isAlreadyActive);
             
             // First, hide all submenus and remove highlights
             $$('.floating-submenu').forEach(sm => sm.classList.remove('active'));
@@ -2529,25 +2506,27 @@
             
             // If we are opening a new/different submenu, show it
             if (submenuToToggle && !isAlreadyActive) {
-                console.log("LOG: Opening a new submenu.");
+                 console.log("LOG: Opening a new submenu.");
                 submenuToToggle.classList.add('active');
                 buttonToHighlight.classList.add('text-brand-600');
             } else {
-                 console.log("LOG: Closing the active submenu or no action needed.");
+                console.log("LOG: Closing the active submenu or no action needed.");
             }
         }
         planBtn.addEventListener('click', (e) => { e.stopPropagation(); toggleSubmenu(planSubmenu, planBtn); });
         toolsBtn.addEventListener('click', (e) => { e.stopPropagation(); toggleSubmenu(toolsSubmenu, toolsBtn); });
 
+        // Close submenus when clicking anywhere else on the page
         document.addEventListener('click', (e) => { 
             if (!e.target.closest('#floating-nav-container')) {
                 toggleSubmenu(null, null);
             }
         });
+        // Close submenus when clicking a link inside them
         $$('#plan-submenu a, #tools-submenu a').forEach(link => link.addEventListener('click', () => toggleSubmenu(null, null)));
 
         window.addEventListener('beforeunload', (event) => {
-            console.log("LOG: beforeunload event. Cleaning up location sharing if active.");
+             console.log("LOG: beforeunload event fired. Cleaning up location sharing if active.");
             if (watchingLocation && currentUserId) {
                 const userLocationDocRef = doc(locationsColRef, currentUserId);
                 deleteDoc(userLocationDocRef);
