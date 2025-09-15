@@ -51,8 +51,16 @@
       --header-bg: rgba(11,18,32,0.8);
     }
     
-    html { scroll-padding-top: 80px; }
-    body{background:var(--bg); color:var(--fg); font-family:Assistant,ui-sans-serif,system-ui; overflow-x: hidden;}
+   html { 
+  scroll-padding-top: 80px; 
+  overflow-x: hidden; /* Add this line */
+}
+body {
+  background:var(--bg); 
+  color:var(--fg); 
+  font-family:Assistant,ui-sans-serif,system-ui; 
+  overflow-x: hidden; /* Keep this line */
+}
     h2, h3 { font-family: var(--heading-font); }
     #site-header { background-color: var(--header-bg); }
     
