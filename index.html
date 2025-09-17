@@ -2171,12 +2171,12 @@ function renderAllPlans(planData) {
         </div>`;
     }
 // ==========================================================
-// התחלה: קוד מתוקן לתרגום קולי
+// התחלה: קוד מתוקן ומשופר לתרגום קולי
 // ==========================================================
 const recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
 let speechRecognizer = null;
 let isRecognizing = false;
-let activeVoiceButton = null; // משתנה שיזכור איזה כפתור נלחץ
+let activeVoiceButton = null;
 
 if (recognition) {
     speechRecognizer = new recognition();
@@ -2186,7 +2186,6 @@ if (recognition) {
     speechRecognizer.onstart = () => {
         isRecognizing = true;
         if (activeVoiceButton) {
-            // מעדכן את הכפתור הספציפי שנלחץ
             activeVoiceButton.innerHTML = '<i class="fa-solid fa-microphone-lines fa-beat"></i> מקשיב...';
             activeVoiceButton.classList.add('text-red-500');
         }
@@ -2196,7 +2195,6 @@ if (recognition) {
     speechRecognizer.onend = () => {
         isRecognizing = false;
         if (activeVoiceButton) {
-            // מחזיר את הכפתור למצבו המקורי
             const originalText = activeVoiceButton.id.includes('he') ? '<i class="fa-solid fa-microphone"></i> דבר בעברית' : '<i class="fa-solid fa-microphone"></i> Parla Italiano';
             activeVoiceButton.innerHTML = originalText;
             activeVoiceButton.classList.remove('text-red-500');
@@ -2209,18 +2207,19 @@ if (recognition) {
         $('#translation-result-container').innerHTML = `<span class="text-red-500">שגיאה בזיהוי הדיבור: ${event.error}</span>`;
     };
 
-    // זו הפונקציה הנכונה והיחידה שצריכה להיות כאן
     speechRecognizer.onresult = async (event) => {
         const spokenText = event.results[0][0].transcript;
         const sourceLang = speechRecognizer.lang;
         console.log(`Speech recognized in ${sourceLang}: ${spokenText}`);
 
-        let targetLangFull, targetLangCode;
+        let sourceLangFull, targetLangFull, targetLangCode;
 
         if (sourceLang === 'he-IL') {
+            sourceLangFull = 'Hebrew';
             targetLangFull = 'Italian';
             targetLangCode = 'it-IT';
-        } else {
+        } else { // 'it-IT'
+            sourceLangFull = 'Italian';
             targetLangFull = 'Hebrew';
             targetLangCode = 'he-IL';
         }
@@ -2230,22 +2229,29 @@ if (recognition) {
         const resultContainer = $('#translation-result-container');
         resultContainer.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> מתרגם...`;
 
-        const prompt = `Translate the following to ${targetLangFull}. Provide ONLY the translated text. Text to translate: "${spokenText}"`;
+        // Prompt משופר כדי להבטיח תרגום ולא תעתיק
+        const prompt = `Translate the meaning of the following word/phrase from ${sourceLangFull} to ${targetLangFull}. Provide ONLY the single, most common translated word/phrase, with no additional formatting or explanations. Word/phrase to translate: "${spokenText}"`;
         const payload = { contents: [{ parts: [{ text: "" }] }] };
         let translatedText = await callGemini(payload, prompt, false);
-        translatedText = translatedText.replace(/[\*\_`]/g, '').trim();
+        translatedText = translatedText.replace(/[\*\_`\.]/g, '').trim();
 
-        resultContainer.innerHTML = `<span>${translatedText}</span>`;
+        // תיקון: הוספת כפתור ההשמעה
+        resultContainer.innerHTML = `<span>${translatedText}</span> <button onclick="window.speakText('${translatedText.replace(/'/g, "\\'")}', '${targetLangCode}')" class="btn btn-ghost p-1 h-auto"><i class="fa-solid fa-volume-high"></i></button>`;
 
-        window.speakText(translatedText.replace(/'/g, "\\'"), targetLangCode);
+        // בונוס: הוספת התרגום להיסטוריה, בדיוק כמו בתרגום טקסט רגיל
+        translationHistory.unshift({ sourceText: spokenText, translatedText: translatedText });
+        if (translationHistory.length > 5) translationHistory.pop();
+        localStorage.setItem('milanTripTranslationHistory', JSON.stringify(translationHistory));
+        renderTranslationHistory();
     };
 
 } else {
     console.warn("Web Speech API is not supported in this browser.");
 }
 // ==========================================================
-// סוף: קוד מתוקן לתרגום קולי
+// סוף: קוד מתוקן ומשופר לתרגום קולי
 // ==========================================================
+
     // --- INIT ---
     document.addEventListener('DOMContentLoaded', () => {
         console.log("LOG: DOMContentLoaded event fired. Initializing app.");
