@@ -380,16 +380,18 @@ body {
             <div id="translator-tool" class="bg-white dark:bg-gray-950 p-6 rounded-2xl shadow-lg flex flex-col scroll-mt-24 lg:col-span-1">
                 <h3 class="text-xl font-bold mb-3"><i class="fa-solid fa-language mr-2"></i>תרגומון</h3>
                 <div class="text-xs text-center text-gray-500 mb-2" id="lang-direction-label">עברית <i class="fa-solid fa-arrow-right-long"></i> איטלקית</div>
-                <form id="dictionary-form" class="grid grid-cols-6 gap-2 mb-3">
-                   <input type="text" id="dictionary-input" placeholder="הקלד לתרגום..." class="col-span-4 w-full p-2 rounded-lg border">
-                   <button type="button" id="swap-lang-btn" class="btn btn-ghost" title="החלף שפות"><i class="fa-solid fa-exchange-alt"></i></button>
-                   <button type="submit" class="btn btn-primary col-span-1">תרגם</button>
-                  <button type="button" id="voice-translate-he-btn" class="btn btn-primary col-span-2"><i class="fa-solid fa-microphone"></i> דבר בעברית</button>
-                  <button type="button" id="voice-translate-it-btn" class="btn btn-ghost col-span-2"><i class="fa-solid fa-microphone"></i> Parla Italiano</button>
-                   <button type="button" id="translate-upload-btn" class="btn btn-ghost" title="העלה תמונה"><i class="fa-solid fa-file-image"></i></button>
-                   <button type="button" id="translate-camera-btn" class="btn btn-ghost" title="פתח מצלמה"><i class="fa-solid fa-camera"></i></button>
-                   <input type="file" id="image-translate-upload" class="hidden" accept="image/*">
-                </form>
+<form id="dictionary-form" class="grid grid-cols-6 gap-2 mb-3">
+   <input type="text" id="dictionary-input" placeholder="הקלד לתרגום..." class="col-span-6 w-full p-2 rounded-lg border">
+
+   <button type="button" id="swap-lang-btn" class="btn btn-ghost" title="החלף שפות"><i class="fa-solid fa-exchange-alt"></i></button>
+   <button type="submit" class="btn btn-primary col-span-2">תרגם</button>
+   <button type="button" id="translate-upload-btn" class="btn btn-ghost" title="העלה תמונה"><i class="fa-solid fa-file-image"></i></button>
+   <button type="button" id="translate-camera-btn" class="btn btn-ghost" title="פתח מצלמה"><i class="fa-solid fa-camera"></i></button>
+   <input type="file" id="image-translate-upload" class="hidden" accept="image/*">
+
+   <button type="button" id="voice-translate-he-btn" class="btn btn-primary col-span-3"><i class="fa-solid fa-microphone"></i> דבר בעברית</button>
+   <button type="button" id="voice-translate-it-btn" class="btn btn-ghost col-span-3"><i class="fa-solid fa-microphone"></i> Parla Italiano</button>
+</form>
                 <div id="translation-result-container" class="mt-2 p-3 bg-gray-100 dark:bg-gray-800 rounded-lg min-h-[60px] text-center flex items-center justify-center gap-3">
                    <span class="text-gray-500">התרגום יופיע כאן...</span>
                 </div>
@@ -2169,31 +2171,37 @@ function renderAllPlans(planData) {
         </div>`;
     }
 // ==========================================================
-// התחלה: קוד חדש לתרגום קולי
+// התחלה: קוד מתוקן לתרגום קולי
 // ==========================================================
-
 const recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
 let speechRecognizer = null;
 let isRecognizing = false;
+let activeVoiceButton = null; // משתנה שיזכור איזה כפתור נלחץ
 
 if (recognition) {
     speechRecognizer = new recognition();
-    speechRecognizer.continuous = false; // זיהוי משפט בודד
-    speechRecognizer.interimResults = false; // קבל רק תוצאה סופית
+    speechRecognizer.continuous = false;
+    speechRecognizer.interimResults = false;
 
     speechRecognizer.onstart = () => {
         isRecognizing = true;
-        const btn = $('#voice-translate-btn');
-        btn.innerHTML = '<i class="fa-solid fa-microphone-lines fa-beat"></i> מקשיב...';
-        btn.classList.add('text-red-500');
+        if (activeVoiceButton) {
+            // מעדכן את הכפתור הספציפי שנלחץ
+            activeVoiceButton.innerHTML = '<i class="fa-solid fa-microphone-lines fa-beat"></i> מקשיב...';
+            activeVoiceButton.classList.add('text-red-500');
+        }
         $('#translation-result-container').innerHTML = '<span>מקשיב...</span>';
     };
 
     speechRecognizer.onend = () => {
         isRecognizing = false;
-        const btn = $('#voice-translate-btn');
-        btn.innerHTML = '<i class="fa-solid fa-microphone"></i> התחל לדבר';
-        btn.classList.remove('text-red-500');
+        if (activeVoiceButton) {
+            // מחזיר את הכפתור למצבו המקורי
+            const originalText = activeVoiceButton.id.includes('he') ? '<i class="fa-solid fa-microphone"></i> דבר בעברית' : '<i class="fa-solid fa-microphone"></i> Parla Italiano';
+            activeVoiceButton.innerHTML = originalText;
+            activeVoiceButton.classList.remove('text-red-500');
+            activeVoiceButton = null;
+        }
     };
 
     speechRecognizer.onerror = (event) => {
@@ -2201,47 +2209,42 @@ if (recognition) {
         $('#translation-result-container').innerHTML = `<span class="text-red-500">שגיאה בזיהוי הדיבור: ${event.error}</span>`;
     };
 
+    // זו הפונקציה הנכונה והיחידה שצריכה להיות כאן
     speechRecognizer.onresult = async (event) => {
         const spokenText = event.results[0][0].transcript;
-        console.log(`Speech recognized: ${spokenText}`);
+        const sourceLang = speechRecognizer.lang;
+        console.log(`Speech recognized in ${sourceLang}: ${spokenText}`);
 
-        // זיהוי שפה: בודק אם הטקסט מכיל אותיות בעברית
-speechRecognizer.onresult = async (event) => {
-    const spokenText = event.results[0][0].transcript;
-    const sourceLang = speechRecognizer.lang; // שפת המקור היא השפה שהאזנו לה
-    console.log(`Speech recognized in ${sourceLang}: ${spokenText}`);
+        let targetLangFull, targetLangCode;
 
-    let targetLangFull, targetLangCode;
+        if (sourceLang === 'he-IL') {
+            targetLangFull = 'Italian';
+            targetLangCode = 'it-IT';
+        } else {
+            targetLangFull = 'Hebrew';
+            targetLangCode = 'he-IL';
+        }
 
-    if (sourceLang === 'he-IL') {
-        targetLangFull = 'Italian';
-        targetLangCode = 'it-IT';
-    } else {
-        targetLangFull = 'Hebrew';
-        targetLangCode = 'he-IL';
-    }
+        $('#dictionary-input').value = spokenText;
 
-    $('#dictionary-input').value = spokenText;
+        const resultContainer = $('#translation-result-container');
+        resultContainer.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> מתרגם...`;
 
-    const resultContainer = $('#translation-result-container');
-    resultContainer.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> מתרגם...`;
+        const prompt = `Translate the following to ${targetLangFull}. Provide ONLY the translated text. Text to translate: "${spokenText}"`;
+        const payload = { contents: [{ parts: [{ text: "" }] }] };
+        let translatedText = await callGemini(payload, prompt, false);
+        translatedText = translatedText.replace(/[\*\_`]/g, '').trim();
 
-    const prompt = `Translate the following to ${targetLangFull}. Provide ONLY the translated text. Text to translate: "${spokenText}"`;
-    const payload = { contents: [{ parts: [{ text: "" }] }] };
-    let translatedText = await callGemini(payload, prompt, false);
-    translatedText = translatedText.replace(/[\*\_`]/g, '').trim();
+        resultContainer.innerHTML = `<span>${translatedText}</span>`;
 
-    resultContainer.innerHTML = `<span>${translatedText}</span>`;
-
-    window.speakText(translatedText.replace(/'/g, "\\'"), targetLangCode);
-};
+        window.speakText(translatedText.replace(/'/g, "\\'"), targetLangCode);
+    };
 
 } else {
     console.warn("Web Speech API is not supported in this browser.");
 }
-
 // ==========================================================
-// סוף: קוד חדש לתרגום קולי
+// סוף: קוד מתוקן לתרגום קולי
 // ==========================================================
     // --- INIT ---
     document.addEventListener('DOMContentLoaded', () => {
