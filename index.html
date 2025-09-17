@@ -380,11 +380,12 @@ body {
             <div id="translator-tool" class="bg-white dark:bg-gray-950 p-6 rounded-2xl shadow-lg flex flex-col scroll-mt-24 lg:col-span-1">
                 <h3 class="text-xl font-bold mb-3"><i class="fa-solid fa-language mr-2"></i>תרגומון</h3>
                 <div class="text-xs text-center text-gray-500 mb-2" id="lang-direction-label">עברית <i class="fa-solid fa-arrow-right-long"></i> איטלקית</div>
-                <form id="dictionary-form" class="grid grid-cols-4 gap-2 mb-3">
+                <form id="dictionary-form" class="grid grid-cols-6 gap-2 mb-3">
                    <input type="text" id="dictionary-input" placeholder="הקלד לתרגום..." class="col-span-4 w-full p-2 rounded-lg border">
                    <button type="button" id="swap-lang-btn" class="btn btn-ghost" title="החלף שפות"><i class="fa-solid fa-exchange-alt"></i></button>
                    <button type="submit" class="btn btn-primary col-span-1">תרגם</button>
-                  <button type="button" id="voice-translate-btn" class="btn btn-ghost col-span-2" title="תרגום קולי"><i class="fa-solid fa-microphone"></i> התחל לדבר</button>
+                  <button type="button" id="voice-translate-he-btn" class="btn btn-primary col-span-2"><i class="fa-solid fa-microphone"></i> דבר בעברית</button>
+                  <button type="button" id="voice-translate-it-btn" class="btn btn-ghost col-span-2"><i class="fa-solid fa-microphone"></i> Parla Italiano</button>
                    <button type="button" id="translate-upload-btn" class="btn btn-ghost" title="העלה תמונה"><i class="fa-solid fa-file-image"></i></button>
                    <button type="button" id="translate-camera-btn" class="btn btn-ghost" title="פתח מצלמה"><i class="fa-solid fa-camera"></i></button>
                    <input type="file" id="image-translate-upload" class="hidden" accept="image/*">
@@ -2205,36 +2206,35 @@ if (recognition) {
         console.log(`Speech recognized: ${spokenText}`);
 
         // זיהוי שפה: בודק אם הטקסט מכיל אותיות בעברית
-        const containsHebrew = /[\u0590-\u05FF]/.test(spokenText);
+speechRecognizer.onresult = async (event) => {
+    const spokenText = event.results[0][0].transcript;
+    const sourceLang = speechRecognizer.lang; // שפת המקור היא השפה שהאזנו לה
+    console.log(`Speech recognized in ${sourceLang}: ${spokenText}`);
 
-        let sourceLangFull, targetLangFull, targetLangCode;
+    let targetLangFull, targetLangCode;
 
-        if (containsHebrew) {
-            targetLangCode = 'it-IT';
-            sourceLangFull = 'Hebrew';
-            targetLangFull = 'Italian';
-        } else {
-            targetLangCode = 'he-IL';
-            sourceLangFull = 'Italian';
-            targetLangFull = 'Hebrew';
-        }
+    if (sourceLang === 'he-IL') {
+        targetLangFull = 'Italian';
+        targetLangCode = 'it-IT';
+    } else {
+        targetLangFull = 'Hebrew';
+        targetLangCode = 'he-IL';
+    }
 
-        console.log(`Detected source: ${sourceLangFull}, translating to ${targetLangFull}`);
-        $('#dictionary-input').value = spokenText;
+    $('#dictionary-input').value = spokenText;
 
-        const resultContainer = $('#translation-result-container');
-        resultContainer.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> מתרגם...`;
+    const resultContainer = $('#translation-result-container');
+    resultContainer.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> מתרגם...`;
 
-        const prompt = `Translate the following from ${sourceLangFull} to ${targetLangFull}. Provide ONLY the translated text. Text to translate: "${spokenText}"`;
-        const payload = { contents: [{ parts: [{ text: "" }] }] };
-        let translatedText = await callGemini(payload, prompt, false);
-        translatedText = translatedText.replace(/[\*\_`]/g, '').trim();
+    const prompt = `Translate the following to ${targetLangFull}. Provide ONLY the translated text. Text to translate: "${spokenText}"`;
+    const payload = { contents: [{ parts: [{ text: "" }] }] };
+    let translatedText = await callGemini(payload, prompt, false);
+    translatedText = translatedText.replace(/[\*\_`]/g, '').trim();
 
-        resultContainer.innerHTML = `<span>${translatedText}</span>`;
+    resultContainer.innerHTML = `<span>${translatedText}</span>`;
 
-        // השמעת התוצאה
-        window.speakText(translatedText.replace(/'/g, "\\'"), targetLangCode);
-    };
+    window.speakText(translatedText.replace(/'/g, "\\'"), targetLangCode);
+};
 
 } else {
     console.warn("Web Speech API is not supported in this browser.");
@@ -2609,30 +2609,29 @@ if (recognition) {
                 });
             }
         });
-      // ==========================================================
-// התחלה: מאזין אירועים לכפתור התרגום הקולי
 // ==========================================================
+// התחלה: מאזינים לאירועים של כפתורי התרגום הקולי
+// ==========================================================
+const heBtn = $('#voice-translate-he-btn');
+const itBtn = $('#voice-translate-it-btn');
 
-const voiceBtn = $('#voice-translate-btn');
-if (speechRecognizer) {
-    voiceBtn.addEventListener('click', () => {
-        if (isRecognizing) {
-            speechRecognizer.stop();
-        } else {
-            speechRecognizer.lang = 'he-IL'; // ניתן לשנות לשפת ברירת מחדל
-            speechRecognizer.start();
-        }
-    });
-} else {
-    // אם הדפדפן לא תומך, נטרל את הכפתור
-    if (voiceBtn) {
-        voiceBtn.disabled = true;
-        voiceBtn.innerHTML = 'לא נתמך';
+function startRecognition(lang) {
+    if (isRecognizing) {
+        speechRecognizer.stop();
     }
+    speechRecognizer.lang = lang;
+    speechRecognizer.start();
 }
 
+if (speechRecognizer) {
+    heBtn.addEventListener('click', () => startRecognition('he-IL'));
+    itBtn.addEventListener('click', () => startRecognition('it-IT'));
+} else {
+    if (heBtn) { heBtn.disabled = true; heBtn.innerHTML = 'לא נתמך'; }
+    if (itBtn) { itBtn.disabled = true; itBtn.innerHTML = 'לא נתמך'; }
+}
 // ==========================================================
-// סוף: מאזין אירועים לכפתור התרגום הקולי
+// סוף: מאזינים לאירועים של כפתורי התרגום הקולי
 // ==========================================================
         
         // Live Location Listener
