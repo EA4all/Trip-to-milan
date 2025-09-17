@@ -384,6 +384,7 @@ body {
                    <input type="text" id="dictionary-input" placeholder="הקלד לתרגום..." class="col-span-4 w-full p-2 rounded-lg border">
                    <button type="button" id="swap-lang-btn" class="btn btn-ghost" title="החלף שפות"><i class="fa-solid fa-exchange-alt"></i></button>
                    <button type="submit" class="btn btn-primary col-span-1">תרגם</button>
+                  <button type="button" id="voice-translate-btn" class="btn btn-ghost col-span-2" title="תרגום קולי"><i class="fa-solid fa-microphone"></i> התחל לדבר</button>
                    <button type="button" id="translate-upload-btn" class="btn btn-ghost" title="העלה תמונה"><i class="fa-solid fa-file-image"></i></button>
                    <button type="button" id="translate-camera-btn" class="btn btn-ghost" title="פתח מצלמה"><i class="fa-solid fa-camera"></i></button>
                    <input type="file" id="image-translate-upload" class="hidden" accept="image/*">
@@ -621,7 +622,7 @@ body {
     let eurToIlsRate = 4.0; // Default rate
     let userCoords = null;
     let isFirebaseConnected = false;
-    let translationHistory = [];
+    let translationHistory = JSON.parse(localStorage.getItem('milanTripTranslationHistory')) || [];
     let lastWeatherAPIData = null;
     
     // --- Live Location State ---
@@ -1423,9 +1424,9 @@ function renderAllPlans(planData) {
                 <span>${exp.desc} <span class="text-xs text-gray-400">${exp.category}</span></span>
                 <span class="flex items-center gap-2">
                     ${exp.amount.toFixed(2)}€
-                    <button class="text-red-400 hover:text-red-600 opacity-0 group-hover:opacity-100 transition-opacity" onclick="window.removeExpense('${exp.id}')">
-                        <i class="fa-solid fa-trash-alt fa-xs"></i>
-                    </button>
+                   <button class="text-red-400 hover:text-red-600 transition-opacity" onclick="window.removeExpense('${exp.id}')">
+    <i class="fa-solid fa-trash-alt fa-xs"></i>
+      </button>
                 </span>
             </div>`
         ).join('');
@@ -1666,6 +1667,7 @@ function renderAllPlans(planData) {
         event.stopPropagation(); 
         console.log(`LOG: Removing translation history item at index ${index}`);
         translationHistory.splice(index, 1);
+      localStorage.setItem('milanTripTranslationHistory', JSON.stringify(translationHistory));
         renderTranslationHistory();
     };
     window.openDayMap = (dayId) => {
@@ -1788,6 +1790,7 @@ function renderAllPlans(planData) {
         
         translationHistory.unshift({ sourceText: text, translatedText: responseText });
         if (translationHistory.length > 5) translationHistory.pop(); // Keep last 5
+      localStorage.setItem('milanTripTranslationHistory', JSON.stringify(translationHistory));
         renderTranslationHistory();
     }
     
@@ -2164,7 +2167,82 @@ function renderAllPlans(planData) {
             </form>
         </div>`;
     }
+// ==========================================================
+// התחלה: קוד חדש לתרגום קולי
+// ==========================================================
 
+const recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+let speechRecognizer = null;
+let isRecognizing = false;
+
+if (recognition) {
+    speechRecognizer = new recognition();
+    speechRecognizer.continuous = false; // זיהוי משפט בודד
+    speechRecognizer.interimResults = false; // קבל רק תוצאה סופית
+
+    speechRecognizer.onstart = () => {
+        isRecognizing = true;
+        const btn = $('#voice-translate-btn');
+        btn.innerHTML = '<i class="fa-solid fa-microphone-lines fa-beat"></i> מקשיב...';
+        btn.classList.add('text-red-500');
+        $('#translation-result-container').innerHTML = '<span>מקשיב...</span>';
+    };
+
+    speechRecognizer.onend = () => {
+        isRecognizing = false;
+        const btn = $('#voice-translate-btn');
+        btn.innerHTML = '<i class="fa-solid fa-microphone"></i> התחל לדבר';
+        btn.classList.remove('text-red-500');
+    };
+
+    speechRecognizer.onerror = (event) => {
+        console.error("Speech recognition error", event.error);
+        $('#translation-result-container').innerHTML = `<span class="text-red-500">שגיאה בזיהוי הדיבור: ${event.error}</span>`;
+    };
+
+    speechRecognizer.onresult = async (event) => {
+        const spokenText = event.results[0][0].transcript;
+        console.log(`Speech recognized: ${spokenText}`);
+
+        // זיהוי שפה: בודק אם הטקסט מכיל אותיות בעברית
+        const containsHebrew = /[\u0590-\u05FF]/.test(spokenText);
+
+        let sourceLangFull, targetLangFull, targetLangCode;
+
+        if (containsHebrew) {
+            targetLangCode = 'it-IT';
+            sourceLangFull = 'Hebrew';
+            targetLangFull = 'Italian';
+        } else {
+            targetLangCode = 'he-IL';
+            sourceLangFull = 'Italian';
+            targetLangFull = 'Hebrew';
+        }
+
+        console.log(`Detected source: ${sourceLangFull}, translating to ${targetLangFull}`);
+        $('#dictionary-input').value = spokenText;
+
+        const resultContainer = $('#translation-result-container');
+        resultContainer.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> מתרגם...`;
+
+        const prompt = `Translate the following from ${sourceLangFull} to ${targetLangFull}. Provide ONLY the translated text. Text to translate: "${spokenText}"`;
+        const payload = { contents: [{ parts: [{ text: "" }] }] };
+        let translatedText = await callGemini(payload, prompt, false);
+        translatedText = translatedText.replace(/[\*\_`]/g, '').trim();
+
+        resultContainer.innerHTML = `<span>${translatedText}</span>`;
+
+        // השמעת התוצאה
+        window.speakText(translatedText.replace(/'/g, "\\'"), targetLangCode);
+    };
+
+} else {
+    console.warn("Web Speech API is not supported in this browser.");
+}
+
+// ==========================================================
+// סוף: קוד חדש לתרגום קולי
+// ==========================================================
     // --- INIT ---
     document.addEventListener('DOMContentLoaded', () => {
         console.log("LOG: DOMContentLoaded event fired. Initializing app.");
@@ -2531,6 +2609,31 @@ function renderAllPlans(planData) {
                 });
             }
         });
+      // ==========================================================
+// התחלה: מאזין אירועים לכפתור התרגום הקולי
+// ==========================================================
+
+const voiceBtn = $('#voice-translate-btn');
+if (speechRecognizer) {
+    voiceBtn.addEventListener('click', () => {
+        if (isRecognizing) {
+            speechRecognizer.stop();
+        } else {
+            speechRecognizer.lang = 'he-IL'; // ניתן לשנות לשפת ברירת מחדל
+            speechRecognizer.start();
+        }
+    });
+} else {
+    // אם הדפדפן לא תומך, נטרל את הכפתור
+    if (voiceBtn) {
+        voiceBtn.disabled = true;
+        voiceBtn.innerHTML = 'לא נתמך';
+    }
+}
+
+// ==========================================================
+// סוף: מאזין אירועים לכפתור התרגום הקולי
+// ==========================================================
         
         // Live Location Listener
         $('#toggle-location-sharing-btn').addEventListener('click', toggleLocationSharing);
