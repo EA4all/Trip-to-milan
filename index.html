@@ -332,7 +332,7 @@ body {
                 </div>
         </div>
         <div class="md:col-span-2">
-            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/e/e2/Milano_-_mappa_rete_metropolitana_%28schematica%29.svg/1200px-Milano_-_mappa_rete_metropolitana_%28schematica%29.svg.png" alt="מפת המטרו של מילאנו" class="rounded-lg w-full h-full object-contain">
+<img id="metro-map-image" src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/c1/Milan_metro_map.png/1024px-Milan_metro_map.png" alt="מפת המטרו של מילאנו" class="rounded-lg w-full h-full object-contain cursor-pointer" title="הקלק להגדלה">
         </div>
     </div>
 </div>
@@ -2736,7 +2736,6 @@ document.addEventListener('DOMContentLoaded', () => {
     if (cachedData) {
         try {
             localTripData = JSON.parse(cachedData);
-            if (localTripData.theme === 'dark') document.documentElement.classList.add('dark');
         } catch(e) {
              console.error("ERROR: Failed to parse cached data.", e);
              localStorage.removeItem(`tripData_${tripId}`);
@@ -3089,6 +3088,22 @@ imageModal.addEventListener('click', (e) => {
 });
 // ========================= סוף: לוגיקה להצגת תמונות מוגדלות =========================
 });
+    // ========================= התחלה: הוספת לוגיקה לפתיחת מפת המטרו =========================
+const metroMapImage = $('#metro-map-image');
+if (metroMapImage) {
+    metroMapImage.addEventListener('click', () => {
+        const imgSrc = metroMapImage.src;
+        // כאן אנו משתמשים באלמנטים של החלון הקופץ שכבר קיימים
+        const imageModal = $('#image-viewer-modal');
+        const enlargedImage = $('#enlarged-image');
+
+        if (imageModal && enlargedImage) {
+            enlargedImage.src = imgSrc;
+            imageModal.classList.add('flex');
+        }
+    });
+}
+// ========================= סוף: הוספת לוגיקה לפתיחת מפת המטרו =========================
   </script>
 
 </body>
