@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="he" dir="rtl" class="scroll-smooth dark">
+<html lang="he" dir="rtl" class="scroll-smooth">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -1660,6 +1660,24 @@ async function getAudioGuide(placeName) {
 
     showAlert(`מדריך ל${placeName}`, summaryText, true, { text: summaryText, lang: 'he-IL' });
 }
+    // ========================= התחלה: פונקציה לעיצוב אוטומטי לפי שעה =========================
+function setAutomaticTheme() {
+    // קבלת השעה הנוכחית במילאנו (0-23)
+    const milanHour = new Date().toLocaleTimeString('en-US', { timeZone: 'Europe/Rome', hour: '2-digit', hour12: false }).substring(0, 2);
+    const hour = parseInt(milanHour, 10);
+
+    // הגדרת שעות הלילה (למשל, מ-19:00 בערב עד 6:00 בבוקר)
+    const isNightTime = hour >= 19 || hour < 6;
+
+    if (isNightTime) {
+        document.documentElement.classList.add('dark');
+        console.log("LOG: Night time in Milan. Setting dark mode.");
+    } else {
+        document.documentElement.classList.remove('dark');
+        console.log("LOG: Day time in Milan. Setting light mode.");
+    }
+}
+// ========================= סוף: פונקציה לעיצוב אוטומטי לפי שעה =========================
 // ========================= סוף: פונקציה למדריך קולי =========================
 // ========================= סוף: פונקציית חיפוש מהיר =========================
     // --- State Modifiers (Write to Firestore) ---
@@ -2411,6 +2429,7 @@ document.addEventListener('DOMContentLoaded', () => {
     window.removeImage = removeImage;
     window.findUtility = findUtility;
     window.getAudioGuide = getAudioGuide;
+     setAutomaticTheme();
 
     // --- PWA Service Worker Registration ---
     if ('serviceWorker' in navigator) {
