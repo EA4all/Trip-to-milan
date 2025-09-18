@@ -277,7 +277,56 @@ body {
 
     <section id="tools" class="my-12 scroll-mt-24">
         <h2 class="text-3xl font-bold text-center text-brand-900 dark:text-brand-300 mb-6">כלים ומידע שימושי</h2>
-        <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6"><div id="emergency-phrases-tool" class="bg-white dark:bg-gray-950 p-6 rounded-2xl shadow-lg">
+    <h3 class="text-xl font-bold mb-3"><i class="fa-solid fa-book-medical mr-2"></i>שיחון חירום</h3>
+    <details class="bg-gray-50 dark:bg-gray-900 rounded-lg">
+        <summary class="cursor-pointer font-semibold p-3">
+            <i class="fa-solid fa-triangle-exclamation text-red-500 w-4 mr-1"></i> מצבי חירום
+        </summary>
+        <div class="p-3 border-t dark:border-gray-700 text-sm space-y-2">
+            <div><b>אני צריך רופא:</b><br>Ho bisogno di un medico (<i>אוֹ בִּיזוֹנְיוֹ דִי אוּן מֶדִיקוֹ</i>)</div>
+            <div><b>איפה בית החולים?:</b><br>Dov'è l'ospedale? (<i>דוֹבֶ'ה לוֹסְפֶּדָאלֶה?</i>)</div>
+            <div><b>תזמינו אמבולנס!:</b><br>Chiamate un'ambulanza! (<i>קְיָאמָאטֶה אוּן-אָמְבּוּלָנְצָה!</i>)</div>
+        </div>
+    </details>
+    <details class="bg-gray-50 dark:bg-gray-900 rounded-lg mt-2">
+        <summary class="cursor-pointer font-semibold p-3">
+            <i class="fa-solid fa-handshake-angle w-4 mr-1"></i> כללי ונימוסים
+        </summary>
+        <div class="p-3 border-t dark:border-gray-700 text-sm space-y-2">
+            <div><b>אפשר חשבון בבקשה?:</b><br>Il conto, per favore (<i>אִיל קוֹנְטוֹ, פֶּר פָאבוֹרֶה</i>)</div>
+            <div><b>אני לא מבין:</b><br>Non capisco (<i>נוֹן קָפִּיסְקוֹ</i>)</div>
+            <div><b>כמה זה עולה?:</b><br>Quanto costa? (<i>קְוָואנְטוֹ קוֹסְטָה?</i>)</div>
+        </div>
+    </details>
+</div>
+          <div id="local-time-tool" class="bg-white dark:bg-gray-950 p-6 rounded-2xl shadow-lg">
+    <h3 class="text-xl font-bold mb-3"><i class="fa-solid fa-clock mr-2"></i>זמן מקומי</h3>
+    <div class="space-y-3">
+        <div class="flex justify-between items-center p-3 bg-gray-50 dark:bg-gray-900 rounded-lg">
+            <span class="font-semibold">מילאנו 🇮🇹</span>
+            <span id="milan-time" class="font-mono text-lg font-bold">--:--:--</span>
+        </div>
+        <div class="flex justify-between items-center p-3 bg-gray-50 dark:bg-gray-900 rounded-lg">
+            <span class="font-semibold">ישראל 🇮🇱</span>
+            <span id="israel-time" class="font-mono text-lg font-bold">--:--:--</span>
+        </div>
+    </div>
+</div>
+        <div id="utility-finder-tool" class="bg-white dark:bg-gray-950 p-6 rounded-2xl shadow-lg">
+    <h3 class="text-xl font-bold mb-3"><i class="fa-solid fa-map-signs mr-2"></i>חיפוש מהיר בסביבה</h3>
+    <div class="grid grid-cols-1 gap-2">
+        <button class="btn btn-primary" onclick="window.findUtility('bagno pubblico', 'שירותים ציבוריים')">
+            <i class="fa-solid fa-restroom w-4"></i> מצא שירותים
+        </button>
+        <button class="btn btn-primary" onclick="window.findUtility('farmacia', 'בית מרקחת')">
+            <i class="fa-solid fa-pills w-4"></i> מצא בית מרקחת
+        </button>
+        <button class="btn btn-primary" onclick="window.findUtility('bancomat', 'כספומט')">
+            <i class="fa-solid fa-money-bill w-4"></i> מצא כספומט
+        </button>
+    </div>
+</div>  
             
             <div id="live-location-tool" class="bg-white dark:bg-gray-950 p-6 rounded-2xl shadow-lg scroll-mt-24 lg:col-span-3">
                 <h3 class="text-xl font-bold mb-3 text-center"><i class="fa-solid fa-map-location-dot mr-2"></i>מפת מיקום חי</h3>
@@ -1535,7 +1584,39 @@ function renderAllPlans(planData) {
             </div>
         `).join('');
     }
+    // ========================= התחלה: פונקציית שעונים =========================
+function updateClocks() {
+    const milanTimeEl = $('#milan-time');
+    const israelTimeEl = $('#israel-time');
 
+    if (milanTimeEl && israelTimeEl) {
+        const now = new Date();
+        milanTimeEl.textContent = now.toLocaleTimeString('he-IL', { timeZone: 'Europe/Rome', hour: '2-digit', minute: '2-digit', second: '2-digit' });
+        israelTimeEl.textContent = now.toLocaleTimeString('he-IL', { timeZone: 'Asia/Jerusalem', hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    }
+}
+    
+// ========================= סוף: פונקציית שעונים =========================
+// ========================= התחלה: פונקציית חיפוש מהיר =========================
+function findUtility(query, queryHebrew) {
+    showAlert('מאתר מיקום...', `מחפש ${queryHebrew} בקרבתך...`);
+    if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(position => {
+            const { latitude, longitude } = position.coords;
+            const url = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}&ll=${latitude},${longitude}`;
+            window.open(url, '_blank');
+            window.closeModal();
+        }, () => {
+            // Fallback in case of location error
+            const url = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}+near+Milan+Cathedral`;
+            window.open(url, '_blank');
+            showAlert('שגיאת מיקום', 'לא ניתן היה לקבל את מיקומך. החיפוש יתבצע ממרכז מילאנו.');
+        });
+    } else {
+        showAlert('שגיאה', 'שירותי מיקום אינם נתמכים בדפדפן זה.');
+    }
+}
+// ========================= סוף: פונקציית חיפוש מהיר =========================
     // --- State Modifiers (Write to Firestore) ---
     async function handleTransportChange(e) {
         const dayId = e.target.dataset.day;
@@ -2265,6 +2346,7 @@ if (recognition) {
         window.removeExpense = removeExpense;
         window.removeDocument = removeDocument;
         window.removeImage = removeImage;
+        window.findUtility = findUtility;
         
         // --- PWA Service Worker Registration ---
         if ('serviceWorker' in navigator) {
@@ -2398,7 +2480,9 @@ if (recognition) {
         showDailyTip();
         fetchSafetyWarnings();
         renderTranslationHistory();
-        
+        // הפעלת השעונים
+updateClocks();
+setInterval(updateClocks, 1000);
         const ctx = document.getElementById('transportChart').getContext('2d');
         new Chart(ctx, {
             type: 'bar',
