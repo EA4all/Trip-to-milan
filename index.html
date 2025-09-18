@@ -278,6 +278,25 @@ body {
     <section id="tools" class="my-12 scroll-mt-24">
         <h2 class="text-3xl font-bold text-center text-brand-900 dark:text-brand-300 mb-6">כלים ומידע שימושי</h2>
         <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div id="pass-calculator-tool" class="bg-white dark:bg-gray-950 p-6 rounded-2xl shadow-lg md:col-span-2 lg:col-span-3">
+    <h3 class="text-xl font-bold mb-3"><i class="fa-solid fa-calculator mr-2"></i>מחשבון כדאיות Pass</h3>
+    <div class="grid md:grid-cols-2 gap-6">
+        <div>
+            <h4 class="font-semibold mb-2">1. סמנו את האטרקציות שאתם מתכננים לבקר:</h4>
+            <div id="pass-attractions-list" class="space-y-2 text-sm max-h-48 overflow-y-auto pr-2">
+                </div>
+        </div>
+        <div>
+            <h4 class="font-semibold mb-2">2. השוואה וחישוב:</h4>
+            <div id="pass-options-info" class="text-sm space-y-2">
+                </div>
+            <button id="calculate-pass-btn" class="btn btn-primary w-full mt-4">חשב כדאיות</button>
+            <div id="pass-result" class="mt-4 p-3 bg-gray-50 dark:bg-gray-900 rounded-lg text-center font-bold">
+                ...
+            </div>
+        </div>
+    </div>
+</div>
 
 <div id="utility-finder-tool" class="bg-white dark:bg-gray-950 p-6 rounded-2xl shadow-lg">
     <h3 class="text-xl font-bold mb-3"><i class="fa-solid fa-map-signs mr-2"></i>חיפוש מהיר (פתוח עכשיו)</h3>
@@ -334,11 +353,12 @@ body {
                 </div>
             </div>
             
-            <div id="weather-tool" class="bg-white dark:bg-gray-950 p-6 rounded-2xl shadow-lg scroll-mt-24 lg:col-span-1">
-                <h3 class="text-xl font-bold mb-3"><i class="fa-solid fa-cloud-sun mr-2"></i>מזג אוויר</h3>
-                <div id="weather-forecast" class="space-y-3"><p>טוען תחזית...</p></div>
-                <div id="weather-attire-recommendation" class="mt-4 pt-3 border-t border-gray-200 dark:border-gray-700 text-sm text-center"></div>
-            </div>
+<div id="weather-tool" class="bg-white dark:bg-gray-950 p-6 rounded-2xl shadow-lg scroll-mt-24 lg:col-span-1">
+    <h3 class="text-xl font-bold mb-3"><i class="fa-solid fa-cloud-sun mr-2"></i>מזג אוויר</h3>
+    <div id="weather-forecast" class="space-y-3"><p>טוען תחזית...</p></div>
+    <div id="weather-alert-box" class="mt-4"></div>
+    <div id="weather-attire-recommendation" class="mt-4 pt-3 border-t border-gray-200 dark:border-gray-700 text-sm text-center"></div>
+</div>
             <div id="budget-tool" class="bg-white dark:bg-gray-950 p-6 rounded-2xl shadow-lg flex flex-col scroll-mt-24 md:col-span-2 lg:col-span-2">
                 <h3 class="text-xl font-bold mb-3"><i class="fa-solid fa-euro-sign mr-2"></i>מעקב תקציב</h3>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6 flex-grow">
@@ -648,40 +668,40 @@ body {
 
 
     // --- DATA ---
-    const attractions = {
-      duomo: { name: "קתדרלת הדואומו", type: 'attraction', address: "Piazza del Duomo, 20122 Milano MI, Italy", img: ["https://www.metailimbaolam.com/wp-content/uploads/2020/08/italy-4695974_1280.jpg"], tickets: "https://www.duomomilano.it/en/buy-tickets/", description: "הלב הפועם של מילאנו. חובה לעלות לגג לתצפית פנורמית מרהיבה על העיר.", coords: { lat: 45.4642, lon: 9.1916 }, cost: 20, hours: "כל יום, 09:00-19:00" },
-      sanSiro: { name: "אצטדיון סן סירו", type: 'attraction', address: "Piazzale Angelo Moratti, 20151 Milano MI, Italy", img: ["https://www.xn--4dbkkmip.co.il/wp-content/uploads/2023/05/san-siro-1940307_640.jpg"], tickets: "https://www.sansirostadium.com/en/stadium-tour-museum/", description: "מקדש הכדורגל של מילאנו, ביתן של מילאן ואינטר. מומלץ לסיור או למשחק.", coords: { lat: 45.4780, lon: 9.1238 }, cost: 30, hours: "כל יום, 09:30-19:00 (משתנה בימי משחק)" },
-      primark: { name: "פריימארק (ויה טורינו)", type: 'attraction', address: "Via Torino, 45, 20123 Milano MI, Italy", img: ["https://www.shutterstock.com/image-photo/bordeaux-france-07-17-2024-260nw-2490117199.jpg"], info: "https://www.primark.com/it/it/negozi/milano/via-torino-45", description: "סניף הדגל הענק של רשת האופנה הזולה, גן עדן לחובבי קניות.", coords: { lat: 45.4623, lon: 9.1861 }, cost: 0, hours: "כל יום, 09:00-22:00" },
-      como: { name: "אגם קומו", type: 'attraction', address: "Varenna, Italy", img: ["https://www.travelonatimebudget.co.uk/wp-content/uploads/2022/01/varenna-dp.jpg"], description: "יום טיול לאחד האגמים היפים באיטליה. מומלץ לבקר בעיירות וארנה ובלאג'יו.", coords: { lat: 45.9863, lon: 9.2816 }, cost: 15 },
-      berninaExpress: { name: "רכבת ברנינה לאלפים", type: 'attraction', address: "Tirano, Italy", img: ["https://www.civitatis.com/f/italia/milan/excursion-alpes-suizos-589x392.jpg"], tickets: "https://www.rhb.ch/en/panoramic-trains/bernina-express", description: "נסיעת רכבת פנורמית מדהימה דרך הרי האלפים לשוויץ.", coords: { lat: 46.4914, lon: 9.8683 }, cost: 70 },
-      laScala: { name: "תיאטרון לה סקאלה", type: 'attraction', address: "Via Filodrammatici, 2, 20121 Milano MI, Italy", img: ["https://www.hakolal.co.il/wp-content/uploads/2018/10/La-Scala.jpg"], tickets: "https://www.teatroallascala.org/en/visit-the-theatre/visits-to-the-theatre-museum.html", description: "אחד מבתי האופרה המפורסמים והיוקרתיים בעולם.", coords: { lat: 45.4675, lon: 9.1895 }, cost: 12, hours: "מוזיאון: כל יום, 09:30-17:30" },
-      navigli: { name: "רובע נבילי", type: 'attraction', address: "Ripa di Porta Ticinese, 20143 Milano MI, Italy", description: "רובע התעלות המקסים של מילאנו, מושלם לשעות הערב ולאפרטיבו.", coords: { lat: 45.4516, lon: 9.1758 }, cost: 0 },
-      ilCentro: { name: "קניון Il Centro", type: 'attraction', address: "Via Giuseppe Eugenio Luraghi, 11, 20044 Arese MI, Italy", img: ["https://architizer-prod.imgix.net/media/1461230538313IL_CENTRO_WEB_RESOLUTION_231.JPG"], info: "https://centroilcentro.it/en/", description: "אחד הקניונים הגדולים באירופה, נמצא מחוץ למילאנו.", coords: { lat: 45.5654, lon: 9.0681 }, cost: 5, hours: "כל יום, 09:00-22:00" },
-      sforza: { name: "טירת ספורצה", type: 'attraction', address: "Piazza Castello, 20121 Milano MI, Italy", description: "מצודה היסטורית מרשימה עם מספר מוזיאונים וגלריות אמנות.", info: "https://www.milanocastello.it/en", coords: { lat: 45.4705, lon: 9.1794 }, cost: 5, hours: "חצרות: 07:00-19:30. מוזיאונים: ג'-א', 10:00-17:30 (סגור בב')" },
-      brera: { name: "רובע בררה", type: 'attraction', address: "Via Brera, Milan", description: "רובע האמנים הציורי, 'המונמרטר של מילאנו', מלא בסמטאות, גלריות ובוטיקים.", coords: { lat: 45.4719, lon: 9.1879 }, cost: 0 },
-      lastSupper: { name: "הסעודה האחרונה", type: 'attraction', address: "Piazza di Santa Maria delle Grazie, 2, 20123 Milano MI", description: "ציור הקיר המפורסם של דה וינצ'י. חובה להזמין כרטיסים חודשים מראש!", tickets: "https://cenacolovinciano.org/en/", coords: { lat: 45.4659, lon: 9.1711 }, cost: 15, hours: "ג'-א', 08:15-19:00 (סגור בב')" },
-      galleriaVittorio: { name: "גלריית ויטוריו אמנואלה", type: 'attraction', address: "Piazza del Duomo, 20123 Milano MI", description: "מרכז קניות היסטורי ומפואר, עם חנויות יוקרה, בתי קפה ומסעדות.", coords: { lat: 45.4656, lon: 9.1905 }, cost: 0, hours: "פתוח 24/7 (חנויות בשעות משתנות)" },
-      pinacotecaBrera: { name: "פינקוטקה די בררה", type: 'attraction', address: "Via Brera, 28, 20121 Milano MI", description: "אחד מגלריות האמנות החשובות באיטליה, מתמקד בציור איטלקי.", tickets: "https://pinacotecabrera.org/en/visit/", coords: { lat: 45.4719, lon: 9.1879 }, cost: 15, hours: "ג'-א', 08:30-19:15 (סגור בב')" },
-      parcoSempione: { name: "פארק סמפיונה", type: 'attraction', address: "Piazza Sempione, 20154 Milano MI", description: "הריאה הירוקה הגדולה של מילאנו, מאחורי טירת ספורצה. מושלם להירגעות.", coords: { lat: 45.4723, lon: 9.1725 }, cost: 0, hours: "כל יום, 06:30-21:00" },
-      quadrilateroDellaModa: { name: "מרובע האופנה", type: 'attraction', address: "Via Monte Napoleone, 20121 Milano MI, Italy", description: "רובע הקניות היוקרתי של מילאנו, בית למותגי האופנה הגדולים בעולם.", coords: { lat: 45.4688, lon: 9.1950 }, cost: 0 },
-      daVinciMuseum: { name: "מוזיאון המדע דה וינצ'י", type: 'attraction', address: "Via San Vittore, 21, 20123 Milano MI, Italy", description: "מוזיאון המדע והטכנולוגיה הגדול באיטליה, מוקדש לדה וינצ'י כממציא.", tickets: "https://www.museoscienza.org/en/visit/tickets", coords: { lat: 45.4627, lon: 9.1715 }, cost: 10, hours: "ג'-ו' 09:30-17:00, ש'-א' 09:30-18:30 (סגור בב')" },
-      boscoVerticale: { name: "בוסקו ורטיקלה", type: 'attraction', address: "Via Gaetano de Castillia, 11, 20124 Milano MI", description: "צמד מגדלי מגורים חדשניים המכוסים באלפי עצים וצמחים. פלא ארכיטקטוני.", coords: { lat: 45.4855, lon: 9.1901 }, cost: 0 },
-      cimiteroMonumentale: { name: "בית הקברות המונומנטלי", type: 'attraction', address: "Piazzale Cimitero Monumentale, 20154 Milano MI", description: "בית קברות שהוא גם מוזיאון פתוח, עם פסלים ומבנים ארכיטקטוניים מרשימים.", coords: { lat: 45.485, lon: 9.178 }, cost: 0, hours: "ג'-א' 08:00-18:00 (סגור בב')" },
-      museoNovecento: { name: "מוזיאון נובצ'נטו", type: 'attraction', address: "Piazza del Duomo, 8, 20123 Milano MI", description: "מוזיאון לאמנות המאה ה-20 הממוקם בכיכר הדואומו, עם תצפית יפה על הקתדרלה.", tickets: "https://www.museodelnovecento.org/en/ biglietti-e-ingressi", coords: { lat: 45.463, lon: 9.190 }, cost: 10, hours: "ג'-א' 10:00-19:30 (סגור בב')" },
-      santAmbrogio: { name: "בזיליקת סנט'אמברוג'ו", type: 'attraction', address: "Piazza Sant'Ambrogio, 15, 20123 Milano MI", description: "אחת הכנסיות העתיקות והחשובות במילאנו, דוגמה מרהיבה לאדריכלות רומנסקית.", coords: { lat: 45.462, lon: 9.173 }, cost: 0 },
-      sanMaurizio: { name: "כנסיית סן מאוריציו", type: 'attraction', address: "Corso Magenta, 15, 20123 Milano MI", description: "מכונה 'הקפלה הסיסטינית של מילאנו' בזכות ציורי הקיר המדהימים שמכסים אותה לחלוטין.", tickets: "https://www.museoarcheologicomilano.it/en/collezioni/san-maurizio-al-monastero-maggiore", coords: { lat: 45.465, lon: 9.176 }, cost: 0, hours: "ג'-א' 10:00-17:30 (סגור בב')" },
-      piazzaMercanti: { name: "פיאצה דיי מרקנטי", type: 'attraction', address: "Piazza dei Mercanti, 20123 Milano MI", description: "כיכר ימי-ביניימית קסומה ונסתרת, דקות הליכה מהדואומו.", coords: { lat: 45.465, lon: 9.188 }, cost: 0 },
-      leonardoVineyard: { name: "הכרם של לאונרדו", type: 'attraction', address: "Corso Magenta, 65, 20123 Milano MI", description: "שחזור של הכרם שהיה שייך ללאונרדו דה וינצ'י, מול 'הסעודה האחרונה'.", tickets: "https://www.vignadileonardo.com/en/", coords: { lat: 45.466, lon: 9.170 }, cost: 10, hours: "ג'-א' 09:00-18:00 (סגור בב')" },
-      piazzaGaeAulenti: { name: "פיאצה גאה אאולנטי", type: 'attraction', address: "Piazza Gae Aulenti, 20124 Milano MI", description: "הלב הפועם של מילאנו המודרנית. כיכר עתידנית מוקפת גורדי שחקים.", coords: { lat: 45.483, lon: 9.191 }, cost: 0 },
-      corsoComo: { name: "10 קורסו קומו", type: 'attraction', address: "Corso Como, 10, 20154 Milano MI", description: "מתחם קונספט המשלב אופנה, עיצוב ואמנות. חווית קניות ובילוי ייחודית.", coords: { lat: 45.482, lon: 9.189 }, cost: 0 },
-      triennale: { name: "מוזיאון העיצוב טריאנלה", type: 'attraction', address: "Viale Emilio Alemagna, 6, 20121 Milano MI", description: "מוזיאון בינלאומי המוקדש לעיצוב, אדריכלות ואמנות חזותית בפארק סמפיונה.", tickets: "https://triennale.org/en/tickets", coords: { lat: 45.470, lon: 9.168 }, cost: 15, hours: "ג'-א' 11:00-20:00 (סגור בב')" },
-      colonneSanLorenzo: { name: "עמודי סן לורנצו", type: 'attraction', address: "Corso di Porta Ticinese, 39, 20123 Milano MI", description: "שרידים רומיים עתיקים שהפכו למקום מפגש פופולרי ותוסס בערב.", coords: { lat: 45.458, lon: 9.181 }, cost: 0 },
-      qcTermemilano: { name: "QC Termemilano", type: 'attraction', address: "Piazzale Medaglie D'Oro, 2, 20135 Milano MI", tickets: "https://www.qcterme.com/en/milano/qc-termemilano", description: "ספא ומרחצאות יוקרתיים בלב העיר, חוויה מושלמת של פינוק ורגיעה.", coords: { lat: 45.4523, lon: 9.2004 }, cost: 60, hours: "כל יום, 09:00-23:00" },
-      interStore: { name: "חנות הדגל של אינטר", type: 'attraction', address: "Galleria Passarella, 2, 20122 Milano MI", info: "https://store.inter.it/", description: "חנות הדגל הרשמית של קבוצת הכדורגל אינטר מילאנו, בלב אזור הקניות.", coords: { lat: 45.465, lon: 9.194 }, cost: 0, hours: "כל יום 10:00-19:30" },
-      casaMilan: { name: "קאזה מילאן (מוזיאון וחנות)", type: 'attraction', address: "Via Aldo Rossi, 8, 20149 Milano MI", tickets: "https://www.acmilan.com/en/club/casa-milan", description: "המטה הראשי של קבוצת מילאן, כולל מוזיאון מונדו מילאן, חנות רשמית ומסעדה.", coords: { lat: 45.489, lon: 9.155 }, cost: 15, hours: "כל יום 10:00-19:00" },
-      torreBranca: { name: "מגדל בראנקה", type: 'attraction', address: "Viale Luigi Camoens, 2, 20121 Milano MI", info: "http://www.museobranca.it/torre-branca-parco-sempione-milano/", description: "מגדל תצפית בפארק סמפיונה המציע נוף פנורמי מרהיב של מילאנו.", coords: { lat: 45.472, lon: 9.171 }, cost: 6, hours: "משתנה לפי עונה, בדקו באתר" },
-      pinacotecaAmbrosiana: { name: "פינקוטקה אמברוזיאנה", type: 'attraction', address: "Piazza Pio XI, 2, 20123 Milano MI", tickets: "https://www.ambrosiana.it/", description: "גלריית אמנות וספרייה היסטורית המכילה יצירות מופת של קאראווג'ו ודה וינצ'י.", coords: { lat: 45.464, lon: 9.186 }, cost: 15, hours: "ג'-א' 10:00-18:00 (סגור בב')" }
-    };
+const attractions = {
+  duomo: { name: "קתדרלת הדואומו", isOutdoor: false, type: 'attraction', address: "Piazza del Duomo, 20122 Milano MI, Italy", img: ["https://www.metailimbaolam.com/wp-content/uploads/2020/08/italy-4695974_1280.jpg"], tickets: "https://www.duomomilano.it/en/buy-tickets/", description: "הלב הפועם של מילאנו. חובה לעלות לגג לתצפית פנורמית מרהיבה על העיר.", coords: { lat: 45.4642, lon: 9.1916 }, cost: 20, hours: "כל יום, 09:00-19:00" },
+  sanSiro: { name: "אצטדיון סן סירו", isOutdoor: true, type: 'attraction', address: "Piazzale Angelo Moratti, 20151 Milano MI, Italy", img: ["https://www.xn--4dbkkmip.co.il/wp-content/uploads/2023/05/san-siro-1940307_640.jpg"], tickets: "https://www.sansirostadium.com/en/stadium-tour-museum/", description: "מקדש הכדורגל של מילאנו, ביתן של מילאן ואינטר. מומלץ לסיור או למשחק.", coords: { lat: 45.4780, lon: 9.1238 }, cost: 30, hours: "כל יום, 09:30-19:00 (משתנה בימי משחק)" },
+  primark: { name: "פריימארק (ויה טורינו)", isOutdoor: false, type: 'attraction', address: "Via Torino, 45, 20123 Milano MI, Italy", img: ["https://www.shutterstock.com/image-photo/bordeaux-france-07-17-2024-260nw-2490117199.jpg"], info: "https://www.primark.com/it/it/negozi/milano/via-torino-45", description: "סניף הדגל הענק של רשת האופנה הזולה, גן עדן לחובבי קניות.", coords: { lat: 45.4623, lon: 9.1861 }, cost: 0, hours: "כל יום, 09:00-22:00" },
+  como: { name: "אגם קומו", isOutdoor: true, type: 'attraction', address: "Varenna, Italy", img: ["https://www.travelonatimebudget.co.uk/wp-content/uploads/2022/01/varenna-dp.jpg"], description: "יום טיול לאחד האגמים היפים באיטליה. מומלץ לבקר בעיירות וארנה ובלאג'יו.", coords: { lat: 45.9863, lon: 9.2816 }, cost: 15 },
+  berninaExpress: { name: "רכבת ברנינה לאלפים", isOutdoor: true, type: 'attraction', address: "Tirano, Italy", img: ["https://www.civitatis.com/f/italia/milan/excursion-alpes-suizos-589x392.jpg"], tickets: "https://www.rhb.ch/en/panoramic-trains/bernina-express", description: "נסיעת רכבת פנורמית מדהימה דרך הרי האלפים לשוויץ.", coords: { lat: 46.4914, lon: 9.8683 }, cost: 70 },
+  laScala: { name: "תיאטרון לה סקאלה", isOutdoor: false, type: 'attraction', address: "Via Filodrammatici, 2, 20121 Milano MI, Italy", img: ["https://www.hakolal.co.il/wp-content/uploads/2018/10/La-Scala.jpg"], tickets: "https://www.teatroallascala.org/en/visit-the-theatre/visits-to-the-theatre-museum.html", description: "אחד מבתי האופרה המפורסמים והיוקרתיים בעולם.", coords: { lat: 45.4675, lon: 9.1895 }, cost: 12, hours: "מוזיאון: כל יום, 09:30-17:30" },
+  navigli: { name: "רובע נבילי", isOutdoor: true, type: 'attraction', address: "Ripa di Porta Ticinese, 20143 Milano MI, Italy", description: "רובע התעלות המקסים של מילאנו, מושלם לשעות הערב ולאפרטיבו.", coords: { lat: 45.4516, lon: 9.1758 }, cost: 0 },
+  ilCentro: { name: "קניון Il Centro", isOutdoor: false, type: 'attraction', address: "Via Giuseppe Eugenio Luraghi, 11, 20044 Arese MI, Italy", img: ["https://architizer-prod.imgix.net/media/1461230538313IL_CENTRO_WEB_RESOLUTION_231.JPG"], info: "https://centroilcentro.it/en/", description: "אחד הקניונים הגדולים באירופה, נמצא מחוץ למילאנו.", coords: { lat: 45.5654, lon: 9.0681 }, cost: 5, hours: "כל יום, 09:00-22:00" },
+  sforza: { name: "טירת ספורצה", isOutdoor: false, type: 'attraction', address: "Piazza Castello, 20121 Milano MI, Italy", description: "מצודה היסטורית מרשימה עם מספר מוזיאונים וגלריות אמנות.", info: "https://www.milanocastello.it/en", coords: { lat: 45.4705, lon: 9.1794 }, cost: 5, hours: "חצרות: 07:00-19:30. מוזיאונים: ג'-א', 10:00-17:30 (סגור בב')" },
+  brera: { name: "רובע בררה", isOutdoor: true, type: 'attraction', address: "Via Brera, Milan", description: "רובע האמנים הציורי, 'המונמרטר של מילאנו', מלא בסמטאות, גלריות ובוטיקים.", coords: { lat: 45.4719, lon: 9.1879 }, cost: 0 },
+  lastSupper: { name: "הסעודה האחרונה", isOutdoor: false, type: 'attraction', address: "Piazza di Santa Maria delle Grazie, 2, 20123 Milano MI", description: "ציור הקיר המפורסם של דה וינצ'י. חובה להזמין כרטיסים חודשים מראש!", tickets: "https://cenacolovinciano.org/en/", coords: { lat: 45.4659, lon: 9.1711 }, cost: 15, hours: "ג'-א', 08:15-19:00 (סגור בב')" },
+  galleriaVittorio: { name: "גלריית ויטוריו אמנואלה", isOutdoor: false, type: 'attraction', address: "Piazza del Duomo, 20123 Milano MI", description: "מרכז קניות היסטורי ומפואר, עם חנויות יוקרה, בתי קפה ומסעדות.", coords: { lat: 45.4656, lon: 9.1905 }, cost: 0, hours: "פתוח 24/7 (חנויות בשעות משתנות)" },
+  pinacotecaBrera: { name: "פינקוטקה די בררה", isOutdoor: false, type: 'attraction', address: "Via Brera, 28, 20121 Milano MI", description: "אחד מגלריות האמנות החשובות באיטליה, מתמקד בציור איטלקי.", tickets: "https://pinacotecabrera.org/en/visit/", coords: { lat: 45.4719, lon: 9.1879 }, cost: 15, hours: "ג'-א', 08:30-19:15 (סגור בב')" },
+  parcoSempione: { name: "פארק סמפיונה", isOutdoor: true, type: 'attraction', address: "Piazza Sempione, 20154 Milano MI", description: "הריאה הירוקה הגדולה של מילאנו, מאחורי טירת ספורצה. מושלם להירגעות.", coords: { lat: 45.4723, lon: 9.1725 }, cost: 0, hours: "כל יום, 06:30-21:00" },
+  quadrilateroDellaModa: { name: "מרובע האופנה", isOutdoor: true, type: 'attraction', address: "Via Monte Napoleone, 20121 Milano MI, Italy", description: "רובע הקניות היוקרתי של מילאנו, בית למותגי האופנה הגדולים בעולם.", coords: { lat: 45.4688, lon: 9.1950 }, cost: 0 },
+  daVinciMuseum: { name: "מוזיאון המדע דה וינצ'י", isOutdoor: false, type: 'attraction', address: "Via San Vittore, 21, 20123 Milano MI, Italy", description: "מוזיאון המדע והטכנולוגיה הגדול באיטליה, מוקדש לדה וינצ'י כממציא.", tickets: "https://www.museoscienza.org/en/visit/tickets", coords: { lat: 45.4627, lon: 9.1715 }, cost: 10, hours: "ג'-ו' 09:30-17:00, ש'-א' 09:30-18:30 (סגור בב')" },
+  boscoVerticale: { name: "בוסקו ורטיקלה", isOutdoor: true, type: 'attraction', address: "Via Gaetano de Castillia, 11, 20124 Milano MI", description: "צמד מגדלי מגורים חדשניים המכוסים באלפי עצים וצמחים. פלא ארכיטקטוני.", coords: { lat: 45.4855, lon: 9.1901 }, cost: 0 },
+  cimiteroMonumentale: { name: "בית הקברות המונומנטלי", isOutdoor: true, type: 'attraction', address: "Piazzale Cimitero Monumentale, 20154 Milano MI", description: "בית קברות שהוא גם מוזיאון פתוח, עם פסלים ומבנים ארכיטקטוניים מרשימים.", coords: { lat: 45.485, lon: 9.178 }, cost: 0, hours: "ג'-א' 08:00-18:00 (סגור בב')" },
+  museoNovecento: { name: "מוזיאון נובצ'נטו", isOutdoor: false, type: 'attraction', address: "Piazza del Duomo, 8, 20123 Milano MI", description: "מוזיאון לאמנות המאה ה-20 הממוקם בכיכר הדואומו, עם תצפית יפה על הקתדרלה.", tickets: "https://www.museodelnovecento.org/en/ biglietti-e-ingressi", coords: { lat: 45.463, lon: 9.190 }, cost: 10, hours: "ג'-א' 10:00-19:30 (סגור בב')" },
+  santAmbrogio: { name: "בזיליקת סנט'אמברוג'ו", isOutdoor: false, type: 'attraction', address: "Piazza Sant'Ambrogio, 15, 20123 Milano MI", description: "אחת הכנסיות העתיקות והחשובות במילאנו, דוגמה מרהיבה לאדריכלות רומנסקית.", coords: { lat: 45.462, lon: 9.173 }, cost: 0 },
+  sanMaurizio: { name: "כנסיית סן מאוריציו", isOutdoor: false, type: 'attraction', address: "Corso Magenta, 15, 20123 Milano MI", description: "מכונה 'הקפלה הסיסטינית של מילאנו' בזכות ציורי הקיר המדהימים שמכסים אותה לחלוטין.", tickets: "https://www.museoarcheologicomilano.it/en/collezioni/san-maurizio-al-monastero-maggiore", coords: { lat: 45.465, lon: 9.176 }, cost: 0, hours: "ג'-א' 10:00-17:30 (סגור בב')" },
+  piazzaMercanti: { name: "פיאצה דיי מרקנטי", isOutdoor: true, type: 'attraction', address: "Piazza dei Mercanti, 20123 Milano MI", description: "כיכר ימי-ביניימית קסומה ונסתרת, דקות הליכה מהדואומו.", coords: { lat: 45.465, lon: 9.188 }, cost: 0 },
+  leonardoVineyard: { name: "הכרם של לאונרדו", isOutdoor: true, type: 'attraction', address: "Corso Magenta, 65, 20123 Milano MI", description: "שחזור של הכרם שהיה שייך ללאונרדו דה וינצ'י, מול 'הסעודה האחרונה'.", tickets: "https://www.vignadileonardo.com/en/", coords: { lat: 45.466, lon: 9.170 }, cost: 10, hours: "ג'-א' 09:00-18:00 (סגור בב')" },
+  piazzaGaeAulenti: { name: "פיאצה גאה אאולנטי", isOutdoor: true, type: 'attraction', address: "Piazza Gae Aulenti, 20124 Milano MI", description: "הלב הפועם של מילאנו המודרנית. כיכר עתידנית מוקפת גורדי שחקים.", coords: { lat: 45.483, lon: 9.191 }, cost: 0 },
+  corsoComo: { name: "10 קורסו קומו", isOutdoor: false, type: 'attraction', address: "Corso Como, 10, 20154 Milano MI", description: "מתחם קונספט המשלב אופנה, עיצוב ואמנות. חווית קניות ובילוי ייחודית.", coords: { lat: 45.482, lon: 9.189 }, cost: 0 },
+  triennale: { name: "מוזיאון העיצוב טריאנלה", isOutdoor: false, type: 'attraction', address: "Viale Emilio Alemagna, 6, 20121 Milano MI", description: "מוזיאון בינלאומי המוקדש לעיצוב, אדריכלות ואמנות חזותית בפארק סמפיונה.", tickets: "https://triennale.org/en/tickets", coords: { lat: 45.470, lon: 9.168 }, cost: 15, hours: "ג'-א' 11:00-20:00 (סגור בב')" },
+  colonneSanLorenzo: { name: "עמודי סן לורנצו", isOutdoor: true, type: 'attraction', address: "Corso di Porta Ticinese, 39, 20123 Milano MI", description: "שרידים רומיים עתיקים שהפכו למקום מפגש פופולרי ותוסס בערב.", coords: { lat: 45.458, lon: 9.181 }, cost: 0 },
+  qcTermemilano: { name: "QC Termemilano", isOutdoor: false, type: 'attraction', address: "Piazzale Medaglie D'Oro, 2, 20135 Milano MI", tickets: "https://www.qcterme.com/en/milano/qc-termemilano", description: "ספא ומרחצאות יוקרתיים בלב העיר, חוויה מושלמת של פינוק ורגיעה.", coords: { lat: 45.4523, lon: 9.2004 }, cost: 60, hours: "כל יום, 09:00-23:00" },
+  interStore: { name: "חנות הדגל של אינטר", isOutdoor: false, type: 'attraction', address: "Galleria Passarella, 2, 20122 Milano MI", info: "https://store.inter.it/", description: "חנות הדגל הרשמית של קבוצת הכדורגל אינטר מילאנו, בלב אזור הקניות.", coords: { lat: 45.465, lon: 9.194 }, cost: 0, hours: "כל יום 10:00-19:30" },
+  casaMilan: { name: "קאזה מילאן (מוזיאון וחנות)", isOutdoor: false, type: 'attraction', address: "Via Aldo Rossi, 8, 20149 Milano MI", tickets: "https://www.acmilan.com/en/club/casa-milan", description: "המטה הראשי של קבוצת מילאן, כולל מוזיאון מונדו מילאן, חנות רשמית ומסעדה.", coords: { lat: 45.489, lon: 9.155 }, cost: 15, hours: "כל יום 10:00-19:00" },
+  torreBranca: { name: "מגדל בראנקה", isOutdoor: true, type: 'attraction', address: "Viale Luigi Camoens, 2, 20121 Milano MI", info: "http://www.museobranca.it/torre-branca-parco-sempione-milano/", description: "מגדל תצפית בפארק סמפיונה המציע נוף פנורמי מרהיב של מילאנו.", coords: { lat: 45.472, lon: 9.171 }, cost: 6, hours: "משתנה לפי עונה, בדקו באתר" },
+  pinacotecaAmbrosiana: { name: "פינקוטקה אמברוזיאנה", isOutdoor: false, type: 'attraction', address: "Piazza Pio XI, 2, 20123 Milano MI", tickets: "https://www.ambrosiana.it/", description: "גלריית אמנות וספרייה היסטורית המכילה יצירות מופת של קאראווג'ו ודה וינצ'י.", coords: { lat: 45.464, lon: 9.186 }, cost: 15, hours: "ג'-א' 10:00-18:00 (סגור בב')" }
+};
     
     const kosherData = {
       restaurants: [
@@ -1359,6 +1379,7 @@ if (majorSitesForGuide.includes(activityKey)) {
             if (data.error) throw new Error(data.reason);
             lastWeatherAPIData = data; // Cache weather data
             console.log("LOG: Weather data fetched successfully.");
+            checkWeatherAlerts();
              const iconMap = {
                 0: 'fa-sun', 1: 'fa-cloud-sun', 2: 'fa-cloud-sun', 3: 'fa-cloud',
                 45: 'fa-smog', 48: 'fa-smog',
@@ -1677,6 +1698,116 @@ function setAutomaticTheme() {
         console.log("LOG: Day time in Milan. Setting light mode.");
     }
 }
+    // ========================= התחלה: פונקציה להתראות מזג אוויר חכמות =========================
+async function checkWeatherAlerts() {
+    if (!lastWeatherAPIData || !localTripData.plan) return;
+
+    const alertBox = $('#weather-alert-box');
+    alertBox.innerHTML = ''; // ניקוי התראות ישנות
+
+    // קודים של מזג אוויר גרוע (גשם, סופות רעמים)
+    const badWeatherCodes = [51, 53, 55, 61, 63, 65, 80, 81, 82, 95, 96, 99];
+
+    // מציאת התאריך של מחר
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const tomorrowString = tomorrow.toISOString().split('T')[0];
+
+    // מציאת האינדקס של מחר בתחזית (בדרך כלל 1)
+    const tomorrowIndex = lastWeatherAPIData.daily.time.findIndex(day => day === tomorrowString);
+    if (tomorrowIndex === -1) return; // לא נמצאה תחזית למחר
+
+    const tomorrowsWeatherCode = lastWeatherAPIData.daily.weathercode[tomorrowIndex];
+
+    // בדיקה אם מזג האוויר של מחר גרוע
+    if (badWeatherCodes.includes(tomorrowsWeatherCode)) {
+        // מציאת התוכנית של מחר
+        const tripStartDate = new Date(tripMeta.flights.inbound.date);
+        const diffTime = Math.abs(tomorrow - tripStartDate);
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        const planKey = `day${diffDays}`;
+
+        if (localTripData.plan[planKey]) {
+            const tomorrowsPlan = localTripData.plan[planKey];
+            const outdoorActivities = tomorrowsPlan.activities.filter(act => {
+                const originalAttraction = attractions[act.id.split('_')[0]];
+                return originalAttraction && originalAttraction.isOutdoor;
+            });
+
+            if (outdoorActivities.length > 0) {
+                const activityNames = outdoorActivities.map(act => act.name).join(', ');
+                const alertMessage = `
+                    <div class="bg-yellow-100 dark:bg-yellow-900/30 border-l-4 border-yellow-500 text-yellow-700 dark:text-yellow-300 p-3 rounded-lg">
+                        <p class="font-bold">התראה חכמה למחר!</p>
+                        <p class="text-sm">צפוי גשם מחר, והתוכנית שלכם כוללת פעילויות בחוץ (${activityNames}). אולי כדאי לשקול להחליף אותן בפעילות מממאגר ההצעות.</p>
+                    </div>
+                `;
+                alertBox.innerHTML = alertMessage;
+            }
+        }
+    }
+}
+    // ========================= התחלה: פונקציה למחשבון כדאיות Pass =========================
+function initPassCalculator() {
+    const passes = {
+        duomoPass: { name: 'Duomo Pass (גג + מוזיאון)', price: 20, keys: ['duomo'] },
+        milanoCard: { name: 'MilanoCard (3 ימים)', price: 15.50, keys: ['transport'] } // מחיר תחב"צ בלבד
+    };
+
+    const attractionsList = $('#pass-attractions-list');
+    const plannedAttractionKeys = Object.values(localTripData.plan || {}).flatMap(day => day.activities.map(act => act.id.split('_')[0]));
+
+    let attractionsHtml = '';
+    for (const key in attractions) {
+        if (attractions[key].cost > 0) {
+            const isChecked = plannedAttractionKeys.includes(key) ? 'checked' : '';
+            attractionsHtml += `
+                <label class="flex items-center gap-2">
+                    <input type="checkbox" class="pass-attraction-checkbox rounded" value="${attractions[key].cost}" data-key="${key}" ${isChecked}>
+                    ${attractions[key].name} (${attractions[key].cost}€)
+                </label>
+            `;
+        }
+    }
+    attractionsList.innerHTML = attractionsHtml;
+
+    let passInfoHtml = '';
+    for (const passKey in passes) {
+        passInfoHtml += `<div>${passes[passKey].name} - <b>${passes[passKey].price.toFixed(2)}€</b></div>`;
+    }
+    $('#pass-options-info').innerHTML = passInfoHtml;
+
+    $('#calculate-pass-btn').addEventListener('click', () => {
+        let individualCost = 0;
+        const selectedKeys = [];
+        $$('.pass-attraction-checkbox:checked').forEach(cb => {
+            individualCost += parseFloat(cb.value);
+            selectedKeys.push(cb.dataset.key);
+        });
+
+        // נוסיף עלות תחב"צ ל-3 ימים לחישוב הכללי
+        individualCost += passes.milanoCard.price;
+
+        let resultHtml = `עלות אישית כולל תחב"צ: <b class="text-red-500">${individualCost.toFixed(2)}€</b><br><hr class="my-2">`;
+
+        // בדיקת כדאיות לדואומו פאס
+        let duomoRelatedCost = 0;
+        if (selectedKeys.includes('duomo')) {
+            duomoRelatedCost += attractions.duomo.cost;
+        }
+        // (ניתן להוסיף כאן עוד אתרים שכלולים בפאס)
+
+        if (duomoRelatedCost > passes.duomoPass.price) {
+            resultHtml += `<span class="text-green-600">מומלץ לקנות את ה-Duomo Pass!</span><br>`;
+        } else {
+            resultHtml += `<span>עבור הדואוμο, יותר זול לקנות כרטיס בודד.</span><br>`;
+        }
+
+        $('#pass-result').innerHTML = resultHtml;
+    });
+}
+// ========================= סוף: פונקציה למחשבון כדאיות Pass =========================
+// ========================= סוף: פונקציה להתראות מזג אוויר חכמות =========================
 // ========================= סוף: פונקציה לעיצוב אוטומטי לפי שעה =========================
 // ========================= סוף: פונקציה למדריך קולי =========================
 // ========================= סוף: פונקציית חיפוש מהיר =========================
@@ -2512,6 +2643,7 @@ document.addEventListener('DOMContentLoaded', () => {
             renderGallery(localTripData.gallery);
             if (localTripData.theme === 'dark') document.documentElement.classList.add('dark');
             else document.documentElement.classList.remove('dark');
+            initPassCalculator();
         }, (error) => {
             console.error("ERROR: Firestore snapshot error:", error);
             const statusIcon = $('#sync-status i');
