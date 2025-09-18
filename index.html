@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="he" dir="rtl" class="scroll-smooth">
+<html lang="he" dir="rtl" class="scroll-smooth dark">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -1755,19 +1755,7 @@ async function getAudioGuide(placeName) {
 
     showAlert(`מדריך ל${placeName}`, summaryText, true, { text: summaryText, lang: 'he-IL' });
 }
-    // ========================= התחלה: פונקציה לעיצוב אוטומטי לפי שעה =========================
-// ========================= התחלה: פונקציה לעיצוב אוטומטי לפי שעה =========================
-function setAutomaticTheme() {
-    const milanHour = new Date().toLocaleTimeString('en-US', { timeZone: 'Europe/Rome', hour: '2-digit', hour12: false }).substring(0, 2);
-    const hour = parseInt(milanHour, 10);
-    const isNightTime = hour >= 19 || hour < 6;
-    if (isNightTime) {
-        document.documentElement.classList.add('dark');
-    } else {
-        document.documentElement.classList.remove('dark');
-    }
-}
-// ========================= סוף: פונקציה לעיצוב אוטומטי לפי שעה =========================
+
     // ========================= התחלה: לוגיקה לעוזר המטרו =========================
 function initMetroHelper() {
     const metroData = {
@@ -2696,7 +2684,6 @@ document.addEventListener('DOMContentLoaded', () => {
     window.removeImage = removeImage;
     window.findUtility = findUtility;
     window.getAudioGuide = getAudioGuide;
-    setAutomaticTheme();
     initMetroHelper();
 
     // --- PWA Service Worker Registration ---
@@ -2736,6 +2723,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (cachedData) {
         try {
             localTripData = JSON.parse(cachedData);
+          
         } catch(e) {
              console.error("ERROR: Failed to parse cached data.", e);
              localStorage.removeItem(`tripData_${tripId}`);
