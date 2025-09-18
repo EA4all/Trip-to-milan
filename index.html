@@ -2402,33 +2402,19 @@ function initPassCalculator() {
         responseContainer.textContent = advice;
         submitBtn.disabled = false;
     }
-    
-    // --- LIVE LOCATION FUNCTIONS ---
-// ========================= התחלה: קוד משודרג למפה עם מצב לילה =========================
-let lightMapLayer, darkMapLayer;
-
+    // ========================= התחלה: קוד למפה במצב בהיר קבוע =========================
 function initLiveMap() {
     console.log("LOG: initLiveMap called.");
     if (liveMap) return;
     liveMap = L.map('live-location-map').setView([45.4642, 9.1916], 12);
 
-    // הגדרת שתי שכבות המפה - בהירה וכהה
-    lightMapLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    // הגדרה של שכבת המפה הבהירה בלבד
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-    });
-
-    darkMapLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-        attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> & © <a href="https://carto.com/attributions">CARTO</a>'
-    });
-
-    // בדיקה איזה מצב פעיל כרגע והצגת השכבה המתאימה
-    if (document.documentElement.classList.contains('dark')) {
-        darkMapLayer.addTo(liveMap);
-    } else {
-        lightMapLayer.addTo(liveMap);
-    }
+    }).addTo(liveMap);
 }
-// ========================= סוף: קוד משודרג למפה עם מצב לילה =========================
+// ========================= סוף: קוד למפה במצב בהיר קבוע =========================
+    // --- LIVE LOCATION FUNCTIONS ---
 
     async function updateLocationInFirestore(position) {
         if (!currentUserId) return;
