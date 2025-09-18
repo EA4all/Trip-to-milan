@@ -202,6 +202,7 @@ body {
           <h1 class="text-xl md:text-2xl font-bold text-brand-800 dark:text-brand-300">החופשה במילאנו</h1>
         </div>
         <div class="hidden md:flex md:items-center md:gap-1 flex-wrap">
+          <a href="#scrapbook" class="nav-link px-3 py-2 rounded-md text-sm font-medium">סקראפבוק</a>
           <a href="#overview" class="nav-link px-3 py-2 rounded-md text-sm font-medium">סקירה</a>
           <a href="#plan" class="nav-link px-3 py-2 rounded-md text-sm font-medium">תוכנית</a>
           <a href="#suggestions" class="nav-link px-3 py-2 rounded-md text-sm font-medium">הצעות</a>
@@ -278,6 +279,22 @@ body {
     <section id="tools" class="my-12 scroll-mt-24">
         <h2 class="text-3xl font-bold text-center text-brand-900 dark:text-brand-300 mb-6">כלים ומידע שימושי</h2>
         <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div id="metro-helper-tool" class="bg-white dark:bg-gray-950 p-6 rounded-2xl shadow-lg md:col-span-2 lg:col-span-3">
+    <h3 class="text-xl font-bold mb-3"><i class="fa-solid fa-train-subway mr-2"></i>עוזר קווי מטרו</h3>
+    <div class="grid md:grid-cols-3 gap-4">
+        <div class="md:col-span-1">
+            <p class="text-sm mb-2">לחץ על קו כדי לראות תחנות ואטרקציות מרכזיות:</p>
+            <div id="metro-lines-container" class="flex flex-wrap gap-2">
+                </div>
+            <div id="metro-line-info" class="mt-4 text-sm space-y-2 max-h-60 overflow-y-auto pr-2">
+                </div>
+        </div>
+        <div class="md:col-span-2">
+            <img src="https://upload.wikimedia.org/wikipedia/commons/0/06/Rete_metropolitana_di_Milano.svg" alt="מפת המטרו של מילאנו" class="rounded-lg w-full h-full object-contain">
+        </div>
+    </div>
+</div>
+          
           <div id="pass-calculator-tool" class="bg-white dark:bg-gray-950 p-6 rounded-2xl shadow-lg md:col-span-2 lg:col-span-3">
     <h3 class="text-xl font-bold mb-3"><i class="fa-solid fa-calculator mr-2"></i>מחשבון כדאיות Pass</h3>
     <div class="grid md:grid-cols-2 gap-6">
@@ -312,6 +329,9 @@ body {
         </button>
         <button class="btn btn-primary" onclick="window.findUtility('bureau de change', 'המרת כספים')">
             <i class="fa-solid fa-coins w-4"></i> מצא Change
+        </button>
+      <button class="btn btn-primary" onclick="window.findUtility('sinagoga', 'בתי כנסת')">
+           <i class="fa-solid fa-synagogue w-4"></i> מצא בית כנסת
         </button>
     </div>
 </div>
@@ -478,7 +498,12 @@ body {
         </div>
         </div>
     </section>
-
+<section id="scrapbook" class="my-12 scroll-mt-24">
+  <h2 class="text-3xl font-bold text-center text-brand-900 dark:text-brand-300 mb-6">סקראפבוק - יומן הטיול</h2>
+  <div id="scrapbook-container" class="space-y-8">
+    <p class="text-center">טוען יומן...</p>
+  </div>
+</section>
     <section id="documents-and-gallery" class="my-12 scroll-mt-24 grid md:grid-cols-2 gap-6">
         <div class="bg-white dark:bg-gray-950 p-6 rounded-2xl shadow-lg">
             <h2 class="text-2xl font-bold mb-4"><i class="fa-solid fa-folder-open mr-2"></i>תיק מסמכים</h2>
@@ -495,7 +520,15 @@ body {
     </section>
 
   </main>
-  
+  <div id="select-day-for-upload-modal" class="modal-backdrop">
+  <div class="modal">
+      <div class="p-4 border-b"><h3 class="text-lg font-bold">לאיזה יום לשייך את התמונות?</h3></div>
+      <div id="modal-upload-day-options" class="p-4 grid grid-cols-2 gap-3"></div>
+      <div class="p-4 border-t flex justify-end">
+          <button onclick="window.closeModal()" class="btn btn-ghost">ביטול</button>
+      </div>
+  </div>
+</div>
   <div id="add-to-day-modal" class="modal-backdrop">
     <div class="modal">
         <div class="p-4 border-b"><h3 class="text-lg font-bold">הוסף פעילות ליום...</h3></div>
@@ -1093,10 +1126,9 @@ function renderMobileNavSubmenus() {
     function renderActivityCard(dayId, activity, index, total, previousActivity) {
         const isDining = activity.type === 'dining';
         const links = [];
-      const majorSitesForGuide = ['duomo', 'sforza', 'laScala', 'lastSupper', 'galleriaVittorio'];
-const activityKey = activity.id.split('_')[0];
 
-if (majorSitesForGuide.includes(activityKey)) {
+
+if (activity.type === 'attraction') {
     links.push(`<button onclick="window.getAudioGuide('${activity.name}')" class="btn btn-primary bg-purple-600 hover:bg-purple-700"><i class="fa-solid fa-headphones"></i> מדריך</button>`);
 }
         if (activity.tickets) links.push(`<a href="${activity.tickets}" target="_blank" class="btn btn-primary"><i class="fa-solid fa-ticket"></i> כרטיסים</a>`);
@@ -1682,22 +1714,85 @@ async function getAudioGuide(placeName) {
     showAlert(`מדריך ל${placeName}`, summaryText, true, { text: summaryText, lang: 'he-IL' });
 }
     // ========================= התחלה: פונקציה לעיצוב אוטומטי לפי שעה =========================
+// ========================= התחלה: פונקציה לעיצוב אוטומטי לפי שעה =========================
 function setAutomaticTheme() {
-    // קבלת השעה הנוכחית במילאנו (0-23)
     const milanHour = new Date().toLocaleTimeString('en-US', { timeZone: 'Europe/Rome', hour: '2-digit', hour12: false }).substring(0, 2);
     const hour = parseInt(milanHour, 10);
-
-    // הגדרת שעות הלילה (למשל, מ-19:00 בערב עד 6:00 בבוקר)
     const isNightTime = hour >= 19 || hour < 6;
 
     if (isNightTime) {
         document.documentElement.classList.add('dark');
-        console.log("LOG: Night time in Milan. Setting dark mode.");
     } else {
         document.documentElement.classList.remove('dark');
-        console.log("LOG: Day time in Milan. Setting light mode.");
     }
 }
+// ========================= סוף: פונקציה לעיצוב אוטומטי לפי שעה =========================
+    // ========================= התחלה: לוגיקה לעוזר המטרו =========================
+function initMetroHelper() {
+    const metroData = {
+        M1: { name: 'M1', color: '#E4001A', stops: { 'Duomo': 'קתדרלת הדואומו, גלריה ויטוריו', 'Cadorna': 'טירת ספורצה, פארק סמפיונה', 'San Babila': 'מרובע האופנה' } },
+        M2: { name: 'M2', color: '#009B4E', stops: { 'Centrale FS': 'תחנה מרכזית (רכבות לאגמים)', 'Garibaldi FS': 'פיאצה גאה אאולנטי, בוסקו ורטיקלה' } },
+        M3: { name: 'M3', color: '#FFD200', stops: { 'Duomo': 'קתדרלת הדואומו', 'Centrale FS': 'תחנה מרכזית' } },
+        M5: { name: 'M5', color: '#6E2C91', stops: { 'San Siro Stadio': 'אצטדיון סן סירו', 'Garibaldi FS': 'פיאצה גאה אאולנטי' } }
+    };
+
+    const linesContainer = $('#metro-lines-container');
+    const infoContainer = $('#metro-line-info');
+
+    Object.keys(metroData).forEach(key => {
+        const line = metroData[key];
+        const btn = document.createElement('button');
+        btn.className = 'btn btn-sm font-bold';
+        btn.textContent = line.name;
+        btn.style.backgroundColor = line.color;
+        btn.style.color = '#fff';
+        btn.onclick = () => {
+            $$('#metro-lines-container button').forEach(b => b.classList.remove('ring-2', 'ring-offset-2', 'dark:ring-offset-gray-900', 'ring-blue-500'));
+            btn.classList.add('ring-2', 'ring-offset-2', 'dark:ring-offset-gray-900', 'ring-blue-500');
+
+            let infoHtml = `<h4 class="font-bold text-lg" style="color:${line.color};">תחנות מרכזיות בקו ${line.name}</h4>`;
+            for(const stop in line.stops) {
+                infoHtml += `<div><b class="font-semibold">${stop}:</b> ${line.stops[stop]}</div>`;
+            }
+            infoContainer.innerHTML = infoHtml;
+        };
+        linesContainer.appendChild(btn);
+    });
+}
+// ========================= סוף: לוגיקה לעוזר המטרו =========================
+    // ========================= התחלה: לוגיקה לסקראפבוק =========================
+function renderScrapbook() {
+    const container = $('#scrapbook-container');
+    if (!localTripData.plan) {
+        container.innerHTML = '<p class="text-center">עדיין אין תוכנית טיול.</p>';
+        return;
+    }
+
+    let scrapbookHtml = '';
+    const sortedDays = Object.entries(localTripData.plan).sort((a, b) => a[0].localeCompare(b[0]));
+
+    for (const [dayId, dayData] of sortedDays) {
+        const journalEntries = (localTripData.journal && localTripData.journal[dayId]) || [];
+        const galleryImages = (localTripData.gallery && localTripData.gallery[dayId]) || [];
+
+        scrapbookHtml += `
+        <div class="bg-white dark:bg-gray-950 p-4 sm:p-6 rounded-2xl shadow-lg">
+            <h3 class="text-2xl font-bold mb-4 border-b pb-2">${dayData.name}</h3>
+
+            <h4 class="font-semibold mt-4 mb-2">היומן שלי:</h4>
+            ${journalEntries.length > 0 ? journalEntries.map(entry => `<p class="text-sm mb-2 p-2 bg-gray-50 dark:bg-gray-900 rounded-md">${entry.text}</p>`).join('') : '<p class="text-xs text-gray-500">לא נכתבו רשומות ביומן ליום זה.</p>'}
+
+            <h4 class="font-semibold mt-4 mb-2">התמונות שלי:</h4>
+            ${galleryImages.length > 0 ? `
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                    ${galleryImages.map(img => `<img src="${img.dataUrl}" class="w-full h-32 object-cover rounded-lg">`).join('')}
+                </div>` : '<p class="text-xs text-gray-500">לא הועלו תמונות ליום זה.</p>'}
+        </div>
+        `;
+    }
+    container.innerHTML = scrapbookHtml || '<p class="text-center">היומן ריק. התחילו להוסיף רשומות ותמונות!</p>';
+}
+// ========================= סוף: לוגיקה לסקראפבוק =========================
     // ========================= התחלה: פונקציה להתראות מזג אוויר חכמות =========================
 async function checkWeatherAlerts() {
     if (!lastWeatherAPIData || !localTripData.plan) return;
@@ -2560,7 +2655,8 @@ document.addEventListener('DOMContentLoaded', () => {
     window.removeImage = removeImage;
     window.findUtility = findUtility;
     window.getAudioGuide = getAudioGuide;
-     setAutomaticTheme();
+    setAutomaticTheme();
+    initMetroHelper();
 
     // --- PWA Service Worker Registration ---
     if ('serviceWorker' in navigator) {
@@ -2644,6 +2740,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (localTripData.theme === 'dark') document.documentElement.classList.add('dark');
             else document.documentElement.classList.remove('dark');
             initPassCalculator();
+            renderScrapbook();
         }, (error) => {
             console.error("ERROR: Firestore snapshot error:", error);
             const statusIcon = $('#sync-status i');
@@ -2787,7 +2884,23 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     $('#document-upload-btn').addEventListener('click', () => $('#document-upload').click());
-    $('#image-upload-btn').addEventListener('click', () => $('#image-upload').click());
+    $('#image-upload-btn').addEventListener('click', () => {
+    const opts = $('#modal-upload-day-options');
+    opts.innerHTML = Object.entries(localTripData.plan).sort((a,b) => a[0].localeCompare(b[0])).map(([dayId, dayData]) => 
+        `<button class="btn btn-primary" data-day-id="${dayId}">${dayData.name}</button>`
+    ).join('');
+
+    $$('#modal-upload-day-options button').forEach(btn => {
+        btn.onclick = () => {
+            const selectedDayId = btn.dataset.dayId;
+            window.closeModal();
+            $('#image-upload').setAttribute('data-day-id', selectedDayId);
+            $('#image-upload').click();
+        };
+    });
+
+    $('#select-day-for-upload-modal').classList.add('flex');
+});
 
     $('#alert-modal-close').addEventListener('click', () => $('#alert-modal').classList.remove('flex'));
     $('#alert-modal-copy-btn').addEventListener('click', (e) => {
