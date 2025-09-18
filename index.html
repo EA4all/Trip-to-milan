@@ -561,19 +561,10 @@ body {
           <div class="grid grid-cols-3 gap-2 text-center text-sm" id="plan-submenu-links">
               </div>
       </div>
-      <div id="tools-submenu" class="floating-submenu fixed bottom-[68px] left-0 right-0 bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm p-2 rounded-t-2xl">
-          <div class="grid grid-cols-3 gap-2 text-center text-sm">
-              <a href="#overview" class="p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 col-span-3 font-bold text-brand-600">חזור לסקירה</a>
-              <a href="#live-location-tool" class="p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700">מיקום חי</a>
-              <a href="#transport-tool" class="p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700">תחבורה</a>
-              <a href="#weather-tool" class="p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700">מזג אוויר</a>
-              <a href="#budget-tool" class="p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700">תקציב</a>
-              <a href="#checklist-section-tool" class="p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700">צ'קליסט</a>
-              <a href="#translator-tool" class="p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700">תרגום</a>
-              <a href="#converter-tool" class="p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700">ממיר מטבע</a>
-              <a href="#safety-warnings-tool" class="p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700">אזהרות</a>
-          </div>
-      </div>
+<div id="tools-submenu" class="floating-submenu fixed bottom-[68px] left-0 right-0 bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm p-2 rounded-t-2xl">
+    <div id="tools-submenu-links" class="grid grid-cols-3 gap-2 text-center text-sm">
+        </div>
+</div>
 
       <nav id="floating-nav" class="bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm shadow-[0_-2px_10px_rgba(0,0,0,0.1)] dark:shadow-[0_-2px_10px_rgba(0,0,0,0.3)] rounded-t-2xl">
         <div class="flex justify-around p-2 text-gray-700 dark:text-gray-300">
@@ -988,7 +979,25 @@ function renderAllPlans(planData) {
         });
     });
 }
-
+// ========================= התחלה: פונקציה ליצירת תפריטי ניווט מהיר =========================
+function renderMobileNavSubmenus() {
+    const toolsContainer = $('#tools-submenu-links');
+    if (toolsContainer) {
+        let toolsHtml = '<a href="#overview" class="p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 col-span-3 font-bold text-brand-600">חזור לסקירה</a>';
+        $$('#tools > div > div').forEach(toolElement => {
+            const toolId = toolElement.id;
+            const toolTitleElement = toolElement.querySelector('h3');
+            if (toolId && toolTitleElement) {
+                const toolTitle = toolTitleElement.textContent || 'כלי';
+                // לוקחים רק את הטקסט, בלי האייקון
+                const cleanTitle = toolTitleElement.childNodes.length > 1 ? toolTitleElement.lastChild.textContent.trim() : toolTitle.trim();
+                toolsHtml += `<a href="#${toolId}" class="p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700">${cleanTitle}</a>`;
+            }
+        });
+        toolsContainer.innerHTML = toolsHtml;
+    }
+}
+// ========================= סוף: פונקציה ליצירת תפריטי ניווט מהיר =========================
     function renderPlanForDay(dayId, dayData) {
         console.log(`LOG: renderPlanForDay called for ${dayId}`);
         const container = $(`#${dayId}`);
@@ -2460,6 +2469,7 @@ if (recognition) {
         showDailyTip();
         fetchSafetyWarnings();
         renderTranslationHistory();
+        renderMobileNavSubmenus();
         // הפעלת השעונים
 updateClocks();
 setInterval(updateClocks, 1000);
