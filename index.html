@@ -456,6 +456,11 @@ body {
                                 </select>
                              </div>
                             <button type="submit" class="btn btn-primary w-full">הוסף הוצאה</button>
+              <button type="button" id="scan-receipt-btn" class="btn btn-ghost w-full">
+                <> <i class="fa-solid fa-camera mr-2"></i>סרוק קבלה
+</button>
+               
+                            
                         </form>
                         <button id="calculate-estimated-btn" class="btn btn-primary w-full mt-2"><i class="fa-solid fa-calculator mr-2"></i>חשב עלות משוערת לאטרקציות</button>
                         <div id="expense-list" class="text-sm my-4 flex-grow max-h-40 overflow-y-auto pr-2"></div>
@@ -736,7 +741,9 @@ body {
     const placeholderLogoUrl = (name) => `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&size=80&rounded=true&background=e0e7ff&color=1e40af`;
     
     // --- Global State ---
-    let db, auth, tripDocRef, locationsColRef;
+    let db, auth, tripDocRef locationsColRef;
+    let cameraMode = 'translate';
+
     let localTripData = {}; 
     let budgetChartInstance = null;
     let cameraStream = null;
@@ -2132,23 +2139,53 @@ function initPassCalculator() {
         }
         $('#camera-modal').classList.remove('flex');
     }
+function captureFrame() {
+    console.log(`LOG: Capturing frame for mode: ${cameraMode}`);
+    const video = $('#camera-feed');
+    const canvas = $('#camera-canvas');
+    const context = canvas.getContext('2d');
 
-    function captureFrameAndTranslate() {
-        console.log("LOG: captureFrameAndTranslate called.");
-        const video = $('#camera-feed');
-        const canvas = $('#camera-canvas');
-        const context = canvas.getContext('2d');
-        
-        canvas.width = video.videoWidth;
-        canvas.height = video.videoHeight;
-        context.drawImage(video, 0, 0, canvas.width, canvas.height);
-        
-        const dataUrl = canvas.toDataURL('image/jpeg');
-        const base64ImageData = dataUrl.split(',')[1];
-        
-        stopCamera();
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+    const dataUrl = canvas.toDataURL('image/jpeg');
+    const base64ImageData = dataUrl.split(',')[1];
+
+    stopCamera();
+
+    if (cameraMode === 'translate') {
         translateImage(base64ImageData, 'image/jpeg');
+    } else if (cameraMode === 'receipt') {
+        processReceiptImage(base64ImageData);
     }
+}
+
+async function processReceiptImage(base64ImageData) {
+    showAlert('מעבד קבלה...', '<div class="text-center"><i class="fa-solid fa-spinner fa-spin fa-2x"></i><p class="mt-2">קורא את הפרטים מהקבלה בעזרת AI...</p></div>');
+
+    const prompt = `Analyze this receipt image. Extract the total amount (as a number, look for "totale" or similar keywords) and the vendor/store name. Respond ONLY with a valid JSON object like {"amount": 12.34, "description": "Vendor Name"}. If you cannot find the info, return {"error": "Could not read receipt"}.`;
+    const payload = { contents: [{ parts: [{ text: prompt }, { inlineData: { mimeType: 'image/jpeg', data: base64ImageData } }] }] };
+
+    const responseText = await callGemini(payload, '', false);
+
+    try {
+        const result = JSON.parse(responseText);
+        if (result.error) {
+            showAlert('שגיאה', 'לא הצלחנו לקרוא את הפרטים מהקבלה. נסו שוב בתאורה טובה יותר.');
+        } else {
+            $('#expense-amount').value = result.amount || '';
+            $('#expense-desc').value = result.description || '';
+            window.closeModal();
+        }
+    } catch (e) {
+        console.error("Error parsing Gemini receipt response:", e);
+        showAlert('שגיאה', 'התקבלה תשובה לא תקינה מהשרת. נסו שוב.');
+    }
+}
+
+
+
 
     // --- Gemini Calls ---
     async function callGemini(payload, prompt, useSearch = false) {
@@ -2898,9 +2935,20 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     $('#translate-upload-btn').addEventListener('click', () => $('#image-translate-upload').click());
-    $('#translate-camera-btn').addEventListener('click', startCamera);
-    $('#camera-close-btn').addEventListener('click', stopCamera);
-    $('#capture-btn').addEventListener('click', captureFrameAndTranslate);
+    
+$('#translate-camera-btn').addEventListener('click', () => {
+    cameraMode = 'translate';
+    startCamera();
+});
+
+$('#scan-receipt-btn').addEventListener('click', () => {
+    cameraMode = 'receipt';
+    startCamera();
+});
+
+$('#camera-close-btn').addEventListener('click', stopCamera);
+$('#capture-btn').addEventListener('click', captureFrame);
+
 
     $('#image-translate-upload').addEventListener('change', (e) => {
         const file = e.target.files[0]; if (!file) return;
