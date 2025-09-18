@@ -569,15 +569,16 @@ body {
     </section>
 
   </main>
-  <div id="image-viewer-modal" class="modal-backdrop image-viewer-modal">
-  <div class="modal">
-      <button class="image-viewer-close-btn" onclick="window.closeModal()">×</button>
-      <img id="modal-image-content" src="" alt="תצוגה מוגדלת של המפה">
-  </div>
+  <div id="lightbox-modal" class="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-[200]" style="display: none;">
+    <img id="lightbox-image" src="" alt="תצוגה מוגדלת" class="max-w-[95vw] max-h-[95vh] rounded-lg shadow-2xl">
+    <button id="lightbox-close-btn" class="absolute top-5 right-5 text-white text-4xl font-bold">&times;</button>
 </div>
+
+  
+ 
   <div id="select-day-for-upload-modal" class="modal-backdrop">
   <div class="modal">
-      <div class="p-4 border-b"><h3 class="text-lg font-bold">לאיזה יום לשייך את התמונות?</h3></div>
+    	  <div class="p-4 border-b"><h3 class="text-lg font-bold">לאיזה יום לשייך את התמונות?</h3></div>
       <div id="modal-upload-day-options" class="p-4 grid grid-cols-2 gap-3"></div>
       <div class="p-4 border-t flex justify-end">
           <button onclick="window.closeModal()" class="btn btn-ghost">ביטול</button>
@@ -3043,48 +3044,36 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
     observer.observe(document.documentElement, { attributes: true });
-  // ========================= התחלה: לוגיка להצגת תמונות מוגדלות =========================
-const galleryGrid = $('#gallery-grid');
-const imageModal = $('#image-viewer-modal');
-const enlargedImage = $('#enlarged-image');
-const imageViewerCloseBtn = $('#image-viewer-close');
+// ========================= התחלה: לוגיקה לחלון הגדלת תמונות (Lightbox) =========================
+const lightboxModal = $('#lightbox-modal');
+const lightboxImage = $('#lightbox-image');
+const lightboxCloseBtn = $('#lightbox-close-btn');
 
-// פונקציה לסגירת החלון
-function closeImageViewer() {
-    imageModal.classList.remove('flex');
-    enlargedImage.src = ''; // מנקה את התמונה כדי למנוע הבהוב בפתיחה הבאה
+function openLightbox(imageUrl, imageAlt) {
+    lightboxImage.src = imageUrl;
+    lightboxImage.alt = imageAlt;
+    lightboxModal.style.display = 'flex';
 }
 
-// מאזין אירועים שמופעל בלחיצה על אזור הגלריה
-galleryGrid.addEventListener('click', (e) => {
-    // בודק אם המשתמש לחץ על תמונה (ולא על כפתור המחיקה)
-    if (e.target.tagName === 'IMG') {
-        const imgSrc = e.target.src;
-        enlargedImage.src = imgSrc;
-        imageModal.classList.add('flex');
-    }
+function closeLightbox() {
+    lightboxModal.style.display = 'none';
+}
+
+// מאזין לחיצה על מפת המטרו
+$('#metro-map-image').addEventListener('click', (e) => {
+    openLightbox(e.target.src, e.target.alt);
 });
 
 // מאזינים לסגירת החלון
-imageViewerCloseBtn.addEventListener('click', closeImageViewer);
-imageModal.addEventListener('click', (e) => {
-    // סוגר את החלון אם המשתמש לחץ על הרקע השחור (ולא על התמונה עצמה)
-    if (e.target === imageModal) {
-        closeImageViewer();
+lightboxCloseBtn.addEventListener('click', closeLightbox);
+lightboxModal.addEventListener('click', (e) => {
+    // סוגר רק אם לחצו על הרקע השחור ולא על התמונה עצמה
+    if (e.target === lightboxModal) {
+        closeLightbox();
     }
 });
-// ========================= סוף: לוגיקה להצגת תמונות מוגדלות =========================
-  // ========================= התחלה: לוגיקה לפתיחת מפת המטרו המוגדלת =========================
-    const metroMapImageForModal = $('#metro-map-image');
-    if (metroMapImageForModal) {
-        metroMapImageForModal.addEventListener('click', () => {
-            // שימוש ב-ID הנכון של התמונה בחלון הקופץ
-            $('#modal-image-content').src = metroMapImageForModal.src; 
-            $('#modal-image-content').alt = metroMapImageForModal.alt;
-            $('#image-viewer-modal').classList.add('flex');
-        });
-    }
-    // ========================= סוף: לוגיקה לפתיחת מפת המטרו המוגדלת =========================
+// ========================= סוף: לוגיקה לחלון הגדלת תמונות (Lightbox) =========================
+
 
 });
 
