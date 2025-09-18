@@ -815,20 +815,29 @@ body {
     };
     window.openAddToDayModal = openAddToDayModal;
 
-    function showAlert(title, message, isCopyable = false) {
-        console.log(`LOG: showAlert called. Title: ${title}, Message: ${message.substring(0, 50)}...`);
-        $('#alert-modal-title').textContent = title;
-        $('#alert-modal-body').textContent = message;
-        
-        const copyBtn = $('#alert-modal-copy-btn');
-        if(isCopyable) {
-            copyBtn.classList.remove('hidden');
-        } else {
-            copyBtn.classList.add('hidden');
-        }
+function showAlert(title, message, isCopyable = false, speechOptions = null) {
+    console.log(`LOG: showAlert called. Title: ${title}`);
+    $('#alert-modal-title').textContent = title;
+    $('#alert-modal-body').innerHTML = message; // Changed to innerHTML to support potential formatting
 
-        $('#alert-modal').classList.add('flex');
+    $('#alert-modal-copy-btn').classList.toggle('hidden', !isCopyable);
+
+    // הוספת כפתור השמעה אם נדרש
+    const closeBtn = $('#alert-modal-close');
+    const existingSpeakBtn = $('#alert-modal-speak-btn');
+    if (existingSpeakBtn) existingSpeakBtn.remove();
+
+    if (speechOptions && speechOptions.text) {
+        const speakBtn = document.createElement('button');
+        speakBtn.id = 'alert-modal-speak-btn';
+        speakBtn.className = 'btn btn-ghost';
+        speakBtn.innerHTML = '<i class="fa-solid fa-volume-high mr-1"></i> השמע';
+        speakBtn.onclick = () => window.speakText(speechOptions.text, speechOptions.lang || 'he-IL');
+        closeBtn.parentNode.insertBefore(speakBtn, closeBtn);
     }
+
+    $('#alert-modal').classList.add('flex');
+}
     
     function openTipModal() {
         console.log("LOG: openTipModal called.");
@@ -860,19 +869,25 @@ function renderOverview() {
         <div id="countdown" class="flex flex-row-reverse justify-around font-mono"></div>
     </div>`;
 
-    const clocksHtml = `<div class="bg-white dark:bg-gray-950 p-4 rounded-lg shadow-lg">
-        <h3 class="text-xl font-bold mb-3 text-center"><i class="fa-solid fa-clock mr-2"></i>זמן מקומי</h3>
-        <div class="space-y-2">
-            <div class="flex justify-between items-center p-2 bg-gray-50 dark:bg-gray-900 rounded-lg">
-                <span class="font-semibold text-sm">מילאנו 🇮🇹</span>
-                <span id="milan-time" class="font-mono text-lg font-bold">--:--:--</span>
-            </div>
-            <div class="flex justify-between items-center p-2 bg-gray-50 dark:bg-gray-900 rounded-lg">
-                <span class="font-semibold text-sm">ישראל 🇮🇱</span>
-                <span id="israel-time" class="font-mono text-lg font-bold">--:--:--</span>
-            </div>
+const clocksHtml = `<div class="bg-white dark:bg-gray-950 p-4 rounded-lg shadow-lg">
+    <h3 class="text-xl font-bold mb-3 text-center"><i class="fa-solid fa-clock mr-2"></i>זמן מקומי</h3>
+    <div class="space-y-2">
+        <div class="flex justify-between items-center p-2 bg-gray-50 dark:bg-gray-900 rounded-lg">
+            <span class="font-semibold text-sm">מילאנו 🇮🇹</span>
+            <span id="milan-time" class="font-mono text-lg font-bold">--:--:--</span>
         </div>
-    </div>`;
+        <div class="flex justify-between items-center p-2 bg-gray-50 dark:bg-gray-900 rounded-lg">
+            <span class="font-semibold text-sm">ישראל 🇮🇱</span>
+            <span id="israel-time" class="font-mono text-lg font-bold">--:--:--</span>
+        </div>
+    </div>
+    <details class="mt-2">
+        <summary class="cursor-pointer text-xs text-center text-gray-500">הצג זמני היום...</summary>
+        <div id="zmanim-container" class="text-xs pt-2 mt-2 border-t dark:border-gray-700 text-center">
+            טוען זמנים...
+        </div>
+    </details>
+</div>`;
 
     const flightsHtml = `<div class="bg-gray-50 dark:bg-gray-800/50 p-4 rounded-lg space-y-2 col-span-1 sm:col-span-2 lg:col-span-1">
         <h3 class="font-bold text-lg"><i class="fa-solid fa-plane-departure mr-2"></i>פרטי טיסות</h3>
@@ -1058,6 +1073,12 @@ function renderMobileNavSubmenus() {
     function renderActivityCard(dayId, activity, index, total, previousActivity) {
         const isDining = activity.type === 'dining';
         const links = [];
+      const majorSitesForGuide = ['duomo', 'sforza', 'laScala', 'lastSupper', 'galleriaVittorio'];
+const activityKey = activity.id.split('_')[0];
+
+if (majorSitesForGuide.includes(activityKey)) {
+    links.push(`<button onclick="window.getAudioGuide('${activity.name}')" class="btn btn-primary bg-purple-600 hover:bg-purple-700"><i class="fa-solid fa-headphones"></i> מדריך</button>`);
+}
         if (activity.tickets) links.push(`<a href="${activity.tickets}" target="_blank" class="btn btn-primary"><i class="fa-solid fa-ticket"></i> כרטיסים</a>`);
         if (activity.info) links.push(`<a href="${activity.info}" target="_blank" class="btn btn-ghost"><i class="fa-solid fa-circle-info"></i> מידע</a>`);
         if (activity.address) {
@@ -1581,6 +1602,30 @@ function updateClocks() {
         israelTimeEl.textContent = now.toLocaleTimeString('he-IL', { timeZone: 'Asia/Jerusalem', hour: '2-digit', minute: '2-digit', second: '2-digit' });
     }
 }
+    // ========================= התחלה: פונקציה לשליפת זמני היום =========================
+async function fetchZmanim() {
+    const container = $('#zmanim-container');
+    try {
+        const response = await fetch('https://www.hebcal.com/zmanim?cfg=json&latitude=45.46&longitude=9.19&tzid=Europe/Rome');
+        const data = await response.json();
+        const formatTime = (isoTime) => new Date(isoTime).toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' });
+
+        container.innerHTML = `
+            <div class="grid grid-cols-2 gap-1 text-right">
+                <span>עלות השחר:</span> <span class="font-semibold text-left">${formatTime(data.times.alotHaShachar)}</span>
+                <span>זריחה:</span> <span class="font-semibold text-left">${formatTime(data.times.sunrise)}</span>
+                <span>סוף זמן ק"ש:</span> <span class="font-semibold text-left">${formatTime(data.times.sofZmanShma)}</span>
+                <span>סוף זמן תפילה:</span> <span class="font-semibold text-left">${formatTime(data.times.sofZmanTfilla)}</span>
+                <span>חצות היום:</span> <span class="font-semibold text-left">${formatTime(data.times.chatzot)}</span>
+                <span>שקיעה:</span> <span class="font-semibold text-left">${formatTime(data.times.sunset)}</span>
+            </div>
+        `;
+    } catch (e) {
+        container.innerHTML = 'שגיאה בטעינת זמנים';
+        console.error("Error fetching zmanim:", e);
+    }
+}
+// ========================= סוף: פונקציה לשליפת זמני היום =========================
     
 // ========================= סוף: פונקציית שעונים =========================
 // ========================= התחלה: פונקציית חיפוש מהיר =========================
@@ -1605,6 +1650,17 @@ function findUtility(query, queryHebrew) {
         showAlert('שגיאה', 'שירותי מיקום אינם נתמכים בדפדפן זה.');
     }
 }
+    // ========================= התחלה: פונקציה למדריך קולי =========================
+async function getAudioGuide(placeName) {
+    showAlert('טוען מדריך...', `<div class="text-center"><i class="fa-solid fa-spinner fa-spin fa-2x"></i><p class="mt-2">מכין עבורך סקירה על ${placeName}...</p></div>`);
+
+    const prompt = `Act as a tour guide. Provide a short, engaging, and interesting overview (about 3-4 sentences) in Hebrew about "${placeName}" in Milan. Focus on one fun fact or a key historical point that a tourist might not know. The tone should be light and informative.`;
+    const payload = { contents: [{ parts: [{ text: "" }] }] };
+    const summaryText = await callGemini(payload, prompt, false);
+
+    showAlert(`מדריך ל${placeName}`, summaryText, true, { text: summaryText, lang: 'he-IL' });
+}
+// ========================= סוף: פונקציה למדריך קולי =========================
 // ========================= סוף: פונקציית חיפוש מהיר =========================
     // --- State Modifiers (Write to Firestore) ---
     async function handleTransportChange(e) {
@@ -2075,14 +2131,31 @@ function findUtility(query, queryHebrew) {
     }
     
     // --- LIVE LOCATION FUNCTIONS ---
-    function initLiveMap() {
-        console.log("LOG: initLiveMap called.");
-        if (liveMap) return;
-        liveMap = L.map('live-location-map').setView([45.4642, 9.1916], 12); // Milan center
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-        }).addTo(liveMap);
+// ========================= התחלה: קוד משודרג למפה עם מצב לילה =========================
+let lightMapLayer, darkMapLayer;
+
+function initLiveMap() {
+    console.log("LOG: initLiveMap called.");
+    if (liveMap) return;
+    liveMap = L.map('live-location-map').setView([45.4642, 9.1916], 12);
+
+    // הגדרת שתי שכבות המפה - בהירה וכהה
+    lightMapLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+    });
+
+    darkMapLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+        attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> & © <a href="https://carto.com/attributions">CARTO</a>'
+    });
+
+    // בדיקה איזה מצב פעיל כרגע והצגת השכבה המתאימה
+    if (document.documentElement.classList.contains('dark')) {
+        darkMapLayer.addTo(liveMap);
+    } else {
+        lightMapLayer.addTo(liveMap);
     }
+}
+// ========================= סוף: קוד משודרג למפה עם מצב לילה =========================
 
     async function updateLocationInFirestore(position) {
         if (!currentUserId) return;
@@ -2336,6 +2409,7 @@ if (recognition) {
         window.removeDocument = removeDocument;
         window.removeImage = removeImage;
         window.findUtility = findUtility;
+        window.getAudioGuide = getAudioGuide;
         
         // --- PWA Service Worker Registration ---
         if ('serviceWorker' in navigator) {
@@ -2469,6 +2543,9 @@ if (recognition) {
         showDailyTip();
         fetchSafetyWarnings();
         renderTranslationHistory();
+        fetchZmanim(); // <--- הוסף את השורה כאן
+        const ctx = document.getElementById('transportChart').getContext('2d');
+        new Chart(ctx, {
         renderMobileNavSubmenus();
         // הפעלת השעונים
 updateClocks();
@@ -2763,6 +2840,36 @@ if (speechRecognizer) {
                 deleteDoc(userLocationDocRef);
             }
         });
+      // ========================= התחלה: קוד להחלפת מפה במעבר למצב לילה =========================
+const observer = new MutationObserver((mutations) => {
+    mutations.forEach((mutation) => {
+        if (mutation.attributeName === 'class') {
+            const isDark = document.documentElement.classList.contains('dark');
+            if (liveMap) {
+                if (isDark) {
+                    if (liveMap.hasLayer(lightMapLayer)) {
+                        liveMap.removeLayer(lightMapLayer);
+                    }
+                    if (!liveMap.hasLayer(darkMapLayer)) {
+                        liveMap.addLayer(darkMapLayer);
+                    }
+                } else {
+                    if (liveMap.hasLayer(darkMapLayer)) {
+                        liveMap.removeLayer(darkMapLayer);
+                    }
+                    if (!liveMap.hasLayer(lightMapLayer)) {
+                        liveMap.addLayer(lightMapLayer);
+                    }
+                }
+            }
+        }
+    });
+});
+
+observer.observe(document.documentElement, {
+    attributes: true
+});
+// ========================= סוף: קוד להחלפת מפה במעבר למצב לילה =========================
     });
   </script>
 
