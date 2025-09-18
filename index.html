@@ -39,6 +39,39 @@
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
 
   <style>
+    .image-viewer-modal .modal {
+    max-width: 90vw;
+    max-height: 90vh;
+    padding: 0;
+    background: transparent;
+    box-shadow: none;
+    position: relative;
+}
+.image-viewer-modal img {
+    width: auto;
+    height: auto;
+    max-width: 100%;
+    max-height: 100%;
+    border-radius: 0.75rem;
+}
+.image-viewer-close-btn {
+    position: absolute;
+    top: -10px;
+    right: -10px;
+    background-color: rgba(0,0,0,0.7);
+    color: white;
+    border-radius: 50%;
+    width: 32px;
+    height: 32px;
+    border: 2px solid white;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    line-height: 1;
+    z-index: 110;
+}
     :root{
       --bg: #f9fafb; --fg:#1f2937; --card:#ffffff; --muted:#6b7280;
       --btn:#1d4ed8; --btn-h:#1e40af; --brd:#e5e7eb;
@@ -190,6 +223,8 @@ body {
       .responsive-table .logo-cell { justify-content: center; padding-bottom: 1rem; }
       .responsive-table .logo-cell::before { display: none; }
     }
+    .modal-backdrop.flex { animation: fadeIn 0.3s ease; }
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
   </style>
 </head>
 <body class="dark:bg-gray-900 dark:text-gray-100">
@@ -521,6 +556,12 @@ body {
     </section>
 
   </main>
+  <div id="image-viewer-modal" class="modal-backdrop image-viewer-modal">
+  <div class="modal">
+      <button class="image-viewer-close-btn" onclick="window.closeModal()">×</button>
+      <img id="modal-image-content" src="" alt="תצוגה מוגדלת של המפה">
+  </div>
+</div>
   <div id="select-day-for-upload-modal" class="modal-backdrop">
   <div class="modal">
       <div class="p-4 border-b"><h3 class="text-lg font-bold">לאיזה יום לשייך את התמונות?</h3></div>
@@ -2737,8 +2778,6 @@ document.addEventListener('DOMContentLoaded', () => {
             renderBudget(localTripData);
             renderDocuments(localTripData.documents);
             renderGallery(localTripData.gallery);
-            if (localTripData.theme === 'dark') document.documentElement.classList.add('dark');
-            else document.documentElement.classList.remove('dark');
             initPassCalculator();
             renderScrapbook();
         }, (error) => {
@@ -3018,6 +3057,37 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
     observer.observe(document.documentElement, { attributes: true });
+  // ========================= התחלה: לוגיка להצגת תמונות מוגדלות =========================
+const galleryGrid = $('#gallery-grid');
+const imageModal = $('#image-viewer-modal');
+const enlargedImage = $('#enlarged-image');
+const imageViewerCloseBtn = $('#image-viewer-close');
+
+// פונקציה לסגירת החלון
+function closeImageViewer() {
+    imageModal.classList.remove('flex');
+    enlargedImage.src = ''; // מנקה את התמונה כדי למנוע הבהוב בפתיחה הבאה
+}
+
+// מאזין אירועים שמופעל בלחיצה על אזור הגלריה
+galleryGrid.addEventListener('click', (e) => {
+    // בודק אם המשתמש לחץ על תמונה (ולא על כפתור המחיקה)
+    if (e.target.tagName === 'IMG') {
+        const imgSrc = e.target.src;
+        enlargedImage.src = imgSrc;
+        imageModal.classList.add('flex');
+    }
+});
+
+// מאזינים לסגירת החלון
+imageViewerCloseBtn.addEventListener('click', closeImageViewer);
+imageModal.addEventListener('click', (e) => {
+    // סוגר את החלון אם המשתמש לחץ על הרקע השחור (ולא על התמונה עצמה)
+    if (e.target === imageModal) {
+        closeImageViewer();
+    }
+});
+// ========================= סוף: לוגיקה להצגת תמונות מוגדלות =========================
 });
   </script>
 
