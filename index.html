@@ -202,7 +202,6 @@ body {
           <h1 class="text-xl md:text-2xl font-bold text-brand-800 dark:text-brand-300">החופשה במילאנו</h1>
         </div>
         <div class="hidden md:flex md:items-center md:gap-1 flex-wrap">
-          <a href="#scrapbook" class="nav-link px-3 py-2 rounded-md text-sm font-medium">סקראפבוק</a>
           <a href="#overview" class="nav-link px-3 py-2 rounded-md text-sm font-medium">סקירה</a>
           <a href="#plan" class="nav-link px-3 py-2 rounded-md text-sm font-medium">תוכנית</a>
           <a href="#suggestions" class="nav-link px-3 py-2 rounded-md text-sm font-medium">הצעות</a>
@@ -279,7 +278,15 @@ body {
     <section id="tools" class="my-12 scroll-mt-24">
         <h2 class="text-3xl font-bold text-center text-brand-900 dark:text-brand-300 mb-6">כלים ומידע שימושי</h2>
         <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-          <div id="metro-helper-tool" class="bg-white dark:bg-gray-950 p-6 rounded-2xl shadow-lg md:col-span-2 lg:col-span-3">
+          <div id="scrapbook-tool" class="bg-white dark:bg-gray-950 p-6 rounded-2xl shadow-lg md:col-span-2 lg:col-span-3">
+    <details>
+        <summary class="text-xl font-bold cursor-pointer"><i class="fa-solid fa-book-open mr-2"></i>סקראפבוק - יומן הטיול</summary>
+        <div id="scrapbook-container" class="space-y-8 mt-4 pt-4 border-t dark:border-gray-700">
+            <p class="text-center">טוען יומן...</p>
+        </div>
+    </details>
+</div>
+<div id="metro-helper-tool" class="bg-white dark:bg-gray-950 p-6 rounded-2xl shadow-lg md:col-span-2 lg:col-span-3">
     <h3 class="text-xl font-bold mb-3"><i class="fa-solid fa-train-subway mr-2"></i>עוזר קווי מטרו</h3>
     <div class="grid md:grid-cols-3 gap-4">
         <div class="md:col-span-1">
@@ -290,7 +297,7 @@ body {
                 </div>
         </div>
         <div class="md:col-span-2">
-            <img src="https://upload.wikimedia.org/wikipedia/commons/0/06/Rete_metropolitana_di_Milano.svg" alt="מפת המטרו של מילאנו" class="rounded-lg w-full h-full object-contain">
+            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/c1/Milan_metro_map.png/1024px-Milan_metro_map.png" alt="מפת המטרו של מילאנו" class="rounded-lg w-full h-full object-contain">
         </div>
     </div>
 </div>
@@ -498,12 +505,6 @@ body {
         </div>
         </div>
     </section>
-<section id="scrapbook" class="my-12 scroll-mt-24">
-  <h2 class="text-3xl font-bold text-center text-brand-900 dark:text-brand-300 mb-6">סקראפבוק - יומן הטיול</h2>
-  <div id="scrapbook-container" class="space-y-8">
-    <p class="text-center">טוען יומן...</p>
-  </div>
-</section>
     <section id="documents-and-gallery" class="my-12 scroll-mt-24 grid md:grid-cols-2 gap-6">
         <div class="bg-white dark:bg-gray-950 p-6 rounded-2xl shadow-lg">
             <h2 class="text-2xl font-bold mb-4"><i class="fa-solid fa-folder-open mr-2"></i>תיק מסמכים</h2>
@@ -935,7 +936,7 @@ const clocksHtml = `<div class="bg-white dark:bg-gray-950 p-4 rounded-lg shadow-
         </div>
     </div>
     <details class="mt-2">
-        <summary class="cursor-pointer text-xs text-center text-gray-500">הצג זמני היום...</summary>
+        <summary class="cursor-pointer text-xs text-center text-gray-500">הצג את זמני היום במילאנו</summary>
         <div id="zmanim-container" class="text-xs pt-2 mt-2 border-t dark:border-gray-700 text-center">
             טוען זמנים...
         </div>
@@ -1719,7 +1720,6 @@ function setAutomaticTheme() {
     const milanHour = new Date().toLocaleTimeString('en-US', { timeZone: 'Europe/Rome', hour: '2-digit', hour12: false }).substring(0, 2);
     const hour = parseInt(milanHour, 10);
     const isNightTime = hour >= 19 || hour < 6;
-
     if (isNightTime) {
         document.documentElement.classList.add('dark');
     } else {
