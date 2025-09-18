@@ -331,9 +331,9 @@ body {
             <div id="metro-line-info" class="mt-4 text-sm space-y-2 max-h-60 overflow-y-auto pr-2">
                 </div>
         </div>
-        <div class="md:col-span-2">
-            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/c1/Milan_metro_map.png/1024px-Milan_metro_map.png" alt="מפת המטרו של מילאנו" class="rounded-lg w-full h-full object-contain">
-        </div>
+<div class="md:col-span-2">
+    <img id="metro-map-image" src="https://upload.wikimedia.org/wikipedia/commons/thumb/e/e2/Milano_-_mappa_rete_metropolitana_%28schematica%29.svg/1200px-Milano_-_mappa_rete_metropolitana_%28schematica%29.svg.png" alt="מפת המטרו של מילאנו" class="rounded-lg w-full h-full object-contain cursor-pointer transition-transform hover:scale-105">
+</div>
     </div>
 </div>
           
@@ -3061,23 +3061,20 @@ imageModal.addEventListener('click', (e) => {
     }
 });
 // ========================= סוף: לוגיקה להצגת תמונות מוגדלות =========================
-});
-    // ========================= התחלה: הוספת לוגיקה לפתיחת מפת המטרו =========================
-const metroMapImage = $('#metro-map-image');
-if (metroMapImage) {
-    metroMapImage.addEventListener('click', () => {
-        const imgSrc = metroMapImage.src;
-        // כאן אנו משתמשים באלמנטים של החלון הקופץ שכבר קיימים
-        const imageModal = $('#image-viewer-modal');
-        const enlargedImage = $('#enlarged-image');
+  // ========================= התחלה: לוגיקה לפתיחת מפת המטרו המוגדלת =========================
+    const metroMapImageForModal = $('#metro-map-image');
+    if (metroMapImageForModal) {
+        metroMapImageForModal.addEventListener('click', () => {
+            // שימוש ב-ID הנכון של התמונה בחלון הקופץ
+            $('#modal-image-content').src = metroMapImageForModal.src; 
+            $('#modal-image-content').alt = metroMapImageForModal.alt;
+            $('#image-viewer-modal').classList.add('flex');
+        });
+    }
+    // ========================= סוף: לוגיקה לפתיחת מפת המטרו המוגדלת =========================
 
-        if (imageModal && enlargedImage) {
-            enlargedImage.src = imgSrc;
-            imageModal.classList.add('flex');
-        }
-    });
-}
-// ========================= סוף: הוספת לוגיקה לפתיחת מפת המטרו =========================
+});
+});
   </script>
 
 </body>
