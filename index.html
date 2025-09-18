@@ -39,13 +39,14 @@
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
 
   <style>
-    .image-viewer-modal .modal {
-    max-width: 90vw;
-    max-height: 90vh;
-    padding: 0;
-    background: transparent;
-    box-shadow: none;
+.image-viewer-modal .modal {
+    max-width: 95vw; /* הגדלה משמעותית יותר */
+    max-height: 95vh; /* הגדלה משמעותית יותר */
+    padding: 1rem; /* ריפוד פנימי ליצירת מסגרת */
+    background: var(--card); /* צבע רקע תואם לאתר */
+    box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.2); /* הצללה ברורה */
     position: relative;
+    border-radius: 1rem; /* פינות מעוגלות למסגרת */
 }
 .image-viewer-modal img {
     width: auto;
@@ -56,21 +57,25 @@
 }
 .image-viewer-close-btn {
     position: absolute;
-    top: -10px;
-    right: -10px;
-    background-color: rgba(0,0,0,0.7);
+    top: 1rem; /* מיקום בתוך הפינה הימנית העליונה */
+    right: 1rem;
+    background-color: rgba(0,0,0,0.5); /* רקע בולט יותר */
     color: white;
     border-radius: 50%;
     width: 32px;
     height: 32px;
-    border: 2px solid white;
+    border: none;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
     font-size: 1.2rem;
     line-height: 1;
-    z-index: 110;
+    z-index: 110; /* מוודא שהוא תמיד מעל התמונה */
+    transition: background-color 0.2s;
+}
+.image-viewer-close-btn:hover {
+    background-color: rgba(0,0,0,0.8);
 }
     :root{
       --bg: #f9fafb; --fg:#1f2937; --card:#ffffff; --muted:#6b7280;
