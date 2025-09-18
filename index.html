@@ -40,42 +40,50 @@
 
   <style>
 .image-viewer-modal .modal {
-    max-width: 95vw; /* הגדלה משמעותית יותר */
-    max-height: 95vh; /* הגדלה משמעותית יותר */
-    padding: 1rem; /* ריפוד פנימי ליצירת מסגרת */
-    background: var(--card); /* צבע רקע תואם לאתר */
-    box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.2); /* הצללה ברורה */
-    position: relative;
-    border-radius: 1rem; /* פינות מעוגלות למסגרת */
+    /* הופכים את המסגרת לשקופה כדי לתת תחושה של חלל פתוח */
+    background: transparent;
+    box-shadow: none;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    display: flex; /* ממקמים את התמונה שבתוכה בדיוק במרכז */
+    align-items: center;
+    justify-content: center;
 }
 .image-viewer-modal img {
+    /* מגבילים את גודל התמונה לגודל המסך פחות שוליים קטנים */
+    max-width: 95vw;
+    max-height: 95vh;
     width: auto;
     height: auto;
-    max-width: 100%;
-    max-height: 100%;
-    border-radius: 0.75rem;
+    border-radius: 0.5rem; /* עיגול פינות עדין */
+    /* הצללה דרמטית כדי להקפיץ את התמונה מהרקע הכהה */
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
 }
 .image-viewer-close-btn {
-    position: absolute;
-    top: 1rem; /* מיקום בתוך הפינה הימנית העליונה */
-    right: 1rem;
-    background-color: rgba(0,0,0,0.5); /* רקע בולט יותר */
+    /* ממקמים את הכפתור בפינה הימנית העליונה של כל המסך, לא של המסגרת */
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    /* הגדלה ועיצוב מחדש לנראות מקסימלית */
+    width: 40px;
+    height: 40px;
+    font-size: 1.5rem;
+    background-color: rgba(0, 0, 0, 0.6);
+    border: 2px solid white;
     color: white;
     border-radius: 50%;
-    width: 32px;
-    height: 32px;
-    border: none;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 1.2rem;
     line-height: 1;
-    z-index: 110; /* מוודא שהוא תמיד מעל התמונה */
-    transition: background-color 0.2s;
+    z-index: 110;
+    transition: transform 0.2s ease, background-color 0.2s ease;
 }
 .image-viewer-close-btn:hover {
-    background-color: rgba(0,0,0,0.8);
+    transform: scale(1.1);
+    background-color: rgba(0, 0, 0, 0.9);
 }
     :root{
       --bg: #f9fafb; --fg:#1f2937; --card:#ffffff; --muted:#6b7280;
