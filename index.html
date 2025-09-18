@@ -277,44 +277,10 @@ body {
 
     <section id="tools" class="my-12 scroll-mt-24">
         <h2 class="text-3xl font-bold text-center text-brand-900 dark:text-brand-300 mb-6">כלים ומידע שימושי</h2>
-        <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6"><div id="emergency-phrases-tool" class="bg-white dark:bg-gray-950 p-6 rounded-2xl shadow-lg">
-    <h3 class="text-xl font-bold mb-3"><i class="fa-solid fa-book-medical mr-2"></i>שיחון חירום</h3>
-    <details class="bg-gray-50 dark:bg-gray-900 rounded-lg">
-        <summary class="cursor-pointer font-semibold p-3">
-            <i class="fa-solid fa-triangle-exclamation text-red-500 w-4 mr-1"></i> מצבי חירום
-        </summary>
-        <div class="p-3 border-t dark:border-gray-700 text-sm space-y-2">
-            <div><b>אני צריך רופא:</b><br>Ho bisogno di un medico (<i>אוֹ בִּיזוֹנְיוֹ דִי אוּן מֶדִיקוֹ</i>)</div>
-            <div><b>איפה בית החולים?:</b><br>Dov'è l'ospedale? (<i>דוֹבֶ'ה לוֹסְפֶּדָאלֶה?</i>)</div>
-            <div><b>תזמינו אמבולנס!:</b><br>Chiamate un'ambulanza! (<i>קְיָאמָאטֶה אוּן-אָמְבּוּלָנְצָה!</i>)</div>
-        </div>
-    </details>
-    <details class="bg-gray-50 dark:bg-gray-900 rounded-lg mt-2">
-        <summary class="cursor-pointer font-semibold p-3">
-            <i class="fa-solid fa-handshake-angle w-4 mr-1"></i> כללי ונימוסים
-        </summary>
-        <div class="p-3 border-t dark:border-gray-700 text-sm space-y-2">
-            <div><b>אפשר חשבון בבקשה?:</b><br>Il conto, per favore (<i>אִיל קוֹנְטוֹ, פֶּר פָאבוֹרֶה</i>)</div>
-            <div><b>אני לא מבין:</b><br>Non capisco (<i>נוֹן קָפִּיסְקוֹ</i>)</div>
-            <div><b>כמה זה עולה?:</b><br>Quanto costa? (<i>קְוָואנְטוֹ קוֹסְטָה?</i>)</div>
-        </div>
-    </details>
-</div>
-          <div id="local-time-tool" class="bg-white dark:bg-gray-950 p-6 rounded-2xl shadow-lg">
-    <h3 class="text-xl font-bold mb-3"><i class="fa-solid fa-clock mr-2"></i>זמן מקומי</h3>
-    <div class="space-y-3">
-        <div class="flex justify-between items-center p-3 bg-gray-50 dark:bg-gray-900 rounded-lg">
-            <span class="font-semibold">מילאנו 🇮🇹</span>
-            <span id="milan-time" class="font-mono text-lg font-bold">--:--:--</span>
-        </div>
-        <div class="flex justify-between items-center p-3 bg-gray-50 dark:bg-gray-900 rounded-lg">
-            <span class="font-semibold">ישראל 🇮🇱</span>
-            <span id="israel-time" class="font-mono text-lg font-bold">--:--:--</span>
-        </div>
-    </div>
-</div>
-        <div id="utility-finder-tool" class="bg-white dark:bg-gray-950 p-6 rounded-2xl shadow-lg">
-    <h3 class="text-xl font-bold mb-3"><i class="fa-solid fa-map-signs mr-2"></i>חיפוש מהיר בסביבה</h3>
+        <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+
+<div id="utility-finder-tool" class="bg-white dark:bg-gray-950 p-6 rounded-2xl shadow-lg">
+    <h3 class="text-xl font-bold mb-3"><i class="fa-solid fa-map-signs mr-2"></i>חיפוש מהיר (פתוח עכשיו)</h3>
     <div class="grid grid-cols-1 gap-2">
         <button class="btn btn-primary" onclick="window.findUtility('bagno pubblico', 'שירותים ציבוריים')">
             <i class="fa-solid fa-restroom w-4"></i> מצא שירותים
@@ -325,8 +291,11 @@ body {
         <button class="btn btn-primary" onclick="window.findUtility('bancomat', 'כספומט')">
             <i class="fa-solid fa-money-bill w-4"></i> מצא כספומט
         </button>
+        <button class="btn btn-primary" onclick="window.findUtility('bureau de change', 'המרת כספים')">
+            <i class="fa-solid fa-coins w-4"></i> מצא Change
+        </button>
     </div>
-</div>  
+</div>
             
             <div id="live-location-tool" class="bg-white dark:bg-gray-950 p-6 rounded-2xl shadow-lg scroll-mt-24 lg:col-span-3">
                 <h3 class="text-xl font-bold mb-3 text-center"><i class="fa-solid fa-map-location-dot mr-2"></i>מפת מיקום חי</h3>
@@ -892,39 +861,47 @@ body {
     }
 
     // --- RENDER FUNCTIONS ---
-    function renderOverview() {
-        console.log("LOG: renderOverview called.");
-        const { hotel, flights, contacts } = tripMeta;
-        const countdownHtml = `<div class="bg-gray-50 dark:bg-gray-800/50 p-4 rounded-lg text-center">
-            <h3 class="font-bold text-lg mb-2">הזמן שנותר לטיול</h3>
-            <div id="countdown" class="flex flex-row-reverse justify-around font-mono"></div>
-        </div>`;
-        const flightsHtml = `<div class="bg-gray-50 dark:bg-gray-800/50 p-4 rounded-lg space-y-2 col-span-1 sm:col-span-2">
-            <h3 class="font-bold text-lg"><i class="fa-solid fa-plane-departure mr-2"></i>פרטי טיסות</h3>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-2 text-sm">
-                <div><b class="font-semibold">הלוך:</b> ${flights.inbound.date} | ${flights.inbound.flight}</div>
-                <div><b>המראה:</b> ${flights.inbound.departureTime} | <b>נחיתה:</b> ${flights.inbound.arrivalTime}</div>
-                <div><b>טרמינל (נתב"ג):</b> ${flights.inbound.terminal}</div>
-                <div><b>כבודה:</b> ${flights.inbound.baggage}</div>
-                <hr class="md:col-span-2 my-1">
-                <div><b class="font-semibold">חזור:</b> ${flights.outbound.date} | ${flights.outbound.flight}</div>
-                <div><b>המראה:</b> ${flights.outbound.departureTime} | <b>נחיתה:</b> ${flights.outbound.arrivalTime}</div>
-                <div><b>טרמינל (מילאנו):</b> ${flights.outbound.terminal}</div>
-                <div><b>כבודה:</b> ${flights.outbound.baggage}</div>
+function renderOverview() {
+    console.log("LOG: renderOverview called.");
+    const { hotel, flights, contacts } = tripMeta;
+    const countdownHtml = `<div class="bg-gray-50 dark:bg-gray-800/50 p-4 rounded-lg text-center">
+        <h3 class="font-bold text-lg mb-2">הזמן שנותר לטיול</h3>
+        <div id="countdown" class="flex flex-row-reverse justify-around font-mono"></div>
+    </div>`;
+
+    const clocksHtml = `<div class="bg-white dark:bg-gray-950 p-4 rounded-lg shadow-lg">
+        <h3 class="text-xl font-bold mb-3 text-center"><i class="fa-solid fa-clock mr-2"></i>זמן מקומי</h3>
+        <div class="space-y-2">
+            <div class="flex justify-between items-center p-2 bg-gray-50 dark:bg-gray-900 rounded-lg">
+                <span class="font-semibold text-sm">מילאנו 🇮🇹</span>
+                <span id="milan-time" class="font-mono text-lg font-bold">--:--:--</span>
             </div>
-        </div>`;
-        const hotelHtml = `<div class="bg-gray-50 dark:bg-gray-800/50 p-4 rounded-lg space-y-2">
-            <h3 class="font-bold text-lg"><i class="fa-solid fa-hotel mr-2"></i>מלון</h3>
-            <p><b>${hotel.name}</b></p>
-            <div class="flex gap-2"><a href="${hotel.tel}" class="btn btn-ghost"><i class="fa fa-phone"></i> חיוג</a><a href="https://maps.google.com/?q=${encodeURIComponent(hotel.address)}" target="_blank" class="btn btn-ghost"><i class="fa fa-map-location-dot"></i> ניווט</a></div>
-        </div>`;
-        const contactsHtml = `<div class="bg-gray-50 dark:bg-gray-800/50 p-4 rounded-lg space-y-2">
-            <h3 class="font-bold text-lg"><i class="fa-solid fa-address-book mr-2"></i>טלפונים חשובים</h3>
-            <div class="flex gap-2"><a href="${contacts.emergency.tel}" class="btn btn-ghost">${contacts.emergency.name}</a><a href="${contacts.embassy.tel}" class="btn btn-ghost">${contacts.embassy.name}</a></div>
-        </div>`;
-        $('#overview-cards').innerHTML = countdownHtml + flightsHtml + hotelHtml + contactsHtml;
-        startCountdown();
-    }
+            <div class="flex justify-between items-center p-2 bg-gray-50 dark:bg-gray-900 rounded-lg">
+                <span class="font-semibold text-sm">ישראל 🇮🇱</span>
+                <span id="israel-time" class="font-mono text-lg font-bold">--:--:--</span>
+            </div>
+        </div>
+    </div>`;
+
+    const flightsHtml = `<div class="bg-gray-50 dark:bg-gray-800/50 p-4 rounded-lg space-y-2 col-span-1 sm:col-span-2 lg:col-span-1">
+        <h3 class="font-bold text-lg"><i class="fa-solid fa-plane-departure mr-2"></i>פרטי טיסות</h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-1 gap-x-4 gap-y-2 text-sm">
+            <div><b class="font-semibold">הלוך:</b> ${flights.inbound.date} | ${flights.inbound.flight}</div>
+            <div><b>המראה:</b> ${flights.inbound.departureTime} | <b>נחיתה:</b> ${flights.inbound.arrivalTime}</div>
+            <hr class="md:col-span-2 lg:col-span-1 my-1">
+            <div><b class="font-semibold">חזור:</b> ${flights.outbound.date} | ${flights.outbound.flight}</div>
+            <div><b>המראה:</b> ${flights.outbound.departureTime} | <b>נחיתה:</b> ${flights.outbound.arrivalTime}</div>
+        </div>
+    </div>`;
+    const hotelHtml = `<div class="bg-gray-50 dark:bg-gray-800/50 p-4 rounded-lg space-y-2">
+        <h3 class="font-bold text-lg"><i class="fa-solid fa-hotel mr-2"></i>מלון</h3>
+        <p><b>${hotel.name}</b></p>
+        <div class="flex gap-2"><a href="${hotel.tel}" class="btn btn-ghost"><i class="fa fa-phone"></i> חיוג</a><a href="https://maps.google.com/?q=${encodeURIComponent(hotel.address)}" target="_blank" class="btn btn-ghost"><i class="fa fa-map-location-dot"></i> ניווט</a></div>
+    </div>`;
+
+    $('#overview-cards').innerHTML = countdownHtml + clocksHtml + flightsHtml + hotelHtml;
+    startCountdown();
+}
 
     function startCountdown() {
         console.log("LOG: startCountdown called.");
@@ -1599,16 +1576,19 @@ function updateClocks() {
 // ========================= סוף: פונקציית שעונים =========================
 // ========================= התחלה: פונקציית חיפוש מהיר =========================
 function findUtility(query, queryHebrew) {
-    showAlert('מאתר מיקום...', `מחפש ${queryHebrew} בקרבתך...`);
+    // הוספת "open now" לחיפוש כדי לסנן תוצאות
+    const searchQuery = `${query} open now`;
+
+    showAlert('מאתר מיקום...', `מחפש ${queryHebrew} שפתוחים כעת בקרבתך...`);
     if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(position => {
             const { latitude, longitude } = position.coords;
-            const url = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}&ll=${latitude},${longitude}`;
+            const url = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(searchQuery)}&ll=${latitude},${longitude}`;
             window.open(url, '_blank');
             window.closeModal();
         }, () => {
             // Fallback in case of location error
-            const url = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}+near+Milan+Cathedral`;
+            const url = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(searchQuery)}+near+Milan+Cathedral`;
             window.open(url, '_blank');
             showAlert('שגיאת מיקום', 'לא ניתן היה לקבל את מיקומך. החיפוש יתבצע ממרכז מילאנו.');
         });
