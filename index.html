@@ -457,8 +457,9 @@ body {
                              </div>
                             <button type="submit" class="btn btn-primary w-full">הוסף הוצאה</button>
               <button type="button" id="scan-receipt-btn" class="btn btn-ghost w-full">
-                <> <i class="fa-solid fa-camera mr-2"></i>סרוק קבלה
+    <i class="fa-solid fa-camera mr-2"></i>סרוק קבלה
 </button>
+
                
                             
                         </form>
@@ -741,7 +742,8 @@ body {
     const placeholderLogoUrl = (name) => `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&size=80&rounded=true&background=e0e7ff&color=1e40af`;
     
     // --- Global State ---
-    let db, auth, tripDocRef locationsColRef;
+    let db, auth, tripDocRef, locationsColRef;
+
     let cameraMode = 'translate';
 
     let localTripData = {}; 
