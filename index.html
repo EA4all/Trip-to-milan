@@ -3111,6 +3111,8 @@ $('#capture-btn').addEventListener('click', captureFrame);
     const geminiModal = $('#gemini-modal');
     $('#gemini-btn').addEventListener('click', () => geminiModal.classList.add('flex'));
     $('#gemini-close-btn').addEventListener('click', () => geminiModal.classList.remove('flex'));
+  $('#alert-modal-close').addEventListener('click', () => $('#alert-modal').classList.remove('flex'));
+$('#daily-tip-close').addEventListener('click', () => $('#daily-tip-modal').classList.remove('flex'));
 
     $$('#gemini-tabs-nav .tab-button').forEach(b => b.addEventListener('click', (e) => {
         $$('#gemini-tabs-nav .tab-button').forEach(btn => btn.classList.remove('tab-active'));
