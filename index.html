@@ -607,9 +607,11 @@ body {
             <video id="camera-feed" class="w-full h-full object-cover bg-black rounded-lg" playsinline autoplay></video>
             <canvas id="camera-canvas" class="hidden"></canvas>
         </div>
-        <div class="p-4 border-t flex justify-center">
-            <button id="capture-btn" class="btn btn-primary w-16 h-16 rounded-full"><i class="fa-solid fa-camera fa-2x"></i></button>
-        </div>
+<div class="p-4 border-t flex justify-center items-center gap-4">
+    <button id="torch-btn" class="btn btn-ghost w-12 h-12 rounded-full text-2xl"><i class="fa-solid fa-lightbulb"></i></button>
+    <button id="capture-btn" class="btn btn-primary w-16 h-16 rounded-full"><i class="fa-solid fa-camera fa-2x"></i></button>
+    <button id="lookup-btn" class="btn btn-ghost w-12 h-12 rounded-full text-2xl"><i class="fa-solid fa-magnifying-glass"></i></button>
+</div>
     </div>
   </div>
   <div id="alert-modal" class="modal-backdrop">
@@ -936,23 +938,37 @@ const attractions = {
 function showAlert(title, message, isCopyable = false, speechOptions = null) {
     console.log(`LOG: showAlert called. Title: ${title}`);
     $('#alert-modal-title').textContent = title;
-    $('#alert-modal-body').innerHTML = message; // Changed to innerHTML to support potential formatting
+    $('#alert-modal-body').innerHTML = message;
 
     $('#alert-modal-copy-btn').classList.toggle('hidden', !isCopyable);
 
-    // הוספת כפתור השמעה אם נדרש
-    const closeBtn = $('#alert-modal-close');
-    const existingSpeakBtn = $('#alert-modal-speak-btn');
-    if (existingSpeakBtn) existingSpeakBtn.remove();
+    // --- START OF UPGRADE ---
+    const buttonContainer = $('#alert-modal-close').parentNode;
+
+    // Remove old buttons if they exist
+    const oldPlayBtn = $('#alert-modal-speak-btn');
+    if (oldPlayBtn) oldPlayBtn.remove();
+    const oldStopBtn = $('#alert-modal-stop-btn');
+    if (oldStopBtn) oldStopBtn.remove();
 
     if (speechOptions && speechOptions.text) {
+        // Create and add Play button
         const speakBtn = document.createElement('button');
         speakBtn.id = 'alert-modal-speak-btn';
         speakBtn.className = 'btn btn-ghost';
         speakBtn.innerHTML = '<i class="fa-solid fa-volume-high mr-1"></i> השמע';
         speakBtn.onclick = () => window.speakText(speechOptions.text, speechOptions.lang || 'he-IL');
-        closeBtn.parentNode.insertBefore(speakBtn, closeBtn);
+        buttonContainer.insertBefore(speakBtn, $('#alert-modal-close'));
+
+        // Create and add Stop button
+        const stopBtn = document.createElement('button');
+        stopBtn.id = 'alert-modal-stop-btn';
+        stopBtn.className = 'btn btn-ghost text-red-500';
+        stopBtn.innerHTML = '<i class="fa-solid fa-stop mr-1"></i> עצור';
+        stopBtn.onclick = () => speechSynthesis.cancel();
+        buttonContainer.insertBefore(stopBtn, speakBtn);
     }
+    // --- END OF UPGRADE ---
 
     $('#alert-modal').classList.add('flex');
 }
@@ -1772,7 +1788,7 @@ function findUtility(query, queryHebrew) {
 async function getAudioGuide(placeName) {
     showAlert('טוען מדריך...', `<div class="text-center"><i class="fa-solid fa-spinner fa-spin fa-2x"></i><p class="mt-2">מכין עבורך סקירה על ${placeName}...</p></div>`);
 
-    const prompt = `Act as a tour guide. Provide a short, engaging, and interesting overview (about 3-4 sentences) in Hebrew about "${placeName}" in Milan. Focus on one fun fact or a key historical point that a tourist might not know. The tone should be light and informative.`;
+    const prompt = `Act as an expert tour guide. Create an engaging and detailed audio guide script in Hebrew for "${placeName}" in Milan. The script should be about 2-3 paragraphs long and feel like a natural, spoken guide. Cover key history, interesting architectural or artistic details, and a unique anecdote that most tourists don't know.`;
     const payload = { contents: [{ parts: [{ text: "" }] }] };
     const summaryText = await callGemini(payload, prompt, false);
 
@@ -2116,24 +2132,69 @@ function initPassCalculator() {
     };
 
     // --- Camera Functions ---
-    async function startCamera() {
-        console.log("LOG: startCamera called.");
-        const video = $('#camera-feed');
-        if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-            try {
-                cameraStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
-                video.srcObject = cameraStream;
-                video.play();
-                $('#camera-modal').classList.add('flex');
-            } catch (err) {
-                console.error("ERROR: Error accessing camera: ", err);
-                showAlert("שגיאת מצלמה", "לא ניתן לגשת למצלמה. ודא שהענקת הרשאות לדפדפן.");
-            }
-        } else {
-            showAlert("מצלמה לא נתמכת", "הדפדפן שלך לא תומך בגישה למצלמה.");
-        }
-    }
+async function startCamera() {
+    console.log("LOG: startCamera called.");
+    const video = $('#camera-feed');
+  const titles = { translate: "תרגם מתמונה", receipt: "סרוק קבלה", lookup: "זיהוי אובייקט" };
+$('#camera-title').textContent = titles[cameraMode] || "מצלמה";
+    if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+        try {
+            // בקשת גישה למצלמה
+            cameraStream = await navigator.mediaDevices.getUserMedia({
+                video: { facingMode: 'environment' }
+            });
+            video.srcObject = cameraStream;
+            video.play();
 
+            // קבלת "המסלול" של הוידאו כדי שנוכל לשלוט בפנס
+            const videoTrack = cameraStream.getVideoTracks()[0];
+
+            // חיבור הלוגיקה לכפתור הפנס
+            const torchBtn = $('#torch-btn');
+            torchBtn.style.display = 'flex'; // וידוא שהכפתור מוצג
+            torchBtn.classList.remove('text-yellow-400'); // איפוס מצב ויזואלי
+
+            // טכניקה למניעת הוספת מאזינים כפולים אם המצלמה נפתחת שוב
+            const newTorchBtn = torchBtn.cloneNode(true);
+            torchBtn.parentNode.replaceChild(newTorchBtn, torchBtn);
+
+            newTorchBtn.addEventListener('click', () => toggleTorch(videoTrack));
+
+            $('#camera-modal').classList.add('flex');
+
+        } catch (err) {
+            console.error("ERROR: Error accessing camera: ", err);
+            showAlert("שגיאת מצלמה", "לא ניתן לגשת למצלמה. ודא שהענקת הרשאות לדפדפן.");
+        }
+    } else {
+        showAlert("מצלמה לא נתמכת", "הדפדפן שלך לא תומך בגישה למצלמה.");
+    }
+}
+async function toggleTorch(track) {
+    const torchBtn = $('#torch-btn');
+    try {
+        // בדיקה אם הדפדפן/מכשיר תומך בכלל בשליטה על פנס
+        const capabilities = track.getCapabilities();
+        if (!capabilities.torch) {
+            showAlert('פנס לא נתמך', 'נראה שלמכשיר או לדפדפן אין אפשרות לשלוט בפנס.');
+            torchBtn.style.display = 'none'; // הסתרת הכפתור אם לא נתמך
+            return;
+        }
+
+        // קבלת המצב הנוכחי של הפנס והפיכתו
+        const currentTorchState = track.getSettings().torch || false;
+        await track.applyConstraints({
+            advanced: [{ torch: !currentTorchState }]
+        });
+
+        // עדכון המראה של הכפתור
+        torchBtn.classList.toggle('text-yellow-400', !currentTorchState);
+
+    } catch (err) {
+        console.error('Error controlling torch:', err);
+        showAlert('שגיאת פנס', 'לא הצלחנו להפעיל את הפנס.');
+    }
+}
     function stopCamera() {
         console.log("LOG: stopCamera called.");
         if (cameraStream) {
@@ -2160,13 +2221,15 @@ function captureFrame() {
         translateImage(base64ImageData, 'image/jpeg');
     } else if (cameraMode === 'receipt') {
         processReceiptImage(base64ImageData);
+    } else if (cameraMode === 'lookup') {
+        processLookupImage(base64ImageData);
     }
 }
 
 async function processReceiptImage(base64ImageData) {
     showAlert('מעבד קבלה...', '<div class="text-center"><i class="fa-solid fa-spinner fa-spin fa-2x"></i><p class="mt-2">קורא את הפרטים מהקבלה בעזרת AI...</p></div>');
 
-    const prompt = `Analyze this receipt image. Extract the total amount (as a number, look for "totale" or similar keywords) and the vendor/store name. Respond ONLY with a valid JSON object like {"amount": 12.34, "description": "Vendor Name"}. If you cannot find the info, return {"error": "Could not read receipt"}.`;
+   const prompt = `You are an expert receipt-scanning AI. Analyze this image of a receipt, which could be in any language (like Italian or Hebrew). Your goal is to identify the final, total amount paid and the name of the store/vendor. Respond ONLY with a valid JSON object in the format {"amount": NUMBER, "description": "STRING"}. The 'amount' should be the single, final, total sum. The 'description' should be the most likely name of the vendor. If you cannot reliably determine both values, return {"error": "Could not read receipt clearly"}.`;
     const payload = { contents: [{ parts: [{ text: prompt }, { inlineData: { mimeType: 'image/jpeg', data: base64ImageData } }] }] };
 
     const responseText = await callGemini(payload, '', false);
@@ -2185,7 +2248,13 @@ async function processReceiptImage(base64ImageData) {
         showAlert('שגיאה', 'התקבלה תשובה לא תקינה מהשרת. נסו שוב.');
     }
 }
-
+async function processLookupImage(base64ImageData) {
+    showAlert('מזהה אובייקט...', '<div class="text-center"><i class="fa-solid fa-spinner fa-spin fa-2x"></i><p class="mt-2">מנתח את התמונה ושולח לזיהוי...</p></div>');
+    const prompt = "Analyze this image. Identify the main landmark, artwork, or object. Provide a short, interesting paragraph about it in Hebrew. If you can't identify it, say so. Respond only with the Hebrew text.";
+    const payload = { contents: [{ parts: [{ text: prompt }, { inlineData: { mimeType: 'image/jpeg', data: base64ImageData } }] }] };
+    const description = await callGemini(payload, '', false);
+    showAlert('זיהוי אובייקט', description, true, { text: description, lang: 'he-IL' });
+}
 
 
 
@@ -3032,6 +3101,10 @@ $('#capture-btn').addEventListener('click', captureFrame);
             navigator.clipboard.writeText(url).then(() => showAlert('הקישור הועתק!', 'הקישור הועתק ללוח.'));
         }
     });
+  $('#lookup-btn').addEventListener('click', () => {
+    cameraMode = 'lookup';
+    startCamera();
+});
 
     const heBtn = $('#voice-translate-he-btn');
     const itBtn = $('#voice-translate-it-btn');
