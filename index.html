@@ -942,44 +942,73 @@ function showAlert(title, message, isCopyable = false, speechOptions = null) {
 
     $('#alert-modal-copy-btn').classList.toggle('hidden', !isCopyable);
 
-    // --- START OF UPGRADE ---
     const buttonContainer = $('#alert-modal-close').parentNode;
 
-    // Remove old buttons if they exist
-    const oldPlayBtn = $('#alert-modal-speak-btn');
-    if (oldPlayBtn) oldPlayBtn.remove();
-    const oldStopBtn = $('#alert-modal-stop-btn');
-    if (oldStopBtn) oldStopBtn.remove();
+    // Remove old dynamic buttons to prevent duplicates
+    ['#alert-modal-play-pause-btn', '#alert-modal-stop-btn', '#alert-modal-speak-btn'].forEach(selector => {
+        const oldBtn = $(selector);
+        if (oldBtn) oldBtn.remove();
+    });
 
     if (speechOptions && speechOptions.text) {
-        // Create and add Play button
-        const speakBtn = document.createElement('button');
-        speakBtn.id = 'alert-modal-speak-btn';
-        speakBtn.className = 'btn btn-ghost';
-        speakBtn.innerHTML = '<i class="fa-solid fa-volume-high mr-1"></i> השמע';
-        speakBtn.onclick = () => window.speakText(speechOptions.text, speechOptions.lang || 'he-IL');
-        buttonContainer.insertBefore(speakBtn, $('#alert-modal-close'));
+        // --- START OF NEW PLAY/PAUSE/STOP LOGIC ---
 
-        // Create and add Stop button
+        // Create Play/Pause Button
+        const playPauseBtn = document.createElement('button');
+        playPauseBtn.id = 'alert-modal-play-pause-btn';
+        playPauseBtn.className = 'btn btn-ghost';
+        playPauseBtn.innerHTML = '<i class="fa-solid fa-play mr-1"></i> הפעל';
+
+        // Create Stop Button
         const stopBtn = document.createElement('button');
         stopBtn.id = 'alert-modal-stop-btn';
         stopBtn.className = 'btn btn-ghost text-red-500';
         stopBtn.innerHTML = '<i class="fa-solid fa-stop mr-1"></i> עצור';
-        stopBtn.onclick = () => speechSynthesis.cancel();
-        buttonContainer.insertBefore(stopBtn, speakBtn);
+        stopBtn.style.display = 'none'; // Initially hidden
+
+        // Event handler for the Play/Pause button
+        playPauseBtn.onclick = () => {
+            if (speechSynthesis.paused) {
+                // If paused, resume playback
+                speechSynthesis.resume();
+                playPauseBtn.innerHTML = '<i class="fa-solid fa-pause mr-1"></i> השהה';
+            } else if (speechSynthesis.speaking) {
+                // If currently speaking, pause playback
+                speechSynthesis.pause();
+                playPauseBtn.innerHTML = '<i class="fa-solid fa-play mr-1"></i> המשך';
+            } else {
+                // If not speaking, start from the beginning
+                speechSynthesis.cancel(); // Clear any previous speech
+                const utterance = new SpeechSynthesisUtterance(speechOptions.text);
+                utterance.lang = speechOptions.lang || 'he-IL';
+
+                utterance.onend = () => {
+                    // When speech finishes naturally
+                    playPauseBtn.innerHTML = '<i class="fa-solid fa-play mr-1"></i> הפעל';
+                    stopBtn.style.display = 'none';
+                };
+
+                speechSynthesis.speak(utterance);
+                playPauseBtn.innerHTML = '<i class="fa-solid fa-pause mr-1"></i> השהה';
+                stopBtn.style.display = 'inline-flex';
+            }
+        };
+
+        // Event handler for the Stop button
+        stopBtn.onclick = () => {
+            speechSynthesis.cancel(); // Stop and reset everything
+            playPauseBtn.innerHTML = '<i class="fa-solid fa-play mr-1"></i> הפעל';
+            stopBtn.style.display = 'none';
+        };
+
+        // Add new buttons to the modal
+        buttonContainer.insertBefore(playPauseBtn, $('#alert-modal-close'));
+        buttonContainer.insertBefore(stopBtn, playPauseBtn);
+        // --- END OF NEW LOGIC ---
     }
-    // --- END OF UPGRADE ---
 
     $('#alert-modal').classList.add('flex');
 }
-    
-    function openTipModal() {
-        console.log("LOG: openTipModal called.");
-        const tip = dailyTips[Math.floor(Math.random() * dailyTips.length)];
-        $('#daily-tip-body').textContent = tip;
-        $('#daily-tip-modal').classList.add('flex');
-    }
-
     function showDailyTip() {
         console.log("LOG: showDailyTip called, checking if tip should be displayed.");
         const lastTipDate = localStorage.getItem('lastTipDate');
