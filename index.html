@@ -602,7 +602,7 @@ body {
   </div>
   <div id="camera-modal" class="modal-backdrop">
     <div class="modal">
-        <div class="p-4 border-b flex justify-between items-center"><h3 class="text-lg font-bold">תרגם מתמונה</h3><button id="camera-close-btn" class="text-2xl">×</button></div>
+      <div class="p-4 border-b flex justify-between items-center"><h3 id="camera-title" class="text-lg font-bold">תרגם מתמונה</h3><button id="camera-close-btn" class="text-2xl">×</button></div>
         <div class="p-4 flex-grow relative">
             <video id="camera-feed" class="w-full h-full object-cover bg-black rounded-lg" playsinline autoplay></video>
             <canvas id="camera-canvas" class="hidden"></canvas>
@@ -3130,9 +3130,10 @@ $('#capture-btn').addEventListener('click', captureFrame);
             navigator.clipboard.writeText(url).then(() => showAlert('הקישור הועתק!', 'הקישור הועתק ללוח.'));
         }
     });
-  $('#lookup-btn').addEventListener('click', () => {
+$('#lookup-btn').addEventListener('click', () => {
     cameraMode = 'lookup';
-    startCamera();
+    $('#camera-title').textContent = 'זיהוי אובייקט';
+    // The main capture button will now perform the lookup
 });
 
     const heBtn = $('#voice-translate-he-btn');
