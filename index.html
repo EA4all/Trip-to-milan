@@ -1009,6 +1009,12 @@ function showAlert(title, message, isCopyable = false, speechOptions = null) {
 
     $('#alert-modal').classList.add('flex');
 }
+    function openTipModal() {
+    console.log("LOG: openTipModal called.");
+    const tip = dailyTips[Math.floor(Math.random() * dailyTips.length)];
+    $('#daily-tip-body').textContent = tip;
+    $('#daily-tip-modal').classList.add('flex');
+}
     function showDailyTip() {
         console.log("LOG: showDailyTip called, checking if tip should be displayed.");
         const lastTipDate = localStorage.getItem('lastTipDate');
