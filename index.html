@@ -2172,7 +2172,8 @@ window.findNearbyAttractions = findNearbyAttractions;
     };
 
     // --- Camera Functions ---
-async function startCamera() {
+
+    async function startCamera() {
     console.log("LOG: startCamera called for mode: " + cameraMode);
     const video = $('#camera-feed');
     const titles = { translate: "תרגם מתמונה", receipt: "סרוק קבלה", lookup: "זיהוי אובייקט" };
@@ -2183,31 +2184,21 @@ async function startCamera() {
             video.srcObject = cameraStream;
             await video.play();
 
-            activeVideoTrack = cameraStream.getVideoTracks()[0];
+            activeVideoTrack = cameraStream.getVideoTracks()[0]; // Store the track
 
-            // --- Flashlight Button Logic ---
-            const torchBtn = $('#torch-btn');
-            const capabilities = activeVideoTrack.getCapabilities();
-
-            if (capabilities.torch) {
-                torchBtn.style.display = 'flex';
-                torchBtn.classList.remove('text-yellow-400');
-            } else {
-                console.warn("Torch functionality not supported.");
-                torchBtn.style.display = 'none';
-            }
-
+            $('#torch-btn').style.display = 'flex'; // Make sure the button is always visible initially
             $('#camera-title').textContent = titles[cameraMode] || "מצלמה";
             $('#camera-modal').classList.add('flex');
 
         } catch (err) {
             console.error("ERROR: Error accessing camera: ", err);
-            showAlert("שגיאת מצלמה", `לא ניתן לגשת למצלמה. ודא שהענקת הרשאות לדפדפן. (${err.name})`);
+            showAlert("שגיאת מצלמה", `לא ניתן לגשת למצלמה. (${err.name})`);
         }
     } else {
         showAlert("מצלמה לא נתמכת", "הדפדפן שלך לא תומך בגישה למצלמה.");
     }
 }
+
 
 // ========================= התחלה: קוד מתוקן ומשופר להפעלת הפנס =========================
 async function toggleTorch() {
@@ -3154,6 +3145,8 @@ $('#scan-receipt-btn').addEventListener('click', () => {
     cameraMode = 'receipt';
     startCamera();
 });
+  
+$('#torch-btn').addEventListener('click', toggleTorch);
 
 $('#camera-close-btn').addEventListener('click', stopCamera);
 $('#capture-btn').addEventListener('click', captureFrame);
