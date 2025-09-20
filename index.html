@@ -2194,28 +2194,41 @@ async function startCamera() {
         showAlert("מצלמה לא נתמכת", "הדפדפן שלך לא תומך בגישה למצלמה.");
     }
 }
+// ========================= התחלה: קוד מתוקן ומשופר להפעלת הפנס =========================
 async function toggleTorch() {
+    const torchBtn = $('#torch-btn');
     if (!activeVideoTrack) {
         console.error("Torch Error: Video track not available.");
+        showAlert('שגיאת פנס', 'נתיב הוידאו של המצלמה אינו פעיל.');
         return;
     }
-    const torchBtn = $('#torch-btn');
+
+    // בדיקה אם הדפדפן/מכשיר בכלל תומך ביכולת הזו
+    if (typeof activeVideoTrack.getCapabilities !== 'function' || !activeVideoTrack.getCapabilities().torch) {
+        showAlert('פנס לא נתמך', 'נראה שהמכשיר או הדפדפן אינם תומכים בשליטה על הפנס דרך האתר.');
+        return;
+    }
+
     try {
-        const capabilities = activeVideoTrack.getCapabilities();
-        if (!capabilities.torch) {
-            showAlert('פנס לא נתמך', 'נראה שהמכשיר או הדפדפן אינם תומכים בשליטה על הפנס.');
-            return;
-        }
+        // קובעים את המצב הרצוי (ההפך מהמצב הנוכחי)
         const currentTorchState = activeVideoTrack.getSettings().torch || false;
+        const desiredState = !currentTorchState;
+
+        // שולחים בקשה מסודרת לשינוי המצב
         await activeVideoTrack.applyConstraints({
-            advanced: [{ torch: !currentTorchState }]
+            advanced: [{ torch: desiredState }]
         });
-        torchBtn.classList.toggle('text-yellow-400', !currentTorchState);
+
+        // מעדכנים את הכפתור רק לאחר שהפעולה הצליחה
+        torchBtn.classList.toggle('text-yellow-400', desiredState);
+        console.log(`LOG: Torch state successfully changed to ${desiredState}`);
+
     } catch (err) {
         console.error('Error controlling torch:', err);
-        showAlert('שגיאת פנס', 'לא הצלחנו להפעיל את הפנס.');
+        showAlert('שגיאת פנס', `לא הצלחנו לשנות את מצב הפנס. שגיאה: ${err.name}`);
     }
 }
+// ========================= סוף: קוד מתוקן ומשופר להפעלת הפנס =========================
 function stopCamera() {
     console.log("LOG: stopCamera called.");
     if (cameraStream) {
