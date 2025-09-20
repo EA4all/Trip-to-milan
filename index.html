@@ -274,9 +274,9 @@ body {
         <div class="flex gap-2 flex-wrap justify-center">
             <button id="share-btn" class="btn btn-primary"><i class="fa-solid fa-share-alt mr-2"></i>שתף תוכנית</button>
             <button id="gemini-btn" class="btn btn-primary"><i class="fa-solid fa-wand-magic-sparkles mr-2"></i>שאל את Gemini</button>
-            <button id="find-nearby-btn" class="btn btn-primary"><i class="fa-solid fa-location-crosshairs mr-2"></i>מצא מקומות קרובים</button>
             <button id="show-tip-btn" class="btn btn-primary"><i class="fa-solid fa-lightbulb mr-2"></i>טיפ יומי</button>
             <button id="create-summary-btn" class="btn btn-primary bg-green-600 hover:bg-green-700"><i class="fa-solid fa-book-open mr-2"></i>צור סיכום טיול</button>
+          <button id="lookup-site-btn" class="btn btn-primary bg-purple-600 hover:bg-purple-700"><i class="fa-solid fa-magnifying-glass mr-2"></i>זיהוי אתרים</button>
         </div>
       </div>
       <div id="overview-cards" class="grid sm:grid-cols-2 lg:grid-cols-4 gap-6"></div>
@@ -373,6 +373,9 @@ body {
 <div id="utility-finder-tool" class="bg-white dark:bg-gray-950 p-6 rounded-2xl shadow-lg">
     <h3 class="text-xl font-bold mb-3"><i class="fa-solid fa-map-signs mr-2"></i>חיפוש מהיר (פתוח עכשיו)</h3>
     <div class="grid grid-cols-1 gap-2">
+      <button class="btn btn-primary" onclick="window.findNearbyAttractions()">
+    <i class="fa-solid fa-star w-4"></i> מצא אטרקציות קרובות
+</button>
         <button class="btn btn-primary" onclick="window.findUtility('bagno pubblico', 'שירותים ציבוריים')">
             <i class="fa-solid fa-restroom w-4"></i> מצא שירותים
         </button>
@@ -608,10 +611,9 @@ body {
             <canvas id="camera-canvas" class="hidden"></canvas>
         </div>
 <div class="p-4 border-t flex justify-center items-center gap-4">
-    <button id="torch-btn" class="btn btn-ghost w-12 h-12 rounded-full text-2xl"><i class="fa-solid fa-lightbulb"></i></button>
+    <button id="torch-btn" class="btn btn-ghost w-16 h-16 rounded-full text-2xl"><i class="fa-solid fa-lightbulb"></i></button>
     <button id="capture-btn" class="btn btn-primary w-16 h-16 rounded-full"><i class="fa-solid fa-camera fa-2x"></i></button>
-    <button id="lookup-btn" class="btn btn-ghost w-12 h-12 rounded-full text-2xl"><i class="fa-solid fa-magnifying-glass"></i></button>
-</div>
+    <div class="w-16"></div> </div>
     </div>
   </div>
   <div id="alert-modal" class="modal-backdrop">
@@ -747,7 +749,7 @@ body {
     let db, auth, tripDocRef, locationsColRef;
 
     let cameraMode = 'translate';
-
+    let activeVideoTrack = null;
     let localTripData = {}; 
     let budgetChartInstance = null;
     let cameraStream = null;
@@ -2054,20 +2056,25 @@ function initPassCalculator() {
         carousel.querySelector('img').src = images[index];
         carousel.dataset.index = index;
     };
-    function findNearby() {
-        console.log("LOG: findNearby button clicked.");
-        if (navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition(position => {
-                const { latitude, longitude } = position.coords;
-                window.open(`https://www.google.com/maps/search/point+of+interest/@${latitude},${longitude},14z`, '_blank');
-            }, () => {
-                showAlert('שגיאת מיקום', 'לא ניתן היה לקבל את מיקומך. נפתח מפה כללית של מילאנו.');
-                window.open('https://www.google.com/maps/place/Milan', '_blank');
-            });
-        } else {
-             window.open('https://www.google.com/maps/place/Milan', '_blank');
-        }
+function findNearbyAttractions() {
+    showAlert('מאתר מיקום...', 'מחפש אטרקציות מומלצות בקרבתך...');
+    if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(position => {
+            const { latitude, longitude } = position.coords;
+            const url = `https://www.google.com/maps/search/tourist+attractions/@${latitude},${longitude},15z`;
+            window.open(url, '_blank');
+            window.closeModal();
+        }, () => {
+            showAlert('שגיאת מיקום', 'לא ניתן היה לקבל את מיקומך. החיפוש יתבצע ממרכז מילאנו.');
+            const url = `https://www.google.com/maps/search/tourist+attractions/Duomo+di+Milano`;
+            window.open(url, '_blank');
+        });
+    } else {
+        showAlert('שגיאה', 'שירותי מיקום אינם נתמכים בדפדפן זה.');
     }
+}
+// And assign it to the window object
+window.findNearbyAttractions = findNearbyAttractions;
     window.findNearbyKosher = (btn) => {
         const lat = parseFloat(btn.dataset.lat), lon = parseFloat(btn.dataset.lon);
         console.log(`LOG: findNearbyKosher called for ${btn.dataset.name} at ${lat}, ${lon}`);
@@ -2170,33 +2177,17 @@ function initPassCalculator() {
 async function startCamera() {
     console.log("LOG: startCamera called.");
     const video = $('#camera-feed');
-  const titles = { translate: "תרגם מתמונה", receipt: "סרוק קבלה", lookup: "זיהוי אובייקט" };
-$('#camera-title').textContent = titles[cameraMode] || "מצלמה";
+    const titles = { translate: "תרגם מתמונה", receipt: "סרוק קבלה", lookup: "זיהוי אובייקט" };
+    $('#camera-title').textContent = titles[cameraMode] || "מצלמה";
+
     if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
         try {
-            // בקשת גישה למצלמה
-            cameraStream = await navigator.mediaDevices.getUserMedia({
-                video: { facingMode: 'environment' }
-            });
+            cameraStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
             video.srcObject = cameraStream;
             video.play();
-
-            // קבלת "המסלול" של הוידאו כדי שנוכל לשלוט בפנס
-            const videoTrack = cameraStream.getVideoTracks()[0];
-
-            // חיבור הלוגיקה לכפתור הפנס
-            const torchBtn = $('#torch-btn');
-            torchBtn.style.display = 'flex'; // וידוא שהכפתור מוצג
-            torchBtn.classList.remove('text-yellow-400'); // איפוס מצב ויזואלי
-
-            // טכניקה למניעת הוספת מאזינים כפולים אם המצלמה נפתחת שוב
-            const newTorchBtn = torchBtn.cloneNode(true);
-            torchBtn.parentNode.replaceChild(newTorchBtn, torchBtn);
-
-            newTorchBtn.addEventListener('click', () => toggleTorch(videoTrack));
-
+            activeVideoTrack = cameraStream.getVideoTracks()[0]; // Store the track globally
+            $('#torch-btn').classList.remove('text-yellow-400'); // Reset torch button
             $('#camera-modal').classList.add('flex');
-
         } catch (err) {
             console.error("ERROR: Error accessing camera: ", err);
             showAlert("שגיאת מצלמה", "לא ניתן לגשת למצלמה. ודא שהענקת הרשאות לדפדפן.");
@@ -2205,38 +2196,36 @@ $('#camera-title').textContent = titles[cameraMode] || "מצלמה";
         showAlert("מצלמה לא נתמכת", "הדפדפן שלך לא תומך בגישה למצלמה.");
     }
 }
-async function toggleTorch(track) {
+async function toggleTorch() {
+    if (!activeVideoTrack) {
+        console.error("Torch Error: Video track not available.");
+        return;
+    }
     const torchBtn = $('#torch-btn');
     try {
-        // בדיקה אם הדפדפן/מכשיר תומך בכלל בשליטה על פנס
-        const capabilities = track.getCapabilities();
+        const capabilities = activeVideoTrack.getCapabilities();
         if (!capabilities.torch) {
-            showAlert('פנס לא נתמך', 'נראה שלמכשיר או לדפדפן אין אפשרות לשלוט בפנס.');
-            torchBtn.style.display = 'none'; // הסתרת הכפתור אם לא נתמך
+            showAlert('פנס לא נתמך', 'נראה שהמכשיר או הדפדפן אינם תומכים בשליטה על הפנס.');
             return;
         }
-
-        // קבלת המצב הנוכחי של הפנס והפיכתו
-        const currentTorchState = track.getSettings().torch || false;
-        await track.applyConstraints({
+        const currentTorchState = activeVideoTrack.getSettings().torch || false;
+        await activeVideoTrack.applyConstraints({
             advanced: [{ torch: !currentTorchState }]
         });
-
-        // עדכון המראה של הכפתור
         torchBtn.classList.toggle('text-yellow-400', !currentTorchState);
-
     } catch (err) {
         console.error('Error controlling torch:', err);
         showAlert('שגיאת פנס', 'לא הצלחנו להפעיל את הפנס.');
     }
 }
-    function stopCamera() {
-        console.log("LOG: stopCamera called.");
-        if (cameraStream) {
-            cameraStream.getTracks().forEach(track => track.stop());
-        }
-        $('#camera-modal').classList.remove('flex');
+function stopCamera() {
+    console.log("LOG: stopCamera called.");
+    if (cameraStream) {
+        cameraStream.getTracks().forEach(track => track.stop());
     }
+    activeVideoTrack = null; // Clear the stored track
+    $('#camera-modal').classList.remove('flex');
+}
 function captureFrame() {
     console.log(`LOG: Capturing frame for mode: ${cameraMode}`);
     const video = $('#camera-feed');
@@ -3040,18 +3029,16 @@ document.addEventListener('DOMContentLoaded', () => {
         inputEl.value = '';
     });
 
-    $('#translate-upload-btn').addEventListener('click', () => $('#image-translate-upload').click());
-    
+// --- Camera Button Listeners ---
 $('#translate-camera-btn').addEventListener('click', () => {
     cameraMode = 'translate';
     startCamera();
 });
-
 $('#scan-receipt-btn').addEventListener('click', () => {
     cameraMode = 'receipt';
     startCamera();
 });
-
+$('#torch-btn').addEventListener('click', toggleTorch); // New listener
 $('#camera-close-btn').addEventListener('click', stopCamera);
 $('#capture-btn').addEventListener('click', captureFrame);
 
@@ -3138,10 +3125,9 @@ $('#daily-tip-close').addEventListener('click', () => $('#daily-tip-modal').clas
             navigator.clipboard.writeText(url).then(() => showAlert('הקישור הועתק!', 'הקישור הועתק ללוח.'));
         }
     });
-$('#lookup-btn').addEventListener('click', () => {
+$('#lookup-site-btn').addEventListener('click', () => {
     cameraMode = 'lookup';
-    $('#camera-title').textContent = 'זיהוי אובייקט';
-    // The main capture button will now perform the lookup
+    startCamera();
 });
 
     const heBtn = $('#voice-translate-he-btn');
