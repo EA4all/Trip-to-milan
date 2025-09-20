@@ -2939,7 +2939,6 @@ document.addEventListener('DOMContentLoaded', () => {
     $('#show-tip-btn').addEventListener('click', openTipModal);
     $('#create-summary-btn').addEventListener('click', generateTripSummary);
     $('#refresh-warnings-btn').addEventListener('click', fetchSafetyWarnings);
-    $('#find-nearby-btn').addEventListener('click', findNearby);
 
     $('#collapse-all').addEventListener('click', () => $$('#plan-content-container details').forEach(d => d.removeAttribute('open')));
     $('#expand-all').addEventListener('click', () => $$('#plan-content-container details').forEach(d => d.setAttribute('open', true)));
