@@ -373,7 +373,7 @@ body {
 <div id="utility-finder-tool" class="bg-white dark:bg-gray-950 p-6 rounded-2xl shadow-lg">
     <h3 class="text-xl font-bold mb-3"><i class="fa-solid fa-map-signs mr-2"></i>חיפוש מהיר (פתוח עכשיו)</h3>
     <div class="grid grid-cols-1 gap-2">
-      <button class="btn btn-primary" onclick="window.findNearbyAttractions()">
+      <button class="btn btn-primary" onclick="findNearbyAttractions()">
     <i class="fa-solid fa-star w-4"></i> מצא אטרקציות קרובות
 </button>
         <button class="btn btn-primary" onclick="window.findUtility('bagno pubblico', 'שירותים ציבוריים')">
@@ -703,8 +703,6 @@ body {
       </nav>
   </div>
   
-  <!-- LeafletJS for Live Map -->
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
   
   <script type="module">
     // --- Firebase SDK ---
@@ -1024,7 +1022,7 @@ function showAlert(title, message, isCopyable = false, speechOptions = null) {
 
         if (lastTipDate !== today) {
             console.log("LOG: Displaying daily tip.");
-            openTipModal();
+           
             localStorage.setItem('lastTipDate', today);
         } else {
             console.log("LOG: Daily tip already shown today.");
@@ -3029,19 +3027,6 @@ document.addEventListener('DOMContentLoaded', () => {
         inputEl.value = '';
     });
 
-// --- Camera Button Listeners ---
-$('#translate-camera-btn').addEventListener('click', () => {
-    cameraMode = 'translate';
-    startCamera();
-});
-$('#scan-receipt-btn').addEventListener('click', () => {
-    cameraMode = 'receipt';
-    startCamera();
-});
-$('#torch-btn').addEventListener('click', toggleTorch); // New listener
-$('#camera-close-btn').addEventListener('click', stopCamera);
-$('#capture-btn').addEventListener('click', captureFrame);
-
 
     $('#image-translate-upload').addEventListener('change', (e) => {
         const file = e.target.files[0]; if (!file) return;
@@ -3129,7 +3114,18 @@ $('#lookup-site-btn').addEventListener('click', () => {
     cameraMode = 'lookup';
     startCamera();
 });
-
+// --- Camera Button Listeners ---
+$('#translate-camera-btn').addEventListener('click', () => {
+    cameraMode = 'translate';
+    startCamera();
+});
+$('#scan-receipt-btn').addEventListener('click', () => {
+    cameraMode = 'receipt';
+    startCamera();
+});
+$('#torch-btn').addEventListener('click', toggleTorch);
+$('#camera-close-btn').addEventListener('click', stopCamera);
+$('#capture-btn').addEventListener('click', captureFrame);
     const heBtn = $('#voice-translate-he-btn');
     const itBtn = $('#voice-translate-it-btn');
     function startRecognition(lang, btn) {
