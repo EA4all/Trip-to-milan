@@ -2295,38 +2295,45 @@ async function processLookupImage(base64ImageData) {
 
     // --- Gemini Calls ---
     async function callGemini(payload, prompt, useSearch = false) {
-        console.log(`LOG: callGemini called. Use search: ${useSearch}. Prompt: ${prompt.substring(0, 100)}...`);
+    // --- START OF FIX ---
+    // If a separate prompt string is provided, use it. This is for simple text requests.
+    if (prompt) {
         payload.contents[0].parts[0].text = prompt;
-        if (useSearch) {
-            // FIX 4: Changed 'google_search' to 'tools' with 'google_search_retrieval'
-            payload.tools = [{ "google_search_retrieval": {} }];
-        } else {
-           if(payload.tools) delete payload.tools;
-        }
-
-        const apiKey = "AIzaSyB80v2xdhebJqhjyruJ5Ta0eyhJiq7DsI8"; 
-        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${apiKey}`;
-        
-        try {
-            const response = await fetch(apiUrl, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            });
-            const result = await response.json();
-            if (!response.ok) {
-                console.error("ERROR: Gemini API response not OK.", result);
-                throw new Error(result.error?.message || `שגיאת רשת: ${response.status}`);
-            }
-            console.log("LOG: Gemini API call successful.");
-            const text = result.candidates?.[0]?.content?.parts?.[0]?.text;
-            return text || "לא התקבלה תשובה מ-Gemini.";
-
-        } catch (error) {
-            console.error("ERROR: Gemini API Error:", error);
-            return `שגיאה: ${error.message}`;
-        }
     }
+    // If no prompt is provided, we assume it's already correctly set in the payload (like for image requests).
+    console.log(`LOG: callGemini called. Use search: ${useSearch}. Payload prompt: ${payload.contents[0].parts[0].text.substring(0, 100)}...`);
+    // --- END OF FIX ---
+
+    if (useSearch) {
+        payload.tools = [{ "google_search_retrieval": {} }];
+    } else {
+       if(payload.tools) delete payload.tools;
+    }
+
+    const apiKey = "AIzaSyB80v2xdhebJqhjyruJ5Ta0eyhJiq7DsI8";
+    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${apiKey}`;
+
+    try {
+        const response = await fetch(apiUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+        const result = await response.json();
+        if (!response.ok) {
+            console.error("ERROR: Gemini API response not OK.", result);
+            throw new Error(result.error?.message || `שגיאת רשת: ${response.status}`);
+        }
+        console.log("LOG: Gemini API call successful.");
+        const text = result.candidates?.[0]?.content?.parts?.[0]?.text;
+        return text || "לא התקבלה תשובה מ-Gemini.";
+
+    } catch (error) {
+        console.error("ERROR: Gemini API Error:", error);
+        return `שגיאה: ${error.message}`;
+    }
+}
+
     window.speakText = (text, lang) => {
         console.log(`LOG: speakText called for lang ${lang}. Text: ${text}`);
         speechSynthesis.cancel();
