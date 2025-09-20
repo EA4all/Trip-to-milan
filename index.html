@@ -2285,7 +2285,7 @@ async function processReceiptImage(base64ImageData) {
 }
 async function processLookupImage(base64ImageData) {
     showAlert('מזהה אובייקט...', '<div class="text-center"><i class="fa-solid fa-spinner fa-spin fa-2x"></i><p class="mt-2">מנתח את התמונה ושולח לזיהוי...</p></div>');
-    const prompt = `You are an AI assistant that responds ONLY in Hebrew. Your task is to identify the landmark, artwork, or object in the provided image. Analyze the image and provide an interesting and detailed paragraph about it. Your entire response must be in Hebrew. If you cannot identify the object, respond with the single Hebrew sentence: 'לא הצלחתי לזהות את מה שבתמונה.'. Do not include any English words or preambles.`;
+    const prompt = אתה עוזר בינה מלאכותית שעונה בלעדית בעברית, הן בטקסט והן בקול. המשימה שלך היא לזהות את האתרים, היצירות או הפריטים בתמונה שסופקה. נתח את התמונה וספק פסקה מעניינת ומפורטת עליה. כל התשובה שלך חייבת להיות בעברית. אם אינך מצליח לזהות את הפריט, השב עם המשפט העברי היחיד: 'לא הצלחתי לזהות את מה שבתמונה.'. אל תכלל מילים או הקדמות באנגלית.`;
     const payload = { contents: [{ parts: [{ text: prompt }, { inlineData: { mimeType: 'image/jpeg', data: base64ImageData } }] }] };
     const description = await callGemini(payload, '', false);
     showAlert('זיהוי אובייקט', description, true, { text: description, lang: 'he-IL' });
