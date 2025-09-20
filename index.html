@@ -2173,27 +2173,42 @@ window.findNearbyAttractions = findNearbyAttractions;
 
     // --- Camera Functions ---
 async function startCamera() {
-    console.log("LOG: startCamera called.");
+    console.log("LOG: startCamera called for mode: " + cameraMode);
     const video = $('#camera-feed');
     const titles = { translate: "תרגם מתמונה", receipt: "סרוק קבלה", lookup: "זיהוי אובייקט" };
-    $('#camera-title').textContent = titles[cameraMode] || "מצלמה";
 
     if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
         try {
             cameraStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
             video.srcObject = cameraStream;
-            video.play();
-            activeVideoTrack = cameraStream.getVideoTracks()[0]; // Store the track globally
-            $('#torch-btn').classList.remove('text-yellow-400'); // Reset torch button
+            await video.play();
+
+            activeVideoTrack = cameraStream.getVideoTracks()[0];
+
+            // --- Flashlight Button Logic ---
+            const torchBtn = $('#torch-btn');
+            const capabilities = activeVideoTrack.getCapabilities();
+
+            if (capabilities.torch) {
+                torchBtn.style.display = 'flex';
+                torchBtn.classList.remove('text-yellow-400');
+            } else {
+                console.warn("Torch functionality not supported.");
+                torchBtn.style.display = 'none';
+            }
+
+            $('#camera-title').textContent = titles[cameraMode] || "מצלמה";
             $('#camera-modal').classList.add('flex');
+
         } catch (err) {
             console.error("ERROR: Error accessing camera: ", err);
-            showAlert("שגיאת מצלמה", "לא ניתן לגשת למצלמה. ודא שהענקת הרשאות לדפדפן.");
+            showAlert("שגיאת מצלמה", `לא ניתן לגשת למצלמה. ודא שהענקת הרשאות לדפדפן. (${err.name})`);
         }
     } else {
         showAlert("מצלמה לא נתמכת", "הדפדפן שלך לא תומך בגישה למצלמה.");
     }
 }
+
 // ========================= התחלה: קוד מתוקן ומשופר להפעלת הפנס =========================
 async function toggleTorch() {
     const torchBtn = $('#torch-btn');
