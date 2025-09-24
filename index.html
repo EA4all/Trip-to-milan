@@ -603,36 +603,40 @@ body {
         </div>
     </div>
   </div>
+-----
   <div id="camera-modal" class="modal-backdrop">
     <div class="modal">
-      <div class="p-4 border-b flex justify-between items-center"><h3 id="camera-title" class="text-lg font-bold">תרגם מתמונה</h3><button id="camera-close-btn" class="text-2xl">×</button></div>
+        <div class="p-4 border-b flex justify-between items-center">
+            <h3 id="camera-title" class="text-lg font-bold">סרוק קבלה</h3>
+            <button id="camera-close-btn" class="text-2xl">×</button>
+        </div>
         <div class="p-4 flex-grow relative">
             <video id="camera-feed" class="w-full h-full object-cover bg-black rounded-lg" playsinline autoplay></video>
             <canvas id="camera-canvas" class="hidden"></canvas>
         </div>
+        <div class="p-4 border-t flex justify-center items-center gap-4">
+            <button id="upload-receipt-btn" class="btn btn-ghost w-16 h-16 rounded-full text-2xl" title="העלה מהגלריה">
+                <i class="fa-solid fa-folder-open"></i>
+            </button>
 
-<div class="p-4 border-t flex justify-center items-center gap-4">
-    <button id="upload-receipt-btn" class="btn btn-ghost w-16 h-16 rounded-full text-2xl" title="העלה מהגלריה">
-        <i class="fa-solid fa-folder-open"></i>
-    </button>
-    
-    <div class="flex flex-col items-center gap-2">
-        <button id="capture-btn" class="btn btn-primary w-20 h-20 rounded-full mx-auto" title="צלם">
-            <i class="fa-solid fa-camera fa-2x"></i>
-        </button>
-        <div class="flex items-center gap-2 text-xs">
-            <button id="zoom-out-btn" class="btn btn-ghost rounded-full w-8 h-8 text-xl" title="הקטן"><i class="fa-solid fa-magnifying-glass-minus"></i></button>
-            <span id="zoom-level">1.0x</span>
-            <button id="zoom-in-btn" class="btn btn-ghost rounded-full w-8 h-8 text-xl" title="הגדל"><i class="fa-solid fa-magnifying-glass-plus"></i></button>
+            <div class="flex flex-col items-center gap-2">
+                <button id="capture-btn" class="btn btn-primary w-20 h-20 rounded-full mx-auto" title="צלם">
+                    <i class="fa-solid fa-camera fa-2x"></i>
+                </button>
+                <div class="flex items-center gap-2 text-xs">
+                    <button id="zoom-out-btn" class="btn btn-ghost rounded-full w-8 h-8 text-xl" title="הקטן"><i class="fa-solid fa-magnifying-glass-minus"></i></button>
+                    <span id="zoom-level">1.0x</span>
+                    <button id="zoom-in-btn" class="btn btn-ghost rounded-full w-8 h-8 text-xl" title="הגדל"><i class="fa-solid fa-magnifying-glass-plus"></i></button>
+                </div>
+            </div>
+
+            <button id="torch-btn" class="btn btn-ghost w-16 h-16 rounded-full text-2xl" title="פנס">
+                <i class="fa-solid fa-lightbulb"></i>
+            </button>
         </div>
     </div>
-    
-    <button id="torch-btn" class="btn btn-ghost w-16 h-16 rounded-full text-2xl" title="פנס">
-        <i class="fa-solid fa-lightbulb"></i>
-    </button>
 </div>
-    </div>
-  </div>
+------
   <div id="alert-modal" class="modal-backdrop">
     <div class="modal">
         <div class="p-4 border-b flex justify-between items-center">
