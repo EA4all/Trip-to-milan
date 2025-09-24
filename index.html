@@ -613,6 +613,7 @@ body {
 <div class="p-4 border-t flex justify-center items-center gap-4">
     <button id="torch-btn" class="btn btn-ghost w-16 h-16 rounded-full text-2xl"><i class="fa-solid fa-lightbulb"></i></button>
     <button id="capture-btn" class="btn btn-primary w-16 h-16 rounded-full"><i class="fa-solid fa-camera fa-2x"></i></button>
+   <button id="capture-btn" class="btn btn-primary w-16 h-16 rounded-full mx-auto"><i class="fa-solid fa-camera fa-2x"></i></button>
     <div class="w-16"></div> </div>
     </div>
   </div>
@@ -2173,7 +2174,7 @@ window.findNearbyAttractions = findNearbyAttractions;
 
     // --- Camera Functions ---
 
-    async function startCamera() {
+async function startCamera() {
     console.log("LOG: startCamera called for mode: " + cameraMode);
     const video = $('#camera-feed');
     const titles = { translate: "תרגם מתמונה", receipt: "סרוק קבלה", lookup: "זיהוי אובייקט" };
@@ -2184,9 +2185,19 @@ window.findNearbyAttractions = findNearbyAttractions;
             video.srcObject = cameraStream;
             await video.play();
 
-            activeVideoTrack = cameraStream.getVideoTracks()[0]; // Store the track
+            activeVideoTrack = cameraStream.getVideoTracks()[0];
+            
+            // בודק אם הפנס נתמך ומציג את הכפתור רק במקרה זה
+            const capabilities = activeVideoTrack.getCapabilities();
+            const torchBtn = $('#torch-btn');
+            if (capabilities.torch) {
+                torchBtn.style.display = 'block';
+                $('#capture-btn').classList.remove('mx-auto');
+            } else {
+                torchBtn.style.display = 'none';
+                $('#capture-btn').classList.add('mx-auto');
+            }
 
-            $('#torch-btn').style.display = 'flex'; // Make sure the button is always visible initially
             $('#camera-title').textContent = titles[cameraMode] || "מצלמה";
             $('#camera-modal').classList.add('flex');
 
@@ -2826,6 +2837,7 @@ if (recognition) {
 
     // --- INIT ---
 document.addEventListener('DOMContentLoaded', () => {
+  
     console.log("LOG: DOMContentLoaded event fired. Initializing app.");
 
     // --- Expose functions to window for onclick attributes ---
@@ -3240,7 +3252,22 @@ lightboxModal.addEventListener('click', (e) => {
     }
 });
 // ========================= סוף: לוגיקה לחלון הגדלת תמונות (Lightbox) =========================
+$('#upload-receipt-btn').addEventListener('click', () => {
+    $('#receipt-upload-input').click();
+});
 
+$('#receipt-upload-input').addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = (event) => {
+            const base64String = event.target.result.split(',')[1];
+            processReceiptImage(base64String);
+            window.closeModal();
+        };
+        reader.readAsDataURL(file);
+    }
+});
 
 });
 
