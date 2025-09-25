@@ -277,7 +277,6 @@ body {
             <button id="show-tip-btn" class="btn btn-primary"><i class="fa-solid fa-lightbulb mr-2"></i>טיפ יומי</button>
             <button id="create-summary-btn" class="btn btn-primary bg-green-600 hover:bg-green-700"><i class="fa-solid fa-book-open mr-2"></i>צור סיכום טיול</button>
           <button id="lookup-site-btn" class="btn btn-primary bg-purple-600 hover:bg-purple-700"><i class="fa-solid fa-magnifying-glass mr-2"></i>זיהוי אתרים</button>
-          <button class="btn btn-ghost" onclick="window.generateDailyPodcast('${dayId}')"><i class="fa-solid fa-podcast mr-2"></i>פודקאסט יומי</button>
         </div>
       </div>
       <div id="overview-cards" class="grid sm:grid-cols-2 lg:grid-cols-4 gap-6"></div>
@@ -786,6 +785,17 @@ body {
     
     // --- Global State ---
     let db, auth, tripDocRef, locationsColRef;
+    let isFirebaseConnected = false;
+    let translationHistory = JSON.parse(localStorage.getItem('milanTripTranslationHistory')) || [];
+    let lastWeatherAPIData = null;
+    
+    // *** המיקום הנכון להוספה ***
+    let geminiChatHistory = []; 
+    // **************************
+
+    // --- Live Location State ---
+    let liveMap;
+    let userMarkers = {};
 
     let cameraMode = 'translate';
     let activeVideoTrack = null;
@@ -1230,6 +1240,7 @@ function renderMobileNavSubmenus() {
             console.error(`ERROR: Container for day ${dayId} not found.`);
             return;
         }
+// קטע קוד מעודכן מתוך renderPlanForDay
         let content = `<div class="p-4"><div class="flex flex-wrap items-center gap-4 mb-4">
             <div class="flex items-center gap-2">
                 <label class="font-semibold">מצב נסיעה:</label>
@@ -1242,6 +1253,7 @@ function renderMobileNavSubmenus() {
             <button class="btn btn-primary" onclick="window.openDayMap('${dayId}')"><i class="fa-solid fa-map-route mr-2"></i>מפת יום</button>
             <button class="btn btn-ghost" onclick="window.optimizeDayRoute('${dayId}')"><i class="fa-solid fa-wand-magic-sparkles mr-2"></i>סדר לי את היום</button>
             <button class="btn btn-ghost" onclick="window.generateIcsFile('${dayId}')"><i class="fa-solid fa-calendar-plus mr-2"></i>הוסף ליומן</button>
+            <button class="btn btn-primary bg-purple-600 hover:bg-purple-700" onclick="window.generateDailyPodcast('${dayId}')"><i class="fa-solid fa-microphone-lines mr-2"></i>פודקאסט יומי</button>
         </div><div class="space-y-4">`;
 
         let previousActivity = null; 
@@ -2522,27 +2534,42 @@ async function processLookupImage(base64ImageData) {
         resultContainer.innerHTML = `<span>${responseText}</span> <button onclick="window.speakText('${responseText.replace(/'/g, "\\'")}', '${langCode}')" class="btn btn-ghost p-1 h-auto"><i class="fa-solid fa-volume-high"></i></button>`;
     }
 
-    async function askGeneralGemini() {
-        console.log("LOG: askGeneralGemini called.");
-        const userPrompt = $('#gemini-prompt').value;
-        if (!userPrompt) return;
+async function askGeneralGemini(userPrompt) { // מקבל עכשיו את הפרומפט כארגומנט
+    console.log("LOG: askGeneralGemini called.");
+    if (!userPrompt) return;
 
-        const responseContainer = $('#gemini-response');
-        const submitBtn = $('#gemini-submit-btn');
-        submitBtn.disabled = true;
-        responseContainer.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> חושב...`;
-        
-        const containsHebrew = /[\u0590-\u05FF]/.test(userPrompt);
-        const finalPrompt = containsHebrew 
-            ? `${userPrompt}\n\n(Please provide the answer in Hebrew)`
-            : userPrompt;
+    const responseContainer = $('#gemini-response');
+    const submitBtn = $('#gemini-submit-btn');
+    submitBtn.disabled = true;
+    responseContainer.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> חושב...`;
+    
+    // 1. הוספת הפנייה הנוכחית להיסטוריה
+    geminiChatHistory.push({ role: "user", parts: [{ text: userPrompt }] });
 
-        const payload = { contents: [{ parts: [{ text: "" }] }] };
-        const responseText = await callGemini(payload, finalPrompt, true);
+    // 2. בניית הפיילווד המלא
+    // נשלח את כל ההיסטוריה של השיחה
+    const payload = { 
+        contents: geminiChatHistory,
+        tools: [{ "google_search_retrieval": {} }] // משתמשים בכלי חיפוש
+    };
 
-        responseContainer.textContent = responseText;
-        submitBtn.disabled = false;
-    }
+    const responseText = await callGemini(payload, '', false); // אין צורך בפרומפט נפרד, הוא בתוך ה-payload.contents
+
+    // 3. עדכון ההיסטוריה עם התשובה של Gemini
+    geminiChatHistory.push({ role: "model", parts: [{ text: responseText }] });
+
+    // 4. עדכון התצוגה - נציג את כל השיחה
+    const chatDisplay = geminiChatHistory.map(entry => {
+        const role = entry.role === 'user' ? 'אתה' : 'Gemini';
+        const color = entry.role === 'user' ? 'text-brand-600' : 'text-green-600';
+        return `<div><strong class="${color}">${role}:</strong> ${entry.parts[0].text}</div>`;
+    }).join('');
+
+    responseContainer.innerHTML = chatDisplay;
+    responseContainer.scrollTop = responseContainer.scrollHeight; // גלילה לתחתית
+    
+    submitBtn.disabled = false;
+}
     
     async function fetchSafetyWarnings() {
         console.log("LOG: fetchSafetyWarnings called.");
@@ -3266,7 +3293,21 @@ document.addEventListener('DOMContentLoaded', () => {
     }));
 
     $('#get-smart-advice-btn').addEventListener('click', getSmartAdvice);
-    $('#gemini-submit-btn').addEventListener('click', askGeneralGemini);
+    $('#gemini-submit-btn').addEventListener('click', () => {
+    const promptInput = $('#gemini-prompt');
+    const userPrompt = promptInput.value.trim();
+    if (userPrompt) {
+        askGeneralGemini(userPrompt);
+        promptInput.value = ''; // ניקוי שדה הקלט
+    }
+});
+  $('#gemini-close-btn').addEventListener('click', () => {
+    $('#gemini-modal').classList.remove('flex');
+    // איפוס היסטוריית השיחה
+    geminiChatHistory = [];
+    $('#gemini-response').textContent = '';
+    $('#gemini-prompt').value = '';
+});
 
     $('#share-btn').addEventListener('click', () => {
         const url = window.location.href;
