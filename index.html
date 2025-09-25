@@ -2325,6 +2325,7 @@ function captureFrame() {
 // שינוי בפונקציה processReceiptImage
 
 async function processReceiptImage(base64ImageData) {
+    // מציג טוען...
     showAlert('מעבד קבלה...', '<div class="text-center"><i class="fa-solid fa-spinner fa-spin fa-2x"></i><p class="mt-2">קורא את הפרטים מהקבלה בעזרת AI...</p></div>');
 
     const prompt = `You are an expert receipt-scanning AI. Analyze this image of a receipt, which could be in any language (like Italian or Hebrew). Your goal is to identify the final, total amount paid and the name of the store/vendor. Respond ONLY with a valid JSON object in the format {"amount": NUMBER, "description": "STRING"}. The 'amount' should be the single, final, total sum. The 'description' should be the most likely name of the vendor. If you cannot reliably determine both values, return {"error": "Could not read receipt clearly"}.`;
@@ -2332,28 +2333,60 @@ async function processReceiptImage(base64ImageData) {
 
     let responseText = await callGemini(payload, '', false);
     
-    // *** הוספת הקוד לניקוי וחלוק JSON:
+    // סוגר את מודל המצלמה (ללא קשר לתוצאת ה-AI)
+    stopCamera();
+    
     try {
-        // 1. חילוץ הבלוק שנראה כמו JSON (מתחיל ב-{ ומסתיים ב-})
         const jsonMatch = responseText.match(/\{[\s\S]*\}/);
         if (!jsonMatch) {
              throw new Error("JSON block not found in response.");
         }
         const cleanJsonString = jsonMatch[0].trim();
         
-        const result = JSON.parse(cleanJsonString); // ננתח את המחרוזת הנקייה
-        // *** סוף הוספה
+        const result = JSON.parse(cleanJsonString);
 
-        if (result.error) {
+        if (result.error || isNaN(result.amount)) {
+            // אם יש שגיאה או סכום לא תקין, מציגים שגיאה
             showAlert('שגיאה', 'לא הצלחנו לקרוא את הפרטים מהקבלה. נסו שוב בתאורה טובה יותר.');
-        } else {
-            $('#expense-amount').value = result.amount || '';
-            $('#expense-desc').value = result.description || '';
-            window.closeModal(); // סגירה רק לאחר הצלחה
+            return; // עוצר את הפונקציה
         }
+        
+        const expenseDescEl = $('#expense-desc');
+        const expenseAmountEl = $('#expense-amount');
+        const expenseCategoryEl = $('#expense-category');
+        const expenseFormEl = $('#expense-form');
+        const submitButton = expenseFormEl.querySelector('button[type="submit"]');
+
+        // 1. מילוי שדות
+        const amount = parseFloat(result.amount);
+        const description = (result.description || '').trim();
+
+        expenseAmountEl.value = amount.toFixed(2);
+        expenseDescEl.value = description;
+        
+        // 2. ניחוש קטגוריה (משופר)
+        const descLower = description.toLowerCase();
+        let suggestedCategory = 'אחר'; // ברירת מחדל
+        if (descLower.includes('cafe') || descLower.includes('risto') || descLower.includes('bar') || descLower.includes('denzel') || descLower.includes('snubar') || descLower.includes('pizza') || descLower.includes('food')) {
+            suggestedCategory = 'אוכל';
+        } else if (descLower.includes('primark') || descLower.includes('zara') || descLower.includes('h&m') || descLower.includes('shopping') || descLower.includes('store')) {
+            suggestedCategory = 'קניות';
+        }
+        
+        // הגדרה ישירה של הערך ב-SELECT
+        expenseCategoryEl.value = suggestedCategory; 
+
+        // 3. שליחה אוטומטית של הטופס
+        // נשתמש ב-requestSubmit כדי לדמות לחיצה על כפתור השליחה
+        // זה יפעיל את ה-event listener שכבר מטפל בשמירה ל-Firestore.
+        expenseFormEl.requestSubmit(submitButton);
+
+        // 4. הודעת אישור (מוצגת לאחר שההוצאה נשמרה)
+        showAlert('הוצאה נוספה!', `הוצאה של **€${amount.toFixed(2)}** עבור **${description}** נוספה בהצלחה לקטגוריית **${suggestedCategory}**.`);
+        
     } catch (e) {
-        console.error("Error parsing Gemini receipt response:", e);
-        showAlert('שגיאה', 'התקבלה תשובה לא תקינה מהשרת, או שה-AI לא זיהה נכון. נסו שוב.');
+        console.error("Error processing receipt:", e);
+        showAlert('שגיאה חמורה', 'אירעה שגיאה בעיבוד הנתונים שהתקבלו. אנא הזן ידנית.');
     }
 }
 async function processLookupImage(base64ImageData) {
