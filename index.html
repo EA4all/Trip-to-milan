@@ -277,6 +277,7 @@ body {
             <button id="show-tip-btn" class="btn btn-primary"><i class="fa-solid fa-lightbulb mr-2"></i>טיפ יומי</button>
             <button id="create-summary-btn" class="btn btn-primary bg-green-600 hover:bg-green-700"><i class="fa-solid fa-book-open mr-2"></i>צור סיכום טיול</button>
           <button id="lookup-site-btn" class="btn btn-primary bg-purple-600 hover:bg-purple-700"><i class="fa-solid fa-magnifying-glass mr-2"></i>זיהוי אתרים</button>
+          <button class="btn btn-ghost" onclick="window.generateDailyPodcast('${dayId}')"><i class="fa-solid fa-podcast mr-2"></i>פודקאסט יומי</button>
         </div>
       </div>
       <div id="overview-cards" class="grid sm:grid-cols-2 lg:grid-cols-4 gap-6"></div>
@@ -1861,14 +1862,61 @@ function findUtility(query, queryHebrew) {
 }
     // ========================= התחלה: פונקציה למדריך קולי =========================
 async function getAudioGuide(placeName) {
-    showAlert('טוען מדריך...', `<div class="text-center"><i class="fa-solid fa-spinner fa-spin fa-2x"></i><p class="mt-2">מכין עבורך סקירה על ${placeName}...</p></div>`);
+    showAlert('טוען מדריך...', `<div class="text-center"><i class="fa-solid fa-spinner fa-spin fa-2x"></i><p class="mt-2">מכין עבורך **תסריט שיחה** על ${placeName}...</p></div>`);
 
-    const prompt = `Act as an expert tour guide. Create an engaging and detailed audio guide script in Hebrew for "${placeName}" in Milan. The script should be about 2-3 paragraphs long and feel like a natural, spoken guide. Cover key history, interesting architectural or artistic details, and a unique anecdote that most tourists don't know.`;
+    // *** הפרומפט החדש ***
+    const prompt = `Act as an expert scriptwriter for a travel podcast. Write an engaging dialogue in Hebrew between two characters: a 'Guide' (מדריך) and a 'Traveler' (מטייל). The conversation should be about 3-4 short turns per character and focus on "${placeName}" in Milan. The Guide should provide historical facts, and the Traveler should ask questions a tourist would ask.
+
+    Format the response strictly as a dialogue, separating the speakers with a new line and their role bolded, like this:
+    **מדריך**: שלום וברוכים הבאים.
+    **מטייל**: איזו כיכר מרשימה!`;
+    // *******************
+    
     const payload = { contents: [{ parts: [{ text: "" }] }] };
-    const summaryText = await callGemini(payload, prompt, false);
+    let scriptText = await callGemini(payload, prompt, false);
+    
+    // עיבוד קל: החלפת עיצוב הפורמט של הפרומפט (אם יש צורך)
+    scriptText = scriptText.replace(/(\*\*.+?\*\*)/g, '<br><strong class="font-semibold text-brand-700 dark:text-brand-300">$1<\/strong>');
 
-    showAlert(`מדריך ל${placeName}`, summaryText, true, { text: summaryText, lang: 'he-IL' });
+    // שימוש ב-scriptText גם לדיבור וגם לתצוגה
+    showAlert(`פודקאסט ל${placeName}`, scriptText, true, { text: scriptText.replace(/\*\*(מדריך|מטייל)\*\*:/g, ' ').replace(/\n/g, ' '), lang: 'he-IL' });
 }
+
+//========================================================================
+    async function generateDailyPodcast(dayId) {
+    const dayData = localTripData.plan[dayId];
+    const journalEntries = (localTripData.journal && localTripData.journal[dayId]) || [];
+    
+    // איסוף נתונים אישיים
+    const activities = dayData.activities.map(a => a.name).join(', ');
+    const personalNotes = journalEntries.map(e => e.text).join('; ');
+    const dayName = dayData.name;
+    
+    if (!activities) {
+        showAlert('אין פעילויות', 'לא שובצו פעילויות ביום זה ליצירת פודקאסט.');
+        return;
+    }
+
+    showAlert('יוצר פודקאסט יומי...', `<div class="text-center"><i class="fa-solid fa-microphone-lines fa-spin fa-2x"></i><p class="mt-2">מנתח את החוויות שלך מיום ${dayName}...</p></div>`);
+
+    const prompt = `Act as an enthusiastic travel podcast host (מנחה פודקאסט). Create a short (1 minute read), personal, and engaging episode summary in Hebrew about the following day in Milan: "${dayName}".
+
+    The content must weave together the activities, the personal journal notes, and one interesting fact about one of the places visited. The tone should be friendly and reflective.
+
+    Day Data:
+    - Visited Sites: ${activities}
+    - Personal Reflections: ${personalNotes || 'No specific journal notes were recorded.'}
+    
+    Start directly with the content of the podcast.`;
+
+    const payload = { contents: [{ parts: [{ text: "" }] }] };
+    const podcastScript = await callGemini(payload, prompt, true);
+
+    showAlert(`סיכום הפודקאסט ל: ${dayName}`, podcastScript, true, { text: podcastScript.replace(/\n/g, ' '), lang: 'he-IL' });
+}
+
+
+  
 
     // ========================= התחלה: לוגיקה לעוזר המטרו =========================
 function initMetroHelper() {
