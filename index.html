@@ -614,26 +614,27 @@ body {
             <video id="camera-feed" class="w-full h-full object-cover bg-black rounded-lg" playsinline autoplay></video>
             <canvas id="camera-canvas" class="hidden"></canvas>
         </div>
-        <div class="p-4 border-t flex justify-center items-center gap-4">
-            <button id="upload-receipt-btn" class="btn btn-ghost w-16 h-16 rounded-full text-2xl" title="העלה מהגלריה">
-                <i class="fa-solid fa-folder-open"></i>
-            </button>
-            
-            <div class="flex flex-col items-center gap-2">
-                <button id="capture-btn" class="btn btn-primary w-20 h-20 rounded-full mx-auto" title="צלם">
-                    <i class="fa-solid fa-camera fa-2x"></i>
-                </button>
-                <div class="flex items-center gap-2 text-xs">
-                    <button id="zoom-out-btn" class="btn btn-ghost rounded-full w-8 h-8 text-xl" title="הקטן"><i class="fa-solid fa-magnifying-glass-minus"></i></button>
-                    <span id="zoom-level">1.0x</span>
-                    <button id="zoom-in-btn" class="btn btn-ghost rounded-full w-8 h-8 text-xl" title="הגדל"><i class="fa-solid fa-magnifying-glass-plus"></i></button>
-                </div>
-            </div>
-            
-            <button id="torch-btn" class="btn btn-ghost w-16 h-16 rounded-full text-2xl" title="פנס">
-                <i class="fa-solid fa-lightbulb"></i>
-            </button>
-        </div>
+<div class="p-4 border-t flex justify-center items-end gap-6">
+  <button id="upload-receipt-btn" class="btn btn-ghost w-16 h-16 rounded-full text-2xl" title="העלה מהגלריה">
+      <i class="fa-solid fa-folder-open"></i>
+  </button>
+<input type="file" id="receipt-file-input" accept="image/*" class="hidden">
+  <div class="flex flex-col items-center">
+      <button id="capture-btn" class="btn btn-primary w-20 h-20 rounded-full mx-auto" title="צלם">
+          <i class="fa-solid fa-camera fa-2x"></i>
+      </button>
+      <div class="flex items-center gap-2 text-xs mt-2">
+          <button id="zoom-out-btn" class="btn btn-ghost rounded-full w-8 h-8 text-xl"><i class="fa-solid fa-magnifying-glass-minus"></i></button>
+          <span id="zoom-level">1.0x</span>
+          <button id="zoom-in-btn" class="btn btn-ghost rounded-full w-8 h-8 text-xl"><i class="fa-solid fa-magnifying-glass-plus"></i></button>
+      </div>
+  </div>
+
+  <button id="torch-btn" class="btn btn-ghost w-16 h-16 rounded-full text-2xl" title="פנס">
+      <i class="fa-solid fa-lightbulb"></i>
+  </button>
+</div>
+
     </div>
 </div>
 ------
@@ -3293,33 +3294,63 @@ $('#receipt-upload-input').addEventListener('change', (e) => {
         reader.readAsDataURL(file);
     }
 });
-// ========================= התחלה: לוגיקה לזום במצלמה =========================
-    let currentZoom = 1;
-    const zoomInBtn = $('#zoom-in-btn');
-    const zoomOutBtn = $('#zoom-out-btn');
-    const zoomLevelEl = $('#zoom-level');
+document.getElementById("torch-btn").addEventListener("click", () => {
+  if (activeVideoTrack && activeVideoTrack.getCapabilities().torch) {
+    let settings = activeVideoTrack.getSettings();
+    let torchOn = settings.torch || false;
+    activeVideoTrack.applyConstraints({ advanced: [{ torch: !torchOn }] });
+  } else {
+    alert("המכשיר לא תומך בפנס");
+  }
+});
 
-    function updateZoom(delta) {
-        if (!activeVideoTrack) return;
-        const capabilities = activeVideoTrack.getCapabilities();
-        const settings = activeVideoTrack.getSettings();
-        if (capabilities.zoom) {
-            let newZoom = settings.zoom + delta;
-            newZoom = Math.max(capabilities.zoom.min, Math.min(newZoom, capabilities.zoom.max));
-            activeVideoTrack.applyConstraints({ advanced: [{ zoom: newZoom }] }).then(() => {
-                currentZoom = newZoom;
-                zoomLevelEl.textContent = `${currentZoom.toFixed(1)}x`;
-            }).catch(e => console.error("Error applying zoom:", e));
-        } else {
-            console.warn("Zoom not supported on this device/browser.");
-        }
-    }
+let zoom = 1.0;
+document.getElementById("zoom-in-btn").addEventListener("click", () => {
+  zoom += 0.1;
+  document.getElementById("zoom-level").textContent = zoom.toFixed(1) + "x";
+  if (activeVideoTrack) {
+    activeVideoTrack.applyConstraints({ advanced: [{ zoom }] }).catch(console.error);
+  }
+});
 
-    if(zoomInBtn && zoomOutBtn) {
-        zoomInBtn.addEventListener('click', () => updateZoom(0.1));
-        zoomOutBtn.addEventListener('click', () => updateZoom(-0.1));
-    }
-    // ========================= סוף: לוגיקה לזום במצלמה =========================
+document.getElementById("zoom-out-btn").addEventListener("click", () => {
+  zoom = Math.max(1.0, zoom - 0.1);
+  document.getElementById("zoom-level").textContent = zoom.toFixed(1) + "x";
+  if (activeVideoTrack) {
+    activeVideoTrack.applyConstraints({ advanced: [{ zoom }] }).catch(console.error);
+  }
+});
+// פתיחת גלריה
+const uploadBtn = document.getElementById("upload-receipt-btn");
+const fileInput = document.getElementById("receipt-file-input");
+
+uploadBtn.addEventListener("click", () => {
+  fileInput.click(); // פותח את חלון בחירת הקבצים
+});
+
+fileInput.addEventListener("change", (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = function(evt) {
+    // כאן אפשר להציג את התמונה במסך או לשלוח לשרת
+    console.log("תמונה נטענה:", file.name);
+    // למשל להציג על הקנבס:
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.getElementById("camera-canvas");
+      const ctx = canvas.getContext("2d");
+      canvas.width = img.width;
+      canvas.height = img.height;
+      ctx.drawImage(img, 0, 0);
+      canvas.classList.remove("hidden");
+    };
+    img.src = evt.target.result;
+  };
+  reader.readAsDataURL(file);
+});
+
 });
 
   </script>
