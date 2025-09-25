@@ -2322,26 +2322,38 @@ function captureFrame() {
     }
 }
 
+// שינוי בפונקציה processReceiptImage
+
 async function processReceiptImage(base64ImageData) {
     showAlert('מעבד קבלה...', '<div class="text-center"><i class="fa-solid fa-spinner fa-spin fa-2x"></i><p class="mt-2">קורא את הפרטים מהקבלה בעזרת AI...</p></div>');
 
-   const prompt = `You are an expert receipt-scanning AI. Analyze this image of a receipt, which could be in any language (like Italian or Hebrew). Your goal is to identify the final, total amount paid and the name of the store/vendor. Respond ONLY with a valid JSON object in the format {"amount": NUMBER, "description": "STRING"}. The 'amount' should be the single, final, total sum. The 'description' should be the most likely name of the vendor. If you cannot reliably determine both values, return {"error": "Could not read receipt clearly"}.`;
+    const prompt = `You are an expert receipt-scanning AI. Analyze this image of a receipt, which could be in any language (like Italian or Hebrew). Your goal is to identify the final, total amount paid and the name of the store/vendor. Respond ONLY with a valid JSON object in the format {"amount": NUMBER, "description": "STRING"}. The 'amount' should be the single, final, total sum. The 'description' should be the most likely name of the vendor. If you cannot reliably determine both values, return {"error": "Could not read receipt clearly"}.`;
     const payload = { contents: [{ parts: [{ text: prompt }, { inlineData: { mimeType: 'image/jpeg', data: base64ImageData } }] }] };
 
-    const responseText = await callGemini(payload, '', false);
-
+    let responseText = await callGemini(payload, '', false);
+    
+    // *** הוספת הקוד לניקוי וחלוק JSON:
     try {
-        const result = JSON.parse(responseText);
+        // 1. חילוץ הבלוק שנראה כמו JSON (מתחיל ב-{ ומסתיים ב-})
+        const jsonMatch = responseText.match(/\{[\s\S]*\}/);
+        if (!jsonMatch) {
+             throw new Error("JSON block not found in response.");
+        }
+        const cleanJsonString = jsonMatch[0].trim();
+        
+        const result = JSON.parse(cleanJsonString); // ננתח את המחרוזת הנקייה
+        // *** סוף הוספה
+
         if (result.error) {
             showAlert('שגיאה', 'לא הצלחנו לקרוא את הפרטים מהקבלה. נסו שוב בתאורה טובה יותר.');
         } else {
             $('#expense-amount').value = result.amount || '';
             $('#expense-desc').value = result.description || '';
-            window.closeModal();
+            window.closeModal(); // סגירה רק לאחר הצלחה
         }
     } catch (e) {
         console.error("Error parsing Gemini receipt response:", e);
-        showAlert('שגיאה', 'התקבלה תשובה לא תקינה מהשרת. נסו שוב.');
+        showAlert('שגיאה', 'התקבלה תשובה לא תקינה מהשרת, או שה-AI לא זיהה נכון. נסו שוב.');
     }
 }
 async function processLookupImage(base64ImageData) {
@@ -3335,27 +3347,24 @@ uploadBtn.addEventListener("click", () => {
   fileInput.click(); // פותח את חלון בחירת הקבצים
 });
 
-fileInput.addEventListener("change", (e) => {
-  const file = e.target.files[0];
-  if (!file) return;
+// קוד חדש ומתוקן עבור הקלט של העלאת קבלה מהגלריה
+document.getElementById("receipt-file-input").addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
 
-  const reader = new FileReader();
-  reader.onload = function(evt) {
-    // כאן אפשר להציג את התמונה במסך או לשלוח לשרת
-    console.log("תמונה נטענה:", file.name);
-    // למשל להציג על הקנבס:
-    const img = new Image();
-    img.onload = () => {
-      const canvas = document.getElementById("camera-canvas");
-      const ctx = canvas.getContext("2d");
-      canvas.width = img.width;
-      canvas.height = img.height;
-      ctx.drawImage(img, 0, 0);
-      canvas.classList.remove("hidden");
+    const reader = new FileReader();
+    reader.onload = function(event) {
+        const dataUrl = event.target.result;
+        // המרת Data URL לבסיס 64 נקי משם הקובץ
+        const base64ImageData = dataUrl.split(',')[1]; 
+        
+        // קריאה לפונקציית העיבוד האמיתית
+        processReceiptImage(base64ImageData);
+        
+        // סגירת מודל המצלמה מיד
+        stopCamera();
     };
-    img.src = evt.target.result;
-  };
-  reader.readAsDataURL(file);
+    reader.readAsDataURL(file);
 });
 
 });
