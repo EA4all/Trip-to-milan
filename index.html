@@ -616,7 +616,7 @@ body {
         </div>
 <div class="p-4 border-t flex justify-center items-end gap-6">
     <!-- Upload -->
-    <div class="flex flex-col items-center">
+    <div class="flex flex-col items-center min-h-[140px]">
         <button id="upload-receipt-btn" class="btn btn-ghost w-16 h-16 rounded-full text-2xl" title="העלה מהגלריה">
             <i class="fa-solid fa-folder-open"></i>
         </button>
@@ -625,7 +625,7 @@ body {
 
     <!-- Capture + Zoom -->
     <div class="flex flex-col items-center">
-        <button id="capture-btn" class="btn btn-primary w-20 h-20 rounded-full" title="צלם">
+        <button id="capture-btn" class="btn btn-primary w-16 h-16 rounded-full" title="צלם">
             <i class="fa-solid fa-camera fa-2x"></i>
         </button>
         <div class="flex items-center gap-2 text-xs mt-2">
@@ -646,7 +646,7 @@ body {
         </button>
     </div>
 </div>
-
+</div>
 
     </div>
 </div>
@@ -3291,22 +3291,7 @@ lightboxModal.addEventListener('click', (e) => {
     }
 });
 // ========================= סוף: לוגיקה לחלון הגדלת תמונות (Lightbox) =========================
-$('#upload-receipt-btn').addEventListener('click', () => {
-    $('#receipt-upload-input').click();
-});
 
-$('#receipt-upload-input').addEventListener('change', (e) => {
-    const file = e.target.files[0];
-    if (file) {
-        const reader = new FileReader();
-        reader.onload = (event) => {
-            const base64String = event.target.result.split(',')[1];
-            processReceiptImage(base64String);
-            window.closeModal();
-        };
-        reader.readAsDataURL(file);
-    }
-});
 document.getElementById("torch-btn").addEventListener("click", () => {
   if (activeVideoTrack && activeVideoTrack.getCapabilities().torch) {
     let settings = activeVideoTrack.getSettings();
@@ -3318,10 +3303,12 @@ document.getElementById("torch-btn").addEventListener("click", () => {
 });
 
 let zoom = 1.0;
+
 document.getElementById("zoom-in-btn").addEventListener("click", () => {
   zoom += 0.1;
   document.getElementById("zoom-level").textContent = zoom.toFixed(1) + "x";
-  if (activeVideoTrack) {
+
+  if (activeVideoTrack && activeVideoTrack.getCapabilities().zoom) {
     activeVideoTrack.applyConstraints({ advanced: [{ zoom }] }).catch(console.error);
   }
 });
@@ -3329,10 +3316,12 @@ document.getElementById("zoom-in-btn").addEventListener("click", () => {
 document.getElementById("zoom-out-btn").addEventListener("click", () => {
   zoom = Math.max(1.0, zoom - 0.1);
   document.getElementById("zoom-level").textContent = zoom.toFixed(1) + "x";
-  if (activeVideoTrack) {
+
+  if (activeVideoTrack && activeVideoTrack.getCapabilities().zoom) {
     activeVideoTrack.applyConstraints({ advanced: [{ zoom }] }).catch(console.error);
   }
 });
+
 // פתיחת גלריה
 const uploadBtn = document.getElementById("upload-receipt-btn");
 const fileInput = document.getElementById("receipt-file-input");
