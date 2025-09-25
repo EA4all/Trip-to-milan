@@ -614,7 +614,10 @@ body {
             <video id="camera-feed" class="w-full h-full object-cover bg-black rounded-lg" playsinline autoplay></video>
             <canvas id="camera-canvas" class="hidden"></canvas>
         </div>
-<div class="p-4 border-t flex justify-center items-center gap-4">
+<div class="p-4 border-t flex justify-center items-center gap-2">
+      <button id="zoom-out-btn" class="btn btn-ghost rounded-full w-8 h-8 text-xl" title="הקטן">
+        <i class="fa-solid fa-magnifying-glass-minus"></i>
+    </button>
     <!-- Upload -->
     <div class="flex flex-col items-center">
         <button id="upload-receipt-btn" class="btn btn-ghost w-16 h-16 rounded-full text-2xl" title="העלה מהגלריה">
@@ -640,16 +643,16 @@ body {
 
 <!-- Zoom row -->
 
-    <button id="zoom-out-btn" class="btn btn-ghost rounded-full w-8 h-8 text-xl" title="הקטן">
-        <i class="fa-solid fa-magnifying-glass-minus"></i>
-    </button>
-    <span id="zoom-level">1.0x</span>
+
     <button id="zoom-in-btn" class="btn btn-ghost rounded-full w-8 h-8 text-xl" title="הגדל">
         <i class="fa-solid fa-magnifying-glass-plus"></i>
     </button>
 
 </div>
 
+  <div class="p-4 border-t flex justify-center items-center gap-2">
+    <span id="zoom-level">1.0x</span>
+        </div>
     </div>
 </div>
 ------
