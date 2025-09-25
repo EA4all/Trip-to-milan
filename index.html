@@ -614,29 +614,20 @@ body {
             <video id="camera-feed" class="w-full h-full object-cover bg-black rounded-lg" playsinline autoplay></video>
             <canvas id="camera-canvas" class="hidden"></canvas>
         </div>
-<div class="p-4 border-t flex justify-center items-end gap-6">
+<div class="p-4 border-t flex justify-center items-center gap-12">
     <!-- Upload -->
-    <div class="flex flex-col items-center min-h-[140px]">
+    <div class="flex flex-col items-center">
         <button id="upload-receipt-btn" class="btn btn-ghost w-16 h-16 rounded-full text-2xl" title="העלה מהגלריה">
             <i class="fa-solid fa-folder-open"></i>
         </button>
         <input type="file" id="receipt-file-input" accept="image/*" class="hidden">
     </div>
 
-    <!-- Capture + Zoom -->
+    <!-- Capture -->
     <div class="flex flex-col items-center">
-        <button id="capture-btn" class="btn btn-primary w-16 h-16 rounded-full" title="צלם">
+        <button id="capture-btn" class="btn btn-primary w-20 h-20 rounded-full" title="צלם">
             <i class="fa-solid fa-camera fa-2x"></i>
         </button>
-        <div class="flex items-center gap-2 text-xs mt-2">
-            <button id="zoom-out-btn" class="btn btn-ghost rounded-full w-8 h-8 text-xl" title="הקטן">
-                <i class="fa-solid fa-magnifying-glass-minus"></i>
-            </button>
-            <span id="zoom-level">1.0x</span>
-            <button id="zoom-in-btn" class="btn btn-ghost rounded-full w-8 h-8 text-xl" title="הגדל">
-                <i class="fa-solid fa-magnifying-glass-plus"></i>
-            </button>
-        </div>
     </div>
 
     <!-- Torch -->
@@ -645,6 +636,17 @@ body {
             <i class="fa-solid fa-lightbulb"></i>
         </button>
     </div>
+</div>
+
+<!-- Zoom row -->
+<div class="flex justify-center items-center gap-2 text-xs mt-2">
+    <button id="zoom-out-btn" class="btn btn-ghost rounded-full w-8 h-8 text-xl" title="הקטן">
+        <i class="fa-solid fa-magnifying-glass-minus"></i>
+    </button>
+    <span id="zoom-level">1.0x</span>
+    <button id="zoom-in-btn" class="btn btn-ghost rounded-full w-8 h-8 text-xl" title="הגדל">
+        <i class="fa-solid fa-magnifying-glass-plus"></i>
+    </button>
 </div>
 </div>
 
