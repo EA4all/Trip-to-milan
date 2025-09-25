@@ -624,7 +624,7 @@ body {
                     <i class="fa-solid fa-camera fa-2x"></i>
                 </button>
                 <div class="flex items-center gap-2 text-xs">
-                    <button id="zoom-out-btn" class="btn btn-ghost rounded-full w-8 h-8 text-xl" title="הקטן"><i class="fa-solid fa-magnifying-glass-minus"></i></i class="fa-solid fa-camera fa-2x"></i></button>
+                    <button id="zoom-out-btn" class="btn btn-ghost rounded-full w-8 h-8 text-xl" title="הקטן"><i class="fa-solid fa-magnifying-glass-minus"></i></button>
                     <span id="zoom-level">1.0x</span>
                     <button id="zoom-in-btn" class="btn btn-ghost rounded-full w-8 h-8 text-xl" title="הגדל"><i class="fa-solid fa-magnifying-glass-plus"></i></button>
                 </div>
@@ -2198,6 +2198,8 @@ async function startCamera() {
     console.log("LOG: startCamera called for mode: " + cameraMode);
     const video = $('#camera-feed');
     const titles = { translate: "תרגם מתמונה", receipt: "סרוק קבלה", lookup: "זיהוי אובייקט" };
+    const torchBtn = $('#torch-btn');
+    const captureBtn = $('#capture-btn');
 
     if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
         try {
@@ -2207,15 +2209,18 @@ async function startCamera() {
 
             activeVideoTrack = cameraStream.getVideoTracks()[0];
             
-            // בודק אם הפנס נתמך ומציג את הכפתור רק במקרה זה
+            // בדיקה וניהול כפתור הפנס
             const capabilities = activeVideoTrack.getCapabilities();
-            const torchBtn = $('#torch-btn');
             if (capabilities.torch) {
-                torchBtn.style.display = 'block';
-                $('#capture-btn').classList.remove('mx-auto');
+                torchBtn.style.display = 'flex'; // הצג את הפנס
+                captureBtn.classList.remove('mx-auto'); // אל תמרכז את הצילום
             } else {
-                torchBtn.style.display = 'none';
-                $('#capture-btn').classList.add('mx-auto');
+                torchBtn.style.display = 'none'; // הסתר את הפנס
+                // מרכז את כפתור הצילום אם הפנס חבוי
+                const btnContainer = captureBtn.closest('.p-4.border-t.flex');
+                if (btnContainer) {
+                    btnContainer.style.justifyContent = 'center';
+                }
             }
 
             $('#camera-title').textContent = titles[cameraMode] || "מצלמה";
