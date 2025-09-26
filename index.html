@@ -2449,6 +2449,8 @@ async function processLookupImage(base64ImageData) {
 
    // חפש את הפונקציה המלאה של callGemini והחלף אותה בגרסה זו:
 
+// חפש את הפונקציה המלאה של callGemini והחלף אותה בגרסה זו:
+
 async function callGemini(payload, prompt, useSearch = false) {
     // --- START OF FIX ---
     // If a separate prompt string is provided, use it. This is for simple text requests.
@@ -2464,9 +2466,12 @@ async function callGemini(payload, prompt, useSearch = false) {
     } else {
        if(payload.tools) delete payload.tools;
     }
+    
+    // *** ודא שאין שדה model: '...' בתוך ה-payload כאן.
+    // מכיוון שאנו מגדירים אותו ב-URL, אסור שהוא יופיע ב-payload.
 
     const apiKey = "AIzaSyB80v2xdhebJqhjyruJ5Ta0eyhJiq7DsI8";
-    // *** התיקון הקריטי! ודא שזה נכתב כך: ***
+    // *** התיקון הקריטי: ודא שזה נכתב כך, בלי 'latest' או מספרים! ***
     const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`; 
 
     try {
@@ -2476,11 +2481,14 @@ async function callGemini(payload, prompt, useSearch = false) {
             body: JSON.stringify(payload)
         });
         const result = await response.json();
+        
+        // ייתכן שהשם הבעייתי נשלח באופן אוטומטי מהקוד הישן שלך.
         if (!response.ok) {
-            console.error("ERROR: Gemini API response not OK.", result);
-            // אם השגיאה עדיין מופיעה, היא נשלחת מה-API, ואנו רוצים להציג אותה
-            throw new Error(result.error?.message || `שגיאת רשת: ${response.status}`);
+             console.error("ERROR: Gemini API response not OK. Result:", result);
+             // השגיאה שהשרת מחזיר היא: "Publisher Model was not found..."
+             throw new Error("שגיאת מודל AI: המודל הספציפי שנדרש אינו נגיש. נסה לרענן את הדף.");
         }
+        
         console.log("LOG: Gemini API call successful.");
         const text = result.candidates?.[0]?.content?.parts?.[0]?.text;
         return text || "לא התקבלה תשובה מ-Gemini.";
