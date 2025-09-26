@@ -794,26 +794,7 @@ body {
     // **************************
 
     // --- Live Location State ---
-    let liveMap;
-    let userMarkers = {};
 
-    let cameraMode = 'translate';
-    let activeVideoTrack = null;
-    let localTripData = {}; 
-    let budgetChartInstance = null;
-    let cameraStream = null;
-    let eurToIlsRate = 4.0; // Default rate
-    let userCoords = null;
-    let isFirebaseConnected = false;
-    let translationHistory = JSON.parse(localStorage.getItem('milanTripTranslationHistory')) || [];
-    let lastWeatherAPIData = null;
-    
-    // --- Live Location State ---
-    let liveMap;
-    let userMarkers = {};
-    let watchingLocation = false;
-    let watchId = null;
-    let currentUserId = null;
 
     console.log("LOG: Global variables and utility functions defined.");
 
@@ -1895,7 +1876,8 @@ async function getAudioGuide(placeName) {
 }
 
 //========================================================================
-    async function generateDailyPodcast(dayId) {
+// קטע קוד חדש ל-generateDailyPodcast
+async function generateDailyPodcast(dayId) {
     const dayData = localTripData.plan[dayId];
     const journalEntries = (localTripData.journal && localTripData.journal[dayId]) || [];
     
@@ -1926,7 +1908,6 @@ async function getAudioGuide(placeName) {
 
     showAlert(`סיכום הפודקאסט ל: ${dayName}`, podcastScript, true, { text: podcastScript.replace(/\n/g, ' '), lang: 'he-IL' });
 }
-
 
   
 
@@ -3011,6 +2992,8 @@ document.addEventListener('DOMContentLoaded', () => {
     window.removeImage = removeImage;
     window.findUtility = findUtility;
     window.getAudioGuide = getAudioGuide;
+    window.generateDailyPodcast = generateDailyPodcast; 
+    window.askGeneralGemini = askGeneralGemini; // אם אתה משתמש בזה ישירות
     initMetroHelper();
 
     // --- PWA Service Worker Registration ---
@@ -3297,7 +3280,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const promptInput = $('#gemini-prompt');
     const userPrompt = promptInput.value.trim();
     if (userPrompt) {
-        askGeneralGemini(userPrompt);
+        window.askGeneralGemini(userPrompt); // ודא שאתה קורא לפונקציה מחלון
         promptInput.value = ''; // ניקוי שדה הקלט
     }
 });
