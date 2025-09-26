@@ -783,20 +783,29 @@ body {
     const fmtBold = (t) => (t || '').replace(/\*\*(.*?)\*\*/g, '<strong class="font-semibold text-brand-700 dark:text-brand-300">$1<\/strong>');
     const placeholderLogoUrl = (name) => `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&size=80&rounded=true&background=e0e7ff&color=1e40af`;
     
-    // --- Global State ---
-    let db, auth, tripDocRef, locationsColRef;
-    let isFirebaseConnected = false;
-    let translationHistory = JSON.parse(localStorage.getItem('milanTripTranslationHistory')) || [];
-    let lastWeatherAPIData = null;
-    
-    // *** המיקום הנכון להוספה ***
-    let geminiChatHistory = []; 
-    // **************************
+// --- Global State ---
+let db, auth, tripDocRef, locationsColRef;
+let cameraMode = 'translate';
+let activeVideoTrack = null;
+let localTripData = {};
+let budgetChartInstance = null;
+let cameraStream = null;
+let eurToIlsRate = 4.0; // Default rate
+let userCoords = null;
+let isFirebaseConnected = false; // הגדרת Firebase תקינה
+let translationHistory = JSON.parse(localStorage.getItem('milanTripTranslationHistory')) || [];
+let lastWeatherAPIData = null;
+let geminiChatHistory = []; // משתנה השיחה החדש
 
-    // --- Live Location State ---
+// --- Live Location State ---
+let liveMap;
+let userMarkers = {};
+let watchingLocation = false;
+let watchId = null;
+let currentUserId = null;
 
-
-    console.log("LOG: Global variables and utility functions defined.");
+console.log("LOG: Global variables and utility functions defined.");
+// -----------------------------------------------------------
 
 
     // --- DATA ---
@@ -2452,8 +2461,12 @@ async function processLookupImage(base64ImageData) {
        if(payload.tools) delete payload.tools;
     }
 
+// קטע קוד מתוקן בתוך callGemini
+
     const apiKey = "AIzaSyB80v2xdhebJqhjyruJ5Ta0eyhJiq7DsI8";
-    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${apiKey}`;
+    // *** URL מעודכן ומתוקן ***
+    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`; 
+    // *************************
 
     try {
         const response = await fetch(apiUrl, {
