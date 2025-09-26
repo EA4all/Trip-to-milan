@@ -2452,28 +2452,26 @@ async function processLookupImage(base64ImageData) {
 // חפש את הפונקציה המלאה של callGemini והחלף אותה בגרסה זו:
 
 async function callGemini(payload, prompt, useSearch = false) {
-    // --- START OF FIX ---
-    // If a separate prompt string is provided, use it. This is for simple text requests.
-    if (prompt) {
-        payload.contents[0].parts[0].text = prompt;
-    }
-    // If no prompt is provided, we assume it's already correctly set in the payload (like for image requests).
-    console.log(`LOG: callGemini called. Use search: ${useSearch}. Payload prompt: ${payload.contents[0].parts[0].text.substring(0, 100)}...`);
-    // --- END OF FIX ---
-
+    console.log(`LOG: callGemini called. Use search: ${useSearch}. Prompt: ${prompt.substring(0, 100)}...`);
+    
+    // הגדרת הטקסט של הפרומפט בתוך ה-payload
+    payload.contents.parts.text = prompt;
+    
+    // בדיקה והגדרת הכלים החדשים
     if (useSearch) {
+        // המבנה החדש: מערך 'tools' המכיל אובייקטים של כלים.
+        // Google Search Grounding הוא כעת אחד הכלים במערך.
         payload.tools = [{ "google_search_retrieval": {} }];
     } else {
+       // אם אין צורך בכלי חיפוש, יש לוודא שהמפתח 'tools' לא קיים.
        if(payload.tools) delete payload.tools;
     }
+
+    const apiKey = "AIzaSyB80v2xdhebJqhjyruJ5Ta0eyhJiq7DsI8"; 
+    // מומלץ להשתמש במזהה מודל ספציפי כמו 'gemini-2.0-flash' במקום 'latest'
+    const modelId = "gemini-1.5-flash-latest"; // לטובת הדוגמה, נשאר על 'latest'
+    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${modelId}:generateContent?key=${apiKey}`;
     
-    // *** ודא שאין שדה model: '...' בתוך ה-payload כאן.
-    // מכיוון שאנו מגדירים אותו ב-URL, אסור שהוא יופיע ב-payload.
-
-    const apiKey = "AIzaSyB80v2xdhebJqhjyruJ5Ta0eyhJiq7DsI8";
-    // *** התיקון הקריטי: ודא שזה נכתב כך, בלי 'latest' או מספרים! ***
-    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`; 
-
     try {
         const response = await fetch(apiUrl, {
             method: 'POST',
@@ -2482,16 +2480,18 @@ async function callGemini(payload, prompt, useSearch = false) {
         });
         const result = await response.json();
         
-        // ייתכן שהשם הבעייתי נשלח באופן אוטומטי מהקוד הישן שלך.
         if (!response.ok) {
-             console.error("ERROR: Gemini API response not OK. Result:", result);
-             // השגיאה שהשרת מחזיר היא: "Publisher Model was not found..."
-             throw new Error("שגיאת מודל AI: המודל הספציפי שנדרש אינו נגיש. נסה לרענן את הדף.");
+            console.error("ERROR: Gemini API response not OK.", result);
+            throw new Error(result.error?.message |
+
+| `שגיאת רשת: ${response.status}`);
         }
         
         console.log("LOG: Gemini API call successful.");
-        const text = result.candidates?.[0]?.content?.parts?.[0]?.text;
-        return text || "לא התקבלה תשובה מ-Gemini.";
+        const text = result.candidates?.?.content?.parts?.?.text;
+        return text |
+
+| "לא התקבלה תשובה מ-Gemini.";
 
     } catch (error) {
         console.error("ERROR: Gemini API Error:", error);
