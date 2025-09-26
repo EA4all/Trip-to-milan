@@ -2445,6 +2445,8 @@ async function processLookupImage(base64ImageData) {
 
 
     // --- Gemini Calls ---
+// קטע קוד מתוקן ומוודא בתוך callGemini
+
     async function callGemini(payload, prompt, useSearch = false) {
     // --- START OF FIX ---
     // If a separate prompt string is provided, use it. This is for simple text requests.
@@ -2461,12 +2463,9 @@ async function processLookupImage(base64ImageData) {
        if(payload.tools) delete payload.tools;
     }
 
-// קטע קוד מתוקן בתוך callGemini
-
     const apiKey = "AIzaSyB80v2xdhebJqhjyruJ5Ta0eyhJiq7DsI8";
-    // *** URL מעודכן ומתוקן ***
+    // *** זה התיקון הקריטי: ודא שאתה משתמש ב-gemini-1.5-flash ללא סיומות שגויות ***
     const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`; 
-    // *************************
 
     try {
         const response = await fetch(apiUrl, {
@@ -2477,6 +2476,7 @@ async function processLookupImage(base64ImageData) {
         const result = await response.json();
         if (!response.ok) {
             console.error("ERROR: Gemini API response not OK.", result);
+            // חשוב לשנות את השגיאה הזו לשגיאה גנרית כדי לא לחשוף שגיאות API
             throw new Error(result.error?.message || `שגיאת רשת: ${response.status}`);
         }
         console.log("LOG: Gemini API call successful.");
