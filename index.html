@@ -2452,42 +2452,40 @@ async function processLookupImage(base64ImageData) {
 // חפש את הפונקציה המלאה של callGemini והחלף אותה בגרסה זו:
 
 async function callGemini(payload, prompt, useSearch = false) {
-    console.log(`LOG: callGemini called. Use search: ${useSearch}. Prompt: ${prompt.substring(0, 100)}...`);
+    const API_KEY = "AIzaSyB80v2xdhebJqhjyruJ5Ta0eyhJiq7DsI8";
+    const BASE_URL = "https://generativelanguage.googleapis.com/v1beta/models";
+    const MODEL_NAME = "gemini-1.5-flash"; 
+    const FINAL_URL = `${BASE_URL}/${MODEL_NAME}:generateContent?key=${API_KEY}`;
     
-    // הגדרת הטקסט של הפרומפט בתוך ה-payload
-    payload.contents.parts.text = prompt;
-    
-    // בדיקה והגדרת הכלים החדשים
-    if (useSearch) {
-        // המבנה החדש: מערך 'tools' המכיל אובייקטים של כלים.
-        // Google Search Grounding הוא כעת אחד הכלים במערך.
-        payload.tools = [{ "google_search_retrieval": {} }];
-    } else {
-       // אם אין צורך בכלי חיפוש, יש לוודא שהמפתח 'tools' לא קיים.
-       if(payload.tools) delete payload.tools;
+    if (prompt) {
+        payload.contents.parts.text = prompt;
     }
 
-    const apiKey = "AIzaSyB80v2xdhebJqhjyruJ5Ta0eyhJiq7DsI8"; 
-    // מומלץ להשתמש במזהה מודל ספציפי כמו 'gemini-2.0-flash' במקום 'latest'
-    const modelId = "gemini-1.5-flash-latest"; // לטובת הדוגמה, נשאר על 'latest'
-    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${modelId}:generateContent?key=${apiKey}`;
+    if (useSearch) {
+        payload.tools = [{ "google_search_retrieval": {} }];
+    } else {
+        if (payload.tools) delete payload.tools;
+    }
     
     try {
-        const response = await fetch(apiUrl, {
+        const response = await fetch(FINAL_URL, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload)
         });
+
         const result = await response.json();
-        
+
         if (!response.ok) {
-            console.error("ERROR: Gemini API response not OK.", result);
+            console.error("ERROR: Gemini API response not OK. Result:", result);
+            if (result.error && result.error.message.includes("was not found")) {
+                throw new Error("שגיאה: שם המודל של ה-AI אינו תקין. אנא בדוק שוב את כתובת המודל בקוד.");
+            }
             throw new Error(result.error?.message |
 
 | `שגיאת רשת: ${response.status}`);
         }
         
-        console.log("LOG: Gemini API call successful.");
         const text = result.candidates?.?.content?.parts?.?.text;
         return text |
 
