@@ -2457,8 +2457,13 @@ async function callGemini(payload, prompt, useSearch = false) {
     const MODEL_NAME = "gemini-1.5-flash"; 
     const FINAL_URL = `${BASE_URL}/${MODEL_NAME}:generateContent?key=${API_KEY}`;
     
+    // תיקון: הגדרת הטקסט ב-payload עבור הפונקציות הקוראות 
+    // שימו לב ש-payload.contents הוא מערך של אובייקטים, לכן הגישה היא דרך [0].
     if (prompt) {
-        payload.contents.parts.text = prompt;
+        if (payload.contents && payload.contents.length > 0 && payload.contents[0].parts) {
+            // זה הופך את הפונקציה לבטוחה יותר לשימוש בהיסטוריית שיחה (askGeneralGemini) ולפרומפטים (fetchSafetyWarnings)
+            payload.contents[0].parts[0].text = prompt;
+        }
     }
 
     if (useSearch) {
@@ -2478,21 +2483,18 @@ async function callGemini(payload, prompt, useSearch = false) {
 
         if (!response.ok) {
             console.error("ERROR: Gemini API response not OK. Result:", result);
-            if (result.error && result.error.message.includes("was not found")) {
-                throw new Error("שגיאה: שם המודל של ה-AI אינו תקין. אנא בדוק שוב את כתובת המודל בקוד.");
-            }
-            throw new Error(result.error?.message |
-
-| `שגיאת רשת: ${response.status}`);
+            // משתמשים בהודעת השגיאה המקורית מהשרת
+            throw new Error(result.error?.message || `שגיאת רשת: ${response.status}`);
         }
         
-        const text = result.candidates?.?.content?.parts?.?.text;
-        return text |
-
-| "לא התקבלה תשובה מ-Gemini.";
+        // תיקון: גישה בטוחה לטקסט מתוך תשובת ה-JSON
+        const text = result.candidates?.[0]?.content?.parts?.[0]?.text;
+        
+        return text || "לא התקבלה תשובה מ-Gemini.";
 
     } catch (error) {
         console.error("ERROR: Gemini API Error:", error);
+        // מחזירים את ההודעה הגנרית שהגדרנו רק במקרה של כשל רשת או אחר
         return `שגיאה: ${error.message}`;
     }
 }
@@ -2536,7 +2538,7 @@ async function callGemini(payload, prompt, useSearch = false) {
         resultContainer.innerHTML = `<span>${responseText}</span> <button onclick="window.speakText('${responseText.replace(/'/g, "\\'")}', '${langCode}')" class="btn btn-ghost p-1 h-auto"><i class="fa-solid fa-volume-high"></i></button>`;
     }
 
-async function askGeneralGemini(userPrompt) { // מקבל עכשיו את הפרומפט כארגומנט
+async function askGeneralGemini(userPrompt) {
     console.log("LOG: askGeneralGemini called.");
     if (!userPrompt) return;
 
@@ -2551,11 +2553,12 @@ async function askGeneralGemini(userPrompt) { // מקבל עכשיו את הפר
     // 2. בניית הפיילווד המלא
     // נשלח את כל ההיסטוריה של השיחה
     const payload = { 
-        contents: geminiChatHistory,
+        contents: geminiChatHistory, // שולח את כל ההיסטוריה כולל השאלה הנוכחית
         tools: [{ "google_search_retrieval": {} }] // משתמשים בכלי חיפוש
     };
 
-    const responseText = await callGemini(payload, '', false); // אין צורך בפרומפט נפרד, הוא בתוך ה-payload.contents
+    // קוראים לפונקציה callGemini בלי פרומפט נוסף, כי ה-contents כבר מכיל את השאלה.
+    const responseText = await callGemini(payload, '', true); // עכשיו זה שולח useSearch=true
 
     // 3. עדכון ההיסטוריה עם התשובה של Gemini
     geminiChatHistory.push({ role: "model", parts: [{ text: responseText }] });
@@ -2572,20 +2575,6 @@ async function askGeneralGemini(userPrompt) { // מקבל עכשיו את הפר
     
     submitBtn.disabled = false;
 }
-    
-    async function fetchSafetyWarnings() {
-        console.log("LOG: fetchSafetyWarnings called.");
-        const container = $('#safety-warnings-content');
-        container.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> מאתר מידע עדכני...`;
-        
-        const today = new Date().toLocaleDateString('en-CA');
-        const prompt = `As a safety advisor, check for any significant demonstrations, public transport strikes, or specific safety warnings for tourists in Milan, Italy, specifically for today's date: ${today}. Provide a concise summary in Hebrew. If your web search finds no specific warnings, state that clearly and mention that the information is current as of today.`;
-        const payload = { contents: [{ parts: [{ text: "" }] }] };
-        const responseText = await callGemini(payload, prompt, true);
-        
-        container.textContent = responseText;
-    }
-
     async function generateTripSummary() {
         console.log("LOG: generateTripSummary called.");
         showAlert('יוצר סיכום...', 'אוסף את כל החוויות והנתונים כדי ליצור סיכום אישי... זה עשוי לקחת רגע.', false);
