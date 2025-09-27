@@ -2452,26 +2452,27 @@ async function processLookupImage(base64ImageData) {
 // חפש את הפונקציה המלאה של callGemini והחלף אותה בגרסה זו:
 
 async function callGemini(payload, prompt, useSearch = false) {
-    //const API_KEY = "AIzaSyB80v2xdhebJqhjyruJ5Ta0eyhJiq7DsI8";
+    //const API_KEY = "AIzaSyB80v2xdhebJqhjyruJ5Ta0eyhJiq7DsI8"; // יש לשים לב למפתח הנכון
     const API_KEY = "AIzaSyDzQFz_abwcxSwq8VhHCQS-HcsYk_Qug-I";
     const BASE_URL = "https://generativelanguage.googleapis.com/v1beta/models";
     const MODEL_NAME = "gemini-2.5-flash"; 
     const FINAL_URL = `${BASE_URL}/${MODEL_NAME}:generateContent?key=${API_KEY}`;
     
-    // תיקון: הגדרת הטקסט ב-payload עבור הפונקציות הקוראות 
-    // שימו לב ש-payload.contents הוא מערך של אובייקטים, לכן הגישה היא דרך [0].
     if (prompt) {
         if (payload.contents && payload.contents.length > 0 && payload.contents[0].parts) {
-            // זה הופך את הפונקציה לבטוחה יותר לשימוש בהיסטוריית שיחה (askGeneralGemini) ולפרומפטים (fetchSafetyWarnings)
             payload.contents[0].parts[0].text = prompt;
         }
     }
 
+    // *** תיקון קריטי: העברת כלי החיפוש ל-config ***
     if (useSearch) {
-        payload.tools = [{ "google_search_retrieval": {} }];
+        payload.config = {
+            tools: [{ googleSearch: {} }]
+        };
     } else {
-        if (payload.tools) delete payload.tools;
+        if (payload.config) delete payload.config;
     }
+    // **********************************************
     
     try {
         const response = await fetch(FINAL_URL, {
@@ -2484,18 +2485,15 @@ async function callGemini(payload, prompt, useSearch = false) {
 
         if (!response.ok) {
             console.error("ERROR: Gemini API response not OK. Result:", result);
-            // משתמשים בהודעת השגיאה המקורית מהשרת
             throw new Error(result.error?.message || `שגיאת רשת: ${response.status}`);
         }
         
-        // תיקון: גישה בטוחה לטקסט מתוך תשובת ה-JSON
         const text = result.candidates?.[0]?.content?.parts?.[0]?.text;
         
         return text || "לא התקבלה תשובה מ-Gemini.";
 
     } catch (error) {
         console.error("ERROR: Gemini API Error:", error);
-        // מחזירים את ההודעה הגנרית שהגדרנו רק במקרה של כשל רשת או אחר
         return `שגיאה: ${error.message}`;
     }
 }
@@ -3030,7 +3028,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Firebase Initialization ---
     const firebaseConfig = {
-      apiKey: "AIzaSyB80v2xdhebJqhjyruJ5Ta0eyhJiq7DsI8",
+      apiKey: "AIzaSyD47-qHc8vmGQt4n4LluKW64LEMB-UYrfk",
       authDomain: "trip-to-milan.firebaseapp.com",
       projectId: "trip-to-milan",
       storageBucket: "trip-to-milan.firebasestorage.app",
