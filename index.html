@@ -2452,7 +2452,7 @@ async function processLookupImage(base64ImageData) {
 // חפש את הפונקציה המלאה של callGemini והחלף אותה בגרסה זו:
 
 async function callGemini(payload, prompt, useSearch = false) {
-    //const API_KEY = "AIzaSyB80v2xdhebJqhjyruJ5Ta0eyhJiq7DsI8"; // יש לשים לב למפתח הנכון
+    //const API_KEY = "AIzaSyB80v2xdhebJqhjyruJ5Ta0eyhJiq7DsI8"; 
     const API_KEY = "AIzaSyDzQFz_abwcxSwq8VhHCQS-HcsYk_Qug-I";
     const BASE_URL = "https://generativelanguage.googleapis.com/v1beta/models";
     const MODEL_NAME = "gemini-2.5-flash"; 
@@ -2464,15 +2464,18 @@ async function callGemini(payload, prompt, useSearch = false) {
         }
     }
 
-    // *** תיקון קריטי: העברת כלי החיפוש ל-config ***
+    // *** תיקון סופי וקריטי: שימוש ב-tools ברמה העליונה עם googleSearch ***
     if (useSearch) {
-        payload.config = {
-            tools: [{ googleSearch: {} }]
-        };
+        // מחזירים את tools לרמה העליונה (כי config לא נתמך במודל זה)
+        payload.tools = [{ googleSearch: {} }];
+        // אם השדה config קיים מהניסיון הקודם - מוחקים אותו
+        if (payload.config) delete payload.config; 
     } else {
+        // אם לא צריך חיפוש - מוחקים את tools ואת config (אם קיים)
+        if (payload.tools) delete payload.tools;
         if (payload.config) delete payload.config;
     }
-    // **********************************************
+    // *******************************************************************
     
     try {
         const response = await fetch(FINAL_URL, {
@@ -2497,7 +2500,6 @@ async function callGemini(payload, prompt, useSearch = false) {
         return `שגיאה: ${error.message}`;
     }
 }
-
     window.speakText = (text, lang) => {
         console.log(`LOG: speakText called for lang ${lang}. Text: ${text}`);
         speechSynthesis.cancel();
