@@ -2452,7 +2452,8 @@ async function processLookupImage(base64ImageData) {
 // חפש את הפונקציה המלאה של callGemini והחלף אותה בגרסה זו:
 
 async function callGemini(payload, prompt, useSearch = false) {
-    const API_KEY = "AIzaSyB80v2xdhebJqhjyruJ5Ta0eyhJiq7DsI8";
+    //const API_KEY = "AIzaSyB80v2xdhebJqhjyruJ5Ta0eyhJiq7DsI8";
+    const API_KEY = "AIzaSyDzQFz_abwcxSwq8VhHCQS-HcsYk_Qug-I";
     const BASE_URL = "https://generativelanguage.googleapis.com/v1beta/models";
     const MODEL_NAME = "gemini-2.5-flash"; 
     const FINAL_URL = `${BASE_URL}/${MODEL_NAME}:generateContent?key=${API_KEY}`;
