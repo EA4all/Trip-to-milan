@@ -1243,7 +1243,7 @@ function renderMobileNavSubmenus() {
             <button class="btn btn-primary" onclick="window.openDayMap('${dayId}')"><i class="fa-solid fa-map-route mr-2"></i>מפת יום</button>
             <button class="btn btn-ghost" onclick="window.optimizeDayRoute('${dayId}')"><i class="fa-solid fa-wand-magic-sparkles mr-2"></i>סדר לי את היום</button>
             <button class="btn btn-ghost" onclick="window.generateIcsFile('${dayId}')"><i class="fa-solid fa-calendar-plus mr-2"></i>הוסף ליומן</button>
-            <button class="btn btn-primary bg-purple-600 hover:bg-purple-700" onclick="window.generateDailyPodcast('${dayId}')"><i class="fa-solid fa-microphone-lines mr-2"></i>פודקאסט יומי</button>
+            <button class="btn btn-primary bg-purple-600 hover:bg-purple-700" onclick="window.generateDailySummary('${dayId}')"><i class="fa-solid fa-microphone-lines mr-2"></i>סיכום יומי (AI)</button>
         </div><div class="space-y-4">`;
 
         let previousActivity = null; 
@@ -1882,7 +1882,7 @@ async function getAudioGuide(placeName) {
 
 //========================================================================
 // קטע קוד חדש ל-generateDailyPodcast
-async function generateDailyPodcast(dayId) {
+async function generateDailySummary(dayId) {
     const dayData = localTripData.plan[dayId];
     const journalEntries = (localTripData.journal && localTripData.journal[dayId]) || [];
     
@@ -1911,7 +1911,7 @@ async function generateDailyPodcast(dayId) {
     const payload = { contents: [{ parts: [{ text: "" }] }] };
     const podcastScript = await callGemini(payload, prompt, true);
 
-    showAlert(`סיכום הפודקאסט ל: ${dayName}`, podcastScript, true, { text: podcastScript.replace(/\n/g, ' '), lang: 'he-IL' });
+showAlert(`סיכום יומי: ${dayName}`, podcastScript, true, { text: podcastScript.replace(/\n/g, ' '), lang: 'he-IL' });
 }
 
   
@@ -2497,40 +2497,27 @@ async function callGemini(payload, prompt, useSearch = false) {
     }
 }
 window.speakText = (text, lang) => {
-        console.log(`LOG: speakText called for lang ${lang}. Text: ${text}`);
-        
-        // פונקציה לבחירת קול ספציפי לאחר טעינתם
-        const selectVoiceAndSpeak = () => {
-            speechSynthesis.cancel();
-            const utterance = new SpeechSynthesisUtterance(text);
-            utterance.lang = lang;
-            
-            if (lang === 'he-IL') {
-                const voices = speechSynthesis.getVoices();
-                const hebrewVoice = voices.find(
-                    // חפש קולות עבריים איכותיים
-                    (v) => v.lang.startsWith('he') && (v.name.includes('Carmit') || v.name.includes('Yael') || v.name.includes('Enhanced'))
-                );
-                if (hebrewVoice) {
-                    console.log(`LOG: Using selected Hebrew voice: ${hebrewVoice.name}`);
-                    utterance.voice = hebrewVoice;
-                    utterance.rate = 1.05; 
-                    utterance.pitch = 1.05;
-                }
-            }
-
-            speechSynthesis.speak(utterance);
-        };
-        
-        // ודא שהקולות נטענו
-        if (speechSynthesis.getVoices().length > 0) {
-            selectVoiceAndSpeak();
-        } else {
-            // אם לא, המתן לאירוע הטעינה של הדפדפן
-            speechSynthesis.onvoiceschanged = selectVoiceAndSpeak;
+    console.log(`LOG: speakText called for lang ${lang}. Text: ${text}`);
+    speechSynthesis.cancel();
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = lang;
+    
+    // ננסה לבחור קול ספציפי רק אם הקולות כבר נטענו
+    if (speechSynthesis.getVoices().length > 0) {
+        const voices = speechSynthesis.getVoices();
+        const hebrewVoice = voices.find(
+            (v) => v.lang.startsWith('he') && (v.name.includes('Carmit') || v.name.includes('Yael') || v.name.includes('Enhanced'))
+        );
+        if (hebrewVoice) {
+            console.log(`LOG: Using selected Hebrew voice: ${hebrewVoice.name}`);
+            utterance.voice = hebrewVoice;
+            utterance.rate = 1.05; 
+            utterance.pitch = 1.05;
         }
     }
-
+    
+    speechSynthesis.speak(utterance);
+}
     async function translateText(text) {
         console.log(`LOG: translateText called for text: ${text}`);
         const resultContainer = $('#translation-result-container');
@@ -3157,18 +3144,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Event Listeners ---
     console.log("LOG: Adding main event listeners.");
-      const loadVoices = () => {
-        if (speechSynthesis.getVoices().length > 0) {
-            console.log("LOG: TTS voices loaded.");
-            speechSynthesis.onvoiceschanged = null; // מנקה את ההאזנה לאחר הטעינה
-        }
-    };
-    // ודא שהקולות נטענים כאשר המשתמש נמצא בדף
-    if ('speechSynthesis' in window) {
+ if ('speechSynthesis' in window) {
+        // אם הקולות לא נטענו עדיין, האזן לאירוע הטעינה שלהם.
+        // זה מבטיח שבפעם הבאה ש-speakText יופעל, getVoices יהיה מלא.
         if (speechSynthesis.getVoices().length === 0) {
-            speechSynthesis.onvoiceschanged = loadVoices;
-        } else {
-            loadVoices(); 
+            speechSynthesis.onvoiceschanged = () => {
+                console.log("LOG: TTS voices loaded via onvoiceschanged event.");
+                speechSynthesis.onvoiceschanged = null; // נקה את המאזין לאחר הטעינה
+            };
         }
     }
     $('#theme-toggle').addEventListener('click', () => {
