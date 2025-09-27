@@ -2500,13 +2500,31 @@ async function callGemini(payload, prompt, useSearch = false) {
         return `שגיאה: ${error.message}`;
     }
 }
-    window.speakText = (text, lang) => {
-        console.log(`LOG: speakText called for lang ${lang}. Text: ${text}`);
-        speechSynthesis.cancel();
-        const utterance = new SpeechSynthesisUtterance(text);
-        utterance.lang = lang;
-        speechSynthesis.speak(utterance);
+window.speakText = (text, lang) => {
+    console.log(`LOG: speakText called for lang ${lang}. Text: ${text}`);
+    speechSynthesis.cancel();
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = lang;
+    
+    // --- לוגיקה לבחירת קול עברי איכותי ---
+    if (lang === 'he-IL') {
+        const voices = speechSynthesis.getVoices();
+        const hebrewVoice = voices.find(
+            // חפש קולות המכילים 'Carmit', 'Yael', או 'Hebrew'
+            (v) => v.lang.startsWith('he') && (v.name.includes('Carmit') || v.name.includes('Yael') || v.name.includes('Enhanced'))
+        );
+        if (hebrewVoice) {
+            console.log(`LOG: Using selected Hebrew voice: ${hebrewVoice.name}`);
+            utterance.voice = hebrewVoice;
+            // הגברת קצב הדיבור וה-Pitch כדי לשפר את ההרגשה
+            utterance.rate = 1.05; 
+            utterance.pitch = 1.05;
+        }
     }
+    // ------------------------------------
+
+    speechSynthesis.speak(utterance);
+}
 
     async function translateText(text) {
         console.log(`LOG: translateText called for text: ${text}`);
@@ -3134,6 +3152,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Event Listeners ---
     console.log("LOG: Adding main event listeners.");
+      const loadVoices = () => {
+        if (speechSynthesis.getVoices().length > 0) {
+            console.log("LOG: TTS voices loaded.");
+            speechSynthesis.onvoiceschanged = null; // מנקה את ההאזנה לאחר הטעינה
+        }
+    };
+    // ודא שהקולות נטענים כאשר המשתמש נמצא בדף
+    if ('speechSynthesis' in window) {
+        if (speechSynthesis.getVoices().length === 0) {
+            speechSynthesis.onvoiceschanged = loadVoices;
+        } else {
+            loadVoices(); 
+        }
+    }
     $('#theme-toggle').addEventListener('click', () => {
         const isDark = document.documentElement.classList.toggle('dark');
         if(tripDocRef && isFirebaseConnected) updateDoc(tripDocRef, { theme: isDark ? 'dark' : 'light' });
