@@ -2496,27 +2496,47 @@ async function callGemini(payload, prompt, useSearch = false) {
         return `שגיאה: ${error.message}`;
     }
 }
+    let voicesLoaded = false;
 window.speakText = (text, lang) => {
     console.log(`LOG: speakText called for lang ${lang}. Text: ${text}`);
     speechSynthesis.cancel();
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.lang = lang;
-    
-    // ננסה לבחור קול ספציפי רק אם הקולות כבר נטענו
-    if (speechSynthesis.getVoices().length > 0) {
-        const voices = speechSynthesis.getVoices();
-        const hebrewVoice = voices.find(
-            (v) => v.lang.startsWith('he') && (v.name.includes('Carmit') || v.name.includes('Yael') || v.name.includes('Enhanced'))
-        );
-        if (hebrewVoice) {
-            console.log(`LOG: Using selected Hebrew voice: ${hebrewVoice.name}`);
-            utterance.voice = hebrewVoice;
-            utterance.rate = 1.05; 
-            utterance.pitch = 1.05;
+
+    // --- פונקציית הקראה פנימית ---
+    const speakWithVoice = () => {
+        // אם הקולות נטענו, נסה לבחור קול עברי איכותי
+        if (voicesLoaded && lang === 'he-IL') {
+            const voices = speechSynthesis.getVoices();
+            const hebrewVoice = voices.find(
+                (v) => v.lang.startsWith('he') && (v.name.includes('Carmit') || v.name.includes('Yael') || v.name.includes('Enhanced'))
+            );
+            if (hebrewVoice) {
+                console.log(`LOG: Using selected Hebrew voice: ${hebrewVoice.name}`);
+                utterance.voice = hebrewVoice;
+                utterance.rate = 1.05; 
+                utterance.pitch = 1.05;
+            }
+        }
+        speechSynthesis.speak(utterance);
+    };
+
+    // --- לוגיקת טעינת קולות אסינכרונית ---
+    if (voicesLoaded) {
+        speakWithVoice();
+    } else {
+        // אם עדיין לא נטען, המתן לטעינה ואז השמע
+        speechSynthesis.onvoiceschanged = () => {
+            voicesLoaded = true; // סימון שהקולות נטענו
+            speechSynthesis.onvoiceschanged = null; // נקה את המאזין לאחר הטעינה
+            speakWithVoice(); // הקרא את הטקסט
+        };
+        // אם עדיין לא נטען, ייתכן שהאירוע כבר נשלח. נסה להפעיל את המאזין כגיבוי.
+        if (speechSynthesis.getVoices().length > 0) {
+            voicesLoaded = true;
+            speakWithVoice();
         }
     }
-    
-    speechSynthesis.speak(utterance);
 }
     async function translateText(text) {
         console.log(`LOG: translateText called for text: ${text}`);
