@@ -1866,22 +1866,18 @@ function findUtility(query, queryHebrew) {
 async function getAudioGuide(placeName) {
     showAlert('טוען מדריך...', `<div class="text-center"><i class="fa-solid fa-spinner fa-spin fa-2x"></i><p class="mt-2">מכין עבורך **תסריט שיחה** על ${placeName}...</p></div>`);
 
-    // *** הפרומפט החדש ***
-    const prompt = `Act as an expert scriptwriter for a travel podcast. Write an engaging dialogue in Hebrew between two characters: a 'Guide' (מדריך) and a 'Traveler' (מטייל). The conversation should be about 3-4 short turns per character and focus on "${placeName}" in Milan. The Guide should provide historical facts, and the Traveler should ask questions a tourist would ask.
+// *** הפרומפט החדש לפורמט מנחה יחיד ***
+    const prompt = `Act as an expert audio guide narrator. Write a short (about 3-4 paragraphs), fascinating, and engaging audio guide script in Hebrew about the landmark "${placeName}" in Milan. The script should focus on historical background, one interesting fact, and a suggestion for a traveler regarding their visit.
 
-    Format the response strictly as a dialogue, separating the speakers with a new line and their role bolded, like this:
-    **מדריך**: שלום וברוכים הבאים.
-    **מטייל**: איזו כיכר מרשימה!`;
+    Format the response strictly as a narrative script. Do not use character names or any dialogue structure.`;
     // *******************
     
     const payload = { contents: [{ parts: [{ text: "" }] }] };
     let scriptText = await callGemini(payload, prompt, false);
     
-    // עיבוד קל: החלפת עיצוב הפורמט של הפרומפט (אם יש צורך)
-    scriptText = scriptText.replace(/(\*\*.+?\*\*)/g, '<br><strong class="font-semibold text-brand-700 dark:text-brand-300">$1<\/strong>');
-
-    // שימוש ב-scriptText גם לדיבור וגם לתצוגה
-    showAlert(`פודקאסט ל${placeName}`, scriptText, true, { text: scriptText.replace(/\*\*(מדריך|מטייל)\*\*:/g, ' ').replace(/\n/g, ' '), lang: 'he-IL' });
+    // בפורמט החדש אין צורך בעיבוד קל של החלפת פורמט, רק החלפת עיצוב בולד שנעשה באופן אוטומטי
+    // נשתמש ב-showAlert עם הכותרת המתאימה
+    showAlert(`מדריך קולי ל-${placeName}`, scriptText, true, { text: scriptText.replace(/\n/g, ' '), lang: 'he-IL' });
 }
 
 //========================================================================
@@ -2501,30 +2497,39 @@ async function callGemini(payload, prompt, useSearch = false) {
     }
 }
 window.speakText = (text, lang) => {
-    console.log(`LOG: speakText called for lang ${lang}. Text: ${text}`);
-    speechSynthesis.cancel();
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.lang = lang;
-    
-    // --- לוגיקה לבחירת קול עברי איכותי ---
-    if (lang === 'he-IL') {
-        const voices = speechSynthesis.getVoices();
-        const hebrewVoice = voices.find(
-            // חפש קולות המכילים 'Carmit', 'Yael', או 'Hebrew'
-            (v) => v.lang.startsWith('he') && (v.name.includes('Carmit') || v.name.includes('Yael') || v.name.includes('Enhanced'))
-        );
-        if (hebrewVoice) {
-            console.log(`LOG: Using selected Hebrew voice: ${hebrewVoice.name}`);
-            utterance.voice = hebrewVoice;
-            // הגברת קצב הדיבור וה-Pitch כדי לשפר את ההרגשה
-            utterance.rate = 1.05; 
-            utterance.pitch = 1.05;
+        console.log(`LOG: speakText called for lang ${lang}. Text: ${text}`);
+        
+        // פונקציה לבחירת קול ספציפי לאחר טעינתם
+        const selectVoiceAndSpeak = () => {
+            speechSynthesis.cancel();
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.lang = lang;
+            
+            if (lang === 'he-IL') {
+                const voices = speechSynthesis.getVoices();
+                const hebrewVoice = voices.find(
+                    // חפש קולות עבריים איכותיים
+                    (v) => v.lang.startsWith('he') && (v.name.includes('Carmit') || v.name.includes('Yael') || v.name.includes('Enhanced'))
+                );
+                if (hebrewVoice) {
+                    console.log(`LOG: Using selected Hebrew voice: ${hebrewVoice.name}`);
+                    utterance.voice = hebrewVoice;
+                    utterance.rate = 1.05; 
+                    utterance.pitch = 1.05;
+                }
+            }
+
+            speechSynthesis.speak(utterance);
+        };
+        
+        // ודא שהקולות נטענו
+        if (speechSynthesis.getVoices().length > 0) {
+            selectVoiceAndSpeak();
+        } else {
+            // אם לא, המתן לאירוע הטעינה של הדפדפן
+            speechSynthesis.onvoiceschanged = selectVoiceAndSpeak;
         }
     }
-    // ------------------------------------
-
-    speechSynthesis.speak(utterance);
-}
 
     async function translateText(text) {
         console.log(`LOG: translateText called for text: ${text}`);
