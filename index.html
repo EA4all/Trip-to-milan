@@ -2454,7 +2454,7 @@ async function processLookupImage(base64ImageData) {
 async function callGemini(payload, prompt, useSearch = false) {
     const API_KEY = "AIzaSyB80v2xdhebJqhjyruJ5Ta0eyhJiq7DsI8";
     const BASE_URL = "https://generativelanguage.googleapis.com/v1beta/models";
-    const MODEL_NAME = "gemini-1.5-flash"; 
+    const MODEL_NAME = "gemini-2.5-flash"; 
     const FINAL_URL = `${BASE_URL}/${MODEL_NAME}:generateContent?key=${API_KEY}`;
     
     // תיקון: הגדרת הטקסט ב-payload עבור הפונקציות הקוראות 
@@ -2575,6 +2575,18 @@ async function askGeneralGemini(userPrompt) {
     
     submitBtn.disabled = false;
 }
+        async function fetchSafetyWarnings() {
+        console.log("LOG: fetchSafetyWarnings called.");
+        const container = $('#safety-warnings-content');
+        container.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> מאתר מידע עדכני...`;
+        
+        const today = new Date().toLocaleDateString('en-CA');
+        const prompt = `As a safety advisor, check for any significant demonstrations, public transport strikes, or specific safety warnings for tourists in Milan, Italy, specifically for today's date: ${today}. Provide a concise summary in Hebrew. If your web search finds no specific warnings, state that clearly and mention that the information is current as of today.`;
+        const payload = { contents: [{ parts: [{ text: "" }] }] };
+        const responseText = await callGemini(payload, prompt, true);
+        
+        container.textContent = responseText;
+    }
     async function generateTripSummary() {
         console.log("LOG: generateTripSummary called.");
         showAlert('יוצר סיכום...', 'אוסף את כל החוויות והנתונים כדי ליצור סיכום אישי... זה עשוי לקחת רגע.', false);
