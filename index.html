@@ -729,21 +729,18 @@ body {
             <button id="voice-settings-close-btn" class="text-2xl">×</button>
         </div>
         <div class="p-6">
-            <p class="text-sm text-gray-500 mb-4">בחר את הקול האנושי המועדף עליך שישמש להקראת מדריכים קוליים וסיכומים יומיים.</p>
-
-            <label for="global-voice-select" class="block text-sm font-medium mb-1">בחר קול (WaveNet מומלץ לאיכות):</label>
-            <select id="global-voice-select" class="w-full p-2 rounded-lg border bg-white dark:bg-gray-800">
-                <option value="he-IL-Wavenet-A">WaveNet A</option>
-                <option value="he-IL-Wavenet-B">WaveNet B (זכר)</option>
-                <option value="he-IL-Wavenet-C">WaveNet C (נקבה)</option>
-                <option value="he-IL-Wavenet-D">WaveNet D (זכר)</option>
-                <option value="he-IL-Standard-A">Standard A (נקבה)</option>
-                <option value="he-IL-Standard-B">Standard B (זכר)</option>
-                <option value="he-IL-Standard-C">Standard C (נקבה)</option>
-                <option value="he-IL-Wavenet-D">WaveNet D (זכר - מומלץ)</option>
+            <label for="global-voice-select" class="block text-sm font-medium mb-1">
+                קול TTS לבחירה (Azure Neural)
+            </label>
+            <select id="global-voice-select" class="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100">
+                <option value="he-IL-NoaNeural">נועה (נקבה - מומלץ)</option>
+                <option value="he-IL-AvriNeural">אברי (זכר)</option>
+                <option value="he-IL-HilaNeural">הילה (נקבה - אלטרנטיבה)</option>
             </select>
+            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                <span class="font-bold">הערה:</span> כל קול חדש שתבחר יושמע לדוגמה.
+            </p>
             
-            <p id="voice-test-status" class="mt-4 text-center text-xs text-gray-500">לחץ על הקול כדי לשמוע דוגמה.</p>
         </div>
     </div>
 </div>
@@ -2608,14 +2605,11 @@ async function callGemini(payload, prompt, useSearch = false) {
         return `שגיאה: ${error.message}`;
     }
 }
-// --- החלפה מלאה: פונקציית speakText חדשה באמצעות Google TTS API ---
-// --- החלפה מלאה: פונקציית speakText (עם Gender מחויב) ---
-// --- החלפה מלאה: פונקציית speakText (עם Gender מחויב) ---
 async function speakText(text) {
     // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     // פרטי המפתח והאזור שקיבלת:
-    const azureKey = "4986vxv62SWLKCBivUvzhj3wjbM0vALDMs9daEJKgT0WcsaJNtXKJQQJ99BIACYeBjFXJ3w3AAAYACOG8ELL"; 
-    const azureRegion = "eastus"; 
+    const azureKey = "6q2D79SKoLiwRgaAG5OSlxfMAHKAN9Eh2TihLFry9kQKylPHelqXvjQQJ99BIACYeBjFXJ3w3AAAYACOG6IUP"; // השתמשנו ב-KEY 2
+    const azureRegion = "westeurope"; // ניסיון עם Region אחר
     // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     
     // כתובת ה-API של Azure TTS (משתמשת באזור שלך)
@@ -2645,14 +2639,12 @@ async function speakText(text) {
 
         // בדיקת תקינות התגובה
         if (response.ok) {
-            // Azure מחזירה Blob (קובץ אודיו גולמי)
             const audioBlob = await response.blob();
             const audio = new Audio(URL.createObjectURL(audioBlob));
             audio.play();
         } else {
             const errorText = await response.text();
             console.error("שגיאה ב-Azure TTS:", response.status, errorText);
-            // אם עדיין 401 או 403 - יש בעיית מפתח או אזור
             showAlert("שגיאת TTS (Azure)", `שגיאה ${response.status}. ודא שהמפתח וה-Region נכונים.`);
         }
     } catch (err) {
