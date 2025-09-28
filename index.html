@@ -281,7 +281,7 @@ body {
       </div>
       <div id="overview-cards" class="grid sm:grid-cols-2 lg:grid-cols-4 gap-6"></div>
       <div class="flex gap-2 justify-center mb-6">
-    <button id="tefilat-haderech-btn" class="btn btn-primary bg-blue-800 hover:bg-blue-900"><i class="fa-solid fa-plane-departure mr-2"></i>תפילת הדרך</button>
+   
 </div>
     </section>
 
@@ -319,6 +319,9 @@ body {
     <button id="scan-kosher-barcode-btn" class="btn btn-primary bg-green-600 hover:bg-green-700">
         <i class="fa-solid fa-barcode mr-2"></i> סרוק ברקוד (כשרות)
     </button>
+  <button id="birkat-hamazon-btn" class="btn btn-primary bg-yellow-600 hover:bg-yellow-700">
+    <i class="fa-solid fa-bread-slice mr-2"></i> ברכת המזון
+</button>
   <button id="bracha-achrona-btn" class="btn btn-primary bg-blue-800 hover:bg-blue-900">
     <i class="fa-solid fa-pray mr-2"></i> ברכה אחרונה
 </button>
@@ -926,9 +929,48 @@ const attractions = {
             embassy: { name: 'שגרירות ישראל', phone: '+39 06 3619 8500', tel: 'tel:+390636198500' }
         }
     };
-    const hebrewPrayers = {
+const hebrewPrayers = {
+        // --- תפילת הדרך --- (אדוניי) - ללא שינוי
         tefilatHaderech: "יהי רצון מלפניך אדוניי אלהינו ואלהי אבותינו שתוליכנו לשלום ותצעידנו לשלום ותסמכנו לשלום ותגיענו למחוז חפצנו לחיים ולשמחה ולשלום, ותחזירנו לשלום. ותצילנו מכף כל אויב ואורב בדרך, ומכל מיני פורענויות המתרגשות לבוא לעולם, ותשלח ברכה במעשי ידינו, ותתן חן וחסד ורחמים בעיניך ובעיני כל רואינו, ותשמע קול תחנונינו, כי אל שומע תפילה ותחנון אתה. ברוך אתה אדוניי שומע תפילה.",
-        brachaAchrona: "ברוך אתה י״י אלהינו מלך העולם, בורא נפשות רבות וחסרונן, על כל מה שברא לב חי לעולם. ברוך חי העולמים." // ברכת בורא נפשות (לרוב המאכלים)
+        
+        // --- ברכות אחרונות ---
+        // 1. בורא נפשות (אדוניי) - ללא שינוי
+        boreiNefashot: "ברוך אתה אדוניי אלהינו מלך העולם, בורא נפשות רבות וחסרונן, על כל מה שברא לב חי לעולם. ברוך חי העולמים.", 
+        
+        // 2. מעין שלוש - על המחיה (נוסח עדות המזרח, מפוצל)
+        alHaMichya: "בָּרוּךְ אַתָּה אֲדֹנָי אֱלֹהֵינוּ מֶלֶךְ הָעוֹלָם, עַל הַמִחְיָה וְעַל הַכַּלְכָּלָה, וְעַל תְּנוּבַת הַשָּׂדֶה וְעַל אֶרֶץ חֶמְדָּה טוֹבָה וּרְחָבָה שֶׁרָצִיתָ וְהִנְחַלְתָּ לַאֲבוֹתֵינוּ לֶאֱכֹל מִפִּרְיָהּ וְלִשְׂבֹּעַ מִטּוּבָהּ. רַחֵם אֲדֹנָי אֱלֹהֵינוּ עָלֵינוּ וְעַל יִשְׂרָאֵל עַמָּךְ וְעַל יְרוּשָׁלַיִם עִירָךְ וְעַל הַר צִיּוֹן מִשְׁכַּן כְּבוֹדָךְ. וְעַל מִזְבָּחָךְ. וְעַל הֵיכָלָךְ. וּבְנֵה יְרוּשָׁלַיִם עִיר הַקֹּדֶשׁ בִּמְהֵרָה בְיָמֵינוּ. וְהַעֲלֵנוּ לְתוֹכָהּ. וְשַׂמְּחֵנוּ בְּבִנְיָנָהּ וּנְבָרְכָךְ עָלֶיהָ בִּקְדֻשָּׁה וּבְטָהֳרָה. כִּי אַתָּה אֲדֹנָי טוֹב וּמֵטִיב לַכֹּל וְנוֹדֶה לְךָ עַל הָאָרֶץ וְעַל הַמִּחְיָה וְעַל הַכַּלְכָּלָה. בָּרוּךְ אַתָּה אֲדֹנָי, עַל הָאָרֶץ וְעַל הַמִּחְיָה.",
+        // 3. מעין שלוש - על הגפן (נוסח עדות המזרח, מפוצל)
+        alHaGefen: "בָּרוּךְ אַתָּה אֲדֹנָי אֱלֹהֵינוּ מֶלֶךְ הָעוֹלָם, עַל הַגֶּפֶן וְעַל פְּרִי הַגֶּפֶן, וְעַל תְּנוּבַת הַשָּׂדֶה וְעַל אֶרֶץ חֶמְדָּה טוֹבָה וּרְחָבָה שֶׁרָצִיתָ וְהִנְחַלְתָּ לַאֲבוֹתֵינוּ לֶאֱכֹל מִפִּרְיָהּ וְלִשְׂבֹּעַ מִטּוּבָהּ. רַחֵם אֲדֹנָי אֱלֹהֵינוּ עָלֵינוּ וְעַל יִשְׂרָאֵל עַמָּךְ וְעַל יְרוּשָׁלַיִם עִירָךְ וְעַל הַר צִיּוֹן מִשְׁכַּן כְּבוֹדָךְ. וְעַל מִזְבָּחָךְ. וְעַל הֵיכָלָךְ. וּבְנֵה יְרוּשָׁלַיִם עִיר הַקֹּדֶשׁ בִּמְהֵרָה בְיָמֵינוּ. וְהַעֲלֵנוּ לְתוֹכָהּ. וְשַׂמְּחֵנוּ בְּבִנְיָנָהּ וּנְבָרְכָךְ עָלֶיהָ בִּקְדֻשָּׁה וּבְטָהֳרָה. כִּי אַתָּה אֲדֹנָי טוֹב וּמֵטִיב לַכֹּל וְנוֹדֶה לְךָ עַל הָאָרֶץ וְעַל פְּרִי הַגֶּפֶן. בָּרוּךְ אַתָּה אֲדֹנָי, עַל הָאָרֶץ וְעַל פְּרִי הַגֶּפֶן.",
+        // 4. מעין שלוש - על העץ (נוסח עדות המזרח, מפוצל)
+        alHaEtz: "בָּרוּךְ אַתָּה אֲדֹנָי אֱלֹהֵינוּ מֶלֶךְ הָעוֹלָם, עַל הָעֵץ וְעַל פְּרִי הָעֵץ, וְעַל תְּנוּבַת הַשָּׂדֶה וְעַל אֶרֶץ חֶמְדָּה טוֹבָה וּרְחָבָה שֶׁרָצִיתָ וְהִנְחַלְתָּ לַאֲבוֹתֵינוּ לֶאֱכֹל מִפִּרְיָהּ וְלִשְׂבֹּעַ מִטּוּבָהּ. רַחֵם אֲדֹנָי אֱלֹהֵינוּ עָלֵינוּ וְעַל יִשְׂרָאֵל עַמָּךְ וְעַל יְרוּשָׁלַיִם עִירָךְ וְעַל הַר צִיּוֹן מִשְׁכַּן כְּבוֹדָךְ. וְעַל מִזְבָּחָךְ. וְעַל הֵיכָלָךְ. וּבְנֵה יְרוּשָׁלַיִם עִיר הַקֹּדֶשׁ בִּמְהֵרָה בְיָמֵינוּ. וְהַעֲלֵנוּ לְתוֹכָהּ. וְשַׂמְּחֵנוּ בְּבִנְיָנָהּ וּנְבָרְכָךְ עָלֶיהָ בִּקְדֻשָּׁה וּבְטָהֳרָה. כִּי אַתָּה אֲדֹנָי טוֹב וּמֵטִיב לַכֹּל וְנוֹדֶה לְךָ עַל הָאָרֶץ וְעַל הַפֵּרוֹת. בָּרוּךְ אַתָּה אֲדֹנָי, עַל הָאָרֶץ וְעַל הַפֵּרוֹת.",
+
+        // 5. ברכת המזון - נוסח עדות המזרח (מלא ומדויק)
+        birkatHaMazon: `
+        <h4 class="font-bold text-lg text-blue-700">ברכת המזון (עדות המזרח - נוסח מלא)</h4>
+        לַמְנַצֵּחַ בִּנְגִינֹת מִזְמוֹר שִׁיר: אֱלֹהִים יְחָנֵּנוּ וִיבָרְכֵנוּ. יָאֵר פָּנָיו אִתָּנוּ סֶלָה: לָדַעַת בָּאָרֶץ דַּרְכֶּךָ. בְּכָל-גּוֹיִם יְשׁוּעָתֶךָ: יוֹדוּךָ עַמִּים אֱלֹהִים. יוֹדוּךָ עַמִּים כֻּלָּם: יִשְׂמְחוּ וִירַנְּנוּ לְאֻמִּים כִּי-תִשְׁפֹּט עַמִּים מִישֹׁר. וּלְאֻמִּים בָּאָרֶץ תַּנְחֵם סֶלָה: יוֹדוּךָ עַמִּים אֱלֹהִים. יוֹדוּךָ עַמִּים כֻּלָּם: אֶרֶץ נָתְנָה יְבוּלָהּ. יְבָרְכֵנוּ אֱלֹהִים אֱלֹהֵינוּ: יְבָרְכֵנוּ אֱלֹהִים. וְיִירְאוּ אוֹתוֹ כָּל-אַפְסֵי-אָרֶץ: (תהילים סז)
+        <hr class="my-2">
+        אֲבָרְכָה אֶת-אֲדֹנָי בְּכָל-עֵת. תָּמִיד תְּהִלָּתוֹ בְּפִי: סוֹף דָּבָר הַכֹּל נִשְׁמָע. אֶת-הָאֱלֹהִים יְרָא וְאֶת-מִצְוֹתָיו שְׁמוֹר, כִּי-זֶה כָּל-הָאָדָם: תְּהִלַּת אֲדֹנָי יְדַבֶּר פִּי. וִיבָרֵךְ כָּל-בָּשָׂר שֵׁם קָדְשׁוֹ לְעוֹלָם וָעֶד: וַאֲנַחְנוּ נְבָרֵךְ יָהּ מֵעַתָּה וְעַד-עוֹלָם הַלְלוּיָהּ: וַיְדַבֵּר אֵלַי, זֶה הַשֻּׁלְחָן אֲשֶׁר לִפְנֵי אֲדֹנָי:
+
+        <h5 class="font-bold text-md text-gray-700 dark:text-gray-300">פתיח וברכה ראשונה (הזן)</h5>
+        רַבּוֹתַי, נְבָרֵךְ. יְהִי שֵׁם אֲדֹנָי מְבֹרָךְ מֵעַתָּה וְעַד עוֹלָם. בָּרְכוּ אֶת אֲדֹנָי אֲשֶׁר אָכַלְנוּ מִשֶּׁלּוֹ. בָּרוּךְ אֲדֹנָי אֲשֶׁר אָכַלְנוּ מִשֶּׁלּוֹ וּבְטוּבוֹ חָיִינוּ. בָּרוּךְ אַתָּה אֲדֹנָי, אֱלֹהֵינוּ מֶלֶךְ הָעוֹלָם, הָאֵל הַזָּן אוֹתָנוּ וְאֶת הָעוֹלָם כֻּלּוֹ בְּטוּבוֹ בְּחֵן בְּחֶסֶד בְּרֶוַח וּבְרַחֲמִים רַבִּים. נֹתֵן לֶחֶם לְכָל-בָּשָׂר. כִּי לְעוֹלָם חַסְדּוֹ: וּבְטוּבוֹ הַגָּדוֹל תָּמִיד לֹא חָסַר לָנוּ וְאַל יֶחְסַר לָנוּ מָזוֹן תָּמִיד לְעוֹלָם וָעֶד. כִּי הוּא אֵל זָן וּמְפַרְנֵס לַכֹּל וְשֻׁלְחָנוֹ עָרוּךְ לַכֹּל וְהִתְקִין מִחְיָה וּמָזוֹן לְכָל-בְּרִיּוֹתָיו אֲשֶׁר בָּרָא בְרַחֲמָיו וּבְרוֹב חֲסָדָיו כָּאָמוּר. פּוֹתֵחַ אֶת-יָדֶךָ. וּמַשְׂבִּיעַ לְכָל-חַי רָצוֹן: בָּרוּךְ אַתָּה אֲדֹנָי, הַזָּן אֶת הַכֹּל:
+
+        <h5 class="font-bold text-md text-gray-700 dark:text-gray-300">ברכה שניה (נודה)</h5>
+        נוֹדֶה לְּךָ אֲדֹנָי אֱלֹהֵינוּ עַל שֶׁהִנְחַלְתָּ לַאֲבוֹתֵינוּ אֶרֶץ חֶמְדָּה טוֹבָה וּרְחָבָה. עַל שֶׁהוֹצֵאתָנוּ אֲדֹנָי אֱלֹהֵינוּ מֵאֶרֶץ מִצְרַיִם וּפְדִיתָנוּ מִבֵּית עֲבָדִים. וְעַל בְּרִיתְךָ שֶׁחָתַמְתָּ בִּבְשָׂרֵנוּ. וְעַל תּוֹרָתְךָ שֶׁלִּמַּדְתָּנוּ. וְעַל חֻקֵּי רְצוֹנָךְ שֶׁהוֹדַעְתָּנוּ. וְעַל חַיִּים וּמָזוֹן שֶׁאַתָּה זָן וּמְפַרְנֵס אוֹתָנוּ: וְעַל הַכֹּל אֲדֹנָי אֱלֹהֵינוּ אֲנַחְנוּ מוֹדִים לָךְ וּמְבָרְכִים אֶת שְׁמָךְ כָּאָמוּר וְאָכַלְתָּ וְשָׂבָעְתָּ. וּבֵרַכְתָּ אֶת-אֲדֹנָי אֱלֹהֶיךָ עַל-הָאָרֶץ הַטֹּבָה אֲשֶׁר נָתַן-לָךְ: בָּרוּךְ אַתָּה אֲדֹנָי, עַל הָאָרֶץ וְעַל הַמָּזוֹן:
+
+        <h5 class="font-bold text-md text-gray-700 dark:text-gray-300">ברכה שלישית (בונה ירושלים)</h5>
+        רַחֵם אֲדֹנָי אֱלֹהֵינוּ עָלֵינוּ וְעַל יִשְׂרָאֵל עַמָּךְ. וְעַל יְרוּשָׁלַיִם עִירָךְ. וְעַל הַר צִיּוֹן מִשְׁכַּן כְּבוֹדָךְ. וְעַל הֵיכָלָךְ. וְעַל מְעוֹנָךְ. וְעַל דְּבִירָךְ. וְעַל הַבַּיִת הַגָּדוֹל וְהַקָּדוֹשׁ שֶׁנִּקְרָא שִׁמְךָ עָלָיו. אָבִינוּ רְעֵנוּ זוּנֵנוּ. פַּרְנְסֵנוּ. כַּלְכְּלֵנוּ. הַרְוִיחֵנוּ הַרְוַח לָנוּ מְהֵרָה מִכָּל-צָרוֹתֵינוּ. וְנָא אַל תַּצְרִיכֵנוּ אֲדֹנָי אֱלֹהֵינוּ לִידֵי מַתְּנוֹת בָּשָׂר וָדָם. וְלֹא לִידֵי הַלְוָאָתָם. אֶלָּא לְיָדְךָ הַמְּלֵאָה וְהָרְחָבָה. הָעֲשִׁירָה וְהַפְּתוּחָה. יְהִי רָצוֹן שֶׁלּא נֵבוֹשׁ בָּעוֹלָם הַזֶּה. וְלֹא נִכָּלֵם לְעוֹלָם הַבָּא. וּמַלְכוּת בֵּית דָּוִד מְשִׁיחָךְ תַּחֲזִירֶנָּה לִמְקוֹמָהּ בִּמְהֵרָה בְיָמֵינוּ: וְתִבְנֶה יְרוּשָׁלַיִם עִירָךְ בִּמְהֵרָה בְיָמֵינוּ: בָּרוּךְ אַתָּה אֲדֹנָי, בּוֹנֵה יְרוּשָׁלָיִם. (ואומר בלחש: אָמֵן):
+
+        <h5 class="font-bold text-md text-gray-700 dark:text-gray-300">ברכה רביעית (הטוב והמטיב)</h5>
+        בָּרוּךְ אַתָּה אֲדֹנָי, אֱלֹהֵינוּ מֶלֶךְ הָעוֹלָם, הָאֵל אָבִינוּ מַלְכֵּנוּ אַדִּירֵנוּ. בּוֹרְאֵנוּ. גּוֹאֲלֵנוּ. קְדוֹשֵׁנוּ. קְדוֹשׁ יַעֲקֹב. רוֹעֵנוּ רוֹעֵה יִשְׂרָאֵל. הַמֶּלֶךְ הַטּוֹב וְהַמֵּטִיב לַכֹּל. שֶׁבְּכָל-יוֹם וָיוֹם הוּא הֵטִיב לָנוּ. הוּא מֵטִיב לָנוּ. הוּא יֵיטִיב לָנוּ. הוּא גְמָלָנוּ. הוּא גוֹמְלֵנוּ. הוּא יִגְמְלֵנוּ לָעַד חֵן וָחֶסֶד וְרַחֲמִים וְרֶוַח וְהַצָּלָה וְכָל-טוֹב:
+
+        <h5 class="font-bold text-md text-gray-700 dark:text-gray-300">הוספות ויהי רצון (קיצור)</h5>
+        הָרַחֲמָן הוּא יִשְׁתַּבַּח עַל כִּסֵּא כְבוֹדוֹ: הָרַחֲמָן הוּא יִשְׁתַּבַּח בַּשָּׁמַיִם וּבָאָרֶץ: הָרַחֲמָן הוּא יִשְׁתַּבַּח בָּנוּ לְדוֹר דּוֹרִים: הָרַחֲמָן הוּא קֶרֶן לְעַמּוֹ יָרִים: הָרַחֲמָן הוּא יִתְפָּאַר בָּנוּ לְנֶצַח נְצָחִים: הָרַחֲמָן הוּא יְפַרְנְסֵנוּ בְּכָבוֹד וְלֹא בְבִזּוּי, בְּהֶתֵּר וְלֹא בְאִסּוּר, בְּנַחַת וְלֹא בְצָעַר: הָרַחֲמָן הוּא יִתֵּן שָׁלוֹם בֵּינֵינוּ: הָרַחֲמָן הוּא יִשְׁלַח בְּרָכָה רְוָחָה וְהַצְלָחָה בְּכָל-מַעֲשֵׂה יָדֵינוּ: הָרַחֲמָן הוּא יַצְלִיחַ אֶת דְּרָכֵינוּ: הָרַחֲמָן הוּא יִשְׁבֹּר עוֹל גָּלוּת מְהֵרָה מֵעַל צַוָּארֵנוּ: הָרַחֲמָן הוּא יוֹלִיכֵנוּ מְהֵרָה קוֹמְמִיּוּת לְאַרְצֵנוּ: הָרַחֲמָן הוּא יִרְפָּאֵנוּ רְפוּאָה שְׁלֵמָה רְפוּאַת הַנֶּפֶשׁ וּרְפוּאַת הַגּוּף: הָרַחֲמָן הוּא יִפְתַּח לָנוּ אֶת יָדוֹ הָרְחָבָה: הָרַחֲמָן הוּא יְבָרֵךְ כָּל אֶחָד וְאֶחָד מִמֶּנּוּ בִּשְׁמוֹ הַגָּדוֹל כְּמוֹ שֶׁנִּתְבָּרְכוּ אֲבוֹתֵינוּ אַבְרָהָם יִצְחָק וְיַעֲקֹב בַּכֹּל מִכֹּל כֹּל. כֵּן יְבָרֵךְ אוֹתָנוּ יַחַד בְּרָכָה שְׁלֵמָה. וְכֵן יְהִי רָצוֹן וְנֹאמַר אָמֵן: הָרַחֲמָן הוּא יִפְרוֹשׂ עָלֵינוּ סֻכַּת שְׁלוֹמוֹ: הָרַחֲמָן הוּא יִטַּע תּוֹרָתוֹ וְאַהֲבָתוֹ בְּלִבֵּנוּ וְתִהְיֶה יִרְאָתוֹ עַל פָּנֵינוּ לְבִלְתִּי נֶחֱטָא. וְיִהְיוּ כָל-מַעֲשֵׂינוּ לְשֵׁם שָׁמָיִם: הָרַחֲמָן הוּא יְבָרֵךְ אֶת הַשֻּׁלְחָן הַזֶּה שֶׁאָכַלְנוּ עָלָיו... הָרַחֲמָן הוּא יְבָרֵךְ אֶת בַּעַל הַבַּיִת הַזֶּה... מַגְדִּיל יְשׁוּעוֹת מַלְכּוֹ. וְעֹשֶׂה-חֶסֶד לִמְשִׁיחוֹ לְדָוִד וּלְזַרְעוֹ עַד-עוֹלָם: כְּפִירִים רָשׁוּ וְרָעֵבוּ. וְדרְשֵׁי אֲדֹנָי לֹא-יַחְסְרוּ כָל-טוֹב: נַעַר הָיִיתִי גַּם-זָקַנְתִּי וְלֹא-רָאִיתִי צַדִּיק נֶעֱזָב. וְזַרְעוֹ מְבַקֶּשׁ-לָחֶם: כָּל-הַיּוֹם חוֹנֵן וּמַלְוֶה. וְזַרְעוֹ לִבְרָכָה: מַה שֶּׁאָכַלְנוּ יִהְיֶה לְשָׂבְעָה. וּמַה שֶּׁשָּׁתִינוּ יִהְיֶה לִרְפוּאָה. וּמַה שֶּׁהוֹתַרְנוּ יִהְיֶה לִבְרָכָה... בְּרוּכִים אַתֶּם לַאֲדֹנָי. עֹשֵׂה שָׁמַיִם וָאָרֶץ: בָּרוּךְ הַגֶּבֶר אֲשֶׁר יִבְטַח בַּאֲדֹנָי... אֲדֹנָי עֹז לְעַמּוֹ יִתֵּן. אֲדֹנָי יְבָרֵךְ אֶת-עַמּוֹ בַשָּׁלוֹם. עוֹשֶׂה שָׁלוֹם בִּמְרוֹמָיו הוּא בְרַחֲמָיו יַעֲשֶׂה שָׁלוֹם עָלֵינוּ וְעַל כָּל-עַמּוֹ יִשְׂרָאֵל וְאִמְרוּ אָמֵן:
+        `,
+
+        // --- תפילות יומיות (נוסח קצר בלבד) - ללא שינוי
+        shacharit: "זמן תפילת **שחרית** (נוסח עדות המזרח).",
+        mincha: "זמן תפילת **מנחה** (נוסח עדות המזרח).",
+        arvit: "זמן תפילת **ערבית** (נוסח עדות המזרח)."
     };
     let currentLang = 'he-it'; // he-it or it-he
 
@@ -1138,31 +1180,34 @@ window.showAlert = showAlert;
 function renderOverview() {
     console.log("LOG: renderOverview called.");
     const { hotel, flights, contacts } = tripMeta;
+    
+    // הוספת כפתור תפילת הדרך בתוך כרטיס הספירה לאחור
     const countdownHtml = `<div class="bg-gray-50 dark:bg-gray-800/50 p-4 rounded-lg text-center">
         <h3 class="font-bold text-lg mb-2">הזמן שנותר לטיול</h3>
         <div id="countdown" class="flex flex-row-reverse justify-around font-mono"></div>
     </div>`;
 
-const clocksHtml = `<div class="bg-white dark:bg-gray-950 p-4 rounded-lg shadow-lg">
-    <h3 class="text-xl font-bold mb-3 text-center"><i class="fa-solid fa-clock mr-2"></i>זמן מקומי</h3>
-    <div class="space-y-2">
-        <div class="flex justify-between items-center p-2 bg-gray-50 dark:bg-gray-900 rounded-lg">
-            <span class="font-semibold text-sm">מילאנו 🇮🇹</span>
-            <span id="milan-time" class="font-mono text-lg font-bold">--:--:--</span>
+    const clocksHtml = `<div class="bg-white dark:bg-gray-950 p-4 rounded-lg shadow-lg">
+        <h3 class="text-xl font-bold mb-3 text-center"><i class="fa-solid fa-clock mr-2"></i>זמן מקומי</h3>
+        <div class="space-y-2">
+            <div class="flex justify-between items-center p-2 bg-gray-50 dark:bg-gray-900 rounded-lg">
+                <span class="font-semibold text-sm">מילאנו 🇮🇹</span>
+                <span id="milan-time" class="font-mono text-lg font-bold">--:--:--</span>
+            </div>
+            <div class="flex justify-between items-center p-2 bg-gray-50 dark:bg-gray-900 rounded-lg">
+                <span class="font-semibold text-sm">ישראל 🇮🇱</span>
+                <span id="israel-time" class="font-mono text-lg font-bold">--:--:--</span>
+            </div>
         </div>
-        <div class="flex justify-between items-center p-2 bg-gray-50 dark:bg-gray-900 rounded-lg">
-            <span class="font-semibold text-sm">ישראל 🇮🇱</span>
-            <span id="israel-time" class="font-mono text-lg font-bold">--:--:--</span>
-        </div>
-    </div>
-    <details class="mt-2">
-        <summary class="cursor-pointer text-xs text-center text-gray-500">הצג את זמני היום במילאנו</summary>
-        <div id="zmanim-container" class="text-xs pt-2 mt-2 border-t dark:border-gray-700 text-center">
-            טוען זמנים...
-        </div>
-    </details>
-</div>`;
+        <details class="mt-2">
+            <summary class="cursor-pointer text-xs text-center text-gray-500">הצג את זמני היום במילאנו</summary>
+            <div id="zmanim-container" class="text-xs pt-2 mt-2 border-t dark:border-gray-700 text-center">
+                טוען זמנים...
+            </div>
+        </details>
+    </div>`;
 
+    // מיקום כפתור "תפילת הדרך" בתוך כרטיס הטיסות
     const flightsHtml = `<div class="bg-gray-50 dark:bg-gray-800/50 p-4 rounded-lg space-y-2 col-span-1 sm:col-span-2 lg:col-span-1">
         <h3 class="font-bold text-lg"><i class="fa-solid fa-plane-departure mr-2"></i>פרטי טיסות</h3>
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-1 gap-x-4 gap-y-2 text-sm">
@@ -1172,7 +1217,15 @@ const clocksHtml = `<div class="bg-white dark:bg-gray-950 p-4 rounded-lg shadow-
             <div><b class="font-semibold">חזור:</b> ${flights.outbound.date} | ${flights.outbound.flight}</div>
             <div><b>המראה:</b> ${flights.outbound.departureTime} | <b>נחיתה:</b> ${flights.outbound.arrivalTime}</div>
         </div>
+        
+        <div class="flex justify-center pt-2">
+            <button id="tefilat-haderech-btn" class="btn btn-primary bg-blue-800 hover:bg-blue-900 text-sm">
+                <i class="fa-solid fa-plane-departure mr-2"></i>תפילת הדרך
+            </button>
+        </div>
+        
     </div>`;
+    
     const hotelHtml = `<div class="bg-gray-50 dark:bg-gray-800/50 p-4 rounded-lg space-y-2">
         <h3 class="font-bold text-lg"><i class="fa-solid fa-hotel mr-2"></i>מלון</h3>
         <p><b>${hotel.name}</b></p>
@@ -1907,6 +1960,55 @@ async function checkKosherStatus(barcode) {
             </div>
         `).join('');
     }
+    function showBrachaAchronaOptions() {
+    const title = 'בחר ברכה אחרונה';
+    const message = `
+        <p class="mb-4">בחר את הברכה האחרונה הרלוונטית:</p>
+        <div class="grid grid-cols-2 gap-2 mt-4" id="brachot-selection-buttons">
+            <button id="borei-nefashot-btn" class="btn btn-neutral">בורא נפשות</button>
+            <button id="meein-shalosh-btn" class="btn btn-neutral">מעין שלוש</button>
+        </div>
+    `;
+    showAlert(title, message, false);
+
+    // הוספת מאזינים לכפתורים החדשים בתוך המודל
+    document.getElementById('borei-nefashot-btn')?.addEventListener('click', () => {
+        const bracha = hebrewPrayers.boreiNefashot;
+        // מעביר ל-showAlert הסופי את הברכה
+        showAlert('ברכת בורא נפשות (אחרונה)', bracha, true, { text: bracha });
+    });
+
+    document.getElementById('meein-shalosh-btn')?.addEventListener('click', () => {
+        showMeEinShaloshOptions(); // קורא לבחירת המשנה של מעין שלוש
+    });
+}
+
+function showMeEinShaloshOptions() {
+    const title = 'ברכת מעין שלוש (עדות המזרח)';
+    const message = `
+        <p class="mb-4">בחר את סוג המזון:</p>
+        <div class="grid grid-cols-3 gap-2 mt-4" id="meein-shalosh-selection-buttons">
+            <button id="al-hamichya-btn" class="btn btn-warning">על המחיה</button>
+            <button id="al-hagefen-btn" class="btn btn-warning">על הגפן</button>
+            <button id="al-haetz-btn" class="btn btn-warning">על העץ</button>
+        </div>
+    `;
+    showAlert(title, message, false);
+
+    // הוספת מאזינים
+    document.getElementById('al-hamichya-btn')?.addEventListener('click', () => {
+        const bracha = hebrewPrayers.alHaMichya;
+        showAlert('ברכת על המחיה (מעין שלוש)', bracha, true, { text: bracha });
+    });
+    document.getElementById('al-hagefen-btn')?.addEventListener('click', () => {
+        const bracha = hebrewPrayers.alHaGefen;
+        showAlert('ברכת על הגפן (מעין שלוש)', bracha, true, { text: bracha });
+    });
+    document.getElementById('al-haetz-btn')?.addEventListener('click', () => {
+        const bracha = hebrewPrayers.alHaEtz;
+        showAlert('ברכת על העץ (מעין שלוש)', bracha, true, { text: bracha });
+    });
+}
     // ========================= התחלה: פונקציית שעונים =========================
 function updateClocks() {
     const milanTimeEl = $('#milan-time');
@@ -1926,26 +2028,28 @@ async function fetchZmanim() {
         const data = await response.json();
         const formatTime = (isoTime) => new Date(isoTime).toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' });
         
-        // --- לוגיקה חדשה לזמן התפילה ---
         const now = new Date();
-        // HebCal מחזיר את הזמנים ב-ISO, נוכל להשתמש בהם כדי להשוות מול הזמן הנוכחי
-        const chatzot = new Date(data.times.chatzot); 
         const alos = new Date(data.times.alotHaShachar);
+        const chatzot = new Date(data.times.chatzot); 
         const shkia = new Date(data.times.sunset);
         
         let tefilaRelevant = '';
+        let tefilaKey = '';
         if (now >= alos && now < chatzot) {
             tefilaRelevant = 'שחרית';
+            tefilaKey = 'shacharit';
         } else if (now >= chatzot && now < shkia) {
             tefilaRelevant = 'מנחה';
-        } else if (now >= shkia || now < alos) {
+            tefilaKey = 'mincha';
+        } else {
             tefilaRelevant = 'ערבית';
+            tefilaKey = 'arvit';
         }
         
-        const tefilaHtml = `<div class="p-2 mt-3 bg-blue-50 dark:bg-blue-900 rounded-lg text-center font-bold">
-            <i class="fa-solid fa-hands-praying mr-2"></i> זמן לתפילת: ${tefilaRelevant}
+        // הופך את התפילה הרלוונטית לכפתור לחיץ
+        const tefilaHtml = `<div id="relevant-tefila-btn" data-tefila-key="${tefilaKey}" class="p-2 mt-3 bg-blue-50 dark:bg-blue-900 rounded-lg text-center font-bold cursor-pointer hover:bg-blue-100 transition-colors">
+            <i class="fa-solid fa-hands-praying mr-2"></i> לחץ לצפייה: ${tefilaRelevant}
         </div>`;
-        // --- סוף לוגיקת זמן התפילה ---
 
         container.innerHTML = tefilaHtml + `
             <div class="grid grid-cols-2 gap-1 text-right pt-2 border-t dark:border-gray-700 mt-2">
@@ -1957,13 +2061,21 @@ async function fetchZmanim() {
                 <span>שקיעה:</span> <span class="font-semibold text-left">${formatTime(data.times.sunset)}</span>
             </div>
         `;
+        
+        // הוספת מאזין לכפתור התפילה החדש
+        const relevantTefilaBtn = $('#relevant-tefila-btn');
+        if (relevantTefilaBtn) {
+            relevantTefilaBtn.addEventListener('click', () => {
+                const key = relevantTefilaBtn.getAttribute('data-tefila-key');
+                const prayerText = hebrewPrayers[key];
+                showAlert(`זמן לתפילת ${tefilaRelevant}`, prayerText, true, { text: prayerText });
+            });
+        }
     } catch (e) {
         container.innerHTML = 'שגיאה בטעינת זמנים';
         console.error("Error fetching zmanim:", e);
     }
 }
-// ========================= סוף: פונקציה לשליפת זמני היום =========================
-    
 // ========================= סוף: פונקציית שעונים =========================
 // ========================= התחלה: פונקציית חיפוש מהיר =========================
 function findUtility(query, queryHebrew) {
@@ -2669,10 +2781,18 @@ async function speakText(text) {
     // *************************************************************************************************************
     const url = `https://texttospeech.googleapis.com/v1/text:synthesize?key=${apiKey}`;
 
-    // שליפת הקול הנבחר מה-Dropdown הגלובלי
+    // 1. עצור ושחרר נגן קודם (אם קיים)
+    if (window.activeAudio) { 
+        window.activeAudio.pause();
+        window.activeAudio = null; 
+        // אופציונלי: עדכון כפתורי הפעלה/עצירה במודל אם הם מוצגים כרגע
+        const playPauseBtn = document.getElementById('alert-modal-play-pause-btn');
+        if(playPauseBtn) playPauseBtn.innerHTML = '<i class="fa-solid fa-play mr-1"></i> הפעל';
+        const stopBtn = document.getElementById('alert-modal-stop-btn');
+        if(stopBtn) stopBtn.style.display = 'none';
+    }
+
     const selectedVoice = document.getElementById("global-voice-select")?.value || "he-IL-Wavenet-D"; 
-    
-    // קביעת המין ב-API בהתאם לקול הנבחר (A ו-C הן נקבה, B ו-D הן זכר)
     const gender = selectedVoice.endsWith('A') || selectedVoice.endsWith('C') ? "FEMALE" : "MALE"; 
 
     try {
@@ -2684,7 +2804,7 @@ async function speakText(text) {
                 voice: { 
                     languageCode: "he-IL", 
                     name: selectedVoice, 
-                    ssmlGender: gender   // מחייב את הקול להיות WaveNet/Standard
+                    ssmlGender: gender
                 },
                 audioConfig: { audioEncoding: "MP3" }
             })
@@ -2693,19 +2813,17 @@ async function speakText(text) {
         const data = await response.json();
 
         if (data.audioContent) {
-            // אם יש נגן פעיל קודם, עוצרים אותו
-            if (activeAudio) { activeAudio.pause(); }
-            
             // יצירת אובייקט Audio חדש ואחסונו במשתנה הגלובלי
-            activeAudio = new Audio("data:audio/mp3;base64," + data.audioContent);
-            activeAudio.play();
+            window.activeAudio = new Audio("data:audio/mp3;base64," + data.audioContent);
+            window.activeAudio.play();
             
             // טיפול בסיום הניגון
-            activeAudio.onended = () => {
-                activeAudio = null; // משחררים את הנגן הגלובלי
-                // אם פועל מודל התראה, מעדכנים את הכפתור חזרה ל'הפעל'
-                const playPauseBtn = $('#alert-modal-play-pause-btn');
+            window.activeAudio.onended = () => {
+                window.activeAudio = null; // שחרור הנגן הגלובלי בסיום
+                const playPauseBtn = document.getElementById('alert-modal-play-pause-btn');
                 if(playPauseBtn) playPauseBtn.innerHTML = '<i class="fa-solid fa-play mr-1"></i> הפעל';
+                const stopBtn = document.getElementById('alert-modal-stop-btn');
+                if(stopBtn) stopBtn.style.display = 'none';
             };
             
         } else {
@@ -2717,7 +2835,6 @@ async function speakText(text) {
         showAlert("שגיאת TTS", "שגיאת רשת או חיבור. נסה שוב.");
     }
 }
-window.speakText = speakText;
 window.speakText = speakText;
 
 // --- סוף החלפת speakText ---
@@ -3213,18 +3330,18 @@ if (recognition) {
 
     // --- INIT ---
 document.addEventListener('DOMContentLoaded', () => {
-    
+      $('#birkat-hamazon-btn')?.addEventListener('click', () => {
+        const bracha = hebrewPrayers.birkatHaMazon;
+        showAlert('ברכת המזון (עדות המזרח)', bracha, true, { text: bracha });
+    });
     console.log("LOG: DOMContentLoaded event fired. Initializing app.");
      // --- מאזיני כפתורים יהודיים חדשים ---
-    $('#tefilat-haderech-btn')?.addEventListener('click', () => {
-        showAlert('תפילת הדרך', hebrewPrayers.tefilatHaderech, true, { text: hebrewPrayers.tefilatHaderech });
-    });
-    
-    $('#bracha-achrona-btn')?.addEventListener('click', () => {
-        // מציגים ברכת בורא נפשות כברירת מחדל
-        const bracha = hebrewPrayers.brachaAchrona;
-        showAlert('ברכה אחרונה', bracha, true, { text: bracha });
-    });
+   $('#tefilat-haderech-btn')?.addEventListener('click', () => {
+        const prayerText = hebrewPrayers.tefilatHaderech;
+        showAlert('תפילת הדרך', prayerText, true, { text: prayerText });
+    });;
+    $('#bracha-achrona-btn')?.addEventListener('click', showBrachaAchronaOptions);
+
     // --- חיבור כפתור סריקת ברקוד ---
     $('#scan-kosher-barcode-btn').addEventListener('click', () => {
         cameraMode = 'barcode'; // הגדרת המצב לברקוד
