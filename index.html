@@ -3160,7 +3160,7 @@ document.addEventListener('DOMContentLoaded', () => {
         startCamera();          // פתיחת המצלמה
     });
     
-    // --- הוספת הלוגיקה של הגדרות הקול וחיבור הכפתורים (בתוך DOMContentLoaded) ---
+    // --- הוספת הלוגיקה של הגדרות הקול וחיבור הכפתורים ---
     const voiceSettingsModal = $('#voice-settings-modal');
     const globalVoiceSelect = $('#global-voice-select');
 
@@ -3206,8 +3206,7 @@ document.addEventListener('DOMContentLoaded', () => {
     window.findUtility = findUtility;
     window.getAudioGuide = getAudioGuide;
     window.generateDailySummary = generateDailySummary; 
-    window.askGeneralGemini = askGeneralGemini; // ודא שזה קיים
-
+    window.askGeneralGemini = askGeneralGemini; 
     initMetroHelper();
 
     // --- PWA Service Worker Registration ---
@@ -3219,8 +3218,21 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // --- Firebase Initialization (הקוד הוסר לצורך הפשטה, אבל במקור היה אמור להיות כאן) ---
-    // ההנחה היא שהקוד הזה מופיע מוקדם יותר בסקריפט או ששייך ל-window.
+    // --- Firebase Initialization ---
+    const firebaseConfig = {
+      apiKey: "AIzaSyD47-qHc8vmGQt4n4LluKW64LEMB-UYrfk",
+      authDomain: "trip-to-milan.firebaseapp.com",
+      projectId: "trip-to-milan",
+      storageBucket: "trip-to-milan.firebasestorage.app",
+      messagingSenderId: "305191186184",
+      appId: "1:305191186184:web:fff1488b64a06942dfc6bd",
+      measurementId: "G-P17LYZJ2H0"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    auth = getAuth(app);
+    db = getFirestore(app);
+    enableIndexedDbPersistence(db).catch(err => console.warn(`WARN: Firestore persistence failed. Code: ${err.code}`));
 
     // --- Caching and Sharing Logic ---
     let tripId = window.location.hash.substring(1);
@@ -3240,7 +3252,53 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // ... (המשך הלוגיקה של Firebase, onAuthStateChanged וכו') ...
+    signInAnonymously(auth).catch(error => showAlert("שגיאת התחברות ל-Firebase", `ההתחברות האנונימית נכשלה. ${error.message}`));
+
+    onAuthStateChanged(auth, (user) => {
+      if (user) {
+        currentUserId = user.uid;
+        tripDocRef = doc(db, "milantrip", tripId);
+        locationsColRef = collection(db, "milantrip", tripId, "locations");
+
+        initLiveMap();
+        listenForLocationUpdates();
+
+        onSnapshot(tripDocRef, async (docSnap) => {
+            if (!isFirebaseConnected) {
+                const statusIcon = $('#sync-status i');
+                const statusText = $('#sync-status span');
+                statusIcon.classList.replace('text-yellow-500', 'text-green-500');
+                statusText.textContent = 'מחובר';
+                isFirebaseConnected = true;
+            }
+            if (docSnap.exists()) {
+                localTripData = docSnap.data();
+            } else {
+                localTripData = getInitialTripData();
+                await setDoc(tripDocRef, localTripData);
+            }
+            localStorage.setItem(`tripData_${tripId}`, JSON.stringify(localTripData));
+
+            // --- Render all components with fresh data ---
+            renderAllPlans(localTripData.plan);
+            renderSuggestions(localTripData.suggestions);
+            renderKosher();
+            renderChecklist(localTripData.checklist);
+            renderBudget(localTripData);
+            renderDocuments(localTripData.documents);
+            renderGallery(localTripData.gallery);
+            initPassCalculator();
+            renderScrapbook();
+        }, (error) => {
+            console.error("ERROR: Firestore snapshot error:", error);
+            const statusIcon = $('#sync-status i');
+            const statusText = $('#sync-status span');
+            statusIcon.classList.remove('text-green-500', 'text-yellow-500');
+            statusIcon.classList.add('text-red-500');
+            statusText.textContent = 'בעיית סנכרון';
+        });
+      }
+    });
 
     // --- Initial Renders & Fetches ---
     console.log("LOG: Performing initial renders and fetches.");
@@ -3263,13 +3321,7 @@ document.addEventListener('DOMContentLoaded', () => {
         options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true } }, plugins: { legend: { display: false } } }
     });
 
-    // --- Event Listeners (החלק שנמצא כרגע אחרי ה-document.addEventListener) ---
-    console.log("LOG: Adding main event listeners.");
-    // ... (כל המאזינים האחרים) ...
-    
-    // ... (הקוד הקיים ממשיך כאן עד הסוף) ...
-
-}); // <--- זה חייב להיות הסוגר האחרון של document.addEventListener('DOMContentLoaded')
+  }); // <--- זה הסוגר היחיד והנכון של document.addEventListener('DOMContentLoaded')
 
   </script>
 
