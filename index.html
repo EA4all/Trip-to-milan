@@ -2590,11 +2590,11 @@ async function callGemini(payload, prompt, useSearch = false) {
         return `שגיאה: ${error.message}`;
     }
 }
-let voicesLoaded = false;
+// --- החלפה מלאה: פונקציית speakText חדשה באמצעות Google TTS API ---
 async function speakText(text) {
     // *************************************************************************************************************
     // חובה להחליף את YOUR_GOOGLE_API_KEY במפתח ה-API האמיתי שלך מ-Google Cloud
-    const apiKey = "YOUR_GOOGLE_API_KEY";
+    const apiKey = "AIzaSyDzQFz_abwcxSwq8VhHCQS-HcsYk_Qug-I";
     // *************************************************************************************************************
     const url = `https://texttospeech.googleapis.com/v1/text:synthesize?key=${apiKey}`;
 
@@ -2636,51 +2636,6 @@ async function speakText(text) {
 }
 window.speakText = speakText;
 
-// --- החלפה: פונקציית speakText חדשה באמצעות Google TTS API ---
-async function speakText(text) {
-    // *************************************************************************************************************
-    // חובה להחליף את YOUR_GOOGLE_API_KEY במפתח ה-API האמיתי שלך מ-Google Cloud
-    const apiKey = "YOUR_GOOGLE_API_KEY";
-    // *************************************************************************************************************
-    const url = `https://texttospeech.googleapis.com/v1/text:synthesize?key=${apiKey}`;
-
-    // שליפת הקול הנבחר (או ברירת מחדל אם לא נבחר)
-    const selectedVoice = document.getElementById("voice-select")?.value || "he-IL-Wavenet-A"; 
-    
-    // קביעת המין ב-API בהתאם לקול
-    const gender = selectedVoice.endsWith('A') || selectedVoice.endsWith('C') ? "FEMALE" : "MALE"; 
-
-    try {
-        const response = await fetch(url, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-                input: { text },
-                voice: { 
-                    languageCode: "he-IL", // עברית
-                    name: selectedVoice,
-                    ssmlGender: gender
-                },
-                audioConfig: { audioEncoding: "MP3" } // פורמט שנוח לנגן
-            })
-        });
-
-        const data = await response.json();
-
-        if (data.audioContent) {
-            // הנגנת האודיו שהתקבל ב-Base64
-            const audio = new Audio("data:audio/mp3;base64," + data.audioContent);
-            audio.play();
-        } else {
-            console.error("שגיאה ב-TTS:", data);
-            showAlert("שגיאת TTS", "שגיאה בקריאה לשרת גוגל. בדוק את מפתח ה-API ואת ההרשאות.");
-        }
-    } catch (err) {
-        console.error("שגיאה בקריאה ל-Google TTS:", err);
-        showAlert("שגיאת TTS", "שגיאת רשת או חיבור. נסה שוב.");
-    }
-}
-window.speakText = speakText;
 // --- סוף החלפת speakText ---
     async function translateText(text) {
         console.log(`LOG: translateText called for text: ${text}`);
