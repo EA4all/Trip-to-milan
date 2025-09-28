@@ -2612,46 +2612,52 @@ async function callGemini(payload, prompt, useSearch = false) {
 // --- החלפה מלאה: פונקציית speakText (עם Gender מחויב) ---
 // --- החלפה מלאה: פונקציית speakText (עם Gender מחויב) ---
 async function speakText(text) {
-    // *************************************************************************************************************
-    // חובה לוודא שזה המפתח התקין שלך!
-    const apiKey = "AIzaSyDzQFz_abwcxSwq8VhHCQS-HcsYk_Qug-I";
-    // *************************************************************************************************************
-    const url = `https://texttospeech.googleapis.com/v1/text:synthesize?key=${apiKey}`;
-
-    // שליפת הקול הנבחר מה-Dropdown הגלובלי
-    const selectedVoice = document.getElementById("global-voice-select")?.value || "he-IL-Wavenet-D"; 
+    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    // פרטי המפתח והאזור שקיבלת:
+    const azureKey = "4986vxv62SWLKCBivUvzhj3wjbM0vALDMs9daEJKgT0WcsaJNtXKJQQJ99BIACYeBjFXJ3w3AAAYACOG8ELL"; 
+    const azureRegion = "eastus"; 
+    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     
-    // קביעת המין ב-API בהתאם לקול הנבחר (A ו-C הן נקבה, B ו-D הן זכר)
-    const gender = selectedVoice.endsWith('A') || selectedVoice.endsWith('C') ? "FEMALE" : "MALE"; 
+    // כתובת ה-API של Azure TTS (משתמשת באזור שלך)
+    const azureUrl = `https://${azureRegion}.tts.speech.microsoft.com/cognitiveservices/v1`;
+
+    // קול נוירוני בעברית (NoaNeural) - זהו קול באיכות גבוהה יותר מ-WaveNet
+    const selectedVoice = "he-IL-NoaNeural"; 
+    
+    // בניית בקשת SSML (פורמט הדיבור של Azure)
+    const ssml = `<speak version='1.0' xml:lang='he-IL'>
+                    <voice name='${selectedVoice}'>
+                        ${text}
+                    </voice>
+                  </speak>`;
 
     try {
-        const response = await fetch(url, {
+        const response = await fetch(azureUrl, {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-                input: { text },
-                voice: { 
-                    languageCode: "he-IL", 
-                    name: selectedVoice, 
-                    ssmlGender: gender   // מחייב את הקול להיות WaveNet/Standard
-                },
-                audioConfig: { audioEncoding: "MP3" }
-            })
+            headers: { 
+                "Ocp-Apim-Subscription-Key": azureKey,
+                "Content-Type": "application/ssml+xml",
+                "X-Microsoft-OutputFormat": "audio-48khz-192kbitrate-mono-mp3", 
+                "User-Agent": "MilanTripApp"
+            },
+            body: ssml
         });
 
-        const data = await response.json();
-
-        if (data.audioContent) {
-            // הנגנת האודיו שהתקבל ב-Base64
-            const audio = new Audio("data:audio/mp3;base64," + data.audioContent);
+        // בדיקת תקינות התגובה
+        if (response.ok) {
+            // Azure מחזירה Blob (קובץ אודיו גולמי)
+            const audioBlob = await response.blob();
+            const audio = new Audio(URL.createObjectURL(audioBlob));
             audio.play();
         } else {
-            console.error("שגיאה ב-TTS:", data);
-            showAlert("שגיאת TTS", "שגיאה בקריאה לשרת גוגל. בדוק את מפתח ה-API ואת ההרשאות.");
+            const errorText = await response.text();
+            console.error("שגיאה ב-Azure TTS:", response.status, errorText);
+            // אם עדיין 401 או 403 - יש בעיית מפתח או אזור
+            showAlert("שגיאת TTS (Azure)", `שגיאה ${response.status}. ודא שהמפתח וה-Region נכונים.`);
         }
     } catch (err) {
-        console.error("שגיאה בקריאה ל-Google TTS:", err);
-        showAlert("שגיאת TTS", "שגיאת רשת או חיבור. נסה שוב.");
+        console.error("שגיאה בקריאה ל-Azure TTS:", err);
+        showAlert("שגיאת TTS", "שגיאת רשת או חיבור.");
     }
 }
 window.speakText = speakText;
