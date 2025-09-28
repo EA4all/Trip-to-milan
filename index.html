@@ -1001,11 +1001,15 @@ const hebrewPrayers = {
             suggestions: Object.entries(attractions)
                 .filter(([key]) => !initialPlanKeys.includes(key))
                 .map(([key, value]) => ({...value, id: key})),
-            checklist: [
-               { id: 'cat1', category: 'מסמכים', items: [{ id: 'c1', text: 'דרכון', done: true }, { id: 'c2', text: 'כרטיסי טיסה', done: false }] },
-                { id: 'cat2', category: 'ביגוד', items: [{ id: 'c3', text: 'מעיל גשם', done: false }] },
-                { id: 'cat3', category: 'אלקטרוניקה', items: [{ id: 'c4', text: 'מטען נייד', done: true }, { id: 'c5', text: 'מתאם לחשמל', done: false }] }
-            ],
+// קטע מתוך ה-checklist באובייקט getInitialTripData()
+checklist: [
+    // ... cat1 (חייב להסתיים בפסיק)
+    { id: 'cat1', category: 'מסמכים', items: [{ id: 'c1', text: 'דרכון', done: true }, { id: 'c2', text: 'כרטיסי טיסה', done: false }] }**,** // ... cat2 (חייב להסתיים בפסיק)
+    { id: 'cat2', category: 'ביגוד', items: [{ id: 'c3', text: 'מעיל גשם', done: false }] }**,** // הרכיב cat3 (כפי ששלחת)
+    { id: 'cat3', category: 'אלקטרוניקה', items: [{ id: 'c4', text: 'מטען נייד', done: true }, { id: 'c5', text: 'מתאם לחשמל', done: false }] }
+    
+    // אם זהו הפריט האחרון במערך ה-checklist, אין צורך בפסיק אחריו
+]
             totalBudget: 1500, expenses: [], documents: [], gallery: [], journal: {},
             theme: 'dark',
             settings: { includeEstimatedCostsInBalance: true }
