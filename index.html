@@ -3154,7 +3154,7 @@ document.addEventListener('DOMContentLoaded', () => {
     
     console.log("LOG: DOMContentLoaded event fired. Initializing app.");
     
-    // קוד סריקת ברקוד
+    // --- חיבור כפתור סריקת ברקוד ---
     $('#scan-kosher-barcode-btn').addEventListener('click', () => {
         cameraMode = 'barcode'; // הגדרת המצב לברקוד
         startCamera();          // פתיחת המצלמה
@@ -3183,11 +3183,9 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // 3. חיבור הכפתורים לחלון הגדרות הקול (אלרט ותרגומון)
     document.addEventListener('click', (e) => {
-        // פתיחת המודל מכפתור הגדרות בתוך חלון ה-Alert (מדריך קולי/סיכום יומי)
         if (e.target.closest('#alert-modal-tts-settings-btn')) {
             voiceSettingsModal.classList.add('flex');
         }
-        // פתיחת המודל מכפתור הגדרות בתוך התרגומון
         if (e.target.closest('#translator-tts-settings-btn')) {
             voiceSettingsModal.classList.add('flex');
         }
@@ -3450,7 +3448,7 @@ document.addEventListener('DOMContentLoaded', () => {
     $('#image-upload-btn').addEventListener('click', () => {
     const opts = $('#modal-upload-day-options');
     opts.innerHTML = Object.entries(localTripData.plan).sort((a,b) => a[0].localeCompare(b[0])).map(([dayId, dayData]) => 
-        `<button class="btn btn-primary" data-day-id="${dayId}">${dayId} (${dayData.name})</button>`
+        `<button class="btn btn-primary" data-day-id="${dayId}">${dayData.name}</button>`
     ).join('');
 
     $$('#modal-upload-day-options button').forEach(btn => {
@@ -3577,10 +3575,21 @@ document.addEventListener('DOMContentLoaded', () => {
         if (watchingLocation && currentUserId) deleteDoc(doc(locationsColRef, currentUserId));
     });
 
-    // --- סגירת מודלי קטנים (הבנתי) ---
+    // --- מאזיני סגירה ---
     $('#alert-modal-close').addEventListener('click', () => $('#alert-modal').classList.remove('flex'));
     $('#daily-tip-close').addEventListener('click', () => $('#daily-tip-modal').classList.remove('flex'));
-
+    
+    // --- מאזיני קול קלט (היה חסר) ---
+    const heBtn = $('#voice-translate-he-btn');
+    const itBtn = $('#voice-translate-it-btn');
+    if (speechRecognizer) {
+        heBtn.addEventListener('click', (e) => startRecognition('he-IL', e.currentTarget));
+        itBtn.addEventListener('click', (e) => startRecognition('it-IT', e.currentTarget));
+    } else {
+        if (heBtn) { heBtn.disabled = true; heBtn.innerHTML = 'לא נתמך'; }
+        if (itBtn) { itBtn.disabled = true; itBtn.innerHTML = 'לא נתמך'; }
+    }
+    
   }); // <--- הסוגר הסופי של document.addEventListener('DOMContentLoaded')
 
   </script>
