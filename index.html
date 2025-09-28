@@ -34,7 +34,7 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" xintegrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
   
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
+  <script src="https://unpkg.com/quagga@0.12.1/dist/quagga.min.js"></script>
   <!-- LeafletJS for Live Map -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
 
@@ -311,9 +311,12 @@ body {
 
     <section id="kosher" class="my-12 scroll-mt-24">
       <h2 class="text-3xl font-bold text-center text-brand-900 dark:text-brand-300 mb-6">המדריך הקולינרי הכשר</h2>
-      <div class="text-center">
-        <button id="toggle-kosher-btn" class="btn btn-primary">הצג מדריך כשרות</button>
-      </div>
+<div class="text-center flex flex-wrap justify-center gap-2">
+    <button id="toggle-kosher-btn" class="btn btn-primary">הצג מדריך כשרות</button>
+    <button id="scan-kosher-barcode-btn" class="btn btn-primary bg-green-600 hover:bg-green-700">
+        <i class="fa-solid fa-barcode mr-2"></i> סרוק ברקוד (כשרות)
+    </button>
+</div>
       <div id="kosher-container" class="hidden mt-6">
         <div class="bg-white dark:bg-gray-950 p-4 sm:p-6 rounded-2xl shadow-lg">
           <p id="kosher-subtitle" class="text-center mb-6 text-gray-600 dark:text-gray-400">ריכוז האפשרויות בשכונות Bande Nere ו‑Washington.</p>
@@ -517,9 +520,19 @@ body {
                 <div id="translation-result-container" class="mt-2 p-3 bg-gray-100 dark:bg-gray-800 rounded-lg min-h-[60px] text-center flex items-center justify-center gap-3">
                    <span class="text-gray-500">התרגום יופיע כאן...</span>
                 </div>
-                <div id="translation-history" class="mt-3 pt-3 border-t text-xs space-y-2 max-h-24 overflow-y-auto">
-                    <div class="text-center text-gray-400">היסטוריית תרגומים</div>
-                </div>
+<div class="mt-4 pt-3 border-t dark:border-gray-700">
+    <label for="voice-select" class="block text-sm font-medium mb-1">בחר קול ל-TTS (עברית):</label>
+    <select id="voice-select" class="w-full p-2 rounded-lg border bg-white dark:bg-gray-800">
+      <option value="he-IL-Wavenet-A">Wavenet A (נקבה - מומלץ)</option>
+      <option value="he-IL-Wavenet-B">Wavenet B (זכר)</option>
+      <option value="he-IL-Wavenet-C">Wavenet C (נקבה)</option>
+      <option value="he-IL-Wavenet-D">Wavenet D (זכר)</option>
+      <option value="he-IL-Standard-A">Standard A (נקבה)</option>
+    </select>
+</div>
+<div id="translation-history" class="mt-3 pt-3 border-t text-xs space-y-2 max-h-24 overflow-y-auto">
+    <div class="text-center text-gray-400">היסטוריית תרגומים</div>
+</div>
            </div>
            <div id="converter-tool" class="bg-white dark:bg-gray-950 p-6 rounded-2xl shadow-lg flex flex-col scroll-mt-24 lg:col-span-1">
              <h3 class="text-xl font-bold mb-3"><i class="fa-solid fa-right-left mr-2"></i>ממיר מטבע</h3>
@@ -1784,6 +1797,46 @@ if (activity.type === 'attraction') {
         });
     }
 
+    // --- NEW: Open Food Facts Lookup Function (Kosher Check) ---
+async function checkKosherStatus(barcode) {
+    showAlert('בודק כשרות...', `<div class="text-center"><i class="fa-solid fa-sync fa-spin fa-2x"></i><p class="mt-2">מחפש ברקוד **${barcode}** ב-Open Food Facts...</p></div>`);
+
+    const url = `https://world.openfoodfacts.org/api/v2/product/${barcode}.json`;
+
+    try {
+        const response = await fetch(url);
+        const data = await response.json();
+
+        if (data.status === 0) {
+            showAlert('לא נמצא מוצר', `הברקוד **${barcode}** לא נמצא במאגר **Open Food Facts**.`);
+            return;
+        }
+
+        const product = data.product;
+        const productName = product.product_name_he || product.product_name_en || product.product_name || 'שם לא ידוע';
+        const labels = product.labels_tags || [];
+        
+        let kosherFound = labels.some(tag => tag.includes('kosher'));
+
+        let summary = `**שם המוצר:** ${productName}\n\n`;
+
+        if (kosherFound) {
+            summary += '✅ **כשרות:** נראה שהתווית "כשר" מופיעה ברשימת התוויות של המוצר.\n';
+            summary += '***שימו לב!*** המידע מוזן על ידי משתמשים. יש לוודא שיש חותמת כשרות מוכרת על המוצר עצמו (כמו OU, OK, וכד\').\n\n';
+        } else {
+            summary += '❌ **כשרות:** התווית "כשר" לא נמצאה ברשומות של Open Food Facts.\n\n';
+        }
+
+        summary += `**תוויות נוספות:** ${labels.filter(tag => tag.startsWith('en:')).map(tag => tag.replace('en:', '').replace(/-/g, ' ')).join(', ') || 'אין'}`;
+        
+        showAlert(`תוצאות סריקת כשרות`, summary, true);
+
+    } catch (error) {
+        console.error("Error in Open Food Facts lookup:", error);
+        showAlert('שגיאה', 'שגיאה בחיבור לשרת Open Food Facts.');
+    }
+}
+
     function renderTranslationHistory() {
         console.log("LOG: renderTranslationHistory called.");
         const container = $('#translation-history');
@@ -2259,41 +2312,82 @@ window.findNearbyAttractions = findNearbyAttractions;
 
     // --- Camera Functions ---
 
+// --- החלפת הפונקציה startCamera הקיימת בקוד המתוקן ---
 async function startCamera() {
     console.log("LOG: startCamera called for mode: " + cameraMode);
     const video = $('#camera-feed');
-    const titles = { translate: "תרגם מתמונה", receipt: "סרוק קבלה", lookup: "זיהוי אובייקט" };
+    // הוספת 'barcode' לרשימת הכותרות
+    const titles = { translate: "תרגם מתמונה", receipt: "סרוק קבלה", lookup: "זיהוי אובייקט", barcode: "סריקת ברקוד" }; 
     const torchBtn = $('#torch-btn');
     const captureBtn = $('#capture-btn');
 
+    // ניקוי QuaggaJS אם פועל במקרה שהמצב משתנה
+    try { if (window.Quagga && Quagga.running) Quagga.stop(); } catch (e) { } 
+    
+    // קובעים את הכותרת לפני הפתיחה
+    $('#camera-title').textContent = titles[cameraMode] || "מצלמה";
+
     if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
         try {
+            // 1. נסה להפעיל את המצלמה
             cameraStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
             video.srcObject = cameraStream;
             await video.play();
 
             activeVideoTrack = cameraStream.getVideoTracks()[0];
             
-            // בדיקה וניהול כפתור הפנס
+            // 2. ניהול כפתורי פנס וצילום (לוגיקה קיימת)
             const capabilities = activeVideoTrack.getCapabilities();
             if (capabilities.torch) {
-                torchBtn.style.display = 'flex'; // הצג את הפנס
-                captureBtn.classList.remove('mx-auto'); // אל תמרכז את הצילום
+                torchBtn.style.display = 'flex';
+                captureBtn.classList.remove('mx-auto');
             } else {
-                torchBtn.style.display = 'none'; // הסתר את הפנס
-                // מרכז את כפתור הצילום אם הפנס חבוי
-                const btnContainer = captureBtn.closest('.p-4.border-t.flex');
-                if (btnContainer) {
-                    btnContainer.style.justifyContent = 'center';
-                }
+                torchBtn.style.display = 'none';
             }
 
-            $('#camera-title').textContent = titles[cameraMode] || "מצלמה";
+            // 3. הצגת המודל
             $('#camera-modal').classList.add('flex');
 
+            // 4. לוגיקה ספציפית למצב 'barcode' (בתוך בלוק ה-try)
+            if (cameraMode === 'barcode') {
+                captureBtn.style.display = 'none'; // הסתרת כפתור הצילום במצב ברקוד
+                
+                window.Quagga.init({
+                    inputStream: {
+                        type: "LiveStream",
+                        target: video,
+                        constraints: { facingMode: "environment" }
+                    },
+                    decoder: {
+                        readers: ["ean_reader", "upc_reader"]
+                    }
+                }, (err) => {
+                    if (err) { 
+                        console.error("QuaggaJS Init Error:", err); 
+                        showAlert("שגיאת ברקוד", err.message); 
+                        stopCamera(); 
+                        return; 
+                    }
+                    window.Quagga.start();
+                });
+                
+                window.Quagga.onDetected((result) => {
+                    window.Quagga.stop();
+                    stopCamera();
+                    const barcode = result.codeResult.code;
+                    checkKosherStatus(barcode);
+                });
+                
+            } else {
+                 captureBtn.style.display = 'block'; // הצגת כפתור הצילום למצבי תמונה
+                 captureBtn.onclick = captureFrame; // ודא שהוא מחובר לצילום תמונה רגיל
+            }
+
         } catch (err) {
+            // אם המצלמה נכשלה להיפתח, הודע למשתמש
             console.error("ERROR: Error accessing camera: ", err);
-            showAlert("שגיאת מצלמה", `לא ניתן לגשת למצלמה. (${err.name})`);
+            showAlert("שגיאת מצלמה", `לא ניתן לגשת למצלמה. ודא שאישרת גישה. (${err.name})`);
+            stopCamera(); // ודא שהמודל נסגר אם יש שגיאה
         }
     } else {
         showAlert("מצלמה לא נתמכת", "הדפדפן שלך לא תומך בגישה למצלמה.");
@@ -2503,41 +2597,52 @@ window.speakText = (text, lang) => {
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.lang = lang;
 
-    // --- פונקציית הקראה פנימית ---
-    const speakWithVoice = () => {
-        // אם הקולות נטענו, נסה לבחור קול עברי איכותי
-        if (voicesLoaded && lang === 'he-IL') {
-            const voices = speechSynthesis.getVoices();
-            const hebrewVoice = voices.find(
-                (v) => v.lang.startsWith('he') && (v.name.includes('Carmit') || v.name.includes('Yael') || v.name.includes('Enhanced'))
-            );
-            if (hebrewVoice) {
-                console.log(`LOG: Using selected Hebrew voice: ${hebrewVoice.name}`);
-                utterance.voice = hebrewVoice;
-                utterance.rate = 1.05; 
-                utterance.pitch = 1.05;
-            }
-        }
-        speechSynthesis.speak(utterance);
-    };
+// --- החלפה: פונקציית speakText חדשה באמצעות Google TTS API ---
+async function speakText(text) {
+    // *************************************************************************************************************
+    // חובה להחליף את YOUR_GOOGLE_API_KEY במפתח ה-API האמיתי שלך מ-Google Cloud
+    const apiKey = "YOUR_GOOGLE_API_KEY";
+    // *************************************************************************************************************
+    const url = `https://texttospeech.googleapis.com/v1/text:synthesize?key=${apiKey}`;
 
-    // --- לוגיקת טעינת קולות אסינכרונית ---
-    if (voicesLoaded) {
-        speakWithVoice();
-    } else {
-        // אם עדיין לא נטען, המתן לטעינה ואז השמע
-        speechSynthesis.onvoiceschanged = () => {
-            voicesLoaded = true; // סימון שהקולות נטענו
-            speechSynthesis.onvoiceschanged = null; // נקה את המאזין לאחר הטעינה
-            speakWithVoice(); // הקרא את הטקסט
-        };
-        // אם עדיין לא נטען, ייתכן שהאירוע כבר נשלח. נסה להפעיל את המאזין כגיבוי.
-        if (speechSynthesis.getVoices().length > 0) {
-            voicesLoaded = true;
-            speakWithVoice();
+    // שליפת הקול הנבחר (או ברירת מחדל אם לא נבחר)
+    const selectedVoice = document.getElementById("voice-select")?.value || "he-IL-Wavenet-A"; 
+    
+    // קביעת המין ב-API בהתאם לקול
+    const gender = selectedVoice.endsWith('A') || selectedVoice.endsWith('C') ? "FEMALE" : "MALE"; 
+
+    try {
+        const response = await fetch(url, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                input: { text },
+                voice: { 
+                    languageCode: "he-IL", // עברית
+                    name: selectedVoice,
+                    ssmlGender: gender
+                },
+                audioConfig: { audioEncoding: "MP3" } // פורמט שנוח לנגן
+            })
+        });
+
+        const data = await response.json();
+
+        if (data.audioContent) {
+            // הנגנת האודיו שהתקבל ב-Base64
+            const audio = new Audio("data:audio/mp3;base64," + data.audioContent);
+            audio.play();
+        } else {
+            console.error("שגיאה ב-TTS:", data);
+            showAlert("שגיאת TTS", "שגיאה בקריאה לשרת גוגל. בדוק את מפתח ה-API ואת ההרשאות.");
         }
+    } catch (err) {
+        console.error("שגיאה בקריאה ל-Google TTS:", err);
+        showAlert("שגיאת TTS", "שגיאת רשת או חיבור. נסה שוב.");
     }
 }
+window.speakText = speakText;
+// --- סוף החלפת speakText ---
     async function translateText(text) {
         console.log(`LOG: translateText called for text: ${text}`);
         const resultContainer = $('#translation-result-container');
@@ -3032,6 +3137,26 @@ if (recognition) {
 document.addEventListener('DOMContentLoaded', () => {
   
     console.log("LOG: DOMContentLoaded event fired. Initializing app.");
+  $('#scan-kosher-barcode-btn').addEventListener('click', () => {
+    cameraMode = 'barcode'; // הגדרת המצב לברקוד
+    startCamera();          // פתיחת המצלמה
+});
+  const savedVoice = localStorage.getItem("selectedVoice");
+const voiceSelect = document.getElementById("voice-select");
+if (voiceSelect) {
+    if (savedVoice) {
+        voiceSelect.value = savedVoice;
+    }
+
+    voiceSelect.addEventListener("change", (e) => {
+        const selectedVoice = e.target.value;
+        localStorage.setItem("selectedVoice", selectedVoice); // שמירה
+        
+        // השמעת דוגמת קול קצרה
+        const sampleText = "שלום, אני הקול שנבחר";
+        speakText(sampleText); 
+    });
+}
 
     // --- Expose functions to window for onclick attributes ---
     window.handleTransportChange = handleTransportChange;
