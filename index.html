@@ -876,7 +876,7 @@ const attractions = {
   santAmbrogio: { name: "בזיליקת סנט'אמברוג'ו", isOutdoor: false, type: 'attraction', address: "Piazza Sant'Ambrogio, 15, 20123 Milano MI", description: "אחת הכנסיות העתיקות והחשובות במילאנו, דוגמה מרהיבה לאדריכלות רומנסקית.", coords: { lat: 45.462, lon: 9.173 }, cost: 0 },
   sanMaurizio: { name: "כנסיית סן מאוריציו", isOutdoor: false, type: 'attraction', address: "Corso Magenta, 15, 20123 Milano MI", description: "מכונה 'הקפלה הסיסטינית של מילאנו' בזכות ציורי הקיר המדהימים שמכסים אותה לחלוטין.", tickets: "https://www.museoarcheologicomilano.it/en/collezioni/san-maurizio-al-monastero-maggiore", coords: { lat: 45.465, lon: 9.176 }, cost: 0, hours: "ג'-א' 10:00-17:30 (סגור בב')" },
   piazzaMercanti: { name: "פיאצה דיי מרקנטי", isOutdoor: true, type: 'attraction', address: "Piazza dei Mercanti, 20123 Milano MI", description: "כיכר ימי-ביניימית קסומה ונסתרת, דקות הליכה מהדואומו.", coords: { lat: 45.465, lon: 9.188 }, cost: 0 },
-  leonardoVineyard: { name: "הכרם של לאונרדו", isOutdoor: true, type: 'attraction', address: "Corso Magenta, 65, 20123 Milano MI", description: "שחזור של הכרם שהיה שייך ללאונרדו דה וינצ'י, מול 'הסעודה האחרונאדוני.", tickets: "https://www.vignadileonardo.com/en/", coords: { lat: 45.466, lon: 9.170 }, cost: 10, hours: "ג'-א' 09:00-18:00 (סגור בב')" },
+  leonardoVineyard: { name: "הכרם של לאונרדו", isOutdoor: true, type: 'attraction', address: "Corso Magenta, 65, 20123 Milano MI", description: "שחזור של הכרם שהיה שייך ללאונרדו דה וינצ'י, מול 'הסעודה האחרנה.", tickets: "https://www.vignadileonardo.com/en/", coords: { lat: 45.466, lon: 9.170 }, cost: 10, hours: "ג'-א' 09:00-18:00 (סגור בב')" },
   piazzaGaeAulenti: { name: "פיאצה גאה אאולנטי", isOutdoor: true, type: 'attraction', address: "Piazza Gae Aulenti, 20124 Milano MI", description: "הלב הפועם של מילאנו המודרנית. כיכר עתידנית מוקפת גורדי שחקים.", coords: { lat: 45.483, lon: 9.191 }, cost: 0 },
   corsoComo: { name: "10 קורסו קומו", isOutdoor: false, type: 'attraction', address: "Corso Como, 10, 20154 Milano MI", description: "מתחם קונספט המשלב אופנה, עיצוב ואמנות. חווית קניות ובילוי ייחודית.", coords: { lat: 45.482, lon: 9.189 }, cost: 0 },
   triennale: { name: "מוזיאון העיצוב טריאנלה", isOutdoor: false, type: 'attraction', address: "Viale Emilio Alemagna, 6, 20121 Milano MI", description: "מוזיאון בינלאומי המוקדש לעיצוב, אדריכלות ואמנות חזותית בפארק סמפיונה.", tickets: "https://triennale.org/en/tickets", coords: { lat: 45.470, lon: 9.168 }, cost: 15, hours: "ג'-א' 11:00-20:00 (סגור בב')" },
@@ -1992,7 +1992,7 @@ async function checkKosherStatus(barcode) {
         `).join('');
     }
     function showBrachaAchronaOptions() {
-    const title = 'בחר ברכה אחרונאדוני;
+    const title = 'בחר ברכה אחרונה';
     const message = `
         <p class="mb-4">בחר את הברכה האחרונה הרלוונטית:</p>
         <div class="grid grid-cols-2 gap-2 mt-4" id="brachot-selection-buttons">
