@@ -280,6 +280,9 @@ body {
         </div>
       </div>
       <div id="overview-cards" class="grid sm:grid-cols-2 lg:grid-cols-4 gap-6"></div>
+      <div class="flex gap-2 justify-center mb-6">
+    <button id="tefilat-haderech-btn" class="btn btn-primary bg-blue-800 hover:bg-blue-900"><i class="fa-solid fa-plane-departure mr-2"></i>תפילת הדרך</button>
+</div>
     </section>
 
     <section id="plan" class="my-12 scroll-mt-24">
@@ -316,6 +319,9 @@ body {
     <button id="scan-kosher-barcode-btn" class="btn btn-primary bg-green-600 hover:bg-green-700">
         <i class="fa-solid fa-barcode mr-2"></i> סרוק ברקוד (כשרות)
     </button>
+  <button id="bracha-achrona-btn" class="btn btn-primary bg-blue-800 hover:bg-blue-900">
+    <i class="fa-solid fa-pray mr-2"></i> ברכה אחרונה
+</button>
 </div>
       <div id="kosher-container" class="hidden mt-6">
         <div class="bg-white dark:bg-gray-950 p-4 sm:p-6 rounded-2xl shadow-lg">
@@ -920,7 +926,10 @@ const attractions = {
             embassy: { name: 'שגרירות ישראל', phone: '+39 06 3619 8500', tel: 'tel:+390636198500' }
         }
     };
-    
+    const hebrewPrayers = {
+        tefilatHaderech: "יהי רצון מלפניך י״י אלהינו ואלהי אבותינו שתוליכנו לשלום ותצעידנו לשלום ותסמכנו לשלום ותגיענו למחוז חפצנו לחיים ולשמחה ולשלום, ותחזירנו לשלום. ותצילנו מכף כל אויב ואורב בדרך, ומכל מיני פורענויות המתרגשות לבוא לעולם, ותשלח ברכה במעשי ידינו, ותתן חן וחסד ורחמים בעיניך ובעיני כל רואינו, ותשמע קול תחנונינו, כי אל שומע תפילה ותחנון אתה. ברוך אתה י״י שומע תפילה.",
+        brachaAchrona: "ברוך אתה י״י אלהינו מלך העולם, בורא נפשות רבות וחסרונן, על כל מה שברא לב חי לעולם. ברוך חי העולמים." // ברכת בורא נפשות (לרוב המאכלים)
+    };
     let currentLang = 'he-it'; // he-it or it-he
 
     console.log("LOG: Static data (attractions, kosher, etc.) loaded.");
@@ -1018,7 +1027,6 @@ function showAlert(title, message, isCopyable = false, speechOptions = null) {
     const modalBody = document.getElementById('alert-modal-body');
     const copyBtn = document.getElementById('alert-modal-copy-btn');
     const closeBtn = document.getElementById('alert-modal-close');
-    // חשוב: נשתמש ב-document.querySelector עבור הכפתור כי אין לו ID ב-HTML
     const buttonContainer = closeBtn.parentNode; 
 
     // 1. הגדרת התוכן
@@ -1033,21 +1041,16 @@ function showAlert(title, message, isCopyable = false, speechOptions = null) {
     });
 
     // 3. הוספת כפתורי השמע (אם נדרש)
+    // הערה: activeAudio אמור להיות עכשיו משתנה גלובלי נגיש
     if (speechOptions && speechOptions.text) {
         
-        // ***************************************************************
-        // לוגיקה חדשה ומפושטת ל-Play/Pause/Stop עבור Google TTS (MP3)
-        // ***************************************************************
-
         // יצירת כפתור Play/Pause
         const playPauseBtn = document.createElement('button');
         playPauseBtn.id = 'alert-modal-play-pause-btn';
         playPauseBtn.className = 'btn btn-ghost';
         
         // קביעת הטקסט הראשוני של הכפתור
-        // אם יש נגן פעיל והוא לא מושהה -> השהה
-        // אחרת (אין נגן או שהוא מושהה) -> הפעל
-        playPauseBtn.innerHTML = window.activeAudio && !window.activeAudio.paused 
+        playPauseBtn.innerHTML = activeAudio && !activeAudio.paused 
             ? '<i class="fa-solid fa-pause mr-1"></i> השהה' 
             : '<i class="fa-solid fa-play mr-1"></i> הפעל';
 
@@ -1056,24 +1059,23 @@ function showAlert(title, message, isCopyable = false, speechOptions = null) {
         stopBtn.id = 'alert-modal-stop-btn';
         stopBtn.className = 'btn btn-ghost text-red-500';
         stopBtn.innerHTML = '<i class="fa-solid fa-stop mr-1"></i> עצור';
-        // מציגים רק אם יש נגן פעיל
-        stopBtn.style.display = window.activeAudio ? 'flex' : 'none'; 
+        stopBtn.style.display = activeAudio ? 'flex' : 'none'; 
 
         // 1. Event handler for the Play/Pause button
         playPauseBtn.onclick = () => {
-            if (window.activeAudio) {
-                if (window.activeAudio.paused) {
-                    window.activeAudio.play();
+            if (activeAudio) {
+                if (activeAudio.paused) {
+                    activeAudio.play();
                     playPauseBtn.innerHTML = '<i class="fa-solid fa-pause mr-1"></i> השהה';
                 } else {
-                    window.activeAudio.pause();
+                    activeAudio.pause();
                     playPauseBtn.innerHTML = '<i class="fa-solid fa-play mr-1"></i> המשך';
                 }
                 stopBtn.style.display = 'flex';
             } else {
-                // אם אין נגן פעיל, מתחילים חדש
+                // אם אין נגן פעיל - מתחילים ניגון חדש
                 window.speakText(speechOptions.text); 
-                // ברגע ש-speakText מופעל, ההנחה היא שהנגן יתחיל לנגן מיד
+                // הנחה: speakText יצר Audio חדש ושמר אותו ב-activeAudio
                 playPauseBtn.innerHTML = '<i class="fa-solid fa-pause mr-1"></i> השהה';
                 stopBtn.style.display = 'flex'; 
             }
@@ -1081,10 +1083,10 @@ function showAlert(title, message, isCopyable = false, speechOptions = null) {
         
         // 2. Event handler for the Stop button
         stopBtn.onclick = () => {
-            if (window.activeAudio) {
-                window.activeAudio.pause(); // עצור
-                window.activeAudio.currentTime = 0; // אחזר להתחלה
-                window.activeAudio = null; // שחרר את המשתנה הגלובלי
+            if (activeAudio) {
+                activeAudio.pause(); 
+                activeAudio.currentTime = 0; 
+                window.activeAudio = null; // שחרור המשתנה
             }
             // איפוס כפתורים
             playPauseBtn.innerHTML = '<i class="fa-solid fa-play mr-1"></i> הפעל';
@@ -1092,9 +1094,9 @@ function showAlert(title, message, isCopyable = false, speechOptions = null) {
         };
         
         // 3. עדכון כפתורים במעבר בין מודלים
-        if(window.activeAudio) {
+        if(activeAudio) {
              const updateButtons = () => {
-                playPauseBtn.innerHTML = window.activeAudio.paused 
+                playPauseBtn.innerHTML = activeAudio.paused 
                     ? '<i class="fa-solid fa-play mr-1"></i> המשך' 
                     : '<i class="fa-solid fa-pause mr-1"></i> השהה';
                 stopBtn.style.display = 'flex';
@@ -1103,7 +1105,6 @@ function showAlert(title, message, isCopyable = false, speechOptions = null) {
         }
 
         // Add new buttons to the modal
-        // שימו לב: הכפתורים מוכנסים לפני כפתור הסגירה הקיים
         buttonContainer.insertBefore(playPauseBtn, closeBtn);
         buttonContainer.insertBefore(stopBtn, playPauseBtn);
     }
@@ -1111,6 +1112,7 @@ function showAlert(title, message, isCopyable = false, speechOptions = null) {
     // 4. הצגת המודל
     modal.classList.add('flex');
 }
+
 window.showAlert = showAlert;
     function openTipModal() {
     console.log("LOG: openTipModal called.");
@@ -1923,9 +1925,30 @@ async function fetchZmanim() {
         const response = await fetch('https://www.hebcal.com/zmanim?cfg=json&latitude=45.46&longitude=9.19&tzid=Europe/Rome');
         const data = await response.json();
         const formatTime = (isoTime) => new Date(isoTime).toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' });
+        
+        // --- לוגיקה חדשה לזמן התפילה ---
+        const now = new Date();
+        // HebCal מחזיר את הזמנים ב-ISO, נוכל להשתמש בהם כדי להשוות מול הזמן הנוכחי
+        const chatzot = new Date(data.times.chatzot); 
+        const alos = new Date(data.times.alotHaShachar);
+        const shkia = new Date(data.times.sunset);
+        
+        let tefilaRelevant = '';
+        if (now >= alos && now < chatzot) {
+            tefilaRelevant = 'שחרית';
+        } else if (now >= chatzot && now < shkia) {
+            tefilaRelevant = 'מנחה';
+        } else if (now >= shkia || now < alos) {
+            tefilaRelevant = 'ערבית';
+        }
+        
+        const tefilaHtml = `<div class="p-2 mt-3 bg-blue-50 dark:bg-blue-900 rounded-lg text-center font-bold">
+            <i class="fa-solid fa-hands-praying mr-2"></i> זמן לתפילת: ${tefilaRelevant}
+        </div>`;
+        // --- סוף לוגיקת זמן התפילה ---
 
-        container.innerHTML = `
-            <div class="grid grid-cols-2 gap-1 text-right">
+        container.innerHTML = tefilaHtml + `
+            <div class="grid grid-cols-2 gap-1 text-right pt-2 border-t dark:border-gray-700 mt-2">
                 <span>עלות השחר:</span> <span class="font-semibold text-left">${formatTime(data.times.alotHaShachar)}</span>
                 <span>זריחה:</span> <span class="font-semibold text-left">${formatTime(data.times.sunrise)}</span>
                 <span>סוף זמן ק"ש:</span> <span class="font-semibold text-left">${formatTime(data.times.sofZmanShma)}</span>
@@ -3192,7 +3215,16 @@ if (recognition) {
 document.addEventListener('DOMContentLoaded', () => {
     
     console.log("LOG: DOMContentLoaded event fired. Initializing app.");
+     // --- מאזיני כפתורים יהודיים חדשים ---
+    $('#tefilat-haderech-btn')?.addEventListener('click', () => {
+        showAlert('תפילת הדרך', hebrewPrayers.tefilatHaderech, true, { text: hebrewPrayers.tefilatHaderech });
+    });
     
+    $('#bracha-achrona-btn')?.addEventListener('click', () => {
+        // מציגים ברכת בורא נפשות כברירת מחדל
+        const bracha = hebrewPrayers.brachaAchrona;
+        showAlert('ברכה אחרונה', bracha, true, { text: bracha });
+    });
     // --- חיבור כפתור סריקת ברקוד ---
     $('#scan-kosher-barcode-btn').addEventListener('click', () => {
         cameraMode = 'barcode'; // הגדרת המצב לברקוד
