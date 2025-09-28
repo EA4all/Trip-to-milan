@@ -3683,20 +3683,23 @@ $('#translate-upload-btn').addEventListener('click', () => {
 });
 
 // 2. קלט הקובץ עצמו מעבד את התמונה
-$('#image-translate-upload').addEventListener('change', (e) => {
-    const file = e.target.files[0]; 
-    if (!file) return;
+// 2. קלט הקובץ עצמו מעבד את התמונה
+    $('#image-translate-upload').addEventListener('change', (e) => {
+        const file = e.target.files[0]; 
+        if (!file) return;
 
-    const reader = new FileReader();
-    reader.onload = (event) => { 
-        const base64String = event.target.result.split(',')[1]; 
-        
-        // כאן משתמשים ישירות ב-translateImage
-        translateImage(base64String, file.type); 
-    };
-    reader.readAsDataURL(file);
-
-  const voiceSettingsModal = $('#voice-settings-modal');
+        const reader = new FileReader();
+        reader.onload = (event) => {
+            const base64String = event.target.result.split(',')[1]; 
+            
+            // כאן משתמשים ישירות ב-translateImage
+            translateImage(base64String, file.type); 
+        };
+        reader.readAsDataURL(file);
+    }); // <--- זה סוגר את המאזין של העלאת הקובץ
+  
+    // --- הוספת הלוגיקה של הגדרות הקול וחיבור הכפתורים (בתוך DOMContentLoaded) ---
+    const voiceSettingsModal = $('#voice-settings-modal');
     const globalVoiceSelect = $('#global-voice-select');
 
     // 1. טעינת בחירה שמורה ושמירה בשינוי
@@ -3727,11 +3730,9 @@ $('#image-translate-upload').addEventListener('change', (e) => {
             voiceSettingsModal.classList.add('flex');
         }
     });
-  }); // <--- סוגר סופי של DOMContentLoaded
 
-});
+  }); // <--- זה הסוגר היחיד והנכון שסוגר את document.addEventListener('DOMContentLoaded', ...)
 
   </script>
-
 </body>
 </html>
