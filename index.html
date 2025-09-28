@@ -732,11 +732,20 @@ body {
             <label for="global-voice-select" class="block text-sm font-medium mb-1">
                 קול TTS לבחירה (Azure Neural)
             </label>
-            <select id="global-voice-select" class="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100">
-                <option value="he-IL-NoaNeural">נועה (נקבה - מומלץ)</option>
-                <option value="he-IL-AvriNeural">אברי (זכר)</option>
-                <option value="he-IL-HilaNeural">הילה (נקבה - אלטרנטיבה)</option>
-            </select>
+<select id="global-voice-select" class="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100">
+    <!-- קולות עברית נוירוניים (המקוריים) -->
+    <option value="he-IL-HilaNeural" selected>הילה (נקבה - מומלץ)</option>
+    <option value="he-IL-NoaNeural">נועה (נקבה - עשוי לגרום ל-400)</option>
+    <option value="he-IL-AvriNeural">אברי (זכר)</option>
+
+    <!-- קולות במבטא זר (קריאה של טקסט עברי במבטא שונה) -->
+    <option value="en-GB-RyanNeural">מבטא בריטי 🇬🇧 (זכר)</option>
+    <option value="en-US-JennyNeural">מבטא אמריקאי 🇺🇸 (נקבה)</option>
+    <option value="it-IT-ElsaNeural">מבטא איטלקי 🇮🇹 (נקבה)</option>
+    <option value="en-AU-AnnetteNeural">מבטא אוסטרלי 🇦🇺 (נקבה)</option>
+    <option value="fr-FR-DeniseNeural">מבטא צרפתי 🇫🇷 (נקבה)</option>
+</select>
+
             <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
                 <span class="font-bold">הערה:</span> כל קול חדש שתבחר יושמע לדוגמה.
             </p>
