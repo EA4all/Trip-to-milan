@@ -1636,7 +1636,7 @@ if (activity.type === 'attraction') {
     function renderKosherFilters() {
         console.log("LOG: renderKosherFilters called.");
        const filters = ['all', 'open', 'בשרי', 'חלבי', 'מאפייה', 'מרכול'];
-        const filterLabels = {'all': 'הכל', 'open': 'פתוח עכשיו', 'בשרי': 'בשרי', 'חלבי': 'חלבי', 'מאפייאדוני: 'מאפייאדוני, 'מרכול': 'מרכול'};
+       const filterLabels = {'all': 'הכל', 'open': 'פתוח עכשיו', 'בשרי': 'בשרי', 'חלבי': 'חלבי', 'מאפייה': 'מאפייה', 'מרכול': 'מרכול'};
         $('#kosher-filters').innerHTML = filters.map(f => `<button class="kosher-filter-btn btn btn-ghost" data-filter="${f}">${filterLabels[f]}</button>`).join('');
         $$('.kosher-filter-btn').forEach(btn => btn.addEventListener('click', e => {
             const currentFilter = e.target.dataset.filter;
