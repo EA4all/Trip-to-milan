@@ -733,14 +733,14 @@ body {
 
             <label for="global-voice-select" class="block text-sm font-medium mb-1">בחר קול (WaveNet מומלץ לאיכות):</label>
             <select id="global-voice-select" class="w-full p-2 rounded-lg border bg-white dark:bg-gray-800">
-                <option value="he-IL-Wavenet-A">WaveNet A (נקבה - מומלץ)</option>
+                <option value="he-IL-Wavenet-A">WaveNet A</option>
                 <option value="he-IL-Wavenet-B">WaveNet B (זכר)</option>
                 <option value="he-IL-Wavenet-C">WaveNet C (נקבה)</option>
                 <option value="he-IL-Wavenet-D">WaveNet D (זכר)</option>
                 <option value="he-IL-Standard-A">Standard A (נקבה)</option>
                 <option value="he-IL-Standard-B">Standard B (זכר)</option>
                 <option value="he-IL-Standard-C">Standard C (נקבה)</option>
-                <option value="he-IL-Standard-D">Standard D (זכר)</option>
+                <option value="he-IL-Wavenet-D">WaveNet D (זכר - מומלץ)</option>
             </select>
             
             <p id="voice-test-status" class="mt-4 text-center text-xs text-gray-500">לחץ על הקול כדי לשמוע דוגמה.</p>
@@ -2610,13 +2610,16 @@ async function callGemini(payload, prompt, useSearch = false) {
 }
 // --- החלפה מלאה: פונקציית speakText חדשה באמצעות Google TTS API ---
 // --- החלפה מלאה: פונקציית speakText (עם Gender מחויב) ---
+// --- החלפה מלאה: פונקציית speakText (עם Gender מחויב) ---
 async function speakText(text) {
-    // מפתח ה-API שלך - כבר הוטמע נכון
+    // *************************************************************************************************************
+    // חובה לוודא שזה המפתח התקין שלך!
     const apiKey = "AIzaSyDzQFz_abwcxSwq8VhHCQS-HcsYk_Qug-I";
+    // *************************************************************************************************************
     const url = `https://texttospeech.googleapis.com/v1/text:synthesize?key=${apiKey}`;
 
     // שליפת הקול הנבחר מה-Dropdown הגלובלי
-    const selectedVoice = document.getElementById("global-voice-select")?.value || "he-IL-Wavenet-A"; 
+    const selectedVoice = document.getElementById("global-voice-select")?.value || "he-IL-Wavenet-D"; 
     
     // קביעת המין ב-API בהתאם לקול הנבחר (A ו-C הן נקבה, B ו-D הן זכר)
     const gender = selectedVoice.endsWith('A') || selectedVoice.endsWith('C') ? "FEMALE" : "MALE"; 
@@ -2630,7 +2633,7 @@ async function speakText(text) {
                 voice: { 
                     languageCode: "he-IL", 
                     name: selectedVoice, 
-                    ssmlGender: gender   // <--- מחייב את הקול להיות WaveNet
+                    ssmlGender: gender   // מחייב את הקול להיות WaveNet/Standard
                 },
                 audioConfig: { audioEncoding: "MP3" }
             })
