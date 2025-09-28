@@ -729,27 +729,20 @@ body {
             <button id="voice-settings-close-btn" class="text-2xl">×</button>
         </div>
         <div class="p-6">
-            <label for="global-voice-select" class="block text-sm font-medium mb-1">
-                קול TTS לבחירה (Azure Neural)
-            </label>
-<select id="global-voice-select" class="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100">
-    <!-- קולות עברית נוירוניים (המקוריים) -->
-    <option value="he-IL-HilaNeural" selected>הילה (נקבה - מומלץ)</option>
-    <option value="he-IL-NoaNeural">נועה (נקבה - עשוי לגרום ל-400)</option>
-    <option value="he-IL-AvriNeural">אברי (זכר)</option>
+           <p class="text-sm text-gray-500 mb-4">בחר את הקול האנושי המועדף עליך שישמש להקראת מדריכים קוליים וסיכומים יומיים.</p>
 
-    <!-- קולות במבטא זר (קריאה של טקסט עברי במבטא שונה) -->
-    <option value="en-GB-RyanNeural">מבטא בריטי 🇬🇧 (זכר)</option>
-    <option value="en-US-JennyNeural">מבטא אמריקאי 🇺🇸 (נקבה)</option>
-    <option value="it-IT-ElsaNeural">מבטא איטלקי 🇮🇹 (נקבה)</option>
-    <option value="en-AU-AnnetteNeural">מבטא אוסטרלי 🇦🇺 (נקבה)</option>
-    <option value="fr-FR-DeniseNeural">מבטא צרפתי 🇫🇷 (נקבה)</option>
-</select>
-
-            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                <span class="font-bold">הערה:</span> כל קול חדש שתבחר יושמע לדוגמה.
-            </p>
-            
+            <label for="global-voice-select" class="block text-sm font-medium mb-1">בחר קול (WaveNet מומלץ לאיכות):</label>
+            <select id="global-voice-select" class="w-full p-2 rounded-lg border bg-white dark:bg-gray-800">
+                <option value="he-IL-Wavenet-A">WaveNet A</option>
+                <option value="he-IL-Wavenet-B">WaveNet B (זכר)</option>
+                <option value="he-IL-Wavenet-C">WaveNet C (נקבה)</option>
+                <option value="he-IL-Wavenet-D">WaveNet D (זכר)</option>
+                <option value="he-IL-Standard-A">Standard A (נקבה)</option>
+                <option value="he-IL-Standard-B">Standard B (זכר)</option>
+                <option value="he-IL-Standard-C">Standard C (נקבה)</option>
+                <option value="he-IL-Wavenet-D">WaveNet D (זכר - מומלץ)</option>
+ </select>
+ <p id="voice-test-status" class="mt-4 text-center text-xs text-gray-500">לחץ על הקול כדי לשמוע דוגמה.</p>
         </div>
     </div>
 </div>
@@ -2616,68 +2609,45 @@ async function callGemini(payload, prompt, useSearch = false) {
 }
 async function speakText(text) {
     // *************************************************************************************************************
-    // זהו המפתח והאזור שלך (Key 2 ב-eastus)
-    const azureKey = "4986vxv62SWLKCBivUvzhj3wjbM0vALDMs9daEJKgT0WcsaJNtXKJQQJ99BIACYeBjFXJ3w3AAAYACOG8ELL"; 
-    const azureRegion = "eastus"; 
+    // חובה לוודא שזה המפתח התקין שלך!
+    const apiKey = "AIzaSyDzQFz_abwcxSwq8VhHCQS-HcsYk_Qug-I";
     // *************************************************************************************************************
+    const url = `https://texttospeech.googleapis.com/v1/text:synthesize?key=${apiKey}`;
+
+    // שליפת הקול הנבחר מה-Dropdown הגלובלי
+    const selectedVoice = document.getElementById("global-voice-select")?.value || "he-IL-Wavenet-D"; 
     
-    const azureUrl = `https://${azureRegion}.tts.speech.microsoft.com/cognitiveservices/v1`;
-
-    // בדיקה אם המשתמש בחר קול זר ועדכון ברירת המחדל אם הבחירה אינה חוקית (למקרה שהמפתח לא נטען)
-    const selectedVoice = document.getElementById("global-voice-select")?.value || "he-IL-HilaNeural"; 
-    const isNeural = selectedVoice.endsWith('Neural');
-    // הגדרת languageCode בהתאם לקול הנבחר (נחוץ ל-SSML)
-    const languageCode = selectedVoice.substring(0, 5); // לדוגמה, he-IL, en-GB, it-IT
-
-    // SSML עם prosody (קצב) לשיפור ההטעמה
-    const ssml = `<speak version='1.0' xml:lang='${languageCode}'>
-                    <voice name='${selectedVoice}'>
-                        ${isNeural ? "<prosody rate='-5%' pitch='default'>" : ""}
-                            ${text}
-                        ${isNeural ? "</prosody>" : ""}
-                    </voice>
-                  </speak>`;
+    // קביעת המין ב-API בהתאם לקול הנבחר (A ו-C הן נקבה, B ו-D הן זכר)
+    const gender = selectedVoice.endsWith('A') || selectedVoice.endsWith('C') ? "FEMALE" : "MALE"; 
 
     try {
-        const response = await fetch(azureUrl, {
+        const response = await fetch(url, {
             method: "POST",
-            headers: { 
-                "Ocp-Apim-Subscription-Key": azureKey,
-                "Content-Type": "application/ssml+xml",
-                // FIX: חזרה ל-MP3. פורמט זה יציב יותר עבור קולות זרים הקוראים עברית (בניגוד ל-WAV)
-                "X-Microsoft-OutputFormat": "audio-48khz-192kbitrate-mono-mp3", 
-                "User-Agent": "MilanTripApp"
-            },
-            body: ssml
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                input: { text },
+                voice: { 
+                    languageCode: "he-IL", 
+                    name: selectedVoice, 
+                    ssmlGender: gender   // מחייב את הקול להיות WaveNet/Standard
+                },
+                audioConfig: { audioEncoding: "MP3" }
+            })
         });
 
-        if (response.ok) {
-            // השרת מחזיר קובץ אודיו גולמי
-            const audioBlob = await response.blob();
-            
-            // המרה ל-Base64 (הדרך הבטוחה לניגון ב-Canvas)
-            return new Promise((resolve, reject) => {
-                const reader = new FileReader();
-                reader.readAsDataURL(audioBlob);
-                reader.onloadend = () => {
-                    // חשוב לוודא שה-MIME Type תואם למה שביקשנו (MP3)
-                    const base64Data = reader.result.replace('audio/wav', 'audio/mp3');
-                    const audio = new Audio(base64Data);
-                    audio.play();
-                    resolve();
-                };
-                reader.onerror = reject;
-            });
+        const data = await response.json();
 
+        if (data.audioContent) {
+            // הנגנת האודיו שהתקבל ב-Base64
+            const audio = new Audio("data:audio/mp3;base64," + data.audioContent);
+            audio.play();
         } else {
-            const errorText = await response.text();
-            console.error("שגיאה ב-Azure TTS:", response.status, errorText);
-            // קריאה חוזרת לטיפול בשגיאות
-            showAlert("שגיאת TTS (Azure)", `שגיאה ${response.status}. הקול הנבחר ("${selectedVoice}") נכשל. נסה קול אחר.`);
+            console.error("שגיאה ב-TTS:", data);
+            showAlert("שגיאת TTS", "שגיאה בקריאה לשרת גוגל. בדוק את מפתח ה-API ואת ההרשאות.");
         }
     } catch (err) {
-        console.error("שגיאה בקריאה ל-Azure TTS:", err);
-        showAlert("שגיאת TTS", "שגיאת רשת או חיבור.");
+        console.error("שגיאה בקריאה ל-Google TTS:", err);
+        showAlert("שגיאת TTS", "שגיאת רשת או חיבור. נסה שוב.");
     }
 }
 window.speakText = speakText;
