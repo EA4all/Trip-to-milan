@@ -1112,24 +1112,24 @@ function showAlert(title, message, isCopyable = false, speechOptions = null) {
         stopBtn.style.display = activeAudio ? 'flex' : 'none'; 
 
         // 1. Event handler for the Play/Pause button
-        playPauseBtn.onclick = () => {
-            if (activeAudio) {
-                if (activeAudio.paused) {
-                    activeAudio.play();
-                    playPauseBtn.innerHTML = '<i class="fa-solid fa-pause mr-1"></i> השהה';
-                } else {
-                    activeAudio.pause();
-                    playPauseBtn.innerHTML = '<i class="fa-solid fa-play mr-1"></i> המשך';
-                }
-                stopBtn.style.display = 'flex';
-            } else {
-                // אם אין נגן פעיל - מתחילים ניגון חדש
-                window.speakText(speechOptions.text); 
-                // הנחה: speakText יצר Audio חדש ושמר אותו ב-activeAudio
-                playPauseBtn.innerHTML = '<i class="fa-solid fa-play mr-1"></i> המשך';
-                stopBtn.style.display = 'flex'; 
-            }
-        };
+playPauseBtn.onclick = () => {
+    if (window.activeAudio) { // נגן קיים
+        if (window.activeAudio.paused) {
+            window.activeAudio.play();
+            // ... עדכון כפתורים
+        } else {
+            window.activeAudio.pause();
+            // ... עדכון כפתורים
+        }
+    } else { // נגן לא קיים, מתחילים
+        window.speakText(speechOptions.text); 
+        // שימו לב: speakText הוא זה שמגדיר את window.activeAudio
+        
+        // כדי לוודא עדכון מצב, ניתן להוסיף השהיה קצרה, אבל זה פחות מומלץ.
+        // אם speakText נכשל, הוא קורא ל-showAlert.
+    }
+    stopBtn.style.display = 'flex'; // ודא שהכפתור תמיד מופיע בניסיון ניגון
+};
         
         // 2. Event handler for the Stop button
 stopBtn.onclick = () => {
