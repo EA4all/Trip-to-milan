@@ -2313,6 +2313,7 @@ window.findNearbyAttractions = findNearbyAttractions;
     // --- Camera Functions ---
 
 // --- החלפת הפונקציה startCamera הקיימת בקוד המתוקן ---
+// --- החלפת הפונקציה startCamera הקיימת בקוד המתוקן ---
 async function startCamera() {
     console.log("LOG: startCamera called for mode: " + cameraMode);
     const video = $('#camera-feed');
@@ -2336,7 +2337,7 @@ async function startCamera() {
 
             activeVideoTrack = cameraStream.getVideoTracks()[0];
             
-            // 2. ניהול כפתורי פנס וצילום (לוגיקה קיימת)
+            // 2. ניהול כפתורי פנס וצילום (הלוגיקה הקיימת שלך)
             const capabilities = activeVideoTrack.getCapabilities();
             if (capabilities.torch) {
                 torchBtn.style.display = 'flex';
@@ -2393,7 +2394,6 @@ async function startCamera() {
         showAlert("מצלמה לא נתמכת", "הדפדפן שלך לא תומך בגישה למצלמה.");
     }
 }
-
 
 // ========================= התחלה: קוד מתוקן ומשופר להפעלת הפנס =========================
 async function toggleTorch() {
@@ -2590,12 +2590,51 @@ async function callGemini(payload, prompt, useSearch = false) {
         return `שגיאה: ${error.message}`;
     }
 }
-    let voicesLoaded = false;
-window.speakText = (text, lang) => {
-    console.log(`LOG: speakText called for lang ${lang}. Text: ${text}`);
-    speechSynthesis.cancel();
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.lang = lang;
+let voicesLoaded = false;
+async function speakText(text) {
+    // *************************************************************************************************************
+    // חובה להחליף את YOUR_GOOGLE_API_KEY במפתח ה-API האמיתי שלך מ-Google Cloud
+    const apiKey = "YOUR_GOOGLE_API_KEY";
+    // *************************************************************************************************************
+    const url = `https://texttospeech.googleapis.com/v1/text:synthesize?key=${apiKey}`;
+
+    // שליפת הקול הנבחר (או ברירת מחדל אם לא נבחר)
+    const selectedVoice = document.getElementById("voice-select")?.value || "he-IL-Wavenet-A"; 
+    
+    // קביעת המין ב-API בהתאם לקול
+    const gender = selectedVoice.endsWith('A') || selectedVoice.endsWith('C') ? "FEMALE" : "MALE"; 
+
+    try {
+        const response = await fetch(url, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                input: { text },
+                voice: { 
+                    languageCode: "he-IL", // עברית
+                    name: selectedVoice,
+                    ssmlGender: gender
+                },
+                audioConfig: { audioEncoding: "MP3" } // פורמט שנוח לנגן
+            })
+        });
+
+        const data = await response.json();
+
+        if (data.audioContent) {
+            // הנגנת האודיו שהתקבל ב-Base64
+            const audio = new Audio("data:audio/mp3;base64," + data.audioContent);
+            audio.play();
+        } else {
+            console.error("שגיאה ב-TTS:", data);
+            showAlert("שגיאת TTS", "שגיאה בקריאה לשרת גוגל. בדוק את מפתח ה-API ואת ההרשאות.");
+        }
+    } catch (err) {
+        console.error("שגיאה בקריאה ל-Google TTS:", err);
+        showAlert("שגיאת TTS", "שגיאת רשת או חיבור. נסה שוב.");
+    }
+}
+window.speakText = speakText;
 
 // --- החלפה: פונקציית speakText חדשה באמצעות Google TTS API ---
 async function speakText(text) {
