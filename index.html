@@ -3673,30 +3673,27 @@ document.getElementById("receipt-file-input").addEventListener("change", (e) => 
     reader.readAsDataURL(file);
 });
 
-  // הוסף את הקוד הזה שוב אם הוא נמחק
-// 1. כפתור העלאה פותח את קלט הקובץ
-$('#translate-upload-btn').addEventListener('click', () => {
+  // 1. כפתור העלאה פותח את קלט הקובץ (עבור תרגום)
+  $('#translate-upload-btn').addEventListener('click', () => {
     // חשוב לוודא שהמצב הוא 'translate' גם כאן
-    // למרות שאין מצלמה, זה משפיע על פונקציית העיבוד
     cameraMode = 'translate';
     $('#image-translate-upload').click();
-});
+  });
 
-// 2. קלט הקובץ עצמו מעבד את התמונה
-// 2. קלט הקובץ עצמו מעבד את התמונה
-    $('#image-translate-upload').addEventListener('change', (e) => {
-        const file = e.target.files[0]; 
-        if (!file) return;
+  // 2. קלט הקובץ עצמו מעבד את התמונה (מאזין תרגום)
+  $('#image-translate-upload').addEventListener('change', (e) => {
+    const file = e.target.files[0]; 
+    if (!file) return;
 
-        const reader = new FileReader();
-        reader.onload = (event) => {
-            const base64String = event.target.result.split(',')[1]; 
-            
-            // כאן משתמשים ישירות ב-translateImage
-            translateImage(base64String, file.type); 
-        };
-        reader.readAsDataURL(file);
-    }); // <--- זה סוגר את המאזין של העלאת הקובץ
+    const reader = new FileReader();
+    reader.onload = (event) => { 
+        const base64String = event.target.result.split(',')[1]; 
+        
+        // כאן משתמשים ישירות ב-translateImage
+        translateImage(base64String, file.type); 
+    };
+    reader.readAsDataURL(file);
+  });
   
     // --- הוספת הלוגיקה של הגדרות הקול וחיבור הכפתורים (בתוך DOMContentLoaded) ---
     const voiceSettingsModal = $('#voice-settings-modal');
@@ -3731,8 +3728,9 @@ $('#translate-upload-btn').addEventListener('click', () => {
         }
     });
 
-  }); // <--- זה הסוגר היחיד והנכון שסוגר את document.addEventListener('DOMContentLoaded', ...)
+  }); // <--- סוגר סופי של document.addEventListener('DOMContentLoaded')
 
   </script>
+
 </body>
 </html>
