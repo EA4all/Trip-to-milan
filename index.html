@@ -2623,11 +2623,14 @@ async function speakText(text) {
     
     const azureUrl = `https://${azureRegion}.tts.speech.microsoft.com/cognitiveservices/v1`;
 
+    // בדיקה אם המשתמש בחר קול זר ועדכון ברירת המחדל אם הבחירה אינה חוקית (למקרה שהמפתח לא נטען)
     const selectedVoice = document.getElementById("global-voice-select")?.value || "he-IL-HilaNeural"; 
     const isNeural = selectedVoice.endsWith('Neural');
+    // הגדרת languageCode בהתאם לקול הנבחר (נחוץ ל-SSML)
+    const languageCode = selectedVoice.substring(0, 5); // לדוגמה, he-IL, en-GB, it-IT
 
     // SSML עם prosody (קצב) לשיפור ההטעמה
-    const ssml = `<speak version='1.0' xml:lang='he-IL'>
+    const ssml = `<speak version='1.0' xml:lang='${languageCode}'>
                     <voice name='${selectedVoice}'>
                         ${isNeural ? "<prosody rate='-5%' pitch='default'>" : ""}
                             ${text}
@@ -2641,8 +2644,8 @@ async function speakText(text) {
             headers: { 
                 "Ocp-Apim-Subscription-Key": azureKey,
                 "Content-Type": "application/ssml+xml",
-                // שימוש בפורמט WAV (פחות דחוס, אך נתמך)
-                "X-Microsoft-OutputFormat": "riff-24khz-16bit-mono-pcm", 
+                // FIX: חזרה ל-MP3. פורמט זה יציב יותר עבור קולות זרים הקוראים עברית (בניגוד ל-WAV)
+                "X-Microsoft-OutputFormat": "audio-48khz-192kbitrate-mono-mp3", 
                 "User-Agent": "MilanTripApp"
             },
             body: ssml
@@ -2657,7 +2660,8 @@ async function speakText(text) {
                 const reader = new FileReader();
                 reader.readAsDataURL(audioBlob);
                 reader.onloadend = () => {
-                    const base64Data = reader.result;
+                    // חשוב לוודא שה-MIME Type תואם למה שביקשנו (MP3)
+                    const base64Data = reader.result.replace('audio/wav', 'audio/mp3');
                     const audio = new Audio(base64Data);
                     audio.play();
                     resolve();
