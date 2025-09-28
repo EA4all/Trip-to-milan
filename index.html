@@ -2127,7 +2127,7 @@ function findUtility(query, queryHebrew) {
             showAlert('שגיאת מיקום', 'לא ניתן היה לקבל את מיקומך. החיפוש יתבצע ממרכז מילאנו.');
         });
     } else {
-        showAlert('שגיאאדוני, 'שירותי מיקום אינם נתמכים בדפדפן זה.');
+        showAlert('שגיאה', 'שירותי מיקום אינם נתמכים בדפדפן זה.');
     }
 }
     // ========================= התחלה: פונקציה למדריך קולי =========================
@@ -2187,8 +2187,8 @@ showAlert(`סיכום יומי: ${dayName}`, podcastScript, true, { text: podcas
     // ========================= התחלה: לוגיקה לעוזר המטרו =========================
 function initMetroHelper() {
     const metroData = {
-        M1: { name: 'M1', color: '#E4001A', stops: { 'Duomo': 'קתדרלת הדואומו, גלריה ויטוריו', 'Cadorna': 'טירת ספורצה, פארק סמפיונאדוני, 'San Babila': 'מרובע האופנאדוני } },
-        M2: { name: 'M2', color: '#009B4E', stops: { 'Centrale FS': 'תחנה מרכזית (רכבות לאגמים)', 'Garibaldi FS': 'פיאצה גאה אאולנטי, בוסקו ורטיקלאדוני } },
+        M1: { name: 'M1', color: '#E4001A', stops: { 'Duomo': 'קתדרלת הדואומו, גלריה ויטוריו', 'Cadorna': 'טירת ספורצה, פארק סמפיונה', 'San Babila': 'מרובע האופנאדוני } },
+        M2: { name: 'M2', color: '#009B4E', stops: { 'Centrale FS': 'תחנה מרכזית (רכבות לאגמים)', 'Garibaldi FS': 'פיאצה גאה אאולנטי, בוסקו ורטיקלה' } },
         M3: { name: 'M3', color: '#FFD200', stops: { 'Duomo': 'קתדרלת הדואומו', 'Centrale FS': 'תחנה מרכזית' } },
         M5: { name: 'M5', color: '#6E2C91', stops: { 'San Siro Stadio': 'אצטדיון סן סירו', 'Garibaldi FS': 'פיאצה גאה אאולנטי' } }
     };
@@ -2422,7 +2422,7 @@ function findNearbyAttractions() {
             window.open(url, '_blank');
         });
     } else {
-        showAlert('שגיאאדוני, 'שירותי מיקום אינם נתמכים בדפדפן זה.');
+        showAlert('שגיאה', 'שירותי מיקום אינם נתמכים בדפדפן זה.');
     }
 }
 // And assign it to the window object
@@ -2707,7 +2707,7 @@ async function processReceiptImage(base64ImageData) {
 
         // בדיקות תקינות לאחר ניתוח JSON
         if (result.error || isNaN(result.amount) || !result.category) {
-            showAlert('שגיאאדוני, 'לא הצלחנו לקרוא את כל הפרטים (סכום, תיאור או קטגוריה) מהקבלה. נסו שוב בתאורה טובה יותר.');
+            showAlert('שגיאה', 'לא הצלחנו לקרוא את כל הפרטים (סכום, תיאור או קטגוריה) מהקבלה. נסו שוב בתאורה טובה יותר.');
             return;
         }
         
@@ -2736,7 +2736,7 @@ async function processReceiptImage(base64ImageData) {
         
     } catch (e) {
         console.error("Error processing receipt:", e);
-        showAlert('שגיאה חמוראדוני, 'אירעה שגיאה בעיבוד הנתונים. אנא הזן ידנית.');
+        showAlert('שגיאה חמורה', 'אירעה שגיאה בעיבוד הנתונים. אנא הזן ידנית.');
     }
 }
 async function processLookupImage(base64ImageData) {
@@ -2927,7 +2927,7 @@ async function askGeneralGemini(userPrompt) {
 
     // 4. עדכון התצוגה - נציג את כל השיחה
     const chatDisplay = geminiChatHistory.map(entry => {
-        const role = entry.role === 'user' ? 'אתאדוני : 'Gemini';
+        const role = entry.role === 'user' ? 'אתה' : 'Gemini';
         const color = entry.role === 'user' ? 'text-brand-600' : 'text-green-600';
         return `<div><strong class="${color}">${role}:</strong> ${entry.parts[0].text}</div>`;
     }).join('');
@@ -2996,7 +2996,7 @@ async function askGeneralGemini(userPrompt) {
         console.log(`LOG: optimizeDayRoute called for ${dayId}`);
         const day = localTripData.plan[dayId];
         if (!day || !day.activities || day.activities.length < 2) {
-            showAlert('לא ניתן לבצע אופטימיזציאדוני, 'צריך לפחות שתי פעילויות ביום כדי לייעל את המסלול.');
+            showAlert('לא ניתן לבצע אופטימיזציה', 'צריך לפחות שתי פעילויות ביום כדי לייעל את המסלול.');
             return;
         }
 
@@ -3578,7 +3578,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if(!isFirebaseConnected) { showAlert('שגיאת סנכרון', 'אין חיבור למסד הנתונים.'); return; }
         const text = $('#new-item-text').value.trim(); if (!text) return;
         let categoryName = $('#new-category-text').value.trim() || $('#category-select').value;
-        if (!categoryName) { showAlert('שגיאאדוני, 'יש לבחור או ליצור קטגוריה.'); return; }
+        if (!categoryName) { showAlert('שגיאה', 'יש לבחור או ליצור קטגוריה.'); return; }
 
         let updatedChecklist = [...(localTripData.checklist || [])];
         let category = updatedChecklist.find(c => c.category === categoryName);
@@ -3603,7 +3603,7 @@ document.addEventListener('DOMContentLoaded', () => {
             await updateDoc(tripDocRef, { expenses: arrayUnion(newExpense) });
             e.target.reset();
         } else {
-            showAlert('שגיאאדוני, 'יש למלא את כל השדות כולל קטגוריה.');
+            showAlert('שגיאה', 'יש למלא את כל השדות כולל קטגוריה.');
         }
     });
 
