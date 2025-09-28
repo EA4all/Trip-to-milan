@@ -1242,11 +1242,22 @@ function renderOverview() {
         });
     }
    $('#birkat-hamazon-btn')?.addEventListener('click', () => {
-        const bracha = hebrewPrayers.birkatHaMazon;
-        showAlert('ברכת המזון (עדות המזרח)', bracha, true, { text: bracha });
-    });
+       const brachaHTML = hebrewPrayers.birkatHaMazon;
+       const brachaCleanText = cleanHtmlForTts(brachaHTML);
+        showAlert('ברכת המזון (עדות המזרח)', brachaHTML, true, { text: brachaCleanText });
+});
     $('#bracha-achrona-btn')?.addEventListener('click', showBrachaAchronaOptions);
 }
+
+    
+function cleanHtmlForTts(htmlText) {
+    // יוצר רכיב DOM זמני כדי לחלץ רק את הטקסט.
+    const tempDiv = document.createElement('div');
+    tempDiv.innerHTML = htmlText;
+    return tempDiv.textContent || tempDiv.innerText || '';
+}
+    
+window.cleanHtmlForTts = cleanHtmlForTts; // חשיפת הפונקציה לשימוש
 
     function startCountdown() {
         console.log("LOG: startCountdown called.");
@@ -3342,10 +3353,11 @@ if (recognition) {
 
     // --- INIT ---
 document.addEventListener('DOMContentLoaded', () => {
-      $('#birkat-hamazon-btn')?.addEventListener('click', () => {
-        const bracha = hebrewPrayers.birkatHaMazon;
-        showAlert('ברכת המזון (עדות המזרח)', bracha, true, { text: bracha });
-    });
+   $('#birkat-hamazon-btn')?.addEventListener('click', () => {
+       const brachaHTML = hebrewPrayers.birkatHaMazon;
+       const brachaCleanText = cleanHtmlForTts(brachaHTML);
+        showAlert('ברכת המזון (עדות המזרח)', brachaHTML, true, { text: brachaCleanText });
+});
     console.log("LOG: DOMContentLoaded event fired. Initializing app.");
      // --- מאזיני כפתורים יהודיים חדשים ---
    $('#tefilat-haderech-btn')?.addEventListener('click', () => {
