@@ -3695,7 +3695,8 @@ $('#image-translate-upload').addEventListener('change', (e) => {
         translateImage(base64String, file.type); 
     };
     reader.readAsDataURL(file);
-});const voiceSettingsModal = $('#voice-settings-modal');
+
+  const voiceSettingsModal = $('#voice-settings-modal');
     const globalVoiceSelect = $('#global-voice-select');
 
     // 1. טעינת בחירה שמורה ושמירה בשינוי
@@ -3715,7 +3716,7 @@ $('#image-translate-upload').addEventListener('change', (e) => {
     // 2. פתיחה/סגירת המודל
     $('#voice-settings-close-btn').addEventListener('click', () => voiceSettingsModal.classList.remove('flex'));
     
-    // 3. חיבור הכפתור בחלון ה-Alert/Summary לטריגר
+    // 3. חיבור הכפתורים לחלון הגדרות הקול
     document.addEventListener('click', (e) => {
         // פתיחת המודל מכפתור הגדרות בתוך חלון ה-Alert (מדריך קולי/סיכום יומי)
         if (e.target.closest('#alert-modal-tts-settings-btn')) {
@@ -3726,8 +3727,9 @@ $('#image-translate-upload').addEventListener('change', (e) => {
             voiceSettingsModal.classList.add('flex');
         }
     });
-  });
+  }); // <--- סוגר סופי של DOMContentLoaded
 
+});
 
   </script>
 
