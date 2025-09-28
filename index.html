@@ -1053,23 +1053,19 @@ function showAlert(title, message, isCopyable = false, speechOptions = null) {
                 speechSynthesis.pause();
                 playPauseBtn.innerHTML = '<i class="fa-solid fa-play mr-1"></i> המשך';
             } else {
-                // If not speaking, start from the beginning
-                speechSynthesis.cancel(); // Clear any previous speech
-                const utterance = new SpeechSynthesisUtterance(speechOptions.text);
-                utterance.lang = speechOptions.lang || 'he-IL';
+                // אם לא מדבר, התחל מההתחלה עם Google TTS
+                speechSynthesis.cancel(); // ודא שכל קולות הדפדפן כבויים
+                
+                // קריאה לפונקציה המותאמת אישית שלנו (Google TTS)
+                window.speakText(speechOptions.text); 
+                
+                // מכיוון ש-Google TTS עובד ב-Fetch, אין לנו שליטה ישירה על הפסקה/המשך
+                // נשנה את הכפתור להודעת "השמעה"
+                playPauseBtn.innerHTML = '<i class="fa-solid fa-volume-high mr-1"></i> משמיע...';
+                stopBtn.style.display = 'none'; // אין צורך בעצור/השהה כי זה קובץ MP3 קצר
 
-                utterance.onend = () => {
-                    // When speech finishes naturally
-                    playPauseBtn.innerHTML = '<i class="fa-solid fa-play mr-1"></i> הפעל';
-                    stopBtn.style.display = 'none';
-                };
-
-                speechSynthesis.speak(utterance);
-                playPauseBtn.innerHTML = '<i class="fa-solid fa-pause mr-1"></i> השהה';
-                stopBtn.style.display = 'inline-flex';
             }
         };
-
         // Event handler for the Stop button
         stopBtn.onclick = () => {
             speechSynthesis.cancel(); // Stop and reset everything
@@ -2613,18 +2609,17 @@ async function callGemini(payload, prompt, useSearch = false) {
     }
 }
 // --- החלפה מלאה: פונקציית speakText חדשה באמצעות Google TTS API ---
+// --- החלפה מלאה: פונקציית speakText (עם Gender מחויב) ---
 async function speakText(text) {
-    // *************************************************************************************************************
-    // חובה להחליף את YOUR_GOOGLE_API_KEY במפתח ה-API האמיתי שלך מ-Google Cloud
+    // מפתח ה-API שלך - כבר הוטמע נכון
     const apiKey = "AIzaSyDzQFz_abwcxSwq8VhHCQS-HcsYk_Qug-I";
-    // *************************************************************************************************************
     const url = `https://texttospeech.googleapis.com/v1/text:synthesize?key=${apiKey}`;
 
-    // שליפת הקול הנבחר (או ברירת מחדל אם לא נבחר)
-   const selectedVoice = document.getElementById("global-voice-select")?.value || "he-IL-Wavenet-A"; 
+    // שליפת הקול הנבחר מה-Dropdown הגלובלי
+    const selectedVoice = document.getElementById("global-voice-select")?.value || "he-IL-Wavenet-A"; 
     
-    // קביעת המין ב-API בהתאם לקול
-    const gender = selectedVoice.endsWith('A') || selectedVoice.endsWith('C') ? "FEMALE" : "MALE";
+    // קביעת המין ב-API בהתאם לקול הנבחר (A ו-C הן נקבה, B ו-D הן זכר)
+    const gender = selectedVoice.endsWith('A') || selectedVoice.endsWith('C') ? "FEMALE" : "MALE"; 
 
     try {
         const response = await fetch(url, {
@@ -2633,9 +2628,9 @@ async function speakText(text) {
             body: JSON.stringify({
                 input: { text },
                 voice: { 
-                    languageCode: "he-IL", // עברית
-                    name: selectedVoice, // <--- זה משתמש בערך שבחרת (WaveNet/Standard)
-                    ssmlGender: gender
+                    languageCode: "he-IL", 
+                    name: selectedVoice, 
+                    ssmlGender: gender   // <--- מחייב את הקול להיות WaveNet
                 },
                 audioConfig: { audioEncoding: "MP3" }
             })
@@ -3174,7 +3169,7 @@ document.addEventListener('DOMContentLoaded', () => {
         globalVoiceSelect.addEventListener("change", (e) => {
             const selectedVoice = e.target.value;
             localStorage.setItem("selectedVoice", selectedVoice); // שמירה
-            speakText("שלום, זהו הקול שבחרת."); // דוגמת קול
+            speakText(" שלום, זהו הקול שבחרת."); // דוגמת קול
         });
     }
 
