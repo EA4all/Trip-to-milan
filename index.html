@@ -2607,18 +2607,18 @@ async function callGemini(payload, prompt, useSearch = false) {
 }
 async function speakText(text) {
     // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    // פרטי המפתח והאזור שקיבלת:
-    const azureKey = "4986vxv62SWLKCBivUvzhj3wjbM0vALDMs9daEJKgT0WcsaJNtXKJQQJ99BIACYeBjFXJ3w3AAAYACOG8ELL"; // השתמשנו ב-KEY 2
-    const azureRegion = "eastus"; // ניסיון עם Region אחר
+    // מעדכנים ל-KEY 2 והאזור eastus
+    const azureKey = "4986vxv62SWLKCBivUvzhj3wjbM0vALDMs9daEJKgT0WcsaJNtXKJQQJ99BIACYeBjFXJ3w3AAAYACOG8ELL"; // Key 1
+    const azureRegion = "eastus"; 
     // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     
-    // כתובת ה-API של Azure TTS (משתמשת באזור שלך)
     const azureUrl = `https://${azureRegion}.tts.speech.microsoft.com/cognitiveservices/v1`;
 
-    // קול נוירוני בעברית (NoaNeural) - זהו קול באיכות גבוהה יותר מ-WaveNet
-    const selectedVoice = "he-IL-NoaNeural"; 
+    // שליפת הקול הנבחר מה-Dropdown הגלובלי
+    const selectedVoice = document.getElementById("global-voice-select")?.value || "he-IL-NoaNeural";
     
     // בניית בקשת SSML (פורמט הדיבור של Azure)
+    // הערה: קטע זה הכרחי כדי למנוע שגיאות 400
     const ssml = `<speak version='1.0' xml:lang='he-IL'>
                     <voice name='${selectedVoice}'>
                         ${text}
@@ -2632,12 +2632,11 @@ async function speakText(text) {
                 "Ocp-Apim-Subscription-Key": azureKey,
                 "Content-Type": "application/ssml+xml",
                 "X-Microsoft-OutputFormat": "audio-48khz-192kbitrate-mono-mp3", 
-                "User-Agent": "MilanTripApp"
+                "User-Agent": "MilanTripApp" // הכותרת שדיברנו עליה
             },
             body: ssml
         });
 
-        // בדיקת תקינות התגובה
         if (response.ok) {
             const audioBlob = await response.blob();
             const audio = new Audio(URL.createObjectURL(audioBlob));
@@ -2645,7 +2644,8 @@ async function speakText(text) {
         } else {
             const errorText = await response.text();
             console.error("שגיאה ב-Azure TTS:", response.status, errorText);
-            showAlert("שגיאת TTS (Azure)", `שגיאה ${response.status}. ודא שהמפתח וה-Region נכונים.`);
+            // אם עדיין 400, נציג הודעה ברורה
+            showAlert("שגיאת TTS (Azure)", `שגיאה ${response.status}. ודא שהטקסט אינו מכיל תווים מיוחדים והמפתח תקין.`);
         }
     } catch (err) {
         console.error("שגיאה בקריאה ל-Azure TTS:", err);
