@@ -3166,7 +3166,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const sampleText = "שלום, אני הקול שנבחר";
         speakText(sampleText); 
     });
-}
+} 
 
     // --- Expose functions to window for onclick attributes ---
     window.handleTransportChange = handleTransportChange;
@@ -3674,26 +3674,12 @@ document.getElementById("receipt-file-input").addEventListener("change", (e) => 
 });
 
   // 1. כפתור העלאה פותח את קלט הקובץ (עבור תרגום)
+ // 1. כפתור העלאה פותח את קלט הקובץ (עבור תרגום)
   $('#translate-upload-btn').addEventListener('click', () => {
     // חשוב לוודא שהמצב הוא 'translate' גם כאן
     cameraMode = 'translate';
     $('#image-translate-upload').click();
   });
-
-  // 2. קלט הקובץ עצמו מעבד את התמונה (מאזין תרגום)
-  $('#image-translate-upload').addEventListener('change', (e) => {
-    const file = e.target.files[0]; 
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = (event) => { 
-        const base64String = event.target.result.split(',')[1]; 
-        
-        // כאן משתמשים ישירות ב-translateImage
-        translateImage(base64String, file.type); 
-    };
-    reader.readAsDataURL(file);
-
   
     // --- הוספת הלוגיקה של הגדרות הקול וחיבור הכפתורים (בתוך DOMContentLoaded) ---
     const voiceSettingsModal = $('#voice-settings-modal');
@@ -3728,7 +3714,7 @@ document.getElementById("receipt-file-input").addEventListener("change", (e) => 
         }
     });
 
-  }); // <--- סוגר סופי של document.addEventListener('DOMContentLoaded')
+  }); // <--- זה הסוגר היחיד והנכון של document.addEventListener('DOMContentLoaded')
 
   </script>
 
