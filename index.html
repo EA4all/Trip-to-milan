@@ -2607,8 +2607,8 @@ async function callGemini(payload, prompt, useSearch = false) {
 }
 async function speakText(text) {
     // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    // מעדכנים ל-KEY 2 והאזור eastus
-    const azureKey = "4986vxv62SWLKCBivUvzhj3wjbM0vALDMs9daEJKgT0WcsaJNtXKJQQJ99BIACYeBjFXJ3w3AAAYACOG8ELL"; // Key 1
+    // מעדכנים ל-KEY 2 והאזור eastus (Key 2 הוא המפתח שכרגע עבר מ-401 ל-400)
+    const azureKey = "6q2D79SKoLiwRgaAG5OSlxfMAHKAN9Eh2TihLFry9kQKylPHelqXvjQQJ99BIACYeBjFXJ3w3AAAYACOG6IUP"; // Key 2
     const azureRegion = "eastus"; 
     // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     
@@ -2618,10 +2618,13 @@ async function speakText(text) {
     const selectedVoice = document.getElementById("global-voice-select")?.value || "he-IL-NoaNeural";
     
     // בניית בקשת SSML (פורמט הדיבור של Azure)
-    // הערה: קטע זה הכרחי כדי למנוע שגיאות 400
+    // הוספנו תגית <prosody> לשליטה על קצב הקריאה (rate) וגובה הצליל (pitch)
+    // rate='-5%' מאט מעט את הדיבור כדי לשפר את ההטעמה והניקוד.
     const ssml = `<speak version='1.0' xml:lang='he-IL'>
                     <voice name='${selectedVoice}'>
-                        ${text}
+                        <prosody rate='-5%' pitch='default'>
+                            ${text}
+                        </prosody>
                     </voice>
                   </speak>`;
 
@@ -2631,8 +2634,9 @@ async function speakText(text) {
             headers: { 
                 "Ocp-Apim-Subscription-Key": azureKey,
                 "Content-Type": "application/ssml+xml",
+                // השתמשנו בפורמט MP3 שנתמך על ידי כל הקולות הנוירוניים
                 "X-Microsoft-OutputFormat": "audio-48khz-192kbitrate-mono-mp3", 
-                "User-Agent": "MilanTripApp" // הכותרת שדיברנו עליה
+                "User-Agent": "MilanTripApp"
             },
             body: ssml
         });
@@ -2644,8 +2648,17 @@ async function speakText(text) {
         } else {
             const errorText = await response.text();
             console.error("שגיאה ב-Azure TTS:", response.status, errorText);
-            // אם עדיין 400, נציג הודעה ברורה
-            showAlert("שגיאת TTS (Azure)", `שגיאה ${response.status}. ודא שהטקסט אינו מכיל תווים מיוחדים והמפתח תקין.`);
+            
+            // הודעת שגיאה ממוקדת יותר
+            let errorMessage = `שגיאה ${response.status}. ודא שהטקסט אינו מכיל תווים מיוחדים.`;
+            if (response.status === 400 && selectedVoice === 'he-IL-HilaNeural') {
+                 // אם 400 עם הילה, זה כנראה בעיית פורמט אזורית
+                errorMessage += " ייתכן שקול הילה אינו נתמך באזור זה (eastus). אנא נסה קול אחר.";
+            } else if (response.status === 401) {
+                errorMessage += " שגיאת אימות! המפתח או האזור שגויים. אנא ודא שהמפתח בפורטל Azure תקין.";
+            }
+
+            showAlert("שגיאת TTS (Azure)", errorMessage);
         }
     } catch (err) {
         console.error("שגיאה בקריאה ל-Azure TTS:", err);
