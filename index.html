@@ -1116,7 +1116,7 @@ function showAlert(title, message, isCopyable = false, speechOptions = null) {
             if (activeAudio) {
                 if (activeAudio.paused) {
                     activeAudio.play();
-                    playPauseBtn.innerHTML = '<i class="fa-solid fa-pause mr-1"></i> השהאדוני;
+                    playPauseBtn.innerHTML = '<i class="fa-solid fa-pause mr-1"></i> השהה';
                 } else {
                     activeAudio.pause();
                     playPauseBtn.innerHTML = '<i class="fa-solid fa-play mr-1"></i> המשך';
@@ -1126,7 +1126,7 @@ function showAlert(title, message, isCopyable = false, speechOptions = null) {
                 // אם אין נגן פעיל - מתחילים ניגון חדש
                 window.speakText(speechOptions.text); 
                 // הנחה: speakText יצר Audio חדש ושמר אותו ב-activeAudio
-                playPauseBtn.innerHTML = '<i class="fa-solid fa-pause mr-1"></i> השהאדוני;
+                playPauseBtn.innerHTML = '<i class="fa-solid fa-play mr-1"></i> המשך';
                 stopBtn.style.display = 'flex'; 
             }
         };
@@ -1148,7 +1148,7 @@ stopBtn.onclick = () => {
              const updateButtons = () => {
                 playPauseBtn.innerHTML = activeAudio.paused 
                     ? '<i class="fa-solid fa-play mr-1"></i> המשך' 
-                    : '<i class="fa-solid fa-pause mr-1"></i> השהאדוני;
+                    : '<i class="fa-solid fa-pause mr-1"></i> השהה';
                 stopBtn.style.display = 'flex';
              };
              updateButtons(); 
