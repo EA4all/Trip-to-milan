@@ -830,6 +830,7 @@ let isFirebaseConnected = false; // הגדרת Firebase תקינה
 let translationHistory = JSON.parse(localStorage.getItem('milanTripTranslationHistory')) || [];
 let lastWeatherAPIData = null;
 let geminiChatHistory = []; // משתנה השיחה החדש
+let activeAudio = null; // משתנה גלובלי שיחזיק את אובייקט ה-Audio הנוכחי
 
 // --- Live Location State ---
 let liveMap;
@@ -1010,76 +1011,97 @@ const attractions = {
     };
     window.openAddToDayModal = openAddToDayModal;
 
-function showAlert(title, message, isCopyable = false, speechOptions = null) {
-    console.log(`LOG: showAlert called. Title: ${title}`);
-    $('#alert-modal-title').textContent = title;
-    $('#alert-modal-body').innerHTML = message;
+function showAlert(title, message, speechOptions = null) {
+    const modal = document.getElementById('alert-modal');
+    const modalTitle = document.getElementById('alert-modal-title');
+    const modalMessage = document.getElementById('alert-modal-message');
+    const buttonContainer = document.getElementById('alert-modal-buttons');
+    const closeBtn = document.getElementById('alert-modal-close');
 
-    $('#alert-modal-copy-btn').classList.toggle('hidden', !isCopyable);
+    // 1. איפוס והצבת תוכן
+    modalTitle.innerHTML = title;
+    modalMessage.innerHTML = message;
+    
+    // מנקה כפתורים קודמים (למעט כפתור הסגירה הקיים)
+    const existingButtons = buttonContainer.querySelectorAll('button:not(#alert-modal-close)');
+    existingButtons.forEach(btn => btn.remove());
 
-    const buttonContainer = $('#alert-modal-close').parentNode;
-
-    // Remove old dynamic buttons to prevent duplicates
-    ['#alert-modal-play-pause-btn', '#alert-modal-stop-btn', '#alert-modal-speak-btn'].forEach(selector => {
-        const oldBtn = $(selector);
-        if (oldBtn) oldBtn.remove();
-    });
-
+    // 2. הוספת כפתורי השמע (אם נדרש)
     if (speechOptions && speechOptions.text) {
-        // --- START OF NEW PLAY/PAUSE/STOP LOGIC ---
+        
+        // ***************************************************************
+        // לוגיקה חדשה ל-Play/Pause/Stop עבור Google TTS (MP3)
+        // ***************************************************************
 
-        // Create Play/Pause Button
+        // יצירת כפתור הפעלה/השהיה
         const playPauseBtn = document.createElement('button');
         playPauseBtn.id = 'alert-modal-play-pause-btn';
         playPauseBtn.className = 'btn btn-ghost';
-        playPauseBtn.innerHTML = '<i class="fa-solid fa-play mr-1"></i> הפעל';
-
-        // Create Stop Button
+        
+        // קביעת המצב הראשוני של הכפתור לפי הנגן הגלובלי (activeAudio)
+        playPauseBtn.innerHTML = activeAudio && !activeAudio.paused 
+            ? '<i class="fa-solid fa-pause mr-1"></i> השהה' 
+            : '<i class="fa-solid fa-play mr-1"></i> הפעל';
+        
+        // יצירת כפתור עצירה
         const stopBtn = document.createElement('button');
         stopBtn.id = 'alert-modal-stop-btn';
         stopBtn.className = 'btn btn-ghost text-red-500';
         stopBtn.innerHTML = '<i class="fa-solid fa-stop mr-1"></i> עצור';
-        stopBtn.style.display = 'none'; // Initially hidden
+        // מציגים רק אם יש נגן פעיל
+        stopBtn.style.display = activeAudio ? 'flex' : 'none'; 
 
-        // Event handler for the Play/Pause button
+        // 1. אירוע לחיצה על Play/Pause
         playPauseBtn.onclick = () => {
-            if (speechSynthesis.paused) {
-                // If paused, resume playback
-                speechSynthesis.resume();
-                playPauseBtn.innerHTML = '<i class="fa-solid fa-pause mr-1"></i> השהה';
-            } else if (speechSynthesis.speaking) {
-                // If currently speaking, pause playback
-                speechSynthesis.pause();
-                playPauseBtn.innerHTML = '<i class="fa-solid fa-play mr-1"></i> המשך';
+            if (activeAudio) {
+                if (activeAudio.paused) {
+                    activeAudio.play();
+                    playPauseBtn.innerHTML = '<i class="fa-solid fa-pause mr-1"></i> השהה';
+                } else {
+                    activeAudio.pause();
+                    playPauseBtn.innerHTML = '<i class="fa-solid fa-play mr-1"></i> המשך';
+                }
+                stopBtn.style.display = 'flex';
             } else {
-                // אם לא מדבר, התחל מההתחלה עם Google TTS
-                speechSynthesis.cancel(); // ודא שכל קולות הדפדפן כבויים
-                
-                // קריאה לפונקציה המותאמת אישית שלנו (Google TTS)
+                // אם אין נגן פעיל, מתחילים חדש (speakText יטפל ביצירת activeAudio חדש)
                 window.speakText(speechOptions.text); 
-                
-                // מכיוון ש-Google TTS עובד ב-Fetch, אין לנו שליטה ישירה על הפסקה/המשך
-                // נשנה את הכפתור להודעת "השמעה"
-                playPauseBtn.innerHTML = '<i class="fa-solid fa-volume-high mr-1"></i> משמיע...';
-                stopBtn.style.display = 'none'; // אין צורך בעצור/השהה כי זה קובץ MP3 קצר
-
+                playPauseBtn.innerHTML = '<i class="fa-solid fa-pause mr-1"></i> השהה';
+                stopBtn.style.display = 'flex'; 
             }
         };
-        // Event handler for the Stop button
+        
+        // 2. אירוע לחיצה על Stop
         stopBtn.onclick = () => {
-            speechSynthesis.cancel(); // Stop and reset everything
+            if (activeAudio) {
+                activeAudio.pause(); 
+                activeAudio.currentTime = 0; // אחזר להתחלה
+                window.activeAudio = null; // משחרר את הנגן הגלובלי
+            }
+            // איפוס כפתורים
             playPauseBtn.innerHTML = '<i class="fa-solid fa-play mr-1"></i> הפעל';
             stopBtn.style.display = 'none';
         };
+        
+        // 3. ודא עדכון כפתורים במקרה שהנגן כבר פועל לפני פתיחת המודל
+        if(activeAudio) {
+             const updateButtons = () => {
+                playPauseBtn.innerHTML = activeAudio.paused 
+                    ? '<i class="fa-solid fa-play mr-1"></i> המשך' 
+                    : '<i class="fa-solid fa-pause mr-1"></i> השהה';
+                stopBtn.style.display = 'flex';
+             };
+             updateButtons(); 
+        }
 
-        // Add new buttons to the modal
-        buttonContainer.insertBefore(playPauseBtn, $('#alert-modal-close'));
+        // הוספת הכפתורים למודל, לפני כפתור הסגירה הקיים
+        buttonContainer.insertBefore(playPauseBtn, closeBtn);
         buttonContainer.insertBefore(stopBtn, playPauseBtn);
-        // --- END OF NEW LOGIC ---
     }
-
-    $('#alert-modal').classList.add('flex');
+    
+    // 3. הצגת המודל
+    modal.classList.add('flex');
 }
+window.showAlert = showAlert;
     function openTipModal() {
     console.log("LOG: openTipModal called.");
     const tip = dailyTips[Math.floor(Math.random() * dailyTips.length)];
@@ -2638,9 +2660,21 @@ async function speakText(text) {
         const data = await response.json();
 
         if (data.audioContent) {
-            // הנגנת האודיו שהתקבל ב-Base64
-            const audio = new Audio("data:audio/mp3;base64," + data.audioContent);
-            audio.play();
+            // אם יש נגן פעיל קודם, עוצרים אותו
+            if (activeAudio) { activeAudio.pause(); }
+            
+            // יצירת אובייקט Audio חדש ואחסונו במשתנה הגלובלי
+            activeAudio = new Audio("data:audio/mp3;base64," + data.audioContent);
+            activeAudio.play();
+            
+            // טיפול בסיום הניגון
+            activeAudio.onended = () => {
+                activeAudio = null; // משחררים את הנגן הגלובלי
+                // אם פועל מודל התראה, מעדכנים את הכפתור חזרה ל'הפעל'
+                const playPauseBtn = $('#alert-modal-play-pause-btn');
+                if(playPauseBtn) playPauseBtn.innerHTML = '<i class="fa-solid fa-play mr-1"></i> הפעל';
+            };
+            
         } else {
             console.error("שגיאה ב-TTS:", data);
             showAlert("שגיאת TTS", "שגיאה בקריאה לשרת גוגל. בדוק את מפתח ה-API ואת ההרשאות.");
@@ -2650,6 +2684,7 @@ async function speakText(text) {
         showAlert("שגיאת TTS", "שגיאת רשת או חיבור. נסה שוב.");
     }
 }
+window.speakText = speakText;
 window.speakText = speakText;
 
 // --- סוף החלפת speakText ---
