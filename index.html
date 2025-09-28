@@ -1018,14 +1018,15 @@ function showAlert(title, message, isCopyable = false, speechOptions = null) {
     const modalBody = document.getElementById('alert-modal-body');
     const copyBtn = document.getElementById('alert-modal-copy-btn');
     const closeBtn = document.getElementById('alert-modal-close');
-    const buttonContainer = closeBtn.parentNode; // מכיל את כל הכפתורים
+    // חשוב: נשתמש ב-document.querySelector עבור הכפתור כי אין לו ID ב-HTML
+    const buttonContainer = closeBtn.parentNode; 
 
     // 1. הגדרת התוכן
     modalTitle.textContent = title;
     modalBody.innerHTML = message;
     copyBtn.classList.toggle('hidden', !isCopyable);
     
-    // 2. הסרת כפתורים דינמיים ישנים
+    // 2. הסרת כפתורים דינמיים ישנים (כדי למנוע כפילויות)
     ['#alert-modal-play-pause-btn', '#alert-modal-stop-btn'].forEach(selector => {
         const oldBtn = document.querySelector(selector);
         if (oldBtn) oldBtn.remove();
@@ -1033,15 +1034,20 @@ function showAlert(title, message, isCopyable = false, speechOptions = null) {
 
     // 3. הוספת כפתורי השמע (אם נדרש)
     if (speechOptions && speechOptions.text) {
-        // --- START OF NEW PLAY/PAUSE/STOP LOGIC ---
+        
+        // ***************************************************************
+        // לוגיקה חדשה ומפושטת ל-Play/Pause/Stop עבור Google TTS (MP3)
+        // ***************************************************************
 
         // יצירת כפתור Play/Pause
         const playPauseBtn = document.createElement('button');
         playPauseBtn.id = 'alert-modal-play-pause-btn';
         playPauseBtn.className = 'btn btn-ghost';
         
-        // קביעת הטקסט הראשוני של הכפתור לפי מצב הנגן הגלובלי (activeAudio)
-        playPauseBtn.innerHTML = activeAudio && !activeAudio.paused 
+        // קביעת הטקסט הראשוני של הכפתור
+        // אם יש נגן פעיל והוא לא מושהה -> השהה
+        // אחרת (אין נגן או שהוא מושהה) -> הפעל
+        playPauseBtn.innerHTML = window.activeAudio && !window.activeAudio.paused 
             ? '<i class="fa-solid fa-pause mr-1"></i> השהה' 
             : '<i class="fa-solid fa-play mr-1"></i> הפעל';
 
@@ -1051,22 +1057,23 @@ function showAlert(title, message, isCopyable = false, speechOptions = null) {
         stopBtn.className = 'btn btn-ghost text-red-500';
         stopBtn.innerHTML = '<i class="fa-solid fa-stop mr-1"></i> עצור';
         // מציגים רק אם יש נגן פעיל
-        stopBtn.style.display = activeAudio ? 'flex' : 'none'; 
+        stopBtn.style.display = window.activeAudio ? 'flex' : 'none'; 
 
         // 1. Event handler for the Play/Pause button
         playPauseBtn.onclick = () => {
-            if (activeAudio) {
-                if (activeAudio.paused) {
-                    activeAudio.play();
+            if (window.activeAudio) {
+                if (window.activeAudio.paused) {
+                    window.activeAudio.play();
                     playPauseBtn.innerHTML = '<i class="fa-solid fa-pause mr-1"></i> השהה';
                 } else {
-                    activeAudio.pause();
+                    window.activeAudio.pause();
                     playPauseBtn.innerHTML = '<i class="fa-solid fa-play mr-1"></i> המשך';
                 }
                 stopBtn.style.display = 'flex';
             } else {
                 // אם אין נגן פעיל, מתחילים חדש
                 window.speakText(speechOptions.text); 
+                // ברגע ש-speakText מופעל, ההנחה היא שהנגן יתחיל לנגן מיד
                 playPauseBtn.innerHTML = '<i class="fa-solid fa-pause mr-1"></i> השהה';
                 stopBtn.style.display = 'flex'; 
             }
@@ -1074,9 +1081,9 @@ function showAlert(title, message, isCopyable = false, speechOptions = null) {
         
         // 2. Event handler for the Stop button
         stopBtn.onclick = () => {
-            if (activeAudio) {
-                activeAudio.pause(); // עצור
-                activeAudio.currentTime = 0; // אחזר להתחלה
+            if (window.activeAudio) {
+                window.activeAudio.pause(); // עצור
+                window.activeAudio.currentTime = 0; // אחזר להתחלה
                 window.activeAudio = null; // שחרר את המשתנה הגלובלי
             }
             // איפוס כפתורים
@@ -1085,9 +1092,9 @@ function showAlert(title, message, isCopyable = false, speechOptions = null) {
         };
         
         // 3. עדכון כפתורים במעבר בין מודלים
-        if(activeAudio) {
+        if(window.activeAudio) {
              const updateButtons = () => {
-                playPauseBtn.innerHTML = activeAudio.paused 
+                playPauseBtn.innerHTML = window.activeAudio.paused 
                     ? '<i class="fa-solid fa-play mr-1"></i> המשך' 
                     : '<i class="fa-solid fa-pause mr-1"></i> השהה';
                 stopBtn.style.display = 'flex';
@@ -1096,15 +1103,15 @@ function showAlert(title, message, isCopyable = false, speechOptions = null) {
         }
 
         // Add new buttons to the modal
+        // שימו לב: הכפתורים מוכנסים לפני כפתור הסגירה הקיים
         buttonContainer.insertBefore(playPauseBtn, closeBtn);
         buttonContainer.insertBefore(stopBtn, playPauseBtn);
-        // --- END OF NEW LOGIC ---
     }
 
     // 4. הצגת המודל
     modal.classList.add('flex');
 }
-window.showAlert = showAlert; // <-- חובה להחזיר את זה!
+window.showAlert = showAlert;
     function openTipModal() {
     console.log("LOG: openTipModal called.");
     const tip = dailyTips[Math.floor(Math.random() * dailyTips.length)];
