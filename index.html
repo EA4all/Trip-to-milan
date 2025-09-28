@@ -520,16 +520,10 @@ body {
                 <div id="translation-result-container" class="mt-2 p-3 bg-gray-100 dark:bg-gray-800 rounded-lg min-h-[60px] text-center flex items-center justify-center gap-3">
                    <span class="text-gray-500">התרגום יופיע כאן...</span>
                 </div>
-<div class="mt-4 pt-3 border-t dark:border-gray-700">
-    <label for="voice-select" class="block text-sm font-medium mb-1">בחר קול ל-TTS (עברית):</label>
-    <select id="voice-select" class="w-full p-2 rounded-lg border bg-white dark:bg-gray-800">
-      <option value="he-IL-Wavenet-A">Wavenet A (נקבה - מומלץ)</option>
-      <option value="he-IL-Wavenet-B">Wavenet B (זכר)</option>
-      <option value="he-IL-Wavenet-C">Wavenet C (נקבה)</option>
-      <option value="he-IL-Wavenet-D">Wavenet D (זכר)</option>
-      <option value="he-IL-Standard-A">Standard A (נקבה)</option>
-    </select>
+              <div class="mt-4 pt-3 border-t dark:border-gray-700 flex justify-end">
+    <button id="translator-tts-settings-btn" class="btn btn-ghost btn-sm"><i class="fa-solid fa-cog mr-2"></i> הגדר קול</button>
 </div>
+
 <div id="translation-history" class="mt-3 pt-3 border-t text-xs space-y-2 max-h-24 overflow-y-auto">
     <div class="text-center text-gray-400">היסטוריית תרגומים</div>
 </div>
@@ -671,10 +665,13 @@ body {
 ------
   <div id="alert-modal" class="modal-backdrop">
     <div class="modal">
-        <div class="p-4 border-b flex justify-between items-center">
-            <h3 id="alert-modal-title" class="text-lg font-bold"></h3>
-            <button id="alert-modal-copy-btn" class="btn btn-ghost btn-sm hidden"><i class="fa-solid fa-copy mr-1"></i>העתק</button>
-        </div>
+<div class="p-4 border-b flex justify-between items-center">
+    <h3 id="alert-modal-title" class="text-lg font-bold"></h3>
+    <div class="flex items-center gap-2">
+        <button id="alert-modal-tts-settings-btn" class="btn btn-ghost btn-sm" title="הגדרות קול"><i class="fa-solid fa-cog"></i></button>
+        <button id="alert-modal-copy-btn" class="btn btn-ghost btn-sm hidden"><i class="fa-solid fa-copy mr-1"></i>העתק</button>
+    </div>
+</div>
         <div id="alert-modal-body" class="p-6 whitespace-pre-wrap max-h-[50vh] overflow-y-auto"></div>
         <div class="p-4 border-t flex justify-end">
             <button id="alert-modal-close" class="btn btn-primary">הבנתי</button>
@@ -722,6 +719,31 @@ body {
         <div id="daily-tip-body" class="p-6 whitespace-pre-wrap">טוען טיפ...</div>
         <div class="p-4 border-t flex justify-end">
             <button id="daily-tip-close" class="btn btn-primary">הבנתי</button>
+        </div>
+    </div>
+</div>
+  <div id="voice-settings-modal" class="modal-backdrop">
+    <div class="modal">
+        <div class="p-4 border-b flex justify-between items-center">
+            <h3 class="text-lg font-bold"><i class="fa-solid fa-volume-high mr-2"></i> הגדרות קול (TTS)</h3>
+            <button id="voice-settings-close-btn" class="text-2xl">×</button>
+        </div>
+        <div class="p-6">
+            <p class="text-sm text-gray-500 mb-4">בחר את הקול האנושי המועדף עליך שישמש להקראת מדריכים קוליים וסיכומים יומיים.</p>
+
+            <label for="global-voice-select" class="block text-sm font-medium mb-1">בחר קול (WaveNet מומלץ לאיכות):</label>
+            <select id="global-voice-select" class="w-full p-2 rounded-lg border bg-white dark:bg-gray-800">
+                <option value="he-IL-Wavenet-A">WaveNet A (נקבה - מומלץ)</option>
+                <option value="he-IL-Wavenet-B">WaveNet B (זכר)</option>
+                <option value="he-IL-Wavenet-C">WaveNet C (נקבה)</option>
+                <option value="he-IL-Wavenet-D">WaveNet D (זכר)</option>
+                <option value="he-IL-Standard-A">Standard A (נקבה)</option>
+                <option value="he-IL-Standard-B">Standard B (זכר)</option>
+                <option value="he-IL-Standard-C">Standard C (נקבה)</option>
+                <option value="he-IL-Standard-D">Standard D (זכר)</option>
+            </select>
+            
+            <p id="voice-test-status" class="mt-4 text-center text-xs text-gray-500">לחץ על הקול כדי לשמוע דוגמה.</p>
         </div>
     </div>
 </div>
@@ -2599,10 +2621,10 @@ async function speakText(text) {
     const url = `https://texttospeech.googleapis.com/v1/text:synthesize?key=${apiKey}`;
 
     // שליפת הקול הנבחר (או ברירת מחדל אם לא נבחר)
-    const selectedVoice = document.getElementById("voice-select")?.value || "he-IL-Wavenet-A"; 
+   const selectedVoice = document.getElementById("global-voice-select")?.value || "he-IL-Wavenet-A"; 
     
     // קביעת המין ב-API בהתאם לקול
-    const gender = selectedVoice.endsWith('A') || selectedVoice.endsWith('C') ? "FEMALE" : "MALE"; 
+    const gender = selectedVoice.endsWith('A') || selectedVoice.endsWith('C') ? "FEMALE" : "MALE";
 
     try {
         const response = await fetch(url, {
@@ -2612,10 +2634,10 @@ async function speakText(text) {
                 input: { text },
                 voice: { 
                     languageCode: "he-IL", // עברית
-                    name: selectedVoice,
+                    name: selectedVoice, // <--- זה משתמש בערך שבחרת (WaveNet/Standard)
                     ssmlGender: gender
                 },
-                audioConfig: { audioEncoding: "MP3" } // פורמט שנוח לנגן
+                audioConfig: { audioEncoding: "MP3" }
             })
         });
 
@@ -3135,13 +3157,7 @@ document.addEventListener('DOMContentLoaded', () => {
     cameraMode = 'barcode'; // הגדרת המצב לברקוד
     startCamera();          // פתיחת המצלמה
 });
-  const savedVoice = localStorage.getItem("selectedVoice");
-const voiceSelect = document.getElementById("voice-select");
-if (voiceSelect) {
-    if (savedVoice) {
-        voiceSelect.value = savedVoice;
-    }
-
+ 
     voiceSelect.addEventListener("change", (e) => {
         const selectedVoice = e.target.value;
         localStorage.setItem("selectedVoice", selectedVoice); // שמירה
@@ -3679,9 +3695,39 @@ $('#image-translate-upload').addEventListener('change', (e) => {
         translateImage(base64String, file.type); 
     };
     reader.readAsDataURL(file);
-});
+});const voiceSettingsModal = $('#voice-settings-modal');
+    const globalVoiceSelect = $('#global-voice-select');
 
-});
+    // 1. טעינת בחירה שמורה ושמירה בשינוי
+    const savedVoice = localStorage.getItem("selectedVoice");
+    if (savedVoice && globalVoiceSelect) {
+        globalVoiceSelect.value = savedVoice;
+    }
+
+    if (globalVoiceSelect) {
+        globalVoiceSelect.addEventListener("change", (e) => {
+            const selectedVoice = e.target.value;
+            localStorage.setItem("selectedVoice", selectedVoice); // שמירה
+            speakText("שלום, זהו הקול שבחרת."); // דוגמת קול
+        });
+    }
+
+    // 2. פתיחה/סגירת המודל
+    $('#voice-settings-close-btn').addEventListener('click', () => voiceSettingsModal.classList.remove('flex'));
+    
+    // 3. חיבור הכפתור בחלון ה-Alert/Summary לטריגר
+    document.addEventListener('click', (e) => {
+        // פתיחת המודל מכפתור הגדרות בתוך חלון ה-Alert (מדריך קולי/סיכום יומי)
+        if (e.target.closest('#alert-modal-tts-settings-btn')) {
+            voiceSettingsModal.classList.add('flex');
+        }
+        // פתיחת המודל מכפתור הגדרות בתוך התרגומון
+        if (e.target.closest('#translator-tts-settings-btn')) {
+            voiceSettingsModal.classList.add('flex');
+        }
+    });
+
+
 
   </script>
 
