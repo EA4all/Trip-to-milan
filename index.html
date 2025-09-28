@@ -1249,13 +1249,31 @@ function renderOverview() {
             showAlert('תפילת הדרך', prayerText, true, { text: prayerText });
         });
     }
-   $('#birkat-hamazon-btn')?.addEventListener('click', () => {
-       const brachaHTML = hebrewPrayers.birkatHaMazon;
-       const brachaCleanText = cleanHtmlForTts(brachaHTML);
-        showAlert('ברכת המזון (עדות המזרח)', brachaHTML, true, { text: brachaCleanText });
+// קטע זה נמצא כנראה בתוך document.addEventListener('DOMContentLoaded', ...) או בסוף renderOverview()
+$('#birkat-hamazon-btn')?.addEventListener('click', () => {
+    const brachaHTML = hebrewPrayers.birkatHaMazon;
+    
+    // 1. נקיון הטקסט המלא מ-HTML
+    const brachaFullCleanText = cleanHtmlForTts(brachaHTML);
+    
+    // 2. פיצול: נחפש את נקודת הפיצול אחרי הברכה הראשונה (הזן)
+    // הברכה הראשונה מסתיימת ב: "בָּרוּךְ אַתָּה ה', הַזָּן אֶת הַכֹּל:"
+    // נשתמש בחלק הפתיחה בלבד כטקסט לניגון:
+    const splitIndex = brachaFullCleanText.indexOf("בְּרָכָה שְׁנִיָּה (נוֹדֶה)");
+    let textToSpeak = brachaFullCleanText;
+    
+    if (splitIndex > -1) {
+        // אם נמצאה הברכה השנייה, נדבר רק עד אליה
+        textToSpeak = brachaFullCleanText.substring(0, splitIndex).trim();
+    } else {
+        // אם הפיצול נכשל, ננסה לדבר רק את 2000 התווים הראשונים (מגבלה בטוחה)
+        textToSpeak = brachaFullCleanText.substring(0, 2000);
+        console.warn("WARN: Could not split Birkat Hamazon by title, truncating to 2000 chars.");
+    }
+    
+    // נשלח את ה-HTML לטקסט המוצג, ואת הטקסט הנקי (וחלקי) לניגון
+    showAlert('ברכת המזון (עדות המזרח)', brachaHTML, true, { text: textToSpeak });
 });
-    $('#bracha-achrona-btn')?.addEventListener('click', showBrachaAchronaOptions);
-}
 
     
 function cleanHtmlForTts(htmlText) {
@@ -2040,6 +2058,21 @@ function showMeEinShaloshOptions() {
         showAlert('ברכת על העץ (מעין שלוש)', bracha, true, { text: bracha });
     });
 }
+ // הוסף את הפונקציה הזו בקטע של ה-UTILS בקוד שלך
+function cleanHtmlForTts(htmlText) {
+    // יוצר רכיב DOM זמני כדי לחלץ רק את הטקסט.
+    const tempDiv = document.createElement('div');
+    tempDiv.innerHTML = htmlText;
+    
+    // ניקוי נוסף: החלפת נקודותיים כפולים (שמשמשים לעיצוב HTML) ברווח כדי לא ליצור טקסט ארוך מדי ל-TTS.
+    let cleanedText = tempDiv.textContent || tempDiv.innerText || '';
+    
+    // אם הטקסט ארוך, פיצול למשפטים יעזור.
+    // מכיוון שיש כותרות HTML בתוך הברכה, זה הופך את העניין למורכב.
+    // הפתרון הפשוט ביותר: נחזיר רק את הטקסט.
+    return cleanedText;
+}
+window.cleanHtmlForTts = cleanHtmlForTts;   
     // ========================= התחלה: פונקציית שעונים =========================
 function updateClocks() {
     const milanTimeEl = $('#milan-time');
@@ -3361,10 +3394,30 @@ if (recognition) {
 
     // --- INIT ---
 document.addEventListener('DOMContentLoaded', () => {
-   $('#birkat-hamazon-btn')?.addEventListener('click', () => {
-       const brachaHTML = hebrewPrayers.birkatHaMazon;
-       const brachaCleanText = cleanHtmlForTts(brachaHTML);
-        showAlert('ברכת המזון (עדות המזרח)', brachaHTML, true, { text: brachaCleanText });
+// קטע זה נמצא כנראה בתוך document.addEventListener('DOMContentLoaded', ...) או בסוף renderOverview()
+$('#birkat-hamazon-btn')?.addEventListener('click', () => {
+    const brachaHTML = hebrewPrayers.birkatHaMazon;
+    
+    // 1. נקיון הטקסט המלא מ-HTML
+    const brachaFullCleanText = cleanHtmlForTts(brachaHTML);
+    
+    // 2. פיצול: נחפש את נקודת הפיצול אחרי הברכה הראשונה (הזן)
+    // הברכה הראשונה מסתיימת ב: "בָּרוּךְ אַתָּה ה', הַזָּן אֶת הַכֹּל:"
+    // נשתמש בחלק הפתיחה בלבד כטקסט לניגון:
+    const splitIndex = brachaFullCleanText.indexOf("בְּרָכָה שְׁנִיָּה (נוֹדֶה)");
+    let textToSpeak = brachaFullCleanText;
+    
+    if (splitIndex > -1) {
+        // אם נמצאה הברכה השנייה, נדבר רק עד אליה
+        textToSpeak = brachaFullCleanText.substring(0, splitIndex).trim();
+    } else {
+        // אם הפיצול נכשל, ננסה לדבר רק את 2000 התווים הראשונים (מגבלה בטוחה)
+        textToSpeak = brachaFullCleanText.substring(0, 2000);
+        console.warn("WARN: Could not split Birkat Hamazon by title, truncating to 2000 chars.");
+    }
+    
+    // נשלח את ה-HTML לטקסט המוצג, ואת הטקסט הנקי (וחלקי) לניגון
+    showAlert('ברכת המזון (עדות המזרח)', brachaHTML, true, { text: textToSpeak });
 });
     console.log("LOG: DOMContentLoaded event fired. Initializing app.");
      // --- מאזיני כפתורים יהודיים חדשים ---
