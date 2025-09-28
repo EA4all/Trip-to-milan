@@ -3858,15 +3858,16 @@ $('#birkat-hamazon-btn')?.addEventListener('click', () => {
     if (speechRecognizer) {
         heBtn.addEventListener('click', (e) => startRecognition('he-IL', e.currentTarget));
         itBtn.addEventListener('click', (e) => startRecognition('it-IT', e.currentTarget));
-    } else {
-        if (heBtn) { heBtn.disabled = true; heBtn.innerHTML = 'לא נתמך'; }
-        if (itBtn) { itBtn.disabled = true; itBtn.innerHTML = 'לא נתמך'; }
+   } else {
+         if (heBtn) { heBtn.disabled = true; heBtn.innerHTML = 'לא נתמך'; }
+         if (itBtn) { itBtn.disabled = true; itBtn.innerHTML = 'לא נתמך'; }
     }
-    
-  }); 
+ } // סוגר את ה-if/else 
+ }); // סוגר את הפונקציה של onresult
 
+ }); // סוגר את הפונקציה האנונימית של DOMContentLoaded
 
-  </script>
+ </script> 
 
 </body>
 </html>
