@@ -1106,17 +1106,19 @@ function showAlert(title, message, isCopyable = false, speechOptions = null) {
         playPauseBtn.onclick = () => {
             if (activeAudio) {
                 if (activeAudio.paused) {
-                    activeAudio.play();
+                    activeAudio.play(); // השמעה מהנקודה המושהית
                     playPauseBtn.innerHTML = '<i class="fa-solid fa-pause mr-1"></i> השהה';
                 } else {
-                    activeAudio.pause();
+                    activeAudio.pause(); // השהייה
                     playPauseBtn.innerHTML = '<i class="fa-solid fa-play mr-1"></i> המשך';
                 }
                 stopBtn.style.display = 'flex';
             } else {
-                // אם אין נגן פעיל - מתחילים ניגון חדש
+                // אם אין נגן פעיל (null) - מתחילים ניגון חדש ע"י קריאה ל-speakText
                 window.speakText(speechOptions.text); 
-                // הנחה: speakText יצר Audio חדש ושמר אותו ב-activeAudio
+                
+                // ההנחה היא ש-speakText יצר נגן ושמר אותו ב-activeAudio, 
+                // אז נעדכן את הכפתור למצב "מנגן".
                 playPauseBtn.innerHTML = '<i class="fa-solid fa-pause mr-1"></i> השהה';
                 stopBtn.style.display = 'flex'; 
             }
