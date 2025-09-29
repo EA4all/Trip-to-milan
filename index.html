@@ -2252,13 +2252,12 @@ function findNearbyAttractions() {
     if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(position => {
             const { latitude, longitude } = position.coords;
-            const url = `https://www.google.com/maps/search/Tourist+attractions/@${latitude},${longitude},15z`;
-            
+            const url = `http://googleusercontent.com/maps.google.com/search?q=tourist+attractions&center=${latitude},${longitude}&zoom=15`; 
             window.open(url, '_blank');
             window.closeModal();
         }, () => {
-            showAlert('שגיאת מיקום', 'לא ניתן היה לקבל את מיקומך. החיפוש יתבצע ממרכז מילאנו.');
-            const url = `https://www.google.com/maps/search/Tourist+attractions+near+Milan+Cathedral`;
+            showAlert('שגיאת מיקום', 'לא ניתן היה לקבל את מיקומך. החיפוש יתבצע ממרכז מילאנו.'); 
+            const url = `http://googleusercontent.com/maps.google.com/search?q=tourist+attractions+near+Milan+Cathedral`; 
             window.open(url, '_blank');
         });
     } else {
@@ -3041,7 +3040,15 @@ if (recognition) {
 } else {
     console.warn("Web Speech API is not supported in this browser.");
 }
-
+function startRecognition(langCode, button) {
+     if (isRecognizing) {
+        speechRecognizer.stop();
+        return;
+    }
+    speechRecognizer.lang = langCode;
+    activeVoiceButton = button;
+    speechRecognizer.start();
+}
 document.addEventListener('DOMContentLoaded', () => {
 $('#birkat-hamazon-btn')?.addEventListener('click', () => {
     const brachaHTML = hebrewPrayers.birkatHaMazon;
