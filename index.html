@@ -40,32 +40,32 @@
 
   <style>
 .image-viewer-modal .modal {
-    /* הופכים את המסגרת לשקופה כדי לתת תחושה של חלל פתוח */
+   
     background: transparent;
     box-shadow: none;
     padding: 0;
     width: 100%;
     height: 100%;
-    display: flex; /* ממקמים את התמונה שבתוכה בדיוק במרכז */
+    display: flex;
     align-items: center;
     justify-content: center;
 }
 .image-viewer-modal img {
-    /* מגבילים את גודל התמונה לגודל המסך פחות שוליים קטנים */
+  
     max-width: 95vw;
     max-height: 95vh;
     width: auto;
     height: auto;
-    border-radius: 0.5rem; /* עיגול פינות עדין */
-    /* הצללה דרמטית כדי להקפיץ את התמונה מהרקע הכהה */
+    border-radius: 0.5rem; 
+   
     box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
 }
 .image-viewer-close-btn {
-    /* ממקמים את הכפתור בפינה הימנית העליונה של כל המסך, לא של המסגרת */
+   
     position: fixed;
     top: 20px;
     right: 20px;
-    /* הגדלה ועיצוב מחדש לנראות מקסימלית */
+    
     width: 40px;
     height: 40px;
     font-size: 1.5rem;
@@ -99,13 +99,13 @@
     
    html { 
   scroll-padding-top: 80px; 
-  overflow-x: hidden; /* Add this line */
+  overflow-x: hidden; 
 }
 body {
   background:var(--bg); 
   color:var(--fg); 
   font-family:Assistant,ui-sans-serif,system-ui; 
-  overflow-x: hidden; /* Keep this line */
+  overflow-x: hidden; 
 }
     h2, h3 { font-family: var(--heading-font); }
     #site-header { background-color: var(--header-bg); }
@@ -219,7 +219,7 @@ body {
 
 
     @media (max-width: 767px) {
-      body { padding-bottom: 70px; } /* Add padding for floating nav */
+      body { padding-bottom: 70px; } 
       .responsive-table thead { display: none; }
       .responsive-table tr {
         display: block; margin-bottom: 1rem; border: 1px solid var(--brd);
@@ -1707,6 +1707,7 @@ if (activity.type === 'attraction') {
             </td>
         </tr>`;
     };
+                  
 
     function renderChecklist(checklistData) {
         console.log("LOG: renderChecklist called.");
@@ -2163,7 +2164,7 @@ function findUtility(query, queryHebrew) {
         showAlert('שגיאה', 'שירותי מיקום אינם נתמכים בדפדפן זה.');
     }
 }
-    // ========================= התחלה: פונקציה למדריך קולי =========================
+          
 async function getAudioGuide(placeName) {
     showAlert('טוען מדריך...', `<div class="text-center"><i class="fa-solid fa-spinner fa-spin fa-2x"></i><p class="mt-2">מכין עבורך **תסריט שיחה** על ${placeName}...</p></div>`);
 
