@@ -2529,7 +2529,7 @@ async function startCamera() {
             await video.play();
 
             activeVideoTrack = cameraStream.getVideoTracks()[0];
-            
+             activeVideoTrack.applyConstraints({ advanced: [{ focusMode: 'manual' }] }); 
             // 2. ניהול כפתורי פנס וצילום (הלוגיקה הקיימת שלך)
             const capabilities = activeVideoTrack.getCapabilities();
             if (capabilities.torch) {
@@ -2744,6 +2744,7 @@ async function processReceiptImage(base64ImageData) {
     }
 }
 async function processLookupImage(base64ImageData) {
+   showAlert('מזהה אובייקט...', '<div class="text-center"><i class="fa-solid fa-spinner fa-spin fa-2x"></i><p class="mt-2">מנתח את התמונה. **זה עלול לקחת 10-20 שניות.** אנא המתן בסבלנות...</p></div>');
     showAlert('מזהה אובייקט...', '<div class="text-center"><i class="fa-solid fa-spinner fa-spin fa-2x"></i><p class="mt-2">מנתח את התמונה ושולח לזיהוי...</p></div>');
    const prompt = `You are an AI assistant that responds ONLY in Hebrew. Your task is to identify the landmark, artwork, or object in the provided image. Analyze the image and provide an interesting and detailed paragraph about it. Your entire response must be in Hebrew. If you cannot identify the object, respond with the single Hebrew sentence: 'לא הצלחתי לזהות את מה שבתמונה.'. Do not include any English words or preambles.`;
     const payload = { contents: [{ parts: [{ text: prompt }, { inlineData: { mimeType: 'image/jpeg', data: base64ImageData } }] }] };
@@ -2867,7 +2868,50 @@ async function speakText(text) {
     }
 }
 window.speakText = speakText;
+const TTS_CHARACTER_LIMIT = 4800; 
 
+function speakTextLocally(text, title) {
+    if ('speechSynthesis' in window) {
+        // 1. ניקוי נגן קיים
+        if (window.activeAudio) { window.activeAudio.pause(); window.activeAudio = null; }
+
+        const utterance = new SpeechSynthesisUtterance(text);
+        const hebrewVoice = window.speechSynthesis.getVoices().find(v => v.lang === 'he-IL' || v.lang === 'he');
+        if (hebrewVoice) {
+            utterance.voice = hebrewVoice;
+        }
+
+        // 2. הפעלת הנגן המקומי
+        window.speechSynthesis.speak(utterance);
+        showAlert(title, "שים לב: הטקסט ארוך, הניגון מתבצע באמצעות הקול המקומי של המכשיר.", true);
+        
+        // 3. טיפול בסיום (הנגן המקומי לא משתמש ב-activeAudio, לכן אין צורך באיפוס)
+        utterance.onend = () => {
+             // ניתן להוסיף כאן לוגיקת סיום אם נדרש
+        };
+
+    } else {
+        showAlert(title, "שגיאה: ניגון קולי אינו נתמך בדפדפן זה.", true);
+    }
+}
+
+async function speakTextSmartly(cleanText, htmlMessage, title) {
+    if (cleanText.length > TTS_CHARACTER_LIMIT) {
+        console.warn(`WARN: Text length (${cleanText.length}) exceeds TTS limit. Switching to local voice.`);
+        
+        // מציג את ההודעה המעוצבת, אך מנגן באופן מקומי
+        showAlert(title, htmlMessage, true, { text: cleanText }); // מציג את המודל
+        speakTextLocally(cleanText, title); // מפעיל ניגון מקומי
+        
+    } else {
+        // שימוש בשיטה האיכותית הקיימת (Google TTS API)
+        await window.speakText(cleanText); 
+        // יש להציג את המודל לאחר ש-speakText סיים ליצור את activeAudio
+        showAlert(title, htmlMessage, true, { text: cleanText });
+    }
+}
+window.speakTextSmartly = speakTextSmartly;
+window.speakTextLocally = speakTextLocally; 
 // --- סוף החלפת speakText ---
     async function translateText(text) {
         console.log(`LOG: translateText called for text: ${text}`);
@@ -3364,16 +3408,16 @@ document.addEventListener('DOMContentLoaded', () => {
   
 // קטע מתוך ה-INIT
 $('#birkat-hamazon-btn')?.addEventListener('click', () => {
-        const brachaHTML = hebrewPrayers.birkatHaMazon;
-        
-        // יצירת DOMParser לחילוץ טקסט נקי מתגי HTML
-        const parser = new DOMParser();
-        const doc = parser.parseFromString(brachaHTML, 'text/html');
-        // שימוש ב-textContent מוציא את כל הטקסט בלי תגיות
-        const brachaCleanText = doc.body.textContent.replace(/[\n\r]/g, ' ').trim(); 
-        
-        showAlert('ברכת המזון (עדות המזרח)', brachaHTML, true, { text: brachaCleanText });
-    });
+    const brachaHTML = hebrewPrayers.birkatHaMazon;
+    
+    // חילוץ טקסט נקי
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(brachaHTML, 'text/html');
+    const brachaCleanText = doc.body.textContent.replace(/[\n\r]/g, ' ').trim(); 
+    
+    // קריאה לפונקציה חדשה שתחליט כיצד לנגן:
+    window.speakTextSmartly(brachaCleanText, brachaHTML, 'ברכת המזון (עדות המזרח)');
+});
     console.log("LOG: DOMContentLoaded event fired. Initializing app.");
      // --- מאזיני כפתורים יהודיים חדשים ---
    $('#tefilat-haderech-btn')?.addEventListener('click', () => {
