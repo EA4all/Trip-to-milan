@@ -668,6 +668,9 @@ body {
   <div class="p-4 border-t flex justify-center items-center gap-2">
     <span id="zoom-level">1.0x</span>
         </div>
+      <div id="barcode-status-container" class="p-2 border-t text-center">
+    <span id="barcode-status-display" class="text-sm text-gray-400">המתן להפעלת המצלמה...</span>
+  </div>
     </div>
 </div>
 ------
@@ -839,7 +842,7 @@ let translationHistory = JSON.parse(localStorage.getItem('milanTripTranslationHi
 let lastWeatherAPIData = null;
 let geminiChatHistory = []; // משתנה השיחה החדש
 let activeAudio = null; // משתנה גלובלי שיחזיק את אובייקט ה-Audio הנוכחי
-
+let lastScannedBarcode = null; // משתנה חדש לאחסון הברקוד שזוהה
 // --- Live Location State ---
 let liveMap;
 let userMarkers = {};
@@ -1241,18 +1244,7 @@ function renderOverview() {
             showAlert('תפילת הדרך', prayerText, true, { text: prayerText });
         });
     }
-$('#birkat-hamazon-btn')?.addEventListener('click', () => {
-        const brachaHTML = hebrewPrayers.birkatHaMazon;
-        
-        // יצירת DOMParser לחילוץ טקסט נקי מתגי HTML
-        const parser = new DOMParser();
-        const doc = parser.parseFromString(brachaHTML, 'text/html');
-        // שימוש ב-textContent מוציא את כל הטקסט בלי תגיות
-        const brachaCleanText = doc.body.textContent.replace(/[\n\r]/g, ' ').trim(); 
-        
-        showAlert('ברכת המזון (עדות המזרח)', brachaHTML, true, { text: brachaCleanText });
-    });
-
+}
     function startCountdown() {
         console.log("LOG: startCountdown called.");
         const targetDate = new Date(`${tripMeta.flights.inbound.date}T00:00:00`).getTime();
@@ -2551,40 +2543,62 @@ async function startCamera() {
             $('#camera-modal').classList.add('flex');
 
             // 4. לוגיקה ספציפית למצב 'barcode' (בתוך בלוק ה-try)
-            if (cameraMode === 'barcode') {
-                captureBtn.style.display = 'flex';  // הסתרת כפתור הצילום במצב ברקוד
-                                captureBtn.onclick = () => {
-                   cameraMode = 'lookup';
-                   captureFrame(); 
-               }; 
+         if (cameraMode === 'barcode') {
+                captureBtn.style.display = 'flex';  
+                captureBtn.onclick = () => {
+                    // לפני הצילום, נעצור את QuaggaJS אם פועל
+                    try { if (window.Quagga && Quagga.running) Quagga.stop(); } catch (e) { } 
+                   cameraMode = 'lookup';
+                   captureFrame(); 
+               }; 
 
-                window.Quagga.init({
-                    inputStream: {
-                        type: "LiveStream",
-                        target: video,
-                        constraints: { facingMode: "environment" }
-                    },
-                    decoder: {
-                        readers: ["ean_reader", "upc_reader"]
+                // ודא שהאזור של ה-QuaggaJS נראה בתוך המודל
+                const videoContainer = $('#camera-feed').closest('.p-4.flex-grow.relative');
+                videoContainer.id = 'interactive-barcode-area'; // הוספת ID למיכל
+
+                window.Quagga.init({
+                    inputStream: {
+                        type: "LiveStream",
+                        target: videoContainer, // Quagga צריך לעבוד על המיכל
+                        constraints: { facingMode: "environment" }
+                    },
+                    decoder: {
+                        readers: ["ean_reader", "upc_reader"]
+                    }
+                }, (err) => {
+                    if (err) { 
+                        console.error("QuaggaJS Init Error:", err); 
+                        showAlert("שגיאת ברקוד", err.message); 
+                        stopCamera(); 
+                        return; 
+                    }
+                    window.Quagga.start();
+                });
+               
+                // הוספת לוגיקה לעדכון הסטטוס החזותי של הסריקה
+                window.Quagga.onProcessed(function(result) {
+                    const statusEl = $('#barcode-status-display');
+                    if (result && result.codeResult && statusEl) {
+                        lastScannedBarcode = result.codeResult.code;
+                        statusEl.innerHTML = `✅ זוהה ברקוד: <strong>${lastScannedBarcode}</strong>`;
+                        statusEl.classList.remove('text-red-500');
+                        statusEl.classList.add('text-green-500');
+                    } else if (statusEl) {
+                        statusEl.innerHTML = '🔍 מכוון...';
+                        statusEl.classList.remove('text-green-500');
+                        statusEl.classList.add('text-red-500');
                     }
-                }, (err) => {
-                    if (err) { 
-                        console.error("QuaggaJS Init Error:", err); 
-                        showAlert("שגיאת ברקוד", err.message); 
-                        stopCamera(); 
-                        return; 
-                    }
-                    window.Quagga.start();
                 });
-                
-                window.Quagga.onDetected((result) => {
-                    window.Quagga.stop();
-                    stopCamera();
-                    const barcode = result.codeResult.code;
-                    checkKosherStatus(barcode);
-                });
-                
-            } else {
+
+                window.Quagga.onDetected((result) => {
+                    window.Quagga.stop();
+                    // שמירת הברקוד שנסרק לפני סגירת המצלמה
+                    lastScannedBarcode = result.codeResult.code; 
+                    stopCamera();
+                    checkKosherStatus(lastScannedBarcode);
+                });
+                
+            } else {
                  captureBtn.style.display = 'flex'; // **הצגת כפתור הצילום למצבי תמונה**
                  captureBtn.onclick = captureFrame; 
             }
