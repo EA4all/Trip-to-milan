@@ -876,7 +876,7 @@ const attractions = {
   santAmbrogio: { name: "בזיליקת סנט'אמברוג'ו", isOutdoor: false, type: 'attraction', address: "Piazza Sant'Ambrogio, 15, 20123 Milano MI", description: "אחת הכנסיות העתיקות והחשובות במילאנו, דוגמה מרהיבה לאדריכלות רומנסקית.", coords: { lat: 45.462, lon: 9.173 }, cost: 0 },
   sanMaurizio: { name: "כנסיית סן מאוריציו", isOutdoor: false, type: 'attraction', address: "Corso Magenta, 15, 20123 Milano MI", description: "מכונה 'הקפלה הסיסטינית של מילאנו' בזכות ציורי הקיר המדהימים שמכסים אותה לחלוטין.", tickets: "https://www.museoarcheologicomilano.it/en/collezioni/san-maurizio-al-monastero-maggiore", coords: { lat: 45.465, lon: 9.176 }, cost: 0, hours: "ג'-א' 10:00-17:30 (סגור בב')" },
   piazzaMercanti: { name: "פיאצה דיי מרקנטי", isOutdoor: true, type: 'attraction', address: "Piazza dei Mercanti, 20123 Milano MI", description: "כיכר ימי-ביניימית קסומה ונסתרת, דקות הליכה מהדואומו.", coords: { lat: 45.465, lon: 9.188 }, cost: 0 },
-  leonardoVineyard: { name: "הכרם של לאונרדו", isOutdoor: true, type: 'attraction', address: "Corso Magenta, 65, 20123 Milano MI", description: "שחזור של הכרם שהיה שייך ללאונרדו דה וינצ'י, מול 'הסעודה האחרונאדוני.", tickets: "https://www.vignadileonardo.com/en/", coords: { lat: 45.466, lon: 9.170 }, cost: 10, hours: "ג'-א' 09:00-18:00 (סגור בב')" },
+  leonardoVineyard: { name: "הכרם של לאונרדו", isOutdoor: true, type: 'attraction', address: "Corso Magenta, 65, 20123 Milano MI", description: "שחזור של הכרם שהיה שייך ללאונרדו דה וינצ'י, מול 'הסעודה האחרונה'.", tickets: "https://www.vignadileonardo.com/en/", coords: { lat: 45.466, lon: 9.170 }, cost: 10, hours: "ג'-א' 09:00-18:00 (סגור בב')" },
   piazzaGaeAulenti: { name: "פיאצה גאה אאולנטי", isOutdoor: true, type: 'attraction', address: "Piazza Gae Aulenti, 20124 Milano MI", description: "הלב הפועם של מילאנו המודרנית. כיכר עתידנית מוקפת גורדי שחקים.", coords: { lat: 45.483, lon: 9.191 }, cost: 0 },
   corsoComo: { name: "10 קורסו קומו", isOutdoor: false, type: 'attraction', address: "Corso Como, 10, 20154 Milano MI", description: "מתחם קונספט המשלב אופנה, עיצוב ואמנות. חווית קניות ובילוי ייחודית.", coords: { lat: 45.482, lon: 9.189 }, cost: 0 },
   triennale: { name: "מוזיאון העיצוב טריאנלה", isOutdoor: false, type: 'attraction', address: "Viale Emilio Alemagna, 6, 20121 Milano MI", description: "מוזיאון בינלאומי המוקדש לעיצוב, אדריכלות ואמנות חזותית בפארק סמפיונה.", tickets: "https://triennale.org/en/tickets", coords: { lat: 45.470, lon: 9.168 }, cost: 15, hours: "ג'-א' 11:00-20:00 (סגור בב')" },
@@ -890,20 +890,20 @@ const attractions = {
     
     const kosherData = {
       restaurants: [
-        { name: "Denzel", type: 'dining', style: "בשרי", logo: "https://static.wixstatic.com/media/c6595a_0d9d7bb6473548d69681f09d18ff4247.png", address: "Via Giorgio Washington, 9, 20146 Milano MI", phone: "+390248519326", website: "https://www.denzel.it/", hours: "א'-אדוני 12:00-15:00, 19:00-23:00; ו' 12:00-15:00", coords: { lat: 45.4654, lon: 9.1555 } },
-        { name: "Ba'Ghetto", type: 'dining', style: "בשרי", address: "Via Sardegna, 45, 20146 Milano MI", phone: "+39024694643", website: "https://www.baghetto.com/en/", hours: "א'-אדוני 12:00-15:00, 19:00-23:00; ו' 12:00-15:00", coords: { lat: 45.4665, lon: 9.1461 } },
-        { name: "Re Salomone", type: 'dining', style: "בשרי", address: "Via Sardegna, 42, 20146 Milano MI", phone: "+39024694643", website: "https://www.resalomone.it/", hours: "א'-אדוני 12:00-14:30, 19:00-23:00; ו' 12:00-14:30", coords: { lat: 45.4665, lon: 9.1458 } },
-        { name: "La's Kebab", type: 'dining', style: "בשרי", address: "Viale Misurata, 19, 20146 Milano MI", phone: "+393288865576", website: "https://laskebab.eatbu.com/", hours: "א'-אדוני 12:00-15:00, 18:00-23:00", coords: { lat: 45.4586, lon: 9.1517 } },
-        { name: "Carmel", type: 'dining', style: "חלבי", address: "Viale S. Gimignano, 10, 20146 Milano MI", phone: "+3902416368", website: "https://carmelkosher.it/", hours: "א'-אדוני 12:00-15:00, 19:00-22:30", coords: { lat: 45.4593, lon: 9.1328 } },
-        { name: "MyKafe", type: 'dining', style: "חלבי", logo: "https://dynamic-media-cdn.tripadvisor.com/media/photo-o/11/a2/1f/a2/my-kafe.jpg", address: "Via Luigi Soderini, 44, 20146 Milano MI", phone: "+390238232748", website: "https://www.instagram.com/mykafe2020/", hours: "א'-אדוני 07:30-19:30; ו' 07:30-16:00", coords: { lat: 45.4578, lon: 9.1337 } },
-        { name: "Bet-El", type: 'dining', style: "חלבי", address: "Viale S. Gimignano, 2, 20146 Milano MI", phone: "+39024151336", website: "http://www.betelkosher.com/", hours: "א'-אדוני 12:00-14:30, 19:00-22:30", coords: { lat: 45.4607, lon: 9.1352 } },
-        { name: "Snubar", type: 'dining', style: "פלאפל/שווארמה", logo: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQmYC-lcBrFV75_D371aWkrfk7yd1Qu3kEIcw&s", address: "Via Leone Tolstoi, 2, 20146 Milano MI", phone: "+39024236963", website: "https://www.snubar.it/it/", hours: "א'-אדוני 12:00-22:00", coords: { lat: 45.4568, lon: 9.1565 } },
-        { name: "Presto", type: 'dining', style: "טייק-אווי", address: "Via delle Forze Armate, 13, 20147 Milano MI", phone: "+39024045598", website: "https://www.presto-kosher.com/", hours: "א'-אדוני 10:00-20:00; ו' 09:00-15:00", coords: { lat: 45.4667, lon: 9.1292 } },
+        { name: "Denzel", type: 'dining', style: "בשרי", logo: "https://static.wixstatic.com/media/c6595a_0d9d7bb6473548d69681f09d18ff4247.png", address: "Via Giorgio Washington, 9, 20146 Milano MI", phone: "+390248519326", website: "https://www.denzel.it/", hours: "א'-ה' 12:00-15:00, 19:00-23:00; ו' 12:00-15:00", coords: { lat: 45.4654, lon: 9.1555 } },
+        { name: "Ba'Ghetto", type: 'dining', style: "בשרי", address: "Via Sardegna, 45, 20146 Milano MI", phone: "+39024694643", website: "https://www.baghetto.com/en/", hours: "א'-ה' 12:00-15:00, 19:00-23:00; ו' 12:00-15:00", coords: { lat: 45.4665, lon: 9.1461 } },
+        { name: "Re Salomone", type: 'dining', style: "בשרי", address: "Via Sardegna, 42, 20146 Milano MI", phone: "+39024694643", website: "https://www.resalomone.it/", hours: "א'-ה' 12:00-14:30, 19:00-23:00; ו' 12:00-14:30", coords: { lat: 45.4665, lon: 9.1458 } },
+        { name: "La's Kebab", type: 'dining', style: "בשרי", address: "Viale Misurata, 19, 20146 Milano MI", phone: "+393288865576", website: "https://laskebab.eatbu.com/", hours: "א'-ה' 12:00-15:00, 18:00-23:00", coords: { lat: 45.4586, lon: 9.1517 } },
+        { name: "Carmel", type: 'dining', style: "חלבי", address: "Viale S. Gimignano, 10, 20146 Milano MI", phone: "+3902416368", website: "https://carmelkosher.it/", hours: "א'-ה' 12:00-15:00, 19:00-22:30", coords: { lat: 45.4593, lon: 9.1328 } },
+        { name: "MyKafe", type: 'dining', style: "חלבי", logo: "https://dynamic-media-cdn.tripadvisor.com/media/photo-o/11/a2/1f/a2/my-kafe.jpg", address: "Via Luigi Soderini, 44, 20146 Milano MI", phone: "+390238232748", website: "https://www.instagram.com/mykafe2020/", hours: "א'-ה' 07:30-19:30; ו' 07:30-16:00", coords: { lat: 45.4578, lon: 9.1337 } },
+        { name: "Bet-El", type: 'dining', style: "חלבי", address: "Viale S. Gimignano, 2, 20146 Milano MI", phone: "+39024151336", website: "http://www.betelkosher.com/", hours: "א'-ה' 12:00-14:30, 19:00-22:30", coords: { lat: 45.4607, lon: 9.1352 } },
+        { name: "Snubar", type: 'dining', style: "פלאפל/שווארמה", logo: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQmYC-lcBrFV75_D371aWkrfk7yd1Qu3kEIcw&s", address: "Via Leone Tolstoi, 2, 20146 Milano MI", phone: "+39024236963", website: "https://www.snubar.it/it/", hours: "א'-ה' 12:00-22:00", coords: { lat: 45.4568, lon: 9.1565 } },
+        { name: "Presto", type: 'dining', style: "טייק-אווי", address: "Via delle Forze Armate, 13, 20147 Milano MI", phone: "+39024045598", website: "https://www.presto-kosher.com/", hours: "א'-ה' 10:00-20:00; ו' 09:00-15:00", coords: { lat: 45.4667, lon: 9.1292 } },
       ],
       markets: [
-        { name: "Kosher Paradise", type: 'dining', style: "מרכול", address: "Viale S. Gimignano, 13, 20146 Milano MI", phone: "+39024122855", website: "https://www.kosherparadise.it/", hours: "א'-אדוני 09:00-19:30; ו' 09:00-15:00", coords: { lat: 45.4589, lon: 9.1325 } },
-        { name: "Denzel's Sweet Bakery", type: 'dining', style: "מאפייה", logo: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSVt6hxH7niOmeBunCjNdpow7Y_PfseIBonPQ&s", address: "Via Soderini, 55, 20146 Milano MI", phone: "+39024125166", website: "https://www.denzel.it/bakery", hours: "א'-אדוני 07:30-19:30; ו' 07:30-15:00", coords: { lat: 45.4570, lon: 9.1329 } },
-        { name: "Kosher King", type: 'dining', style: "מרכול", address: "Piazza Napoli, 15, 20146 Milano MI", phone: "+390242296773", website: "https://www.facebook.com/kosherkingmilan/", hours: "א'-אדוני 08:30-19:30; ו' 08:30-16:00", coords: { lat: 45.4563, lon: 9.1492 } },
+        { name: "Kosher Paradise", type: 'dining', style: "מרכול", address: "Viale S. Gimignano, 13, 20146 Milano MI", phone: "+39024122855", website: "https://www.kosherparadise.it/", hours: "א'-ה' 09:00-19:30; ו' 09:00-15:00", coords: { lat: 45.4589, lon: 9.1325 } },
+        { name: "Denzel's Sweet Bakery", type: 'dining', style: "מאפייה", logo: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSVt6hxH7niOmeBunCjNdpow7Y_PfseIBonPQ&s", address: "Via Soderini, 55, 20146 Milano MI", phone: "+39024125166", website: "https://www.denzel.it/bakery", hours: "א'-ה' 07:30-19:30; ו' 07:30-15:00", coords: { lat: 45.4570, lon: 9.1329 } },
+        { name: "Kosher King", type: 'dining', style: "מרכול", address: "Piazza Napoli, 15, 20146 Milano MI", phone: "+390242296773", website: "https://www.facebook.com/kosherkingmilan/", hours: "א'-ה' 08:30-19:30; ו' 08:30-16:00", coords: { lat: 45.4563, lon: 9.1492 } },
       ]
     };
     
@@ -913,7 +913,7 @@ const attractions = {
       "'Coperto' הוא חיוב שירות קבוע שרוב המסעדות מוסיפות לחשבון. זה לא טיפ, אלא תשלום על השירות והלחם. טיפ נוסף אינו חובה אך מוערך.",
       "הרבה מוזיאונים וכנסיות דורשים לבוש צנוע (כתפיים וברכיים מכוסות). כדאי להחזיק צעיף קל בתיק למקרה הצורך.",
       "מים מהברז במילאנו בטוחים וטובים לשתייה. חפשו ברזיות ציבוריות (fontanelle) כדי למלא את בקבוק המים שלכם ולחסוך כסף.",
-      "אם אתם מתכננים לראות את 'הסעודה האחרונאדוני של דה וינצ'י, חובה להזמין כרטיסים באינטרנט מספר חודשים מראש. הכניסה מוגבלת מאוד."
+      "אם אתם מתכננים לראות את 'הסעודה האחרונה' של דה וינצ'י, חובה להזמין כרטיסים באינטרנט מספר חודשים מראש. הכניסה מוגבלת מאוד."
     ];
 
     const tripMeta = {
@@ -931,11 +931,11 @@ const attractions = {
     };
 const hebrewPrayers = {
         // --- תפילת הדרך --- (אדוניי) - ללא שינוי
-       tefilatHaderech: "יְהִי רָצוֹן מִלְּפָנֶיךָ אדוני אֱלֹהֵינוּ וֵאלֹהֵי אֲבוֹתֵינוּ, שֶׁתּוֹלִיכֵנוּ לְשָׁלוֹם, וְתַצְעִידֵנוּ לְשָׁלוֹם, וְתִסְמְכֵנוּ לְשָׁלוֹם, וְתַגִּיעֵנוּ לִמְחוֹז חֶפְצֵנוּ לְחַיִּים וּלְשִׂמְחָה וּלְשָׁלוֹם, וְתַחְזִירֵנוּ לְשָׁלוֹם. וְתַצִּילֵנוּ מִכַּף כָּל אוֹיֵב וְאוֹרֵב בַּדֶּרֶךְ, וּמִכָּל מִינֵי פֻּרְעָנֻיּוֹת הַמִּתְרַגְּשׁוֹת לָבֹא לָעוֹלָם, וְתִשְׁלַח בְּרָכָה בְּמַעֲשֵׂה יָדֵינוּ, וְתִתֵּן חֵן וָחֶסֶד וְרַחֲמִים בְּעֵינֶיךָ וּבְעֵינֵי כָל רוֹאֵינוּ, וְתִשְׁמַע קוֹל תַּחֲנוּנֵינוּ, כִּי אֵל שׁוֹמֵעַ תְּפִלָּה וְתַחֲנוּן אָתָּה. בָּרוּךְ אַתָּה אדוני, שׁוֹמֵעַ תְּפִלָּה.",
+       tefilatHaderech: "יְהִי רָצוֹן מִלְּפָנֶיךָ ה' אֱלֹהֵינוּ וֵאלֹהֵי אֲבוֹתֵינוּ, שֶׁתּוֹלִיכֵנוּ לְשָׁלוֹם, וְתַצְעִידֵנוּ לְשָׁלוֹם, וְתִסְמְכֵנוּ לְשָׁלוֹם, וְתַגִּיעֵנוּ לִמְחוֹז חֶפְצֵנוּ לְחַיִּים וּלְשִׂמְחָה וּלְשָׁלוֹם, וְתַחְזִירֵנוּ לְשָׁלוֹם. וְתַצִּילֵנוּ מִכַּף כָּל אוֹיֵב וְאוֹרֵב בַּדֶּרֶךְ, וּמִכָּל מִינֵי פֻּרְעָנֻיּוֹת הַמִּתְרַגְּשׁוֹת לָבֹא לָעוֹלָם, וְתִשְׁלַח בְּרָכָה בְּמַעֲשֵׂה יָדֵינוּ, וְתִתֵּן חֵן וָחֶסֶד וְרַחֲמִים בְּעֵינֶיךָ וּבְעֵינֵי כָל רוֹאֵינוּ, וְתִשְׁמַע קוֹל תַּחֲנוּנֵינוּ, כִּי אֵל שׁוֹמֵעַ תְּפִלָּה וְתַחֲנוּן אָתָּה. בָּרוּךְ אַתָּה ה', שׁוֹמֵעַ תְּפִלָּה.",
         
         // --- ברכות אחרונות ---
         // 1. בורא נפשות (אדוניי) - ללא שינוי
-        boreiNefashot: "בָּרוּךְ אַתָּה אדוני אֱלֹהֵינוּ מֶלֶךְ הָעוֹלָם, בּוֹרֵא נְפָשׁוֹת רַבּוֹת וְחֶסְרוֹנָן, עַל כָּל מַה שֶׁבָּרָאתָ לְהַחֲיוֹת בָּהֶם נֶפֶשׁ כָּל חָי. בָּרוּךְ חַי הָעוֹלָמִים.",
+        boreiNefashot: "בָּרוּךְ אַתָּה ה' אֱלֹהֵינוּ מֶלֶךְ הָעוֹלָם, בּוֹרֵא נְפָשׁוֹת רַבּוֹת וְחֶסְרוֹנָן, עַל כָּל מַה שֶׁבָּרָאתָ לְהַחֲיוֹת בָּהֶם נֶפֶשׁ כָּל חָי. בָּרוּךְ חַי הָעוֹלָמִים.",
         
         // 2. מעין שלוש - על המחיה (נוסח עדות המזרח, מפוצל)
         alHaMichya: "בָּרוּךְ אַתָּה אֲדֹנָי אֱלֹהֵינוּ מֶלֶךְ הָעוֹלָם, עַל הַמִחְיָה וְעַל הַכַּלְכָּלָה, וְעַל תְּנוּבַת הַשָּׂדֶה וְעַל אֶרֶץ חֶמְדָּה טוֹבָה וּרְחָבָה שֶׁרָצִיתָ וְהִנְחַלְתָּ לַאֲבוֹתֵינוּ לֶאֱכֹל מִפִּרְיָהּ וְלִשְׂבֹּעַ מִטּוּבָהּ. רַחֵם אֲדֹנָי אֱלֹהֵינוּ עָלֵינוּ וְעַל יִשְׂרָאֵל עַמָּךְ וְעַל יְרוּשָׁלַיִם עִירָךְ וְעַל הַר צִיּוֹן מִשְׁכַּן כְּבוֹדָךְ. וְעַל מִזְבָּחָךְ. וְעַל הֵיכָלָךְ. וּבְנֵה יְרוּשָׁלַיִם עִיר הַקֹּדֶשׁ בִּמְהֵרָה בְיָמֵינוּ. וְהַעֲלֵנוּ לְתוֹכָהּ. וְשַׂמְּחֵנוּ בְּבִנְיָנָהּ וּנְבָרְכָךְ עָלֶיהָ בִּקְדֻשָּׁה וּבְטָהֳרָה. כִּי אַתָּה אֲדֹנָי טוֹב וּמֵטִיב לַכֹּל וְנוֹדֶה לְךָ עַל הָאָרֶץ וְעַל הַמִּחְיָה וְעַל הַכַּלְכָּלָה. בָּרוּךְ אַתָּה אֲדֹנָי, עַל הָאָרֶץ וְעַל הַמִּחְיָה.",
@@ -1002,9 +1002,9 @@ const hebrewPrayers = {
                 .filter(([key]) => !initialPlanKeys.includes(key))
                 .map(([key, value]) => ({...value, id: key})),
             checklist: [
-                { id: 'cat1', category: 'מסמכים', items: [{ id: 'c1', text: 'דרכון', done: true }, { id: 'c2', text: 'כרטיסי טיסאדוני, done: false }] },
+                { id: 'cat1', category: 'מסמכים', items: [{ id: 'c1', text: 'דרכון', done: true }, { id: 'c2', text: 'כרטיסי טיסה', done: false }] },
                 { id: 'cat2', category: 'ביגוד', items: [{ id: 'c3', text: 'מעיל גשם', done: false }] },
-                { id: 'cat3', category: 'אלקטרוניקאדוני, items: [{ id: 'c4', text: 'מטען נייד', done: true }, { id: 'c5', text: 'מתאם לחשמל', done: false }] }
+                { id: 'cat3', category: 'אלקטרוניקה', items: [{ id: 'c4', text: 'מטען נייד', done: true }, { id: 'c5', text: 'מתאם לחשמל', done: false }] }
             ],
             totalBudget: 1500, expenses: [], documents: [], gallery: [], journal: {},
             theme: 'dark',
@@ -1093,7 +1093,7 @@ function showAlert(title, message, isCopyable = false, speechOptions = null) {
         
         // קביעת הטקסט הראשוני של הכפתור
         playPauseBtn.innerHTML = activeAudio && !activeAudio.paused 
-            ? '<i class="fa-solid fa-pause mr-1"></i> השהאדוני 
+            ? '<i class="fa-solid fa-pause mr-1"></i> השהה' 
             : '<i class="fa-solid fa-play mr-1"></i> הפעל';
 
         // יצירת כפתור עצור
@@ -1108,7 +1108,7 @@ function showAlert(title, message, isCopyable = false, speechOptions = null) {
             if (activeAudio) {
                 if (activeAudio.paused) {
                     activeAudio.play();
-                    playPauseBtn.innerHTML = '<i class="fa-solid fa-pause mr-1"></i> השהאדוני;
+                    playPauseBtn.innerHTML = '<i class="fa-solid fa-pause mr-1"></i> השהה';
                 } else {
                     activeAudio.pause();
                     playPauseBtn.innerHTML = '<i class="fa-solid fa-play mr-1"></i> המשך';
@@ -1118,7 +1118,7 @@ function showAlert(title, message, isCopyable = false, speechOptions = null) {
                 // אם אין נגן פעיל - מתחילים ניגון חדש
                 window.speakText(speechOptions.text); 
                 // הנחה: speakText יצר Audio חדש ושמר אותו ב-activeAudio
-                playPauseBtn.innerHTML = '<i class="fa-solid fa-pause mr-1"></i> השהאדוני;
+                playPauseBtn.innerHTML = '<i class="fa-solid fa-pause mr-1"></i> השהה';
                 stopBtn.style.display = 'flex'; 
             }
         };
@@ -1140,7 +1140,7 @@ stopBtn.onclick = () => {
              const updateButtons = () => {
                 playPauseBtn.innerHTML = activeAudio.paused 
                     ? '<i class="fa-solid fa-play mr-1"></i> המשך' 
-                    : '<i class="fa-solid fa-pause mr-1"></i> השהאדוני;
+                    : '<i class="fa-solid fa-pause mr-1"></i> השהה';
                 stopBtn.style.display = 'flex';
              };
              updateButtons(); 
@@ -1532,7 +1532,7 @@ if (activity.type === 'attraction') {
         const currentDay = dayMapEn[milanDayStr];
         const currentTimeInMinutes = currentHour * 60 + currentMinute;
         
-        const dayMapHe = {'א': 0, 'ב': 1, 'ג': 2, 'ד': 3, 'אדוני: 4, 'ו': 5, 'ש': 6};
+        const dayMapHe = {'א': 0, 'ב': 1, 'ג': 2, 'ד': 3, 'ה': 4, 'ו': 5, 'ש': 6};
 
         try {
             const dayEntries = hoursString.split(';').map(s => s.trim());
@@ -1616,8 +1616,8 @@ if (activity.type === 'attraction') {
 
     function renderKosherFilters() {
         console.log("LOG: renderKosherFilters called.");
-        const filters = ['all', 'open', 'בשרי', 'חלבי', 'מאפייאדוני, 'מרכול'];
-        const filterLabels = {'all': 'הכל', 'open': 'פתוח עכשיו', 'בשרי': 'בשרי', 'חלבי': 'חלבי', 'מאפייאדוני: 'מאפייאדוני, 'מרכול': 'מרכול'};
+        const filters = ['all', 'open', 'בשרי', 'חלבי', 'מאפייה', 'מרכול'];
+        const filterLabels = {'all': 'הכל', 'open': 'פתוח עכשיו', 'בשרי': 'בשרי', 'חלבי': 'חלבי', 'מאפייה': 'מאפייה', 'מרכול': 'מרכול'};
         $('#kosher-filters').innerHTML = filters.map(f => `<button class="kosher-filter-btn btn btn-ghost" data-filter="${f}">${filterLabels[f]}</button>`).join('');
         $$('.kosher-filter-btn').forEach(btn => btn.addEventListener('click', e => {
             const currentFilter = e.target.dataset.filter;
@@ -1949,7 +1949,7 @@ async function checkKosherStatus(barcode) {
 
     } catch (error) {
         console.error("Error in Open Food Facts lookup:", error);
-        showAlert('שגיאאדוני, 'שגיאה בחיבור לשרת Open Food Facts.');
+        showAlert('שגיאה', 'שגיאה בחיבור לשרת Open Food Facts.');
     }
 }
 
@@ -1973,7 +1973,7 @@ async function checkKosherStatus(barcode) {
         `).join('');
     }
     function showBrachaAchronaOptions() {
-    const title = 'בחר ברכה אחרונאדוני;
+    const title = 'בחר ברכה אחרונה';
     const message = `
         <p class="mb-4">בחר את הברכה האחרונה הרלוונטית:</p>
         <div class="grid grid-cols-2 gap-2 mt-4" id="brachot-selection-buttons">
@@ -2051,7 +2051,7 @@ async function fetchZmanim() {
             tefilaRelevant = 'שחרית';
             tefilaKey = 'shacharit';
         } else if (now >= chatzot && now < shkia) {
-            tefilaRelevant = 'מנחאדוני;
+            tefilaRelevant = 'מנחה';
             tefilaKey = 'mincha';
         } else {
             tefilaRelevant = 'ערבית';
@@ -2108,7 +2108,7 @@ function findUtility(query, queryHebrew) {
             showAlert('שגיאת מיקום', 'לא ניתן היה לקבל את מיקומך. החיפוש יתבצע ממרכז מילאנו.');
         });
     } else {
-        showAlert('שגיאאדוני, 'שירותי מיקום אינם נתמכים בדפדפן זה.');
+        showAlert('שגיאה', 'שירותי מיקום אינם נתמכים בדפדפן זה.');
     }
 }
     // ========================= התחלה: פונקציה למדריך קולי =========================
@@ -2168,8 +2168,8 @@ showAlert(`סיכום יומי: ${dayName}`, podcastScript, true, { text: podcas
     // ========================= התחלה: לוגיקה לעוזר המטרו =========================
 function initMetroHelper() {
     const metroData = {
-        M1: { name: 'M1', color: '#E4001A', stops: { 'Duomo': 'קתדרלת הדואומו, גלריה ויטוריו', 'Cadorna': 'טירת ספורצה, פארק סמפיונאדוני, 'San Babila': 'מרובע האופנאדוני } },
-        M2: { name: 'M2', color: '#009B4E', stops: { 'Centrale FS': 'תחנה מרכזית (רכבות לאגמים)', 'Garibaldi FS': 'פיאצה גאה אאולנטי, בוסקו ורטיקלאדוני } },
+        M1: { name: 'M1', color: '#E4001A', stops: { 'Duomo': 'קתדרלת הדואומו, גלריה ויטוריו', 'Cadorna': 'טירת ספורצה, פארק סמפיונה', 'San Babila': 'מרובע האופנה' } },
+        M2: { name: 'M2', color: '#009B4E', stops: { 'Centrale FS': 'תחנה מרכזית (רכבות לאגמים)', 'Garibaldi FS': 'פיאצה גאה אאולנטי, בוסקו ורטיקלה' } },
         M3: { name: 'M3', color: '#FFD200', stops: { 'Duomo': 'קתדרלת הדואומו', 'Centrale FS': 'תחנה מרכזית' } },
         M5: { name: 'M5', color: '#6E2C91', stops: { 'San Siro Stadio': 'אצטדיון סן סירו', 'Garibaldi FS': 'פיאצה גאה אאולנטי' } }
     };
@@ -2403,7 +2403,7 @@ function findNearbyAttractions() {
             window.open(url, '_blank');
         });
     } else {
-        showAlert('שגיאאדוני, 'שירותי מיקום אינם נתמכים בדפדפן זה.');
+        showAlert('שגיאה', 'שירותי מיקום אינם נתמכים בדפדפן זה.');
     }
 }
 // And assign it to the window object
@@ -2688,7 +2688,7 @@ async function processReceiptImage(base64ImageData) {
 
         // בדיקות תקינות לאחר ניתוח JSON
         if (result.error || isNaN(result.amount) || !result.category) {
-            showAlert('שגיאאדוני, 'לא הצלחנו לקרוא את כל הפרטים (סכום, תיאור או קטגוריה) מהקבלה. נסו שוב בתאורה טובה יותר.');
+            showAlert('שגיאה', 'לא הצלחנו לקרוא את כל הפרטים (סכום, תיאור או קטגוריה) מהקבלה. נסו שוב בתאורה טובה יותר.');
             return;
         }
         
@@ -2717,7 +2717,7 @@ async function processReceiptImage(base64ImageData) {
         
     } catch (e) {
         console.error("Error processing receipt:", e);
-        showAlert('שגיאה חמוראדוני, 'אירעה שגיאה בעיבוד הנתונים. אנא הזן ידנית.');
+        showAlert('שגיאה חמורה', 'אירעה שגיאה בעיבוד הנתונים. אנא הזן ידנית.');
     }
 }
 async function processLookupImage(base64ImageData) {
@@ -2908,7 +2908,7 @@ async function askGeneralGemini(userPrompt) {
 
     // 4. עדכון התצוגה - נציג את כל השיחה
     const chatDisplay = geminiChatHistory.map(entry => {
-        const role = entry.role === 'user' ? 'אתאדוני : 'Gemini';
+        const role = entry.role === 'user' ? 'אתה' : 'Gemini';
         const color = entry.role === 'user' ? 'text-brand-600' : 'text-green-600';
         return `<div><strong class="${color}">${role}:</strong> ${entry.parts[0].text}</div>`;
     }).join('');
@@ -2977,7 +2977,7 @@ async function askGeneralGemini(userPrompt) {
         console.log(`LOG: optimizeDayRoute called for ${dayId}`);
         const day = localTripData.plan[dayId];
         if (!day || !day.activities || day.activities.length < 2) {
-            showAlert('לא ניתן לבצע אופטימיזציאדוני, 'צריך לפחות שתי פעילויות ביום כדי לייעל את המסלול.');
+            showAlert('לא ניתן לבצע אופטימיזציה', 'צריך לפחות שתי פעילויות ביום כדי לייעל את המסלול.');
             return;
         }
 
@@ -3558,7 +3558,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if(!isFirebaseConnected) { showAlert('שגיאת סנכרון', 'אין חיבור למסד הנתונים.'); return; }
         const text = $('#new-item-text').value.trim(); if (!text) return;
         let categoryName = $('#new-category-text').value.trim() || $('#category-select').value;
-        if (!categoryName) { showAlert('שגיאאדוני, 'יש לבחור או ליצור קטגוריה.'); return; }
+        if (!categoryName) { showAlert('שגיאה', 'יש לבחור או ליצור קטגוריה.'); return; }
 
         let updatedChecklist = [...(localTripData.checklist || [])];
         let category = updatedChecklist.find(c => c.category === categoryName);
@@ -3583,7 +3583,7 @@ document.addEventListener('DOMContentLoaded', () => {
             await updateDoc(tripDocRef, { expenses: arrayUnion(newExpense) });
             e.target.reset();
         } else {
-            showAlert('שגיאאדוני, 'יש למלא את כל השדות כולל קטגוריה.');
+            showAlert('שגיאה', 'יש למלא את כל השדות כולל קטגוריה.');
         }
     });
 
