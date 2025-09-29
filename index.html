@@ -1244,15 +1244,8 @@ function renderOverview() {
         });
     }
     $('#birkat-hamazon-btn')?.addEventListener('click', () => {
-        const brachaHTML = hebrewPrayers.birkatHaMazon;
-        
-        // יצירת DOMParser לחילוץ טקסט נקי מתגי HTML
-        const parser = new DOMParser();
-        const doc = parser.parseFromString(brachaHTML, 'text/html');
-        // שימוש ב-textContent מוציא את כל הטקסט בלי תגיות
-        const brachaCleanText = doc.body.textContent.replace(/[\n\r]/g, ' ').trim(); 
-        
-        showAlert('ברכת המזון (עדות המזרח)', brachaHTML, true, { text: brachaCleanText });
+        const bracha = hebrewPrayers.birkatHaMazon;
+        showAlert('ברכת המזון (עדות המזרח)', bracha, true, { text: bracha });
     });
     $('#bracha-achrona-btn')?.addEventListener('click', showBrachaAchronaOptions);
 }
