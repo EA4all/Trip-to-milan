@@ -1241,12 +1241,7 @@ function renderOverview() {
             showAlert('תפילת הדרך', prayerText, true, { text: prayerText });
         });
     }
-    $('#birkat-hamazon-btn')?.addEventListener('click', () => {
-        const bracha = hebrewPrayers.birkatHaMazon;
-        showAlert('ברכת המזון (עדות המזרח)', bracha, true, { text: bracha });
-    });
-    $('#bracha-achrona-btn')?.addEventListener('click', showBrachaAchronaOptions);
-}
+ $('#birkat-hamazon-btn')?.addEventListener('click', () => {
 
     function startCountdown() {
         console.log("LOG: startCountdown called.");
@@ -3344,10 +3339,7 @@ if (recognition) {
 document.addEventListener('DOMContentLoaded', () => {
   
 // קטע מתוך ה-INIT
-    $('#birkat-hamazon-btn')?.addEventListener('click', () => {
-        const bracha = hebrewPrayers.birkatHaMazon;
-        showAlert('ברכת המזון (עדות המזרח)', bracha, true, { text: bracha });
-    });
+ $('#birkat-hamazon-btn')?.addEventListener('click', () => {
     console.log("LOG: DOMContentLoaded event fired. Initializing app.");
      // --- מאזיני כפתורים יהודיים חדשים ---
    $('#tefilat-haderech-btn')?.addEventListener('click', () => {
