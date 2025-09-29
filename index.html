@@ -655,7 +655,11 @@ body {
             <i class="fa-solid fa-lightbulb"></i>
         </button>
     </div>
-
+    <div class="flex flex-col items-center">
+        <button id="cancel-camera-btn" class="btn btn-ghost w-16 h-16 rounded-full text-2xl" title="ביטול">
+            <i class="fa-solid fa-times-circle"></i>
+        </button>
+    </div>
 
 <!-- Zoom row -->
 
@@ -2549,6 +2553,7 @@ async function startCamera() {
             if (cameraMode === 'barcode') {
                 captureBtn.style.display = 'none'; // הסתרת כפתור הצילום במצב ברקוד
                 
+
                 window.Quagga.init({
                     inputStream: {
                         type: "LiveStream",
@@ -2576,8 +2581,8 @@ async function startCamera() {
                 });
                 
             } else {
-                 captureBtn.style.display = 'block'; // הצגת כפתור הצילום למצבי תמונה
-                 captureBtn.onclick = captureFrame; // ודא שהוא מחובר לצילום תמונה רגיל
+                 captureBtn.style.display = 'flex'; // **הצגת כפתור הצילום למצבי תמונה**
+                 captureBtn.onclick = captureFrame; 
             }
 
         } catch (err) {
@@ -3342,6 +3347,7 @@ if (recognition) {
 
     // --- INIT ---
 document.addEventListener('DOMContentLoaded', () => {
+      $('#cancel-camera-btn').addEventListener('click', stopCamera);
       $('#birkat-hamazon-btn')?.addEventListener('click', () => {
         const bracha = hebrewPrayers.birkatHaMazon;
         showAlert('ברכת המזון (עדות המזרח)', bracha, true, { text: bracha });
