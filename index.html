@@ -843,6 +843,8 @@ let lastWeatherAPIData = null;
 let geminiChatHistory = []; // משתנה השיחה החדש
 let activeAudio = null; // משתנה גלובלי שיחזיק את אובייקט ה-Audio הנוכחי
 let lastScannedBarcode = null; // משתנה חדש לאחסון הברקוד שזוהה
+let activeAudio = null; 
+const TTS_CHARACTER_LIMIT = 4800; // מגבלה לטקסט ארוך
 // --- Live Location State ---
 let liveMap;
 let userMarkers = {};
@@ -1075,7 +1077,13 @@ function showAlert(title, message, isCopyable = false, speechOptions = null) {
 
     // 1. הגדרת התוכן
     modalTitle.textContent = title;
-    modalBody.innerHTML = message;
+    
+    // **תיקון ברכת המזון:** הטקסט המעוצב מוצג, ונוסיף אזהרה אם הטקסט ארוך
+    let finalMessage = message;
+    if (speechOptions?.text && speechOptions.text.length > TTS_CHARACTER_LIMIT) {
+         finalMessage = message + `<div class="mt-4 p-2 bg-yellow-100 dark:bg-yellow-900/30 text-sm rounded">שים לב: הטקסט ארוך, הניגון יבוצע באמצעות הקול המקומי של המכשיר.</div>`;
+    }
+    modalBody.innerHTML = finalMessage;
     copyBtn.classList.toggle('hidden', !isCopyable);
     
     // 2. הסרת כפתורים דינמיים ישנים (כדי למנוע כפילויות)
@@ -1105,8 +1113,11 @@ function showAlert(title, message, isCopyable = false, speechOptions = null) {
         stopBtn.style.display = activeAudio ? 'flex' : 'none'; 
 
         // 1. Event handler for the Play/Pause button
-        playPauseBtn.onclick = () => { // *** כאן מתחיל ההאנדלר המתוקן ***
+        playPauseBtn.onclick = () => { 
+            const textToSpeak = speechOptions.text;
+
             if (activeAudio) {
+                // לוגיקה רגילה של השהה/המשך לנגן קיים
                 if (activeAudio.paused) {
                     activeAudio.play(); // השמעה מהנקודה המושהית
                     playPauseBtn.innerHTML = '<i class="fa-solid fa-pause mr-1"></i> השהה';
@@ -1115,12 +1126,19 @@ function showAlert(title, message, isCopyable = false, speechOptions = null) {
                     playPauseBtn.innerHTML = '<i class="fa-solid fa-play mr-1"></i> המשך';
                 }
                 stopBtn.style.display = 'flex';
-            } else {
-                // אם אין נגן פעיל (null) - מתחילים ניגון חדש ע"י קריאה ל-speakText
-                window.speakText(speechOptions.text); 
                 
-                // ההנחה היא ש-speakText יצר נגן ושמר אותו ב-activeAudio, 
-                // אז נעדכן את הכפתור למצב "מנגן".
+            } else {
+                // אם אין נגן פעיל (null) - התחל ניגון
+                if (textToSpeak.length > TTS_CHARACTER_LIMIT) {
+                     // טקסט ארוך = ניגון מקומי
+                     window.speakTextLocally(textToSpeak, title);
+                     
+                } else {
+                     // טקסט רגיל = ניגון דרך Google TTS API
+                     window.speakText(textToSpeak); 
+                }
+                
+                // עדכון כפתורים למצב "מנגן"
                 playPauseBtn.innerHTML = '<i class="fa-solid fa-pause mr-1"></i> השהה';
                 stopBtn.style.display = 'flex'; 
             }
@@ -1128,10 +1146,13 @@ function showAlert(title, message, isCopyable = false, speechOptions = null) {
         
         // 2. Event handler for the Stop button
         stopBtn.onclick = () => {
+            if ('speechSynthesis' in window && window.speechSynthesis.speaking) {
+                 window.speechSynthesis.cancel(); // עצירת ניגון מקומי
+            }
             if (activeAudio) {
                 activeAudio.pause(); 
                 activeAudio.currentTime = 0; 
-                window.activeAudio = null; // <--- איפוס הנגן הגלובלי
+                window.activeAudio = null; // איפוס הנגן הגלובלי
             }
             // איפוס כפתורים
             playPauseBtn.innerHTML = '<i class="fa-solid fa-play mr-1"></i> הפעל';
@@ -2516,10 +2537,15 @@ async function startCamera() {
     const captureBtn = $('#capture-btn');
 
     // ניקוי QuaggaJS אם פועל במקרה שהמצב משתנה
-    try { if (window.Quagga && Quagga.running) Quagga.stop(); } catch (e) { } 
+    try { if (window.Quagga && Quagga.running) window.Quagga.stop(); } catch (e) { } 
     
     // קובעים את הכותרת לפני הפתיחה
     $('#camera-title').textContent = titles[cameraMode] || "מצלמה";
+
+    // הסתר את כפתור הסטטוס של הברקוד
+    const barcodeStatusDisplay = $('#barcode-status-display');
+    if (barcodeStatusDisplay) barcodeStatusDisplay.style.display = (cameraMode === 'barcode' ? 'flex' : 'none');
+    if (barcodeStatusDisplay) barcodeStatusDisplay.innerHTML = '🔍 טוען מצלמה...';
 
     if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
         try {
@@ -2529,52 +2555,67 @@ async function startCamera() {
             await video.play();
 
             activeVideoTrack = cameraStream.getVideoTracks()[0];
-             activeVideoTrack.applyConstraints({ advanced: [{ focusMode: 'manual' }] }); 
-            // 2. ניהול כפתורי פנס וצילום (הלוגיקה הקיימת שלך)
+            
+            // **תיקון קריטי לבעיית כפתורים/יכולות חסרות:**
+            // נכריח את ה-Track להכיר את יכולותיו (Apply Constraints)
+            activeVideoTrack.applyConstraints({
+                advanced: [{ 
+                    focusMode: 'continuous', // נסה פוקוס רציף
+                    zoom: activeVideoTrack.getCapabilities().zoom?.max ? activeVideoTrack.getCapabilities().zoom.max / 4 : undefined, // סט זום התחלתי
+                }]
+            }).catch(e => console.warn("WARN: Failed to set advanced camera constraints:", e)); // אם נכשל - לא שובר את הקוד
+
+            // 2. ניהול כפתורי פנס וצילום
             const capabilities = activeVideoTrack.getCapabilities();
+            
+            // בדיקת פנס: אם ה-Track מדווח על יכולת פנס
             if (capabilities.torch) {
                 torchBtn.style.display = 'flex';
-                captureBtn.classList.remove('mx-auto');
+                // אם כפתור הפנס קיים, נפנה את כפתור הצילום למרכז אם הוא לא בשימוש
+                if (cameraMode !== 'barcode') {
+                     captureBtn.classList.remove('mx-auto');
+                }
             } else {
                 torchBtn.style.display = 'none';
+                captureBtn.classList.add('mx-auto'); // מרכז את כפתור הצילום אם אין פנס
             }
 
             // 3. הצגת המודל
             $('#camera-modal').classList.add('flex');
 
             // 4. לוגיקה ספציפית למצב 'barcode' (בתוך בלוק ה-try)
-         if (cameraMode === 'barcode') {
-                captureBtn.style.display = 'flex';  
-                captureBtn.onclick = () => {
-                    // לפני הצילום, נעצור את QuaggaJS אם פועל
-                    try { if (window.Quagga && Quagga.running) Quagga.stop(); } catch (e) { } 
-                   cameraMode = 'lookup';
-                   captureFrame(); 
-               }; 
-
+            if (cameraMode === 'barcode') {
+                captureBtn.style.display = 'flex'; 
+                captureBtn.onclick = () => {
+                    // לפני הצילום, נעצור את QuaggaJS אם פועל
+                    try { if (window.Quagga && Quagga.running) window.Quagga.stop(); } catch (e) { } 
+                    cameraMode = 'lookup';
+                    captureFrame(); 
+                }; 
+                
                 // ודא שהאזור של ה-QuaggaJS נראה בתוך המודל
                 const videoContainer = $('#camera-feed').closest('.p-4.flex-grow.relative');
-                videoContainer.id = 'interactive-barcode-area'; // הוספת ID למיכל
+                if (videoContainer) videoContainer.id = 'interactive-barcode-area';
 
-                window.Quagga.init({
-                    inputStream: {
-                        type: "LiveStream",
-                        target: videoContainer, // Quagga צריך לעבוד על המיכל
-                        constraints: { facingMode: "environment" }
-                    },
-                    decoder: {
-                        readers: ["ean_reader", "upc_reader"]
-                    }
-                }, (err) => {
-                    if (err) { 
-                        console.error("QuaggaJS Init Error:", err); 
-                        showAlert("שגיאת ברקוד", err.message); 
-                        stopCamera(); 
-                        return; 
-                    }
-                    window.Quagga.start();
-                });
-               
+                window.Quagga.init({
+                    inputStream: {
+                        type: "LiveStream",
+                        target: videoContainer,
+                        constraints: { facingMode: "environment" }
+                    },
+                    decoder: {
+                        readers: ["ean_reader", "upc_reader"]
+                    }
+                }, (err) => {
+                    if (err) { 
+                        console.error("QuaggaJS Init Error:", err); 
+                        showAlert("שגיאת ברקוד", err.message); 
+                        stopCamera(); 
+                        return; 
+                    }
+                    window.Quagga.start();
+                });
+                
                 // הוספת לוגיקה לעדכון הסטטוס החזותי של הסריקה
                 window.Quagga.onProcessed(function(result) {
                     const statusEl = $('#barcode-status-display');
@@ -2590,30 +2631,29 @@ async function startCamera() {
                     }
                 });
 
-                window.Quagga.onDetected((result) => {
-                    window.Quagga.stop();
-                    // שמירת הברקוד שנסרק לפני סגירת המצלמה
+                window.Quagga.onDetected((result) => {
+                    window.Quagga.stop();
                     lastScannedBarcode = result.codeResult.code; 
-                    stopCamera();
-                    checkKosherStatus(lastScannedBarcode);
-                });
-                
-            } else {
-                 captureBtn.style.display = 'flex'; // **הצגת כפתור הצילום למצבי תמונה**
-                 captureBtn.onclick = captureFrame; 
+                    stopCamera();
+                    checkKosherStatus(lastScannedBarcode);
+                });
+                
+            } else {
+                // **הצגת כפתור הצילום למצבי תמונה**
+                captureBtn.style.display = 'flex'; 
+                captureBtn.onclick = captureFrame; 
             }
 
         } catch (err) {
-            // אם המצלמה נכשלה להיפתח, הודע למשתמש
+            // אם המצלמה נכשלה להיפתח (Permission Denied או Not Found), הודע למשתמש
             console.error("ERROR: Error accessing camera: ", err);
-            showAlert("שגיאת מצלמה", `לא ניתן לגשת למצלמה. ודא שאישרת גישה. (${err.name})`);
+            showAlert("שגיאת מצלמה", `לא ניתן לגשת למצלמה. ודא שאישרת גישה ושאפליקציות אחרות לא משתמשות בה. (${err.name})`);
             stopCamera(); // ודא שהמודל נסגר אם יש שגיאה
         }
     } else {
         showAlert("מצלמה לא נתמכת", "הדפדפן שלך לא תומך בגישה למצלמה.");
     }
 }
-
 // ========================= התחלה: קוד מתוקן ומשופר להפעלת הפנס =========================
 async function toggleTorch() {
     const torchBtn = $('#torch-btn');
@@ -2821,9 +2861,13 @@ async function speakText(text) {
     // 1. **תיקון קריטי:** אם יש נגן קיים (פעיל או מושהה), עצור ושחרר אותו לפני ניגון חדש.
     if (window.activeAudio) { 
         window.activeAudio.pause();
-        window.activeAudio = null; // שחרור הנגן הגלובלי
-        // אם צריך, ניתן להוסיף כאן לוגיקה לעדכון כפתורים אם הם פתוחים
+        window.activeAudio = null; 
     }
+    // עצירת ניגון מקומי אם הוא פועל
+    if ('speechSynthesis' in window && window.speechSynthesis.speaking) {
+         window.speechSynthesis.cancel();
+    }
+
 
     const selectedVoice = document.getElementById("global-voice-select")?.value || "he-IL-Wavenet-D"; 
     const gender = selectedVoice.endsWith('A') || selectedVoice.endsWith('C') ? "FEMALE" : "MALE"; 
@@ -2860,11 +2904,12 @@ async function speakText(text) {
             
         } else {
             console.error("שגיאה ב-TTS:", data);
-            showAlert("שגיאת TTS", "שגיאה בקריאה לשרת גוגל. בדוק את מפתח ה-API ואת ההרשאות.");
+            // אם ה-API נכשל, ננסה ניגון מקומי כפאלבק
+            window.speakTextLocally(text, "שגיאה בניגון API"); 
         }
     } catch (err) {
         console.error("שגיאה בקריאה ל-Google TTS:", err);
-        showAlert("שגיאת TTS", "שגיאת רשת או חיבור. נסה שוב.");
+        window.speakTextLocally(text, "שגיאה בניגון רשת");
     }
 }
 window.speakText = speakText;
@@ -2874,7 +2919,8 @@ function speakTextLocally(text, title) {
     if ('speechSynthesis' in window) {
         // 1. ניקוי נגן קיים
         if (window.activeAudio) { window.activeAudio.pause(); window.activeAudio = null; }
-
+        if (window.speechSynthesis.speaking) { window.speechSynthesis.cancel(); }
+        
         const utterance = new SpeechSynthesisUtterance(text);
         const hebrewVoice = window.speechSynthesis.getVoices().find(v => v.lang === 'he-IL' || v.lang === 'he');
         if (hebrewVoice) {
@@ -2883,17 +2929,35 @@ function speakTextLocally(text, title) {
 
         // 2. הפעלת הנגן המקומי
         window.speechSynthesis.speak(utterance);
-        showAlert(title, "שים לב: הטקסט ארוך, הניגון מתבצע באמצעות הקול המקומי של המכשיר.", true);
         
-        // 3. טיפול בסיום (הנגן המקומי לא משתמש ב-activeAudio, לכן אין צורך באיפוס)
+        // 3. טיפול בסיום (מאפס את כפתורי המודל)
         utterance.onend = () => {
-             // ניתן להוסיף כאן לוגיקת סיום אם נדרש
+            const playPauseBtn = document.getElementById('alert-modal-play-pause-btn');
+            if(playPauseBtn) playPauseBtn.innerHTML = '<i class="fa-solid fa-play mr-1"></i> הפעל';
+            const stopBtn = document.getElementById('alert-modal-stop-btn');
+            if(stopBtn) stopBtn.style.display = 'none';
         };
 
     } else {
-        showAlert(title, "שגיאה: ניגון קולי אינו נתמך בדפדפן זה.", true);
+        showAlert(title, "שגיאה: ניגון קולי מקומי אינו נתמך בדפדפן זה.", true);
     }
 }
+window.speakTextLocally = speakTextLocally; 
+
+// *** ודא שאתה משתמש במאזין זה עבור ברכת המזון (בקטע ה-INIT) ***
+// 1. חלץ טקסט נקי.
+// 2. קרא ל-showAlert עם ה-HTML המעוצב.
+// 3. ה-showAlert ינהל את הניגון החכם (מקומי) או יציג את ה-HTML הנקי.
+// *************************************************************
+// $('#birkat-hamazon-btn')?.addEventListener('click', () => {
+//     const brachaHTML = hebrewPrayers.birkatHaMazon;
+    
+//     const parser = new DOMParser();
+//     const doc = parser.parseFromString(brachaHTML, 'text/html');
+//     const brachaCleanText = doc.body.textContent.replace(/[\n\r]/g, ' ').trim(); 
+    
+//     showAlert('ברכת המזון (עדות המזרח)', brachaHTML, true, { text: brachaCleanText });
+// });
 
 async function speakTextSmartly(cleanText, htmlMessage, title) {
     if (cleanText.length > TTS_CHARACTER_LIMIT) {
