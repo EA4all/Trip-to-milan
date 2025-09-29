@@ -2557,7 +2557,7 @@ async function startCamera() {
             // 4. לוגיקה ספציפית למצב 'barcode' (בתוך בלוק ה-try)
             if (cameraMode === 'barcode') {
                 captureBtn.style.display = 'flex';  // הסתרת כפתור הצילום במצב ברקוד
-                                captureBtn.onclick = () => {.
+                                captureBtn.onclick = () => {
                    cameraMode = 'lookup';
                    captureFrame(); 
                }; 
