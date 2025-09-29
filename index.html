@@ -619,7 +619,6 @@ body {
         </div>
     </div>
   </div>
------
 <div id="camera-modal" class="modal-backdrop">
     <div class="modal">
         <div class="p-4 border-b flex justify-between items-center">
@@ -641,37 +640,25 @@ body {
         </button>
         <input type="file" id="receipt-file-input" accept="image/*" class="hidden">
     </div>
-
-    <!-- Capture -->
     <div class="flex flex-col items-center">
         <button id="capture-btn" class="btn btn-primary w-16 h-16 rounded-full" title="צלם">
             <i class="fa-solid fa-camera fa-2x"></i>
         </button>
     </div>
-
-    <!-- Torch -->
     <div class="flex flex-col items-center">
         <button id="torch-btn" class="btn btn-ghost w-16 h-16 rounded-full text-2xl" title="פנס">
             <i class="fa-solid fa-lightbulb"></i>
         </button>
     </div>
-
-
-<!-- Zoom row -->
-
-
     <button id="zoom-in-btn" class="btn btn-ghost rounded-full w-8 h-8 text-xl" title="הגדל">
         <i class="fa-solid fa-magnifying-glass-plus"></i>
     </button>
-
 </div>
-
   <div class="p-4 border-t flex justify-center items-center gap-2">
     <span id="zoom-level">1.0x</span>
         </div>
     </div>
 </div>
-------
   <div id="alert-modal" class="modal-backdrop">
     <div class="modal">
 <div class="p-4 border-b flex justify-between items-center">
@@ -739,7 +726,6 @@ body {
         </div>
         <div class="p-6">
            <p class="text-sm text-gray-500 mb-4">בחר את הקול האנושי המועדף עליך שישמש להקראת מדריכים קוליים וסיכומים יומיים.</p>
-
             <label for="global-voice-select" class="block text-sm font-medium mb-1">בחר קול (WaveNet מומלץ לאיכות):</label>
             <select id="global-voice-select" class="w-full p-2 rounded-lg border bg-white dark:bg-gray-800">
                 <option value="he-IL-Wavenet-A">WaveNet A</option>
@@ -755,9 +741,6 @@ body {
         </div>
     </div>
 </div>
-
-
-
   <div id="floating-nav-container" class="md:hidden fixed bottom-0 left-0 right-0 z-40">
       <div id="plan-submenu" class="floating-submenu fixed bottom-[68px] left-0 right-0 bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm p-2 rounded-t-2xl">
           <div class="grid grid-cols-3 gap-2 text-center text-sm" id="plan-submenu-links">
@@ -767,7 +750,6 @@ body {
     <div id="tools-submenu-links" class="grid grid-cols-3 gap-2 text-center text-sm">
         </div>
 </div>
-
       <nav id="floating-nav" class="bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm shadow-[0_-2px_10px_rgba(0,0,0,0.1)] dark:shadow-[0_-2px_10px_rgba(0,0,0,0.3)] rounded-t-2xl">
         <div class="flex justify-around p-2 text-gray-700 dark:text-gray-300">
             <button id="floating-plan-btn" class="flex flex-col items-center text-xs gap-1 p-1 hover:text-brand-600 w-1/4">
@@ -785,17 +767,11 @@ body {
         </div>
       </nav>
   </div>
-  
-  
   <script type="module">
-    // --- Firebase SDK ---
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
     import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
     import { getFirestore, doc, onSnapshot, setDoc, updateDoc, arrayUnion, arrayRemove, getDoc, enableIndexedDbPersistence, collection, serverTimestamp, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-    
     console.log("LOG: Script start. Initializing variables.");
-
-    // --- UTILS ---
     const $ = (s, p = document) => p.querySelector(s);
     const $$ = (s, p = document) => Array.from(p.querySelectorAll(s));
     function toRad(x) { return x * Math.PI / 180; }
@@ -825,23 +801,20 @@ body {
     }
     const fmtBold = (t) => (t || '').replace(/\*\*(.*?)\*\*/g, '<strong class="font-semibold text-brand-700 dark:text-brand-300">$1<\/strong>');
     const placeholderLogoUrl = (name) => `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&size=80&rounded=true&background=e0e7ff&color=1e40af`;
-    
-// --- Global State ---
+
 let db, auth, tripDocRef, locationsColRef;
 let cameraMode = 'translate';
 let activeVideoTrack = null;
 let localTripData = {};
 let budgetChartInstance = null;
 let cameraStream = null;
-let eurToIlsRate = 4.0; // Default rate
+let eurToIlsRate = 4.0; 
 let userCoords = null;
-let isFirebaseConnected = false; // הגדרת Firebase תקינה
+let isFirebaseConnected = false; 
 let translationHistory = JSON.parse(localStorage.getItem('milanTripTranslationHistory')) || [];
 let lastWeatherAPIData = null;
-let geminiChatHistory = []; // משתנה השיחה החדש
-let activeAudio = null; // משתנה גלובלי שיחזיק את אובייקט ה-Audio הנוכחי
-
-// --- Live Location State ---
+let geminiChatHistory = []; 
+let activeAudio = null; 
 let liveMap;
 let userMarkers = {};
 let watchingLocation = false;
@@ -849,10 +822,6 @@ let watchId = null;
 let currentUserId = null;
 
 console.log("LOG: Global variables and utility functions defined.");
-// -----------------------------------------------------------
-
-
-    // --- DATA ---
 const attractions = {
   duomo: { name: "קתדרלת הדואומו", isOutdoor: false, type: 'attraction', address: "Piazza del Duomo, 20122 Milano MI, Italy", img: ["https://www.metailimbaolam.com/wp-content/uploads/2020/08/italy-4695974_1280.jpg"], tickets: "https://www.duomomilano.it/en/buy-tickets/", description: "הלב הפועם של מילאנו. חובה לעלות לגג לתצפית פנורמית מרהיבה על העיר.", coords: { lat: 45.4642, lon: 9.1916 }, cost: 20, hours: "כל יום, 09:00-19:00" },
   sanSiro: { name: "אצטדיון סן סירו", isOutdoor: true, type: 'attraction', address: "Piazzale Angelo Moratti, 20151 Milano MI, Italy", img: ["https://www.xn--4dbkkmip.co.il/wp-content/uploads/2023/05/san-siro-1940307_640.jpg"], tickets: "https://www.sansirostadium.com/en/stadium-tour-museum/", description: "מקדש הכדורגל של מילאנו, ביתן של מילאן ואינטר. מומלץ לסיור או למשחק.", coords: { lat: 45.4780, lon: 9.1238 }, cost: 30, hours: "כל יום, 09:30-19:00 (משתנה בימי משחק)" },
@@ -907,14 +876,18 @@ const attractions = {
       ]
     };
     
-    const dailyTips = [
-      "זכרו לתקף את כרטיס התחבורה הציבורית שלכם במכונות הצהובות לפני כל נסיעה במטרו, אוטובוס או טראם כדי למנוע קנסות.",
-      "אפרטיבו (Aperitivo) הוא מנהג איטלקי פופולרי. בין 18:00 ל-21:00, שלמו על משקה וקבלו גישה חופשית למזנון אכול כפי יכולתך. רובע נבילי הוא מקום מעולה לחוות זאת.",
-      "'Coperto' הוא חיוב שירות קבוע שרוב המסעדות מוסיפות לחשבון. זה לא טיפ, אלא תשלום על השירות והלחם. טיפ נוסף אינו חובה אך מוערך.",
-      "הרבה מוזיאונים וכנסיות דורשים לבוש צנוע (כתפיים וברכיים מכוסות). כדאי להחזיק צעיף קל בתיק למקרה הצורך.",
-      "מים מהברז במילאנו בטוחים וטובים לשתייה. חפשו ברזיות ציבוריות (fontanelle) כדי למלא את בקבוק המים שלכם ולחסוך כסף.",
-      "אם אתם מתכננים לראות את 'הסעודה האחרונה של דה וינצ'י, חובה להזמין כרטיסים באינטרנט מספר חודשים מראש. הכניסה מוגבלת מאוד."
-    ];
+const dailyTips = [
+    "זכרו לתקף את כרטיס התחבורה הציבורית שלכם במכונות הצהובות לפני כל נסיעה במטרו, אוטובוס או טראם כדי למנוע קנסות.",
+    "אפרטיבו (Aperitivo) הוא מנהג איטלקי פופולרי. בין 18:00 ל-21:00, שלמו על משקה וקבלו גישה חופשית למזנון אכול כפי יכולתך. רובע נבילי הוא מקום מעולה לחוות זאת.",
+    "'Coperto' הוא חיוב שירות קבוע שרוב המסעדות מוסיפות לחשבון. זה לא טיפ, אלא תשלום על השירות והלחם. טיפ נוסף אינו חובה אך מוערך.",
+    "הרבה מוזיאונים וכנסיות דורשים לבוש צנוע (כתפיים וברכיים מכוסות). כדאי להחזיק צעיף קל בתיק למקרה הצורך.",
+    "מים מהברז במילאנו בטוחים וטובים לשתייה. חפשו ברזיות ציבוריות (fontanelle) כדי למלא את בקבוק המים שלכם ולחסוך כסף.",
+    "אם אתם מתכננים לראות את 'הסעודה האחרונה של דה וינצ'י, חובה להזמין כרטיסים באינטרנט מספר חודשים מראש. הכניסה מוגבלת מאוד.",
+    "הימנעו מקניית כרטיסי מטרו מרוכלים: יש להיזהר מרמאים שמציעים למכור כרטיסי מטרו (ATM) מחוץ לתחנות. תמיד קנו את הכרטיס שלכם ממכונות אוטומטיות רשמיות או בקיוסקים (Tabacchi), כדי לוודא שהוא תקף ולמנוע קנסות. זכרו לתקף את הכרטיס במכונה הצהובה.",
+    "שימו לב לשעות הצהריים (Siesta): מילאנו היא עיר אירופאית גדולה ופעילה יותר מערים איטלקיות קטנות, אבל בתי עסק קטנים ומסעדות מסורתיות עדיין נוהגים לסגור בין 14:30 ל-18:00. אם אתם רעבים בשעות אלה, מומלץ לחפש מקומות ליד אזורי תיירות מרכזיים או בתי קפה גדולים.",
+    "השתמשו באפליקציות שיתופיות: כדי לחסוך בהוצאות תחבורה בנסיעות קצרות או באזורים פחות נגישים, שקלו להשתמש באפליקציות אופניים או קורקינטים שיתופיים (Lime, Dott וכו'). זו דרך נעימה, זולה וכיפית לראות את העיר, במיוחד באזורים כמו רובע נבילי או פארק סמפיונה.",
+    "אצטדיון סן סירו מחזיק בשיא ייחודי כאחד ממקדשי הכדורגל של מילאנו: הוא משמש כבית לשתי קבוצות יריבות גדולות - אינטר מילאנו ואיי סי מילאן. זו אחת האטרקציות המומלצות לסיור או למשחק."
+];
 
     const tripMeta = {
         flights: {
@@ -930,49 +903,32 @@ const attractions = {
         }
     };
 const hebrewPrayers = {
-        // --- תפילת הדרך --- (אדוניי) - ללא שינוי
        tefilatHaderech: "יְהִי רָצוֹן מִלְּפָנֶיךָ אדוני אֱלֹהֵינוּ וֵאלֹהֵי אֲבוֹתֵינוּ, שֶׁתּוֹלִיכֵנוּ לְשָׁלוֹם, וְתַצְעִידֵנוּ לְשָׁלוֹם, וְתִסְמְכֵנוּ לְשָׁלוֹם, וְתַגִּיעֵנוּ לִמְחוֹז חֶפְצֵנוּ לְחַיִּים וּלְשִׂמְחָה וּלְשָׁלוֹם, וְתַחְזִירֵנוּ לְשָׁלוֹם. וְתַצִּילֵנוּ מִכַּף כָּל אוֹיֵב וְאוֹרֵב בַּדֶּרֶךְ, וּמִכָּל מִינֵי פֻּרְעָנֻיּוֹת הַמִּתְרַגְּשׁוֹת לָבֹא לָעוֹלָם, וְתִשְׁלַח בְּרָכָה בְּמַעֲשֵׂה יָדֵינוּ, וְתִתֵּן חֵן וָחֶסֶד וְרַחֲמִים בְּעֵינֶיךָ וּבְעֵינֵי כָל רוֹאֵינוּ, וְתִשְׁמַע קוֹל תַּחֲנוּנֵינוּ, כִּי אֵל שׁוֹמֵעַ תְּפִלָּה וְתַחֲנוּן אָתָּה. בָּרוּךְ אַתָּה אדוני, שׁוֹמֵעַ תְּפִלָּה.",
-        
-        // --- ברכות אחרונות ---
-        // 1. בורא נפשות (אדוניי) - ללא שינוי
         boreiNefashot: "בָּרוּךְ אַתָּה אדוני אֱלֹהֵינוּ מֶלֶךְ הָעוֹלָם, בּוֹרֵא נְפָשׁוֹת רַבּוֹת וְחֶסְרוֹנָן, עַל כָּל מַה שֶׁבָּרָאתָ לְהַחֲיוֹת בָּהֶם נֶפֶשׁ כָּל חָי. בָּרוּךְ חַי הָעוֹלָמִים.",
-        
-        // 2. מעין שלוש - על המחיה (נוסח עדות המזרח, מפוצל)
         alHaMichya: "בָּרוּךְ אַתָּה אֲדֹנָי אֱלֹהֵינוּ מֶלֶךְ הָעוֹלָם, עַל הַמִחְיָה וְעַל הַכַּלְכָּלָה, וְעַל תְּנוּבַת הַשָּׂדֶה וְעַל אֶרֶץ חֶמְדָּה טוֹבָה וּרְחָבָה שֶׁרָצִיתָ וְהִנְחַלְתָּ לַאֲבוֹתֵינוּ לֶאֱכֹל מִפִּרְיָהּ וְלִשְׂבֹּעַ מִטּוּבָהּ. רַחֵם אֲדֹנָי אֱלֹהֵינוּ עָלֵינוּ וְעַל יִשְׂרָאֵל עַמָּךְ וְעַל יְרוּשָׁלַיִם עִירָךְ וְעַל הַר צִיּוֹן מִשְׁכַּן כְּבוֹדָךְ. וְעַל מִזְבָּחָךְ. וְעַל הֵיכָלָךְ. וּבְנֵה יְרוּשָׁלַיִם עִיר הַקֹּדֶשׁ בִּמְהֵרָה בְיָמֵינוּ. וְהַעֲלֵנוּ לְתוֹכָהּ. וְשַׂמְּחֵנוּ בְּבִנְיָנָהּ וּנְבָרְכָךְ עָלֶיהָ בִּקְדֻשָּׁה וּבְטָהֳרָה. כִּי אַתָּה אֲדֹנָי טוֹב וּמֵטִיב לַכֹּל וְנוֹדֶה לְךָ עַל הָאָרֶץ וְעַל הַמִּחְיָה וְעַל הַכַּלְכָּלָה. בָּרוּךְ אַתָּה אֲדֹנָי, עַל הָאָרֶץ וְעַל הַמִּחְיָה.",
-        // 3. מעין שלוש - על הגפן (נוסח עדות המזרח, מפוצל)
         alHaGefen: "בָּרוּךְ אַתָּה אֲדֹנָי אֱלֹהֵינוּ מֶלֶךְ הָעוֹלָם, עַל הַגֶּפֶן וְעַל פְּרִי הַגֶּפֶן, וְעַל תְּנוּבַת הַשָּׂדֶה וְעַל אֶרֶץ חֶמְדָּה טוֹבָה וּרְחָבָה שֶׁרָצִיתָ וְהִנְחַלְתָּ לַאֲבוֹתֵינוּ לֶאֱכֹל מִפִּרְיָהּ וְלִשְׂבֹּעַ מִטּוּבָהּ. רַחֵם אֲדֹנָי אֱלֹהֵינוּ עָלֵינוּ וְעַל יִשְׂרָאֵל עַמָּךְ וְעַל יְרוּשָׁלַיִם עִירָךְ וְעַל הַר צִיּוֹן מִשְׁכַּן כְּבוֹדָךְ. וְעַל מִזְבָּחָךְ. וְעַל הֵיכָלָךְ. וּבְנֵה יְרוּשָׁלַיִם עִיר הַקֹּדֶשׁ בִּמְהֵרָה בְיָמֵינוּ. וְהַעֲלֵנוּ לְתוֹכָהּ. וְשַׂמְּחֵנוּ בְּבִנְיָנָהּ וּנְבָרְכָךְ עָלֶיהָ בִּקְדֻשָּׁה וּבְטָהֳרָה. כִּי אַתָּה אֲדֹנָי טוֹב וּמֵטִיב לַכֹּל וְנוֹדֶה לְךָ עַל הָאָרֶץ וְעַל פְּרִי הַגֶּפֶן. בָּרוּךְ אַתָּה אֲדֹנָי, עַל הָאָרֶץ וְעַל פְּרִי הַגֶּפֶן.",
-        // 4. מעין שלוש - על העץ (נוסח עדות המזרח, מפוצל)
         alHaEtz: "בָּרוּךְ אַתָּה אֲדֹנָי אֱלֹהֵינוּ מֶלֶךְ הָעוֹלָם, עַל הָעֵץ וְעַל פְּרִי הָעֵץ, וְעַל תְּנוּבַת הַשָּׂדֶה וְעַל אֶרֶץ חֶמְדָּה טוֹבָה וּרְחָבָה שֶׁרָצִיתָ וְהִנְחַלְתָּ לַאֲבוֹתֵינוּ לֶאֱכֹל מִפִּרְיָהּ וְלִשְׂבֹּעַ מִטּוּבָהּ. רַחֵם אֲדֹנָי אֱלֹהֵינוּ עָלֵינוּ וְעַל יִשְׂרָאֵל עַמָּךְ וְעַל יְרוּשָׁלַיִם עִירָךְ וְעַל הַר צִיּוֹן מִשְׁכַּן כְּבוֹדָךְ. וְעַל מִזְבָּחָךְ. וְעַל הֵיכָלָךְ. וּבְנֵה יְרוּשָׁלַיִם עִיר הַקֹּדֶשׁ בִּמְהֵרָה בְיָמֵינוּ. וְהַעֲלֵנוּ לְתוֹכָהּ. וְשַׂמְּחֵנוּ בְּבִנְיָנָהּ וּנְבָרְכָךְ עָלֶיהָ בִּקְדֻשָּׁה וּבְטָהֳרָה. כִּי אַתָּה אֲדֹנָי טוֹב וּמֵטִיב לַכֹּל וְנוֹדֶה לְךָ עַל הָאָרֶץ וְעַל הַפֵּרוֹת. בָּרוּךְ אַתָּה אֲדֹנָי, עַל הָאָרֶץ וְעַל הַפֵּרוֹת.",
-
-        // 5. ברכת המזון - נוסח עדות המזרח (מלא ומדויק)
         birkatHaMazon: `
         <h4 class="font-bold text-lg text-blue-700">ברכת המזון (עדות המזרח - נוסח מלא)</h4>
         לַמְנַצֵּחַ בִּנְגִינֹת מִזְמוֹר שִׁיר: אֱלֹהִים יְחָנֵּנוּ וִיבָרְכֵנוּ. יָאֵר פָּנָיו אִתָּנוּ סֶלָה: לָדַעַת בָּאָרֶץ דַּרְכֶּךָ. בְּכָל-גּוֹיִם יְשׁוּעָתֶךָ: יוֹדוּךָ עַמִּים אֱלֹהִים. יוֹדוּךָ עַמִּים כֻּלָּם: יִשְׂמְחוּ וִירַנְּנוּ לְאֻמִּים כִּי-תִשְׁפֹּט עַמִּים מִישֹׁר. וּלְאֻמִּים בָּאָרֶץ תַּנְחֵם סֶלָה: יוֹדוּךָ עַמִּים אֱלֹהִים. יוֹדוּךָ עַמִּים כֻּלָּם: אֶרֶץ נָתְנָה יְבוּלָהּ. יְבָרְכֵנוּ אֱלֹהִים אֱלֹהֵינוּ: יְבָרְכֵנוּ אֱלֹהִים. וְיִירְאוּ אוֹתוֹ כָּל-אַפְסֵי-אָרֶץ: (תהילים סז)
         <hr class="my-2">
         אֲבָרְכָה אֶת-אֲדֹנָי בְּכָל-עֵת. תָּמִיד תְּהִלָּתוֹ בְּפִי: סוֹף דָּבָר הַכֹּל נִשְׁמָע. אֶת-הָאֱלֹהִים יְרָא וְאֶת-מִצְוֹתָיו שְׁמוֹר, כִּי-זֶה כָּל-הָאָדָם: תְּהִלַּת אֲדֹנָי יְדַבֶּר פִּי. וִיבָרֵךְ כָּל-בָּשָׂר שֵׁם קָדְשׁוֹ לְעוֹלָם וָעֶד: וַאֲנַחְנוּ נְבָרֵךְ יָהּ מֵעַתָּה וְעַד-עוֹלָם הַלְלוּיָהּ: וַיְדַבֵּר אֵלַי, זֶה הַשֻּׁלְחָן אֲשֶׁר לִפְנֵי אֲדֹנָי:
-
         <h5 class="font-bold text-md text-gray-700 dark:text-gray-300">פתיח וברכה ראשונה (הזן)</h5>
         רַבּוֹתַי, נְבָרֵךְ. יְהִי שֵׁם אֲדֹנָי מְבֹרָךְ מֵעַתָּה וְעַד עוֹלָם. בָּרְכוּ אֶת אֲדֹנָי אֲשֶׁר אָכַלְנוּ מִשֶּׁלּוֹ. בָּרוּךְ אֲדֹנָי אֲשֶׁר אָכַלְנוּ מִשֶּׁלּוֹ וּבְטוּבוֹ חָיִינוּ. בָּרוּךְ אַתָּה אֲדֹנָי, אֱלֹהֵינוּ מֶלֶךְ הָעוֹלָם, הָאֵל הַזָּן אוֹתָנוּ וְאֶת הָעוֹלָם כֻּלּוֹ בְּטוּבוֹ בְּחֵן בְּחֶסֶד בְּרֶוַח וּבְרַחֲמִים רַבִּים. נֹתֵן לֶחֶם לְכָל-בָּשָׂר. כִּי לְעוֹלָם חַסְדּוֹ: וּבְטוּבוֹ הַגָּדוֹל תָּמִיד לֹא חָסַר לָנוּ וְאַל יֶחְסַר לָנוּ מָזוֹן תָּמִיד לְעוֹלָם וָעֶד. כִּי הוּא אֵל זָן וּמְפַרְנֵס לַכֹּל וְשֻׁלְחָנוֹ עָרוּךְ לַכֹּל וְהִתְקִין מִחְיָה וּמָזוֹן לְכָל-בְּרִיּוֹתָיו אֲשֶׁר בָּרָא בְרַחֲמָיו וּבְרוֹב חֲסָדָיו כָּאָמוּר. פּוֹתֵחַ אֶת-יָדֶךָ. וּמַשְׂבִּיעַ לְכָל-חַי רָצוֹן: בָּרוּךְ אַתָּה אֲדֹנָי, הַזָּן אֶת הַכֹּל:
-
         <h5 class="font-bold text-md text-gray-700 dark:text-gray-300">ברכה שניה (נודה)</h5>
         נוֹדֶה לְּךָ אֲדֹנָי אֱלֹהֵינוּ עַל שֶׁהִנְחַלְתָּ לַאֲבוֹתֵינוּ אֶרֶץ חֶמְדָּה טוֹבָה וּרְחָבָה. עַל שֶׁהוֹצֵאתָנוּ אֲדֹנָי אֱלֹהֵינוּ מֵאֶרֶץ מִצְרַיִם וּפְדִיתָנוּ מִבֵּית עֲבָדִים. וְעַל בְּרִיתְךָ שֶׁחָתַמְתָּ בִּבְשָׂרֵנוּ. וְעַל תּוֹרָתְךָ שֶׁלִּמַּדְתָּנוּ. וְעַל חֻקֵּי רְצוֹנָךְ שֶׁהוֹדַעְתָּנוּ. וְעַל חַיִּים וּמָזוֹן שֶׁאַתָּה זָן וּמְפַרְנֵס אוֹתָנוּ: וְעַל הַכֹּל אֲדֹנָי אֱלֹהֵינוּ אֲנַחְנוּ מוֹדִים לָךְ וּמְבָרְכִים אֶת שְׁמָךְ כָּאָמוּר וְאָכַלְתָּ וְשָׂבָעְתָּ. וּבֵרַכְתָּ אֶת-אֲדֹנָי אֱלֹהֶיךָ עַל-הָאָרֶץ הַטֹּבָה אֲשֶׁר נָתַן-לָךְ: בָּרוּךְ אַתָּה אֲדֹנָי, עַל הָאָרֶץ וְעַל הַמָּזוֹן:
-
         <h5 class="font-bold text-md text-gray-700 dark:text-gray-300">ברכה שלישית (בונה ירושלים)</h5>
         רַחֵם אֲדֹנָי אֱלֹהֵינוּ עָלֵינוּ וְעַל יִשְׂרָאֵל עַמָּךְ. וְעַל יְרוּשָׁלַיִם עִירָךְ. וְעַל הַר צִיּוֹן מִשְׁכַּן כְּבוֹדָךְ. וְעַל הֵיכָלָךְ. וְעַל מְעוֹנָךְ. וְעַל דְּבִירָךְ. וְעַל הַבַּיִת הַגָּדוֹל וְהַקָּדוֹשׁ שֶׁנִּקְרָא שִׁמְךָ עָלָיו. אָבִינוּ רְעֵנוּ זוּנֵנוּ. פַּרְנְסֵנוּ. כַּלְכְּלֵנוּ. הַרְוִיחֵנוּ הַרְוַח לָנוּ מְהֵרָה מִכָּל-צָרוֹתֵינוּ. וְנָא אַל תַּצְרִיכֵנוּ אֲדֹנָי אֱלֹהֵינוּ לִידֵי מַתְּנוֹת בָּשָׂר וָדָם. וְלֹא לִידֵי הַלְוָאָתָם. אֶלָּא לְיָדְךָ הַמְּלֵאָה וְהָרְחָבָה. הָעֲשִׁירָה וְהַפְּתוּחָה. יְהִי רָצוֹן שֶׁלּא נֵבוֹשׁ בָּעוֹלָם הַזֶּה. וְלֹא נִכָּלֵם לְעוֹלָם הַבָּא. וּמַלְכוּת בֵּית דָּוִד מְשִׁיחָךְ תַּחֲזִירֶנָּה לִמְקוֹמָהּ בִּמְהֵרָה בְיָמֵינוּ: וְתִבְנֶה יְרוּשָׁלַיִם עִירָךְ בִּמְהֵרָה בְיָמֵינוּ: בָּרוּךְ אַתָּה אֲדֹנָי, בּוֹנֵה יְרוּשָׁלָיִם. (ואומר בלחש: אָמֵן):
-
         <h5 class="font-bold text-md text-gray-700 dark:text-gray-300">ברכה רביעית (הטוב והמטיב)</h5>
         בָּרוּךְ אַתָּה אֲדֹנָי, אֱלֹהֵינוּ מֶלֶךְ הָעוֹלָם, הָאֵל אָבִינוּ מַלְכֵּנוּ אַדִּירֵנוּ. בּוֹרְאֵנוּ. גּוֹאֲלֵנוּ. קְדוֹשֵׁנוּ. קְדוֹשׁ יַעֲקֹב. רוֹעֵנוּ רוֹעֵה יִשְׂרָאֵל. הַמֶּלֶךְ הַטּוֹב וְהַמֵּטִיב לַכֹּל. שֶׁבְּכָל-יוֹם וָיוֹם הוּא הֵטִיב לָנוּ. הוּא מֵטִיב לָנוּ. הוּא יֵיטִיב לָנוּ. הוּא גְמָלָנוּ. הוּא גוֹמְלֵנוּ. הוּא יִגְמְלֵנוּ לָעַד חֵן וָחֶסֶד וְרַחֲמִים וְרֶוַח וְהַצָּלָה וְכָל-טוֹב:
-
         <h5 class="font-bold text-md text-gray-700 dark:text-gray-300">הוספות ויהי רצון (קיצור)</h5>
         הָרַחֲמָן הוּא יִשְׁתַּבַּח עַל כִּסֵּא כְבוֹדוֹ: הָרַחֲמָן הוּא יִשְׁתַּבַּח בַּשָּׁמַיִם וּבָאָרֶץ: הָרַחֲמָן הוּא יִשְׁתַּבַּח בָּנוּ לְדוֹר דּוֹרִים: הָרַחֲמָן הוּא קֶרֶן לְעַמּוֹ יָרִים: הָרַחֲמָן הוּא יִתְפָּאַר בָּנוּ לְנֶצַח נְצָחִים: הָרַחֲמָן הוּא יְפַרְנְסֵנוּ בְּכָבוֹד וְלֹא בְבִזּוּי, בְּהֶתֵּר וְלֹא בְאִסּוּר, בְּנַחַת וְלֹא בְצָעַר: הָרַחֲמָן הוּא יִתֵּן שָׁלוֹם בֵּינֵינוּ: הָרַחֲמָן הוּא יִשְׁלַח בְּרָכָה רְוָחָה וְהַצְלָחָה בְּכָל-מַעֲשֵׂה יָדֵינוּ: הָרַחֲמָן הוּא יַצְלִיחַ אֶת דְּרָכֵינוּ: הָרַחֲמָן הוּא יִשְׁבֹּר עוֹל גָּלוּת מְהֵרָה מֵעַל צַוָּארֵנוּ: הָרַחֲמָן הוּא יוֹלִיכֵנוּ מְהֵרָה קוֹמְמִיּוּת לְאַרְצֵנוּ: הָרַחֲמָן הוּא יִרְפָּאֵנוּ רְפוּאָה שְׁלֵמָה רְפוּאַת הַנֶּפֶשׁ וּרְפוּאַת הַגּוּף: הָרַחֲמָן הוּא יִפְתַּח לָנוּ אֶת יָדוֹ הָרְחָבָה: הָרַחֲמָן הוּא יְבָרֵךְ כָּל אֶחָד וְאֶחָד מִמֶּנּוּ בִּשְׁמוֹ הַגָּדוֹל כְּמוֹ שֶׁנִּתְבָּרְכוּ אֲבוֹתֵינוּ אַבְרָהָם יִצְחָק וְיַעֲקֹב בַּכֹּל מִכֹּל כֹּל. כֵּן יְבָרֵךְ אוֹתָנוּ יַחַד בְּרָכָה שְׁלֵמָה. וְכֵן יְהִי רָצוֹן וְנֹאמַר אָמֵן: הָרַחֲמָן הוּא יִפְרוֹשׂ עָלֵינוּ סֻכַּת שְׁלוֹמוֹ: הָרַחֲמָן הוּא יִטַּע תּוֹרָתוֹ וְאַהֲבָתוֹ בְּלִבֵּנוּ וְתִהְיֶה יִרְאָתוֹ עַל פָּנֵינוּ לְבִלְתִּי נֶחֱטָא. וְיִהְיוּ כָל-מַעֲשֵׂינוּ לְשֵׁם שָׁמָיִם: הָרַחֲמָן הוּא יְבָרֵךְ אֶת הַשֻּׁלְחָן הַזֶּה שֶׁאָכַלְנוּ עָלָיו... הָרַחֲמָן הוּא יְבָרֵךְ אֶת בַּעַל הַבַּיִת הַזֶּה... מַגְדִּיל יְשׁוּעוֹת מַלְכּוֹ. וְעֹשֶׂה-חֶסֶד לִמְשִׁיחוֹ לְדָוִד וּלְזַרְעוֹ עַד-עוֹלָם: כְּפִירִים רָשׁוּ וְרָעֵבוּ. וְדרְשֵׁי אֲדֹנָי לֹא-יַחְסְרוּ כָל-טוֹב: נַעַר הָיִיתִי גַּם-זָקַנְתִּי וְלֹא-רָאִיתִי צַדִּיק נֶעֱזָב. וְזַרְעוֹ מְבַקֶּשׁ-לָחֶם: כָּל-הַיּוֹם חוֹנֵן וּמַלְוֶה. וְזַרְעוֹ לִבְרָכָה: מַה שֶּׁאָכַלְנוּ יִהְיֶה לְשָׂבְעָה. וּמַה שֶּׁשָּׁתִינוּ יִהְיֶה לִרְפוּאָה. וּמַה שֶּׁהוֹתַרְנוּ יִהְיֶה לִבְרָכָה... בְּרוּכִים אַתֶּם לַאֲדֹנָי. עֹשֵׂה שָׁמַיִם וָאָרֶץ: בָּרוּךְ הַגֶּבֶר אֲשֶׁר יִבְטַח בַּאֲדֹנָי... אֲדֹנָי עֹז לְעַמּוֹ יִתֵּן. אֲדֹנָי יְבָרֵךְ אֶת-עַמּוֹ בַשָּׁלוֹם. עוֹשֶׂה שָׁלוֹם בִּמְרוֹמָיו הוּא בְרַחֲמָיו יַעֲשֶׂה שָׁלוֹם עָלֵינוּ וְעַל כָּל-עַמּוֹ יִשְׂרָאֵל וְאִמְרוּ אָמֵן:
         `,
-
-        // --- תפילות יומיות (נוסח קצר בלבד) - ללא שינוי
         shacharit: "זמן תפילת **שחרית** (נוסח עדות המזרח).",
         mincha: "זמן תפילת **מנחה** (נוסח עדות המזרח).",
         arvit: "זמן תפילת **ערבית** (נוסח עדות המזרח)."
     };
-    let currentLang = 'he-it'; // he-it or it-he
+    let currentLang = 'he-it'; /
 
     console.log("LOG: Static data (attractions, kosher, etc.) loaded.");
 
@@ -1001,26 +957,17 @@ const hebrewPrayers = {
             suggestions: Object.entries(attractions)
                 .filter(([key]) => !initialPlanKeys.includes(key))
                 .map(([key, value]) => ({...value, id: key})),
-// קטע מתוך ה-checklist באובייקט getInitialTripData()
 checklist: [
-    // קטע 1 מתוקן: השאר רק את הסוגר והפסיק
-    { id: 'cat1', category: 'מסמכים', items: [{ id: 'c1', text: 'דרכון', done: true }, { id: 'c2', text: 'כרטיסי טיסה', done: false }] }, // ... cat2 (חייב להסתיים בפסיק)
-    
-    // קטע 2 מתוקן: השאר רק את הסוגר והפסיק
-    { id: 'cat2', category: 'ביגוד', items: [{ id: 'c3', text: 'מעיל גשם', done: false }] }, // הרכיב cat3 (כפי ששלחת)
-    
-    // קטע 3 (כפי ששלחת, אין צורך בפסיק בסוף)
-{ id: 'cat3', category: 'אלקטרוניקה', items: [{ id: 'c4', text: 'מטען נייד', done: true }, { id: 'c5', text: 'מתאם לחשמל', done: false }] }
-] // <--- סוגר את מערך ה-checklist
-, // <--- פסיק שמפריד בין checklist ל-totalBudget
-
+    { id: 'cat1', category: 'מסמכים', items: [{ id: 'c1', text: 'דרכון', done: true }, { id: 'c2', text: 'כרטיסי טיסה', done: false }] }, 
+    { id: 'cat2', category: 'ביגוד', items: [{ id: 'c3', text: 'מעיל גשם', done: false }] }, 
+    { id: 'cat3', category: 'אלקטרוניקה', items: [{ id: 'c4', text: 'מטען נייד', done: true }, { id: 'c5', text: 'מתאם לחשמל', done: false }] }
+] 
+, 
 totalBudget: 1500, expenses: [], documents: [], gallery: [], journal: {},
             theme: 'dark',
             settings: { includeEstimatedCostsInBalance: true }
         };
     }
-
-    // --- MODAL ---
     let activityToModify = null;
     const modal = $('#add-to-day-modal');
     async function openAddToDayModal(activityId, type = 'suggestion') {
@@ -1032,12 +979,10 @@ totalBudget: 1500, expenses: [], documents: [], gallery: [], journal: {},
             activityToModify = allKosher.find(k => k.name === activityId);
             if(activityToModify) activityToModify.id = activityId;
         }
-        
         if (!activityToModify) {
             console.error(`ERROR: Could not find activity to modify with id: ${activityId}`);
             return;
         }
-
         const opts = $('#modal-day-options');
         opts.innerHTML = Object.entries(localTripData.plan).sort((a,b) => a[0].localeCompare(b[0])).map(([dayId, dayData]) => 
             `<button class="btn btn-primary" onclick="window.addActivityToDay('${dayId}', '${type}')">${dayData.name}</button>`
@@ -1071,79 +1016,52 @@ totalBudget: 1500, expenses: [], documents: [], gallery: [], journal: {},
     window.openAddToDayModal = openAddToDayModal;
 function showAlert(title, message, isCopyable = false, speechOptions = null) {
     console.log(`LOG: showAlert called. Title: ${title}`);
-    
     const modal = document.getElementById('alert-modal');
     const modalTitle = document.getElementById('alert-modal-title');
     const modalBody = document.getElementById('alert-modal-body');
     const copyBtn = document.getElementById('alert-modal-copy-btn');
     const closeBtn = document.getElementById('alert-modal-close');
     const buttonContainer = closeBtn.parentNode; 
-
-    // 1. הגדרת התוכן
     modalTitle.textContent = title;
     modalBody.innerHTML = message;
     copyBtn.classList.toggle('hidden', !isCopyable);
-    
-    // 2. הסרת כפתורים דינמיים ישנים (כדי למנוע כפילויות)
     ['#alert-modal-play-pause-btn', '#alert-modal-stop-btn'].forEach(selector => {
         const oldBtn = document.querySelector(selector);
         if (oldBtn) oldBtn.remove();
     });
-
-    // 3. הוספת כפתורי השמע (אם נדרש)
-    // הערה: activeAudio אמור להיות עכשיו משתנה גלובלי נגיש
     if (speechOptions && speechOptions.text) {
-        
-        // יצירת כפתור Play/Pause
         const playPauseBtn = document.createElement('button');
         playPauseBtn.id = 'alert-modal-play-pause-btn';
         playPauseBtn.className = 'btn btn-ghost';
-        
-        // קביעת הטקסט הראשוני של הכפתור
         playPauseBtn.innerHTML = activeAudio && !activeAudio.paused 
     ? '<i class="fa-solid fa-pause mr-1"></i> השהה' 
     : '<i class="fa-solid fa-play mr-1"></i> הפעל';
-
-        // יצירת כפתור עצור
         const stopBtn = document.createElement('button');
         stopBtn.id = 'alert-modal-stop-btn';
         stopBtn.className = 'btn btn-ghost text-red-500';
         stopBtn.innerHTML = '<i class="fa-solid fa-stop mr-1"></i> עצור';
         stopBtn.style.display = activeAudio ? 'flex' : 'none'; 
-
-        // 1. Event handler for the Play/Pause button
 playPauseBtn.onclick = () => {
-    if (window.activeAudio) { // נגן קיים
+    if (window.activeAudio) { 
         if (window.activeAudio.paused) {
             window.activeAudio.play();
-            // ... עדכון כפתורים
         } else {
             window.activeAudio.pause();
-            // ... עדכון כפתורים
         }
-    } else { // נגן לא קיים, מתחילים
+    } else { 
         window.speakText(speechOptions.text); 
-        // שימו לב: speakText הוא זה שמגדיר את window.activeAudio
-        
-        // כדי לוודא עדכון מצב, ניתן להוסיף השהיה קצרה, אבל זה פחות מומלץ.
-        // אם speakText נכשל, הוא קורא ל-showAlert.
     }
-    stopBtn.style.display = 'flex'; // ודא שהכפתור תמיד מופיע בניסיון ניגון
+    stopBtn.style.display = 'flex'; 
 };
-        
-        // 2. Event handler for the Stop button
 stopBtn.onclick = () => {
     if (activeAudio) {
         activeAudio.pause(); 
         activeAudio.currentTime = 0; 
-        window.activeAudio = null; // <--- זה התיקון הקריטי: איפוס הנגן הגלובלי
+        window.activeAudio = null; 
     }
-            // איפוס כפתורים
     playPauseBtn.innerHTML = '<i class="fa-solid fa-play mr-1"></i> הפעל';
     stopBtn.style.display = 'none';
 };
-        
-        // 3. עדכון כפתורים במעבר בין מודלים
         if(activeAudio) {
              const updateButtons = () => {
                 playPauseBtn.innerHTML = activeAudio.paused 
@@ -1153,16 +1071,11 @@ stopBtn.onclick = () => {
              };
              updateButtons(); 
         }
-
-        // Add new buttons to the modal
         buttonContainer.insertBefore(playPauseBtn, closeBtn);
         buttonContainer.insertBefore(stopBtn, playPauseBtn);
     }
-
-    // 4. הצגת המודל
     modal.classList.add('flex');
 }
-
 window.showAlert = showAlert;
     function openTipModal() {
     console.log("LOG: openTipModal called.");
@@ -1184,12 +1097,9 @@ window.showAlert = showAlert;
         }
     }
 
-    // --- RENDER FUNCTIONS ---
 function renderOverview() {
     console.log("LOG: renderOverview called.");
     const { hotel, flights, contacts } = tripMeta;
-    
-    // הוספת כפתור תפילת הדרך בתוך כרטיס הספירה לאחור
     const countdownHtml = `<div class="bg-gray-50 dark:bg-gray-800/50 p-4 rounded-lg text-center">
         <h3 class="font-bold text-lg mb-2">הזמן שנותר לטיול</h3>
         <div id="countdown" class="flex flex-row-reverse justify-around font-mono"></div>
@@ -1215,7 +1125,6 @@ function renderOverview() {
         </details>
     </div>`;
 
-    // מיקום כפתור "תפילת הדרך" בתוך כרטיס הטיסות
     const flightsHtml = `<div class="bg-gray-50 dark:bg-gray-800/50 p-4 rounded-lg space-y-2 col-span-1 sm:col-span-2 lg:col-span-1">
         <h3 class="font-bold text-lg"><i class="fa-solid fa-plane-departure mr-2"></i>פרטי טיסות</h3>
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-1 gap-x-4 gap-y-2 text-sm">
@@ -1231,14 +1140,12 @@ function renderOverview() {
                 <i class="fa-solid fa-plane-departure mr-2"></i>תפילת הדרך
             </button>
         </div>
-        
     </div>`;
-    
-    const hotelHtml = `<div class="bg-gray-50 dark:bg-gray-800/50 p-4 rounded-lg space-y-2">
-        <h3 class="font-bold text-lg"><i class="fa-solid fa-hotel mr-2"></i>מלון</h3>
-        <p><b>${hotel.name}</b></p>
-        <div class="flex gap-2"><a href="${hotel.tel}" class="btn btn-ghost"><i class="fa fa-phone"></i> חיוג</a><a href="https://maps.google.com/?q=${encodeURIComponent(hotel.address)}" target="_blank" class="btn btn-ghost"><i class="fa fa-map-location-dot"></i> ניווט</a></div>
-    </div>`;
+const hotelHtml = `<div class="bg-gray-50 dark:bg-gray-800/50 p-4 rounded-lg space-y-2">
+    <h3 class="font-bold text-lg"><i class="fa-solid fa-hotel mr-2"></i>מלון</h3>
+    <p><b>${hotel.name}</b></p>
+    <div class="flex gap-2"><a href="${hotel.tel}" class="btn btn-ghost"><i class="fa fa-phone"></i> חיוג</a><a href="http://googleusercontent.com/maps.google.com/search?q=${encodeURIComponent(hotel.address)}" target="_blank" class="btn btn-ghost"><i class="fa fa-map-location-dot"></i> ניווט</a></div>
+</div>`;
 
     $('#overview-cards').innerHTML = countdownHtml + clocksHtml + flightsHtml + hotelHtml;
     startCountdown();
@@ -1249,41 +1156,26 @@ function renderOverview() {
             showAlert('תפילת הדרך', prayerText, true, { text: prayerText });
         });
     }
-// קטע זה נמצא כנראה בתוך document.addEventListener('DOMContentLoaded', ...) או בסוף renderOverview()
 $('#birkat-hamazon-btn')?.addEventListener('click', () => {
     const brachaHTML = hebrewPrayers.birkatHaMazon;
-    
-    // 1. נקיון הטקסט המלא מ-HTML
     const brachaFullCleanText = cleanHtmlForTts(brachaHTML);
-    
-    // 2. פיצול: נחפש את נקודת הפיצול אחרי הברכה הראשונה (הזן)
-    // הברכה הראשונה מסתיימת ב: "בָּרוּךְ אַתָּה ה', הַזָּן אֶת הַכֹּל:"
-    // נשתמש בחלק הפתיחה בלבד כטקסט לניגון:
-    const splitIndex = brachaFullCleanText.indexOf("בְּרָכָה שְׁנִיָּה (נוֹדֶה)");
+    const splitIndex = brachaFullCleanText.indexOf("ברכה שניה (נודה)");
     let textToSpeak = brachaFullCleanText;
-    
     if (splitIndex > -1) {
-        // אם נמצאה הברכה השנייה, נדבר רק עד אליה
         textToSpeak = brachaFullCleanText.substring(0, splitIndex).trim();
     } else {
-        // אם הפיצול נכשל, ננסה לדבר רק את 2000 התווים הראשונים (מגבלה בטוחה)
         textToSpeak = brachaFullCleanText.substring(0, 2000);
         console.warn("WARN: Could not split Birkat Hamazon by title, truncating to 2000 chars.");
     }
-    
-    // נשלח את ה-HTML לטקסט המוצג, ואת הטקסט הנקי (וחלקי) לניגון
     showAlert('ברכת המזון (עדות המזרח)', brachaHTML, true, { text: textToSpeak });
 });
 
-    
 function cleanHtmlForTts(htmlText) {
-    // יוצר רכיב DOM זמני כדי לחלץ רק את הטקסט.
     const tempDiv = document.createElement('div');
     tempDiv.innerHTML = htmlText;
     return tempDiv.textContent || tempDiv.innerText || '';
 }
-    
-window.cleanHtmlForTts = cleanHtmlForTts; // חשיפת הפונקציה לשימוש
+window.cleanHtmlForTts = cleanHtmlForTts; 
 
     function startCountdown() {
         console.log("LOG: startCountdown called.");
@@ -1326,15 +1218,10 @@ function renderAllPlans(planData) {
     }
     const nav = $('#day-tabs-nav'), content = $('#plan-content-container');
     const submenu = $('#plan-submenu-links');
-    
-    // --- START OF FIX ---
     let navHtml = '';
     let contentHtml = '';
     let submenuHtml = '';
-
     const sortedDays = Object.entries(planData).sort((a, b) => a[0].localeCompare(b[0]));
-
-    // Step 1: Build all HTML strings first
     sortedDays.forEach(([dayId, dayData], i) => {
         const active = i === 0;
         navHtml += `<button class="tab-button ${active ? 'tab-active' : ''}" data-content="${dayId}">${dayData.name}</button>`;
@@ -1342,19 +1229,12 @@ function renderAllPlans(planData) {
         submenuHtml += `<a href="#plan" data-day-index="${i}" class="p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700">${dayData.name.split(':')[0]}</a>`;
     });
     submenuHtml += `<a href="#suggestions" class="p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 col-span-3">הצעות</a>`;
-
-    // Step 2: Set innerHTML only ONCE for each container
     nav.innerHTML = navHtml;
     content.innerHTML = contentHtml;
     submenu.innerHTML = submenuHtml;
-
-    // Step 3: Now that all containers exist, populate them and add listeners
     sortedDays.forEach(([dayId, dayData]) => {
         renderPlanForDay(dayId, dayData);
     });
-    // --- END OF FIX ---
-
-    // Attach event listeners for tabs (this part remains the same)
     $$('#day-tabs-nav .tab-button').forEach(b => b.addEventListener('click', (e) => {
         console.log(`LOG: Day tab clicked: ${e.currentTarget.dataset.content}`);
         $$('#day-tabs-nav .tab-button').forEach(btn => btn.classList.remove('tab-active'));
@@ -1370,7 +1250,7 @@ function renderAllPlans(planData) {
         });
     });
 }
-// ========================= התחלה: פונקציה ליצירת תפריטי ניווט מהיר =========================
+  
 function renderMobileNavSubmenus() {
     const toolsContainer = $('#tools-submenu-links');
     if (toolsContainer) {
@@ -1380,7 +1260,6 @@ function renderMobileNavSubmenus() {
             const toolTitleElement = toolElement.querySelector('h3');
             if (toolId && toolTitleElement) {
                 const toolTitle = toolTitleElement.textContent || 'כלי';
-                // לוקחים רק את הטקסט, בלי האייקון
                 const cleanTitle = toolTitleElement.childNodes.length > 1 ? toolTitleElement.lastChild.textContent.trim() : toolTitle.trim();
                 toolsHtml += `<a href="#${toolId}" class="p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700">${cleanTitle}</a>`;
             }
@@ -1388,7 +1267,6 @@ function renderMobileNavSubmenus() {
         toolsContainer.innerHTML = toolsHtml;
     }
 }
-// ========================= סוף: פונקציה ליצירת תפריטי ניווט מהיר =========================
     function renderPlanForDay(dayId, dayData) {
         console.log(`LOG: renderPlanForDay called for ${dayId}`);
         const container = $(`#${dayId}`);
@@ -1396,7 +1274,6 @@ function renderMobileNavSubmenus() {
             console.error(`ERROR: Container for day ${dayId} not found.`);
             return;
         }
-// קטע קוד מעודכן מתוך renderPlanForDay
         let content = `<div class="p-4"><div class="flex flex-wrap items-center gap-4 mb-4">
             <div class="flex items-center gap-2">
                 <label class="font-semibold">מצב נסיעה:</label>
@@ -1424,11 +1301,8 @@ function renderMobileNavSubmenus() {
             content += renderActivityCard(dayId, act, i, dayData.activities.length, previousActivity);
             previousActivity = act;
         });
-        
         content += `</div>${renderJournal(dayId, localTripData.journal ? localTripData.journal[dayId] : [])}</div>`;
         container.innerHTML = content;
-        
-        // Add event listener to the newly created journal form
         const journalForm = $(`#journal-form-${dayId}`);
         if (journalForm) {
             journalForm.addEventListener('submit', (e) => {
@@ -1448,94 +1322,99 @@ function renderMobileNavSubmenus() {
         }
     }
     
-    function renderActivityCard(dayId, activity, index, total, previousActivity) {
-        const isDining = activity.type === 'dining';
-        const links = [];
-
+function renderActivityCard(dayId, activity, index, total, previousActivity) {
+    const isDining = activity.type === 'dining';
+    const links = [];
 
 if (activity.type === 'attraction') {
     links.push(`<button onclick="window.getAudioGuide('${activity.name}')" class="btn btn-primary bg-purple-600 hover:bg-purple-700"><i class="fa-solid fa-headphones"></i> מדריך</button>`);
 }
-        if (activity.tickets) links.push(`<a href="${activity.tickets}" target="_blank" class="btn btn-primary"><i class="fa-solid fa-ticket"></i> כרטיסים</a>`);
-        if (activity.info) links.push(`<a href="${activity.info}" target="_blank" class="btn btn-ghost"><i class="fa-solid fa-circle-info"></i> מידע</a>`);
-        if (activity.address) {
-            links.push(`<a href="https://waze.com/ul?q=${encodeURIComponent(activity.address)}" target="_blank" class="btn btn-ghost" title="Waze"><i class="fa-brands fa-waze"></i></a>`);
-            links.push(`<a href="https://maps.google.com/?q=${encodeURIComponent(activity.address)}" target="_blank" class="btn btn-ghost" title="Google Maps"><i class="fa-brands fa-google"></i></a>`);
-        }
-        if (previousActivity && previousActivity.address && activity.address) {
-            const transitUrl = `https://maps.google.com/?saddr=${encodeURIComponent(previousActivity.address)}&daddr=${encodeURIComponent(activity.address)}&travelmode=transit`;
-            links.push(`<a href="${transitUrl}" target="_blank" class="btn btn-ghost" title="ניווט בתחב״צ"><i class="fa-solid fa-route"></i></a>`);
-        }
-        if(!isDining && activity.coords) {
-             links.push(`<button onclick="window.findNearbyKosher(this)" data-lat="${activity.coords.lat}" data-lon="${activity.coords.lon}" data-name="${activity.name}" class="btn btn-ghost"><i class="fa-solid fa-utensils"></i> מסעדות</button>`);
-        }
-
-        const imgHTML = activity.img ? `<div class="image-carousel" data-images='${JSON.stringify(activity.img)}' data-index="0">
-            <img loading="lazy" src="${activity.img[0]}" alt="${activity.name}" class="thumb" onerror="this.style.display='none'">
-            ${(activity.img.length || 0) > 1 ? `<button class="carousel-prev" onclick="window.navigateCarousel(this, -1)"><</button><button class="carousel-next" onclick="window.navigateCarousel(this, 1)">></button>` : ''}
-        </div>` : '';
+    if (activity.tickets) links.push(`<a href="${activity.tickets}" target="_blank" class="btn btn-primary"><i class="fa-solid fa-ticket"></i> כרטיסים</a>`);
+    if (activity.info) links.push(`<a href="${activity.info}" target="_blank" class="btn btn-ghost"><i class="fa-solid fa-circle-info"></i> מידע</a>`);
+    
+    if (activity.address) {
+        links.push(`<a href="https://waze.com/ul?q=${encodeURIComponent(activity.address)}" target="_blank" class="btn btn-ghost" title="Waze"><i class="fa-brands fa-waze"></i></a>`);
         
-        const moveButtons = `
-            <button class="p-1 ${index === 0 ? 'opacity-25' : ''}" ${index === 0 ? 'disabled' : ''} onclick="window.moveActivity('${dayId}', '${activity.id}', -1)"><i class="fa-solid fa-arrow-up"></i></button>
-            <button class="p-1 ${index === total - 1 ? 'opacity-25' : ''}" ${index === total - 1 ? 'disabled' : ''} onclick="window.moveActivity('${dayId}', '${activity.id}', 1)"><i class="fa-solid fa-arrow-down"></i></button>
-        `;
-
-        return `<details class="bg-gray-50 dark:bg-gray-900 rounded-xl shadow-md overflow-hidden relative" open>
-          <summary class="cursor-pointer list-none flex items-center justify-between p-4">
-            <h4 class="font-bold text-lg">${isDining ? '<i class="fa-solid fa-utensils mr-2"></i>' : ''}${activity.time ? activity.time + ' - ' : ''}${activity.name}</h4>
-            <div class="text-gray-400 flex items-center gap-2">
-                ${moveButtons}
-                <i class="fa-solid fa-chevron-down transition-transform"></i>
-            </div>
-          </summary>
-          <button class="absolute top-3 left-3 text-red-500 hover:text-red-700 p-1 z-10" onclick="window.removeActivity('${dayId}', '${activity.id}')"><i class="fa-solid fa-trash"></i></button>
-          <div class="flex flex-col md:flex-row border-t border-gray-100 dark:border-gray-800">
-            ${imgHTML}
-            <div class="p-4 md:p-5 flex-grow">
-              <p class="text-gray-700 dark:text-gray-300">${fmtBold(activity.description)}</p>
-              ${activity.hours ? `<p class="text-sm text-gray-500 dark:text-gray-400 mt-2"><i class="fa-solid fa-clock w-4 mr-1"></i> ${activity.hours}</p>` : ''}
-              <div class="mt-4 flex flex-wrap items-center gap-2">${links.join('')}</div>
-            </div>
-          </div>
-        </details>`;
+        // ⭐ תיקון 1: החלפת פורמט ה-URL השגוי לחיפוש בגוגל מפות (Template Literal)
+        links.push(`<a href="http://googleusercontent.com/maps.google.com/search?q=${encodeURIComponent(activity.address)}" target="_blank" class="btn btn-ghost" title="Google Maps"><i class="fa-brands fa-google"></i></a>`);
     }
     
-    function renderSuggestions(suggestions) {
-        console.log("LOG: renderSuggestions called.");
-        const container = $('#suggestions-table-container');
-        if (!suggestions || suggestions.length === 0) {
-            container.innerHTML = `<div class="text-center text-gray-500">כל הכבוד! כל הפעילויות שובצו בתוכנית.</div>`;
-            return;
-        }
-
-        const tableRows = suggestions.map(s => `
-            <tr class="border-b dark:border-gray-800">
-                <td data-label="שם" class="p-3 font-medium">${s.name}</td>
-                <td data-label="תיאור" class="p-3 text-sm text-gray-600 dark:text-gray-400">${s.description}</td>
-                <td data-label="פעולות" class="p-3">
-                    <div class="flex flex-wrap gap-2 justify-end">
-                        <button onclick="window.openAddToDayModal('${s.id}')" class="btn btn-primary btn-sm"><i class="fa-solid fa-plus"></i> הוסף</button>
-                        <a href="https://maps.google.com/?q=${s.coords.lat},${s.coords.lon}" target="_blank" class="btn btn-ghost btn-sm"><i class="fa-solid fa-map-location-dot"></i> מפה</a>
-                    </div>
-                </td>
-            </tr>
-        `).join('');
-
-        container.innerHTML = `
-            <table class="w-full text-sm responsive-table">
-                <thead class="text-right bg-gray-50 dark:bg-gray-800">
-                    <tr>
-                        <th class="p-3 font-semibold">שם</th>
-                        <th class="p-3 font-semibold">תיאור</th>
-                        <th class="p-3 font-semibold"></th>
-                    </tr>
-                </thead>
-                <tbody>
-                    ${tableRows}
-                </tbody>
-            </table>
-        `;
+    if (previousActivity && previousActivity.address && activity.address) {
+        // ⭐ תיקון 2: החלפת פורמט ה-URL השגוי למסלול בתחבורה ציבורית (Template Literal)
+        const transitUrl = `http://googleusercontent.com/maps.google.com/dir?api=1&origin=${encodeURIComponent(previousActivity.address)}&destination=${encodeURIComponent(activity.address)}&travelmode=transit`;
+        links.push(`<a href="${transitUrl}" target="_blank" class="btn btn-ghost" title="ניווט בתחב״צ"><i class="fa-solid fa-route"></i></a>`);
     }
+    
+    if(!isDining && activity.coords) {
+         links.push(`<button onclick="window.findNearbyKosher(this)" data-lat="${activity.coords.lat}" data-lon="${activity.coords.lon}" data-name="${activity.name}" class="btn btn-ghost"><i class="fa-solid fa-utensils"></i> מסעדות</button>`);
+    }
+
+    const imgHTML = activity.img ? `<div class="image-carousel" data-images='${JSON.stringify(activity.img)}' data-index="0">
+        <img loading="lazy" src="${activity.img[0]}" alt="${activity.name}" class="thumb" onerror="this.style.display='none'">
+        ${(activity.img.length || 0) > 1 ? `<button class="carousel-prev" onclick="window.navigateCarousel(this, -1)"><</button><button class="carousel-next" onclick="window.navigateCarousel(this, 1)">></button>` : ''}
+    </div>` : '';
+    
+    const moveButtons = `
+        <button class="p-1 ${index === 0 ? 'opacity-25' : ''}" ${index === 0 ? 'disabled' : ''} onclick="window.moveActivity('${dayId}', '${activity.id}', -1)"><i class="fa-solid fa-arrow-up"></i></button>
+        <button class="p-1 ${index === total - 1 ? 'opacity-25' : ''}" ${index === total - 1 ? 'disabled' : ''} onclick="window.moveActivity('${dayId}', '${activity.id}', 1)"><i class="fa-solid fa-arrow-down"></i></button>
+    `;
+
+    return `<details class="bg-gray-50 dark:bg-gray-900 rounded-xl shadow-md overflow-hidden relative" open>
+      <summary class="cursor-pointer list-none flex items-center justify-between p-4">
+        <h4 class="font-bold text-lg">${isDining ? '<i class="fa-solid fa-utensils mr-2"></i>' : ''}${activity.time ? activity.time + ' - ' : ''}${activity.name}</h4>
+        <div class="text-gray-400 flex items-center gap-2">
+            ${moveButtons}
+            <i class="fa-solid fa-chevron-down transition-transform"></i>
+        </div>
+      </summary>
+      <button class="absolute top-3 left-3 text-red-500 hover:text-red-700 p-1 z-10" onclick="window.removeActivity('${dayId}', '${activity.id}')"><i class="fa-solid fa-trash"></i></button>
+      <div class="flex flex-col md:flex-row border-t border-gray-100 dark:border-gray-800">
+        ${imgHTML}
+        <div class="p-4 md:p-5 flex-grow">
+          <p class="text-gray-700 dark:text-gray-300">${fmtBold(activity.description)}</p>
+          ${activity.hours ? `<p class="text-sm text-gray-500 dark:text-gray-400 mt-2"><i class="fa-solid fa-clock w-4 mr-1"></i> ${activity.hours}</p>` : ''}
+          <div class="mt-4 flex flex-wrap items-center gap-2">${links.join('')}</div>
+        </div>
+      </div>
+    </details>`;
+}
+function renderSuggestions(suggestions) {
+    console.log("LOG: renderSuggestions called.");
+    const container = $('#suggestions-table-container');
+    if (!suggestions || suggestions.length === 0) {
+        container.innerHTML = `<div class="text-center text-gray-500">כל הכבוד! כל הפעילויות שובצו בתוכנית.</div>`;
+        return;
+    }
+
+    const tableRows = suggestions.map(s => `
+        <tr class="border-b dark:border-gray-800">
+            <td data-label="שם" class="p-3 font-medium">${s.name}</td>
+            <td data-label="תיאור" class="p-3 text-sm text-gray-600 dark:text-gray-400">${s.description}</td>
+            <td data-label="פעולות" class="p-3">
+                <div class="flex flex-wrap gap-2 justify-end">
+                    <button onclick="window.openAddToDayModal('${s.id}')" class="btn btn-primary btn-sm"><i class="fa-solid fa-plus"></i> הוסף</button>
+                    
+                    <a href="http://googleusercontent.com/maps.google.com/search?q=${s.coords.lat},${s.coords.lon}" target="_blank" class="btn btn-ghost btn-sm"><i class="fa-solid fa-map-location-dot"></i> מפה</a>
+                </div>
+            </td>
+        </tr>
+    `).join('');
+
+    container.innerHTML = `
+        <table class="w-full text-sm responsive-table">
+            <thead class="text-right bg-gray-50 dark:bg-gray-800">
+                <tr>
+                    <th class="p-3 font-semibold">שם</th>
+                    <th class="p-3 font-semibold">תיאור</th>
+                    <th class="p-3 font-semibold"></th>
+                </tr>
+            </thead>
+            <tbody>
+                ${tableRows}
+            </tbody>
+        </table>
+    `;
+}
 
     function isCurrentlyOpen(hoursString) {
         if (!hoursString) return false;
@@ -1666,49 +1545,51 @@ if (activity.type === 'attraction') {
         $('.kosher-filter-btn[data-filter="all"]').classList.add('tab-active');
     }
 
-    const rowRestaurant = r => {
-        const logoSrc = r.logo || placeholderLogoUrl(r.name);
-        return `
-        <tr class="align-top border-b dark:border-gray-800">
-            <td data-label="לוגו" class="p-3 logo-cell"><img class="logo" src="${logoSrc}" alt="${r.name}" onerror="this.onerror=null;this.src='${placeholderLogoUrl(r.name)}';"></td>
-            <td data-label="שם" class="p-3 font-medium">${r.name} <span class="text-xs font-normal text-gray-500">${r.distance ? formatKm(r.distance) : ''}</span></td>
-            <td data-label="סגנון" class="p-3">${r.style}</td>
-            <td data-label="שעות" class="p-3 text-xs">${r.hours || ''}</td>
-            <td data-label="פעולות" class="p-3">
-                <div class="flex flex-wrap gap-2">
-                    <button onclick="window.openAddToDayModal('${r.name}', 'kosher')" class="btn btn-primary btn-sm" title="הוסף ליום"><i class="fa-solid fa-plus"></i></button>
-                    ${r.phone ? `<a title="התקשר" href="tel:${r.phone}" class="btn btn-ghost btn-sm"><i class="fa-solid fa-phone"></i></a>`:''}
-                    <a title="Waze" href="https://waze.com/ul?q=${encodeURIComponent(r.address)}" target="_blank" class="btn btn-ghost btn-sm"><i class="fa-brands fa-waze"></i></a>
-                    <a title="Google Maps" href="https://maps.google.com/?q=${encodeURIComponent(r.address)}" target="_blank" class="btn btn-ghost btn-sm"><i class="fa-brands fa-google"></i></a>
-                    ${r.menu ? `<a href="${r.menu}" target="_blank" class="btn btn-ghost btn-sm" title="תפריט"><i class="fa-solid fa-utensils"></i></a>`:''}
-                    ${r.website ? `<a href="${r.website}" target="_blank" class="btn btn-ghost btn-sm" title="אתר"><i class="fa-solid fa-globe"></i></a>`:''}
-                    ${r.instagram ? `<a title="אינסטגרם" href="${r.instagram}" target="_blank" class="btn btn-ghost btn-sm"><i class="fa-brands fa-instagram"></i></a>`:''}
-                </div>
-            </td>
-        </tr>`;
-    };
-    const rowMarket = m => {
-        const logoSrc = m.logo || placeholderLogoUrl(m.name);
-        return `
-        <tr class="align-top border-b dark:border-gray-800">
-            <td data-label="לוגו" class="p-3 logo-cell"><img class="logo" src="${logoSrc}" alt="${m.name}" onerror="this.onerror=null;this.src='${placeholderLogoUrl(m.name)}';"></td>
-            <td data-label="שם" class="p-3 font-medium">${m.name} <span class="text-xs font-normal text-gray-500">${m.distance ? formatKm(m.distance) : ''}</span></td>
-            <td data-label="סוג" class="p-3">${m.style}</td>
-            <td data-label="שעות" class="p-3 text-xs">${m.hours || ''}</td>
-            <td data-label="פעולות" class="p-3">
-                <div class="flex flex-wrap gap-2">
-                    <button onclick="window.openAddToDayModal('${m.name}', 'kosher')" class="btn btn-primary btn-sm" title="הוסף ליום"><i class="fa-solid fa-plus"></i></button>
-                    ${m.phone ? `<a title="התקשר" href="tel:${m.phone}" class="btn btn-ghost btn-sm"><i class="fa-solid fa-phone"></i></a>`:''}
-                    <a title="Waze" href="https://waze.com/ul?q=${encodeURIComponent(m.address)}" target="_blank" class="btn btn-ghost btn-sm"><i class="fa-brands fa-waze"></i></a>
-                    <a title="Google Maps" href="https://maps.google.com/?q=${encodeURIComponent(m.address)}" target="_blank" class="btn btn-ghost btn-sm"><i class="fa-brands fa-google"></i></a>
-                    ${m.website ? `<a href="${m.website}" target="_blank" class="btn btn-ghost btn-sm" title="אתר"><i class="fa-solid fa-globe"></i></a>`:''}
-                    ${m.instagram ? `<a title="אינסטגרם" href="${r.instagram}" target="_blank" class="btn btn-ghost btn-sm"><i class="fa-brands fa-instagram"></i></a>`:''}
-                </div>
-            </td>
-        </tr>`;
-    };
-                  
-
+   const rowRestaurant = r => {
+    const logoSrc = r.logo || placeholderLogoUrl(r.name);
+    return `
+    <tr class="align-top border-b dark:border-gray-800">
+        <td data-label="לוגו" class="p-3 logo-cell"><img class="logo" src="${logoSrc}" alt="${r.name}" onerror="this.onerror=null;this.src='${placeholderLogoUrl(r.name)}';"></td>
+        <td data-label="שם" class="p-3 font-medium">${r.name} <span class="text-xs font-normal text-gray-500">${r.distance ? formatKm(r.distance) : ''}</span></td>
+        <td data-label="סגנון" class="p-3">${r.style}</td>
+        <td data-label="שעות" class="p-3 text-xs">${r.hours || ''}</td>
+        <td data-label="פעולות" class="p-3">
+            <div class="flex flex-wrap gap-2">
+                <button onclick="window.openAddToDayModal('${r.name}', 'kosher')" class="btn btn-primary btn-sm" title="הוסף ליום"><i class="fa-solid fa-plus"></i></button>
+                ${r.phone ? `<a title="התקשר" href="tel:${r.phone}" class="btn btn-ghost btn-sm"><i class="fa-solid fa-phone"></i></a>`:''}
+                <a title="Waze" href="https://waze.com/ul?q=${encodeURIComponent(r.address)}" target="_blank" class="btn btn-ghost btn-sm"><i class="fa-brands fa-waze"></i></a>
+                
+                <a title="Google Maps" href="http://googleusercontent.com/maps.google.com/search?q=${encodeURIComponent(r.address)}" target="_blank" class="btn btn-ghost btn-sm"><i class="fa-brands fa-google"></i></a>
+                
+                ${r.menu ? `<a href="${r.menu}" target="_blank" class="btn btn-ghost btn-sm" title="תפריט"><i class="fa-solid fa-utensils"></i></a>`:''}
+                ${r.website ? `<a href="${r.website}" target="_blank" class="btn btn-ghost btn-sm" title="אתר"><i class="fa-solid fa-globe"></i></a>`:''}
+                ${r.instagram ? `<a title="אינסטגרם" href="${r.instagram}" target="_blank" class="btn btn-ghost btn-sm"><i class="fa-brands fa-instagram"></i></a>`:''}
+            </div>
+        </td>
+    </tr>`;
+};
+const rowMarket = m => {
+    const logoSrc = m.logo || placeholderLogoUrl(m.name);
+    return `
+    <tr class="align-top border-b dark:border-gray-800">
+        <td data-label="לוגו" class="p-3 logo-cell"><img class="logo" src="${logoSrc}" alt="${m.name}" onerror="this.onerror=null;this.src='${placeholderLogoUrl(m.name)}';"></td>
+        <td data-label="שם" class="p-3 font-medium">${m.name} <span class="text-xs font-normal text-gray-500">${m.distance ? formatKm(m.distance) : ''}</span></td>
+        <td data-label="סוג" class="p-3">${m.style}</td>
+        <td data-label="שעות" class="p-3 text-xs">${m.hours || ''}</td>
+        <td data-label="פעולות" class="p-3">
+            <div class="flex flex-wrap gap-2">
+                <button onclick="window.openAddToDayModal('${m.name}', 'kosher')" class="btn btn-primary btn-sm" title="הוסף ליום"><i class="fa-solid fa-plus"></i></button>
+                ${m.phone ? `<a title="התקשר" href="tel:${m.phone}" class="btn btn-ghost btn-sm"><i class="fa-solid fa-phone"></i></a>`:''}
+                <a title="Waze" href="https://waze.com/ul?q=${encodeURIComponent(m.address)}" target="_blank" class="btn btn-ghost btn-sm"><i class="fa-brands fa-waze"></i></a>
+                
+                <a title="Google Maps" href="http://googleusercontent.com/maps.google.com/search?q=${encodeURIComponent(m.address)}" target="_blank" class="btn btn-ghost btn-sm"><i class="fa-brands fa-google"></i></a>
+                
+                ${m.website ? `<a href="${m.website}" target="_blank" class="btn btn-ghost btn-sm" title="אתר"><i class="fa-solid fa-globe"></i></a>`:''}
+                ${m.instagram ? `<a title="אינסטגרם" href="${m.instagram}" target="_blank" class="btn btn-ghost btn-sm"><i class="fa-brands fa-instagram"></i></a>`:''}
+            </div>
+        </td>
+    </tr>`;
+};
     function renderChecklist(checklistData) {
         console.log("LOG: renderChecklist called.");
         const container = $('#checklist-container');
@@ -1728,7 +1609,6 @@ if (activity.type === 'attraction') {
             container.innerHTML += catHtml + '</div>';
         });
     }
-
     async function fetchWeather() {
         console.log("LOG: fetchWeather called.");
         try {
@@ -1785,7 +1665,6 @@ if (activity.type === 'attraction') {
             $('#weather-forecast').innerHTML = `<p class="text-xs text-red-500">שגיאה בטעינת תחזית. ${e.message}</p>`; 
         }
     }
-
     async function fetchExchangeRate() {
         console.log("LOG: fetchExchangeRate called.");
         try {
@@ -1932,8 +1811,6 @@ if (activity.type === 'attraction') {
                 }
             }
         });
-
-        // Generate custom legend
         legendContainer.innerHTML = `<h4 class="text-center font-bold mb-2">פירוט הוצאות</h4>`;
         labels.forEach((label, index) => {
             const amount = categoryTotals[label];
@@ -1950,8 +1827,6 @@ if (activity.type === 'attraction') {
             `;
         });
     }
-
-    // --- NEW: Open Food Facts Lookup Function (Kosher Check) ---
 async function checkKosherStatus(barcode) {
     showAlert('בודק כשרות...', `<div class="text-center"><i class="fa-solid fa-sync fa-spin fa-2x"></i><p class="mt-2">מחפש ברקוד **${barcode}** ב-Open Food Facts...</p></div>`);
 
@@ -1990,7 +1865,6 @@ async function checkKosherStatus(barcode) {
         showAlert('שגיאה', 'שגיאה בחיבור לשרת Open Food Facts.');
     }
 }
-
     function renderTranslationHistory() {
         console.log("LOG: renderTranslationHistory called.");
         const container = $('#translation-history');
@@ -2021,15 +1895,12 @@ async function checkKosherStatus(barcode) {
     `;
     showAlert(title, message, false);
 
-    // הוספת מאזינים לכפתורים החדשים בתוך המודל
     document.getElementById('borei-nefashot-btn')?.addEventListener('click', () => {
         const bracha = hebrewPrayers.boreiNefashot;
-        // מעביר ל-showAlert הסופי את הברכה
         showAlert('ברכת בורא נפשות (אחרונה)', bracha, true, { text: bracha });
     });
-
     document.getElementById('meein-shalosh-btn')?.addEventListener('click', () => {
-        showMeEinShaloshOptions(); // קורא לבחירת המשנה של מעין שלוש
+        showMeEinShaloshOptions();
     });
 }
 
@@ -2044,8 +1915,6 @@ function showMeEinShaloshOptions() {
         </div>
     `;
     showAlert(title, message, false);
-
-    // הוספת מאזינים
     document.getElementById('al-hamichya-btn')?.addEventListener('click', () => {
         const bracha = hebrewPrayers.alHaMichya;
         showAlert('ברכת על המחיה (מעין שלוש)', bracha, true, { text: bracha });
@@ -2059,45 +1928,32 @@ function showMeEinShaloshOptions() {
         showAlert('ברכת על העץ (מעין שלוש)', bracha, true, { text: bracha });
     });
 }
- // הוסף את הפונקציה הזו בקטע של ה-UTILS בקוד שלך
 function cleanHtmlForTts(htmlText) {
-    // יוצר רכיב DOM זמני כדי לחלץ רק את הטקסט.
     const tempDiv = document.createElement('div');
     tempDiv.innerHTML = htmlText;
-    
-    // ניקוי נוסף: החלפת נקודותיים כפולים (שמשמשים לעיצוב HTML) ברווח כדי לא ליצור טקסט ארוך מדי ל-TTS.
     let cleanedText = tempDiv.textContent || tempDiv.innerText || '';
-    
-    // אם הטקסט ארוך, פיצול למשפטים יעזור.
-    // מכיוון שיש כותרות HTML בתוך הברכה, זה הופך את העניין למורכב.
-    // הפתרון הפשוט ביותר: נחזיר רק את הטקסט.
     return cleanedText;
 }
 window.cleanHtmlForTts = cleanHtmlForTts;   
-    // ========================= התחלה: פונקציית שעונים =========================
 function updateClocks() {
     const milanTimeEl = $('#milan-time');
     const israelTimeEl = $('#israel-time');
-
     if (milanTimeEl && israelTimeEl) {
         const now = new Date();
         milanTimeEl.textContent = now.toLocaleTimeString('he-IL', { timeZone: 'Europe/Rome', hour: '2-digit', minute: '2-digit', second: '2-digit' });
         israelTimeEl.textContent = now.toLocaleTimeString('he-IL', { timeZone: 'Asia/Jerusalem', hour: '2-digit', minute: '2-digit', second: '2-digit' });
     }
 }
-    // ========================= התחלה: פונקציה לשליפת זמני היום =========================
 async function fetchZmanim() {
     const container = $('#zmanim-container');
     try {
         const response = await fetch('https://www.hebcal.com/zmanim?cfg=json&latitude=45.46&longitude=9.19&tzid=Europe/Rome');
         const data = await response.json();
         const formatTime = (isoTime) => new Date(isoTime).toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' });
-        
         const now = new Date();
         const alos = new Date(data.times.alotHaShachar);
         const chatzot = new Date(data.times.chatzot); 
         const shkia = new Date(data.times.sunset);
-        
         let tefilaRelevant = '';
         let tefilaKey = '';
         if (now >= alos && now < chatzot) {
@@ -2110,12 +1966,9 @@ async function fetchZmanim() {
             tefilaRelevant = 'ערבית';
             tefilaKey = 'arvit';
         }
-        
-        // הופך את התפילה הרלוונטית לכפתור לחיץ
         const tefilaHtml = `<div id="relevant-tefila-btn" data-tefila-key="${tefilaKey}" class="p-2 mt-3 bg-blue-50 dark:bg-blue-900 rounded-lg text-center font-bold cursor-pointer hover:bg-blue-100 transition-colors">
             <i class="fa-solid fa-hands-praying mr-2"></i> לחץ לצפייה: ${tefilaRelevant}
         </div>`;
-
         container.innerHTML = tefilaHtml + `
             <div class="grid grid-cols-2 gap-1 text-right pt-2 border-t dark:border-gray-700 mt-2">
                 <span>עלות השחר:</span> <span class="font-semibold text-left">${formatTime(data.times.alotHaShachar)}</span>
@@ -2126,8 +1979,6 @@ async function fetchZmanim() {
                 <span>שקיעה:</span> <span class="font-semibold text-left">${formatTime(data.times.sunset)}</span>
             </div>
         `;
-        
-        // הוספת מאזין לכפתור התפילה החדש
         const relevantTefilaBtn = $('#relevant-tefila-btn');
         if (relevantTefilaBtn) {
             relevantTefilaBtn.addEventListener('click', () => {
@@ -2141,49 +1992,34 @@ async function fetchZmanim() {
         console.error("Error fetching zmanim:", e);
     }
 }
-// ========================= סוף: פונקציית שעונים =========================
-// ========================= התחלה: פונקציית חיפוש מהיר =========================
 function findUtility(query, queryHebrew) {
-    // הוספת "open now" לחיפוש כדי לסנן תוצאות
     const searchQuery = `${query} open now`;
-
     showAlert('מאתר מיקום...', `מחפש ${queryHebrew} שפתוחים כעת בקרבתך...`);
     if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(position => {
             const { latitude, longitude } = position.coords;
-            const url = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(searchQuery)}&ll=${latitude},${longitude}`;
+            const url = `http://googleusercontent.com/maps.google.com/search?q=${encodeURIComponent(searchQuery)}&ll=${latitude},${longitude}`;
             window.open(url, '_blank');
             window.closeModal();
         }, () => {
-            // Fallback in case of location error
-            const url = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(searchQuery)}+near+Milan+Cathedral`;
-            window.open(url, '_blank');
+            const url = `http://googleusercontent.com/maps.google.com/search?q=${encodeURIComponent(searchQuery)}+near+Milan+Cathedral`;
             showAlert('שגיאת מיקום', 'לא ניתן היה לקבל את מיקומך. החיפוש יתבצע ממרכז מילאנו.');
+            window.open(url, '_blank');
         });
     } else {
         showAlert('שגיאה', 'שירותי מיקום אינם נתמכים בדפדפן זה.');
     }
-}
-          
+}          
 async function getAudioGuide(placeName) {
     showAlert('טוען מדריך...', `<div class="text-center"><i class="fa-solid fa-spinner fa-spin fa-2x"></i><p class="mt-2">מכין עבורך **תסריט שיחה** על ${placeName}...</p></div>`);
-
-// *** הפרומפט החדש לפורמט מנחה יחיד ***
     const prompt = `Act as an expert audio guide narrator. Write a short (about 3-4 paragraphs), fascinating, and engaging audio guide script in Hebrew about the landmark "${placeName}" in Milan. The script should focus on historical background, one interesting fact, and a suggestion for a traveler regarding their visit.
-
     Format the response strictly as a narrative script. Do not use character names or any dialogue structure.`;
-    // *******************
-    
     const payload = { contents: [{ parts: [{ text: "" }] }] };
     let scriptText = await callGemini(payload, prompt, false);
-    
-    // בפורמט החדש אין צורך בעיבוד קל של החלפת פורמט, רק החלפת עיצוב בולד שנעשה באופן אוטומטי
-    // נשתמש ב-showAlert עם הכותרת המתאימה
+
     showAlert(`מדריך קולי ל-${placeName}`, scriptText, true, { text: scriptText.replace(/\n/g, ' '), lang: 'he-IL' });
 }
 
-//========================================================================
-// קטע קוד חדש ל-generateDailyPodcast
 async function generateDailySummary(dayId) {
     const dayData = localTripData.plan[dayId];
     const journalEntries = (localTripData.journal && localTripData.journal[dayId]) || [];
@@ -2216,9 +2052,6 @@ async function generateDailySummary(dayId) {
 showAlert(`סיכום יומי: ${dayName}`, podcastScript, true, { text: podcastScript.replace(/\n/g, ' '), lang: 'he-IL' });
 }
 
-  
-
-    // ========================= התחלה: לוגיקה לעוזר המטרו =========================
 function initMetroHelper() {
     const metroData = {
         M1: { name: 'M1', color: '#E4001A', stops: { 'Duomo': 'קתדרלת הדואומו, גלריה ויטוריו', 'Cadorna': 'טירת ספורצה, פארק סמפיונה', 'San Babila': 'מרובע האופנה' } },
@@ -2250,8 +2083,6 @@ function initMetroHelper() {
         linesContainer.appendChild(btn);
     });
 }
-// ========================= סוף: לוגיקה לעוזר המטרו =========================
-    // ========================= התחלה: לוגיקה לסקראפבוק =========================
 function renderScrapbook() {
     const container = $('#scrapbook-container');
     if (!localTripData.plan) {
@@ -2283,31 +2114,21 @@ function renderScrapbook() {
     }
     container.innerHTML = scrapbookHtml || '<p class="text-center">היומן ריק. התחילו להוסיף רשומות ותמונות!</p>';
 }
-// ========================= סוף: לוגיקה לסקראפבוק =========================
-    // ========================= התחלה: פונקציה להתראות מזג אוויר חכמות =========================
 async function checkWeatherAlerts() {
     if (!lastWeatherAPIData || !localTripData.plan) return;
 
     const alertBox = $('#weather-alert-box');
-    alertBox.innerHTML = ''; // ניקוי התראות ישנות
-
-    // קודים של מזג אוויר גרוע (גשם, סופות רעמים)
+    alertBox.innerHTML = ''; 
     const badWeatherCodes = [51, 53, 55, 61, 63, 65, 80, 81, 82, 95, 96, 99];
 
-    // מציאת התאריך של מחר
     const tomorrow = new Date();
     tomorrow.setDate(tomorrow.getDate() + 1);
     const tomorrowString = tomorrow.toISOString().split('T')[0];
 
-    // מציאת האינדקס של מחר בתחזית (בדרך כלל 1)
     const tomorrowIndex = lastWeatherAPIData.daily.time.findIndex(day => day === tomorrowString);
-    if (tomorrowIndex === -1) return; // לא נמצאה תחזית למחר
-
+    if (tomorrowIndex === -1) return; 
     const tomorrowsWeatherCode = lastWeatherAPIData.daily.weathercode[tomorrowIndex];
-
-    // בדיקה אם מזג האוויר של מחר גרוע
     if (badWeatherCodes.includes(tomorrowsWeatherCode)) {
-        // מציאת התוכנית של מחר
         const tripStartDate = new Date(tripMeta.flights.inbound.date);
         const diffTime = Math.abs(tomorrow - tripStartDate);
         const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
@@ -2333,16 +2154,13 @@ async function checkWeatherAlerts() {
         }
     }
 }
-    // ========================= התחלה: פונקציה למחשבון כדאיות Pass =========================
 function initPassCalculator() {
     const passes = {
         duomoPass: { name: 'Duomo Pass (גג + מוזיאון)', price: 20, keys: ['duomo'] },
         milanoCard: { name: 'MilanoCard (3 ימים)', price: 15.50, keys: ['transport'] } // מחיר תחב"צ בלבד
     };
-
     const attractionsList = $('#pass-attractions-list');
     const plannedAttractionKeys = Object.values(localTripData.plan || {}).flatMap(day => day.activities.map(act => act.id.split('_')[0]));
-
     let attractionsHtml = '';
     for (const key in attractions) {
         if (attractions[key].cost > 0) {
@@ -2370,19 +2188,12 @@ function initPassCalculator() {
             individualCost += parseFloat(cb.value);
             selectedKeys.push(cb.dataset.key);
         });
-
-        // נוסיף עלות תחב"צ ל-3 ימים לחישוב הכללי
         individualCost += passes.milanoCard.price;
-
         let resultHtml = `עלות אישית כולל תחב"צ: <b class="text-red-500">${individualCost.toFixed(2)}€</b><br><hr class="my-2">`;
-
-        // בדיקת כדאיות לדואומו פאס
         let duomoRelatedCost = 0;
         if (selectedKeys.includes('duomo')) {
             duomoRelatedCost += attractions.duomo.cost;
         }
-        // (ניתן להוסיף כאן עוד אתרים שכלולים בפאס)
-
         if (duomoRelatedCost > passes.duomoPass.price) {
             resultHtml += `<span class="text-green-600">מומלץ לקנות את ה-Duomo Pass!</span><br>`;
         } else {
@@ -2392,12 +2203,6 @@ function initPassCalculator() {
         $('#pass-result').innerHTML = resultHtml;
     });
 }
-// ========================= סוף: פונקציה למחשבון כדאיות Pass =========================
-// ========================= סוף: פונקציה להתראות מזג אוויר חכמות =========================
-// ========================= סוף: פונקציה לעיצוב אוטומטי לפי שעה =========================
-// ========================= סוף: פונקציה למדריך קולי =========================
-// ========================= סוף: פונקציית חיפוש מהיר =========================
-    // --- State Modifiers (Write to Firestore) ---
     async function handleTransportChange(e) {
         const dayId = e.target.dataset.day;
         const newTransportMode = e.target.value;
@@ -2447,19 +2252,19 @@ function findNearbyAttractions() {
     if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(position => {
             const { latitude, longitude } = position.coords;
-            const url = `https://www.google.com/maps/search/tourist+attractions/@${latitude},${longitude},15z`;
+            const url = `https://www.google.com/maps/search/Tourist+attractions/@${latitude},${longitude},15z`;
+            
             window.open(url, '_blank');
             window.closeModal();
         }, () => {
             showAlert('שגיאת מיקום', 'לא ניתן היה לקבל את מיקומך. החיפוש יתבצע ממרכז מילאנו.');
-            const url = `https://www.google.com/maps/search/tourist+attractions/Duomo+di+Milano`;
+            const url = `https://www.google.com/maps/search/Tourist+attractions+near+Milan+Cathedral`;
             window.open(url, '_blank');
         });
     } else {
         showAlert('שגיאה', 'שירותי מיקום אינם נתמכים בדפדפן זה.');
     }
 }
-// And assign it to the window object
 window.findNearbyAttractions = findNearbyAttractions;
     window.findNearbyKosher = (btn) => {
         const lat = parseFloat(btn.dataset.lat), lon = parseFloat(btn.dataset.lon);
@@ -2483,7 +2288,6 @@ window.findNearbyAttractions = findNearbyAttractions;
         } else {
             labelSpan.classList.remove('line-through', 'text-gray-500');
         }
-
         const updatedChecklist = localTripData.checklist.map(cat => ({
             ...cat,
             items: cat.items.map(item => item.id === itemId ? { ...item, done: isDone } : item)
@@ -2539,54 +2343,45 @@ window.findNearbyAttractions = findNearbyAttractions;
       localStorage.setItem('milanTripTranslationHistory', JSON.stringify(translationHistory));
         renderTranslationHistory();
     };
-    window.openDayMap = (dayId) => {
-        console.log(`LOG: openDayMap called for ${dayId}`);
-        const day = localTripData.plan[dayId];
-        if (!day || !day.activities || day.activities.length === 0) {
-            showAlert('אין מיקומים', 'אין פעילויות עם כתובות ביום זה כדי להציג על המפה.');
-            return;
-        }
-        const locations = day.activities
-            .map(act => act.address)
-            .filter(address => address); 
-        
-        if (locations.length < 1) {
-             showAlert('אין מיקומים', 'אין פעילויות עם כתובות ביום זה כדי להציג על המפה.');
-             return;
-        }
-
-        const url = `https://www.google.com/maps/dir/${locations.map(encodeURIComponent).join('/')}`;
-        window.open(url, '_blank');
-    };
-
-    // --- Camera Functions ---
-
-// --- החלפת הפונקציה startCamera הקיימת בקוד המתוקן ---
-// --- החלפת הפונקציה startCamera הקיימת בקוד המתוקן ---
+ window.openDayMap = (dayId) => {
+    console.log(`LOG: openDayMap called for ${dayId}`);
+    const day = localTripData.plan[dayId];
+    
+    if (!day || !day.activities || day.activities.length === 0) {
+        showAlert('אין מיקומים', 'אין פעילויות עם כתובות ביום זה כדי להציג על המפה.');
+        return;
+    }
+    const locations = day.activities
+        .map(act => act.address)
+        .filter(address => address);
+    if (locations.length < 1) {
+        showAlert('אין מיקומים', 'אין פעילויות עם כתובות ביום זה כדי להציג על המפה.');
+        return;
+    }
+    const origin = locations[0];
+    const destination = locations[locations.length - 1];
+    const waypoints = locations.slice(1, -1).join('|');
+    let url = `http://googleusercontent.com/maps.google.com/dir?api=1&origin=${encodeURIComponent(origin)}&destination=${encodeURIComponent(destination)}`;
+    
+    if (waypoints.length > 0) {
+        url += `&waypoints=${encodeURIComponent(waypoints)}`;
+    }
+    window.open(url, '_blank');
+};
 async function startCamera() {
     console.log("LOG: startCamera called for mode: " + cameraMode);
     const video = $('#camera-feed');
-    // הוספת 'barcode' לרשימת הכותרות
     const titles = { translate: "תרגם מתמונה", receipt: "סרוק קבלה", lookup: "זיהוי אובייקט", barcode: "סריקת ברקוד" }; 
     const torchBtn = $('#torch-btn');
     const captureBtn = $('#capture-btn');
-
-    // ניקוי QuaggaJS אם פועל במקרה שהמצב משתנה
     try { if (window.Quagga && Quagga.running) Quagga.stop(); } catch (e) { } 
-    
-    // קובעים את הכותרת לפני הפתיחה
     $('#camera-title').textContent = titles[cameraMode] || "מצלמה";
-
     if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
         try {
-            // 1. נסה להפעיל את המצלמה
             cameraStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
             video.srcObject = cameraStream;
             await video.play();
-
             activeVideoTrack = cameraStream.getVideoTracks()[0];
-            
-            // 2. ניהול כפתורי פנס וצילום (הלוגיקה הקיימת שלך)
             const capabilities = activeVideoTrack.getCapabilities();
             if (capabilities.torch) {
                 torchBtn.style.display = 'flex';
@@ -2594,14 +2389,9 @@ async function startCamera() {
             } else {
                 torchBtn.style.display = 'none';
             }
-
-            // 3. הצגת המודל
             $('#camera-modal').classList.add('flex');
-
-            // 4. לוגיקה ספציפית למצב 'barcode' (בתוך בלוק ה-try)
             if (cameraMode === 'barcode') {
-                captureBtn.style.display = 'none'; // הסתרת כפתור הצילום במצב ברקוד
-                
+                captureBtn.style.display = 'none'; 
                 window.Quagga.init({
                     inputStream: {
                         type: "LiveStream",
@@ -2620,31 +2410,27 @@ async function startCamera() {
                     }
                     window.Quagga.start();
                 });
-                
+              
                 window.Quagga.onDetected((result) => {
                     window.Quagga.stop();
                     stopCamera();
                     const barcode = result.codeResult.code;
                     checkKosherStatus(barcode);
                 });
-                
             } else {
-                 captureBtn.style.display = 'block'; // הצגת כפתור הצילום למצבי תמונה
-                 captureBtn.onclick = captureFrame; // ודא שהוא מחובר לצילום תמונה רגיל
+                 captureBtn.style.display = 'block'; 
+                 captureBtn.onclick = captureFrame; 
             }
 
         } catch (err) {
-            // אם המצלמה נכשלה להיפתח, הודע למשתמש
             console.error("ERROR: Error accessing camera: ", err);
             showAlert("שגיאת מצלמה", `לא ניתן לגשת למצלמה. ודא שאישרת גישה. (${err.name})`);
-            stopCamera(); // ודא שהמודל נסגר אם יש שגיאה
+            stopCamera(); 
         }
     } else {
         showAlert("מצלמה לא נתמכת", "הדפדפן שלך לא תומך בגישה למצלמה.");
     }
 }
-
-// ========================= התחלה: קוד מתוקן ומשופר להפעלת הפנס =========================
 async function toggleTorch() {
     const torchBtn = $('#torch-btn');
     if (!activeVideoTrack) {
@@ -2652,122 +2438,82 @@ async function toggleTorch() {
         showAlert('שגיאת פנס', 'נתיב הוידאו של המצלמה אינו פעיל.');
         return;
     }
-
-    // בדיקה אם הדפדפן/מכשיר בכלל תומך ביכולת הזו
     if (typeof activeVideoTrack.getCapabilities !== 'function' || !activeVideoTrack.getCapabilities().torch) {
         showAlert('פנס לא נתמך', 'נראה שהמכשיר או הדפדפן אינם תומכים בשליטה על הפנס דרך האתר.');
         return;
     }
 
     try {
-        // קובעים את המצב הרצוי (ההפך מהמצב הנוכחי)
         const currentTorchState = activeVideoTrack.getSettings().torch || false;
         const desiredState = !currentTorchState;
-
-        // שולחים בקשה מסודרת לשינוי המצב
         await activeVideoTrack.applyConstraints({
             advanced: [{ torch: desiredState }]
         });
-
-        // מעדכנים את הכפתור רק לאחר שהפעולה הצליחה
         torchBtn.classList.toggle('text-yellow-400', desiredState);
         console.log(`LOG: Torch state successfully changed to ${desiredState}`);
-
     } catch (err) {
         console.error('Error controlling torch:', err);
         showAlert('שגיאת פנס', `לא הצלחנו לשנות את מצב הפנס. שגיאה: ${err.name}`);
     }
 }
-// ========================= סוף: קוד מתוקן ומשופר להפעלת הפנס =========================
 function stopCamera() {
     console.log("LOG: stopCamera called.");
     if (cameraStream) {
         cameraStream.getTracks().forEach(track => track.stop());
     }
-    activeVideoTrack = null; // Clear the stored track
+    activeVideoTrack = null;
     $('#camera-modal').classList.remove('flex');
 }
 
-    // ודא שהקוד שלך נראה כך
 function captureFrame() {
     console.log(`LOG: Capturing frame for mode: ${cameraMode}`);
     const video = $('#camera-feed');
     const canvas = $('#camera-canvas');
     const context = canvas.getContext('2d');
-
     canvas.width = video.videoWidth;
     canvas.height = video.videoHeight;
     context.drawImage(video, 0, 0, canvas.width, canvas.height);
-
     const dataUrl = canvas.toDataURL('image/jpeg');
     const base64ImageData = dataUrl.split(',')[1];
-
     stopCamera();
-
-    // *** זה הקטע הקריטי שמפריד בין המצבים:
     if (cameraMode === 'translate') {
         translateImage(base64ImageData, 'image/jpeg');
     } else if (cameraMode === 'receipt') {
         processReceiptImage(base64ImageData);
     } else if (cameraMode === 'lookup') {
         processLookupImage(base64ImageData);
-    } 
-    // ***
+    }
 }
-
-// שינוי בפונקציה processReceiptImage
 async function processReceiptImage(base64ImageData) {
     showAlert('מעבד קבלה...', '<div class="text-center"><i class="fa-solid fa-spinner fa-spin fa-2x"></i><p class="mt-2">קורא את הפרטים מהקבלה בעזרת AI ומסווג את ההוצאה...</p></div>');
-
-    // *** הפרומפט המעודכן דורש שדה "category" ***
     const prompt = `You are an expert receipt-scanning AI. Analyze this image of a receipt. Your goal is to identify the final, total amount paid, the name of the store/vendor, and its correct category. Respond ONLY with a valid JSON object in the format {"amount": NUMBER, "description": "STRING", "category": "STRING"}. The category MUST be one of the following Hebrew words: "אוכל", "קניות", "תחבורה", "אטרקציות", or "אחר". If you cannot reliably determine all values, return {"error": "Could not read receipt clearly"}.`;
-    // ********************************************
-    
     const payload = { contents: [{ parts: [{ text: prompt }, { inlineData: { mimeType: 'image/jpeg', data: base64ImageData } }] }] };
-
     let responseText = await callGemini(payload, '', false);
-    
-    // סוגר את מודל המצלמה (ללא קשר לתוצאת ה-AI)
     stopCamera();
-    
     try {
         const jsonMatch = responseText.match(/\{[\s\S]*\}/);
         if (!jsonMatch) {
              throw new Error("JSON block not found in response.");
         }
         const cleanJsonString = jsonMatch[0].trim();
-        
         const result = JSON.parse(cleanJsonString);
-
-        // בדיקות תקינות לאחר ניתוח JSON
         if (result.error || isNaN(result.amount) || !result.category) {
             showAlert('שגיאה', 'לא הצלחנו לקרוא את כל הפרטים (סכום, תיאור או קטגוריה) מהקבלה. נסו שוב בתאורה טובה יותר.');
             return;
         }
-        
         const expenseDescEl = $('#expense-desc');
         const expenseAmountEl = $('#expense-amount');
         const expenseCategoryEl = $('#expense-category');
         const expenseFormEl = $('#expense-form');
         const submitButton = expenseFormEl.querySelector('button[type="submit"]');
-
-        // 1. מילוי שדות מבוסס על פלט ה-AI
         const amount = parseFloat(result.amount);
         const description = (result.description || '').trim();
-        const category = result.category.trim(); // מקבלים את הקטגוריה ישירות מה-AI
-
+        const category = result.category.trim(); 
         expenseAmountEl.value = amount.toFixed(2);
         expenseDescEl.value = description;
-        
-        // 2. הגדרת הקטגוריה שנשלחה מה-AI
         expenseCategoryEl.value = category; 
-        
-        // 3. שליחה אוטומטית של הטופס
         expenseFormEl.requestSubmit(submitButton);
-
-        // 4. הודעת אישור
         showAlert('הוצאה נוספה!', `הוצאה של **€${amount.toFixed(2)}** עבור **${description}** נוספה בהצלחה לקטגוריית **${category}**.`);
-        
     } catch (e) {
         console.error("Error processing receipt:", e);
         showAlert('שגיאה חמורה', 'אירעה שגיאה בעיבוד הנתונים. אנא הזן ידנית.');
@@ -2780,86 +2526,56 @@ async function processLookupImage(base64ImageData) {
     const description = await callGemini(payload, '', false);
     showAlert('זיהוי אובייקט', description, true, { text: description, lang: 'he-IL' });
 }
-
-
-
-    // --- Gemini Calls ---
-// קטע קוד מתוקן ומוודא בתוך callGemini
-
-   // חפש את הפונקציה המלאה של callGemini והחלף אותה בגרסה זו:
-
-// חפש את הפונקציה המלאה של callGemini והחלף אותה בגרסה זו:
-
 async function callGemini(payload, prompt, useSearch = false) {
     //const API_KEY = "AIzaSyB80v2xdhebJqhjyruJ5Ta0eyhJiq7DsI8"; 
     const API_KEY = "AIzaSyDzQFz_abwcxSwq8VhHCQS-HcsYk_Qug-I";
     const BASE_URL = "https://generativelanguage.googleapis.com/v1beta/models";
     const MODEL_NAME = "gemini-2.5-flash"; 
     const FINAL_URL = `${BASE_URL}/${MODEL_NAME}:generateContent?key=${API_KEY}`;
-    
     if (prompt) {
         if (payload.contents && payload.contents.length > 0 && payload.contents[0].parts) {
             payload.contents[0].parts[0].text = prompt;
         }
     }
-
-    // *** תיקון סופי וקריטי: שימוש ב-tools ברמה העליונה עם googleSearch ***
     if (useSearch) {
-        // מחזירים את tools לרמה העליונה (כי config לא נתמך במודל זה)
         payload.tools = [{ googleSearch: {} }];
-        // אם השדה config קיים מהניסיון הקודם - מוחקים אותו
         if (payload.config) delete payload.config; 
     } else {
-        // אם לא צריך חיפוש - מוחקים את tools ואת config (אם קיים)
         if (payload.tools) delete payload.tools;
         if (payload.config) delete payload.config;
     }
-    // *******************************************************************
-    
     try {
         const response = await fetch(FINAL_URL, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload)
         });
-
         const result = await response.json();
-
         if (!response.ok) {
             console.error("ERROR: Gemini API response not OK. Result:", result);
             throw new Error(result.error?.message || `שגיאת רשת: ${response.status}`);
         }
         
-        const text = result.candidates?.[0]?.content?.parts?.[0]?.text;
-        
+        const text = result.candidates?.[0]?.content?.parts?.[0]?.text;       
         return text || "לא התקבלה תשובה מ-Gemini.";
-
     } catch (error) {
         console.error("ERROR: Gemini API Error:", error);
         return `שגיאה: ${error.message}`;
     }
 }
 async function speakText(text) {
-    // *************************************************************************************************************
-    // חובה לוודא שזה המפתח התקין שלך!
     const apiKey = "AIzaSyDzQFz_abwcxSwq8VhHCQS-HcsYk_Qug-I";
-    // *************************************************************************************************************
     const url = `https://texttospeech.googleapis.com/v1/text:synthesize?key=${apiKey}`;
-
-    // 1. עצור ושחרר נגן קודם (אם קיים)
     if (window.activeAudio) { 
         window.activeAudio.pause();
         window.activeAudio = null; 
-        // אופציונלי: עדכון כפתורי הפעלה/עצירה במודל אם הם מוצגים כרגע
         const playPauseBtn = document.getElementById('alert-modal-play-pause-btn');
         if(playPauseBtn) playPauseBtn.innerHTML = '<i class="fa-solid fa-play mr-1"></i> הפעל';
         const stopBtn = document.getElementById('alert-modal-stop-btn');
         if(stopBtn) stopBtn.style.display = 'none';
     }
-
     const selectedVoice = document.getElementById("global-voice-select")?.value || "he-IL-Wavenet-D"; 
     const gender = selectedVoice.endsWith('A') || selectedVoice.endsWith('C') ? "FEMALE" : "MALE"; 
-
     try {
         const response = await fetch(url, {
             method: "POST",
@@ -2874,23 +2590,17 @@ async function speakText(text) {
                 audioConfig: { audioEncoding: "MP3" }
             })
         });
-
         const data = await response.json();
-
         if (data.audioContent) {
-            // יצירת אובייקט Audio חדש ואחסונו במשתנה הגלובלי
             window.activeAudio = new Audio("data:audio/mp3;base64," + data.audioContent);
             window.activeAudio.play();
-            
-            // טיפול בסיום הניגון
             window.activeAudio.onended = () => {
-                window.activeAudio = null; // שחרור הנגן הגלובלי בסיום
+                window.activeAudio = null; 
                 const playPauseBtn = document.getElementById('alert-modal-play-pause-btn');
                 if(playPauseBtn) playPauseBtn.innerHTML = '<i class="fa-solid fa-play mr-1"></i> הפעל';
                 const stopBtn = document.getElementById('alert-modal-stop-btn');
                 if(stopBtn) stopBtn.style.display = 'none';
             };
-            
         } else {
             console.error("שגיאה ב-TTS:", data);
             showAlert("שגיאת TTS", "שגיאה בקריאה לשרת גוגל. בדוק את מפתח ה-API ואת ההרשאות.");
@@ -2901,8 +2611,6 @@ async function speakText(text) {
     }
 }
 window.speakText = speakText;
-
-// --- סוף החלפת speakText ---
     async function translateText(text) {
         console.log(`LOG: translateText called for text: ${text}`);
         const resultContainer = $('#translation-result-container');
@@ -2942,53 +2650,36 @@ async function askGeneralGemini(userPrompt) {
     const submitBtn = $('#gemini-submit-btn');
     submitBtn.disabled = true;
     responseContainer.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> חושב...`;
-    
-    // 1. הוספת הפנייה הנוכחית להיסטוריה
     geminiChatHistory.push({ role: "user", parts: [{ text: userPrompt }] });
-
-    // 2. בניית הפיילווד המלא
-    // נשלח את כל ההיסטוריה של השיחה
     const payload = { 
-        contents: geminiChatHistory, // שולח את כל ההיסטוריה כולל השאלה הנוכחית
-        tools: [{ "google_search_retrieval": {} }] // משתמשים בכלי חיפוש
+        contents: geminiChatHistory, 
+        tools: [{ "google_search_retrieval": {} }] 
     };
-
-    // קוראים לפונקציה callGemini בלי פרומפט נוסף, כי ה-contents כבר מכיל את השאלה.
-    const responseText = await callGemini(payload, '', true); // עכשיו זה שולח useSearch=true
-
-    // 3. עדכון ההיסטוריה עם התשובה של Gemini
+    const responseText = await callGemini(payload, '', true); 
     geminiChatHistory.push({ role: "model", parts: [{ text: responseText }] });
-
-    // 4. עדכון התצוגה - נציג את כל השיחה
     const chatDisplay = geminiChatHistory.map(entry => {
         const role = entry.role === 'user' ? 'אתה' : 'Gemini';
         const color = entry.role === 'user' ? 'text-brand-600' : 'text-green-600';
         return `<div><strong class="${color}">${role}:</strong> ${entry.parts[0].text}</div>`;
     }).join('');
-
     responseContainer.innerHTML = chatDisplay;
-    responseContainer.scrollTop = responseContainer.scrollHeight; // גלילה לתחתית
-    
+    responseContainer.scrollTop = responseContainer.scrollHeight;
     submitBtn.disabled = false;
 }
         async function fetchSafetyWarnings() {
         console.log("LOG: fetchSafetyWarnings called.");
         const container = $('#safety-warnings-content');
         container.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> מאתר מידע עדכני...`;
-        
         const today = new Date().toLocaleDateString('en-CA');
         const prompt = `As a safety advisor, check for any significant demonstrations, public transport strikes, or specific safety warnings for tourists in Milan, Italy, specifically for today's date: ${today}. Provide a concise summary in Hebrew. If your web search finds no specific warnings, state that clearly and mention that the information is current as of today.`;
         const payload = { contents: [{ parts: [{ text: "" }] }] };
         const responseText = await callGemini(payload, prompt, true);
-        
         container.textContent = responseText;
     }
     async function generateTripSummary() {
         console.log("LOG: generateTripSummary called.");
         showAlert('יוצר סיכום...', 'אוסף את כל החוויות והנתונים כדי ליצור סיכום אישי... זה עשוי לקחת רגע.', false);
-        
         const { plan, expenses, journal } = localTripData;
-        
         let placesVisited = [];
         if(plan) {
             Object.values(plan).forEach(day => {
@@ -2996,17 +2687,14 @@ async function askGeneralGemini(userPrompt) {
                     if (!placesVisited.includes(act.name)) placesVisited.push(act.name);
                 });
             });
-        }
-        
+        } 
         const totalExpenses = (expenses || []).reduce((sum, exp) => sum + exp.amount, 0);
-        
         let journalEntries = [];
         if (journal) {
             Object.values(journal).forEach(dayEntries => {
                 (dayEntries || []).forEach(entry => journalEntries.push(entry.text));
             });
         }
-
         const prompt = `
             Act as a creative travel blogger writing a personal trip summary. Based on the following data from a trip to Milan, create a warm, engaging, and experiential summary in Hebrew.
             The summary should feel like a personal memory, not just a list. Use paragraphs and an enthusiastic tone.
@@ -3025,7 +2713,6 @@ async function askGeneralGemini(userPrompt) {
         showAlert('סיכום הטיול שלכם!', summaryText, true);
     }
 
-    // --- NEW PWA & Smart Features ---
     window.optimizeDayRoute = async (dayId) => {
         console.log(`LOG: optimizeDayRoute called for ${dayId}`);
         const day = localTripData.plan[dayId];
@@ -3033,17 +2720,13 @@ async function askGeneralGemini(userPrompt) {
             showAlert('לא ניתן לבצע אופטימיזציה', 'צריך לפחות שתי פעילויות ביום כדי לייעל את המסלול.');
             return;
         }
-
-        showAlert('מבצע אופטימיזציה...', 'מסדר מחדש את הפעילויות כדי לחסוך לך זמן...');
-        
+        showAlert('מבצע אופטימיזציה...', 'מסדר מחדש את הפעילויות כדי לחסוך לך זמן...');        
         let activities = [...day.activities];
-        let optimizedRoute = [activities.shift()]; // Start with the first activity
-        
+        let optimizedRoute = [activities.shift()];      
         while (activities.length > 0) {
             let lastPoint = optimizedRoute[optimizedRoute.length - 1];
             let nearestIndex = -1;
             let minDistance = Infinity;
-
             activities.forEach((activity, index) => {
                 const distance = haversineKm(lastPoint.coords?.lat, lastPoint.coords?.lon, activity.coords?.lat, activity.coords?.lon);
                 if (distance < minDistance) {
@@ -3070,10 +2753,8 @@ async function askGeneralGemini(userPrompt) {
         const tripStartDate = new Date(tripMeta.flights.inbound.date);
         const eventDate = new Date(tripStartDate.setDate(tripStartDate.getDate() + dayIndex));
         const eventDateStr = eventDate.toISOString().split('T')[0].replace(/-/g, '');
-
         const timeMap = { 'בוקר': '090000', 'צהריים': '140000', 'ערב': '190000' };
         const durationMap = { 'בוקר': 3, 'צהריים': 4, 'ערב': 4 };
-
         let icsContent = [
             'BEGIN:VCALENDAR',
             'VERSION:2.0',
@@ -3086,7 +2767,6 @@ async function askGeneralGemini(userPrompt) {
             const startDateTime = `${eventDateStr}T${startTime}`;
             const endHour = parseInt(startTime.substring(0, 2), 10) + durationHours;
             const endDateTime = `${eventDateStr}T${String(endHour).padStart(2, '0')}0000`;
-
             icsContent.push(
                 'BEGIN:VEVENT',
                 `UID:${activity.id}@milantrip.app`,
@@ -3100,7 +2780,6 @@ async function askGeneralGemini(userPrompt) {
             );
         });
         icsContent.push('END:VCALENDAR');
-
         const blob = new Blob([icsContent.join('\r\n')], { type: 'text/calendar' });
         const link = document.createElement('a');
         link.href = URL.createObjectURL(blob);
@@ -3116,15 +2795,12 @@ async function askGeneralGemini(userPrompt) {
         const submitBtn = $('#get-smart-advice-btn');
         submitBtn.disabled = true;
         responseContainer.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> היועץ החכם בודק את הנתונים...`;
-        
         const remainingBudget = (localTripData.totalBudget || 0) - (localTripData.expenses || []).reduce((sum, exp) => sum + exp.amount, 0);
         let weatherInfo = "No weather data available.";
         if(lastWeatherAPIData) {
             weatherInfo = `Today's forecast is a high of ${lastWeatherAPIData.daily.temperature_2m_max[0]}°C and a low of ${lastWeatherAPIData.daily.temperature_2m_min[0]}°C. Weather code: ${lastWeatherAPIData.daily.weathercode[0]}.`
         }
-        
-        const milanTime = new Date().toLocaleTimeString('en-US', { timeZone: 'Europe/Rome', hour: '2-digit', minute: '2-digit', hour12: false });
-        
+        const milanTime = new Date().toLocaleTimeString('en-US', { timeZone: 'Europe/Rome', hour: '2-digit', minute: '2-digit', hour12: false });       
         const prompt = `
             As a smart travel advisor for a trip to Milan, provide a short, actionable recommendation in Hebrew based on the following context. Be friendly and helpful.
             
@@ -3141,20 +2817,14 @@ async function askGeneralGemini(userPrompt) {
         responseContainer.textContent = advice;
         submitBtn.disabled = false;
     }
-    // ========================= התחלה: קוד למפה במצב בהיר קבוע =========================
 function initLiveMap() {
     console.log("LOG: initLiveMap called.");
     if (liveMap) return;
     liveMap = L.map('live-location-map').setView([45.4642, 9.1916], 12);
-
-    // הגדרה של שכבת המפה הבהירה בלבד
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
     }).addTo(liveMap);
 }
-// ========================= סוף: קוד למפה במצב בהיר קבוע =========================
-    // --- LIVE LOCATION FUNCTIONS ---
-
     async function updateLocationInFirestore(position) {
         if (!currentUserId) return;
         const { latitude, longitude } = position.coords;
@@ -3190,7 +2860,6 @@ function initLiveMap() {
                         .openPopup();
                 }
             });
-            // Optional: remove markers for users who are no longer sharing
             const currentUids = snapshot.docs.map(d => d.id);
             Object.keys(userMarkers).forEach(uid => {
                 if (!currentUids.includes(uid)) {
@@ -3233,8 +2902,6 @@ function initLiveMap() {
             }
         }
     }
-    
-    // --- FIX 1 & 2: REWRITTEN JOURNAL FUNCTIONS ---
     async function addJournalEntry(dayId, text) {
         console.log(`LOG: addJournalEntry called for day ${dayId}`);
         if (!tripDocRef) {
@@ -3311,9 +2978,6 @@ function initLiveMap() {
             </form>
         </div>`;
     }
-// ==========================================================
-// התחלה: קוד מתוקן ומשופר לתרגום קולי
-// ==========================================================
 const recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
 let speechRecognizer = null;
 let isRecognizing = false;
@@ -3347,14 +3011,11 @@ if (recognition) {
         console.error("Speech recognition error", event.error);
         $('#translation-result-container').innerHTML = `<span class="text-red-500">שגיאה בזיהוי הדיבור: ${event.error}</span>`;
     };
-
     speechRecognizer.onresult = async (event) => {
         const spokenText = event.results[0][0].transcript;
         const sourceLang = speechRecognizer.lang;
         console.log(`Speech recognized in ${sourceLang}: ${spokenText}`);
-
         let sourceLangFull, targetLangFull, targetLangCode;
-
         if (sourceLang === 'he-IL') {
             sourceLangFull = 'Hebrew';
             targetLangFull = 'Italian';
@@ -3364,98 +3025,61 @@ if (recognition) {
             targetLangFull = 'Hebrew';
             targetLangCode = 'he-IL';
         }
-
         $('#dictionary-input').value = spokenText;
-
         const resultContainer = $('#translation-result-container');
         resultContainer.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> מתרגם...`;
-
-        // Prompt משופר כדי להבטיח תרגום ולא תעתיק
         const prompt = `Translate the meaning of the following word/phrase from ${sourceLangFull} to ${targetLangFull}. Provide ONLY the single, most common translated word/phrase, with no additional formatting or explanations. Word/phrase to translate: "${spokenText}"`;
         const payload = { contents: [{ parts: [{ text: "" }] }] };
         let translatedText = await callGemini(payload, prompt, false);
         translatedText = translatedText.replace(/[\*\_`\.]/g, '').trim();
-
-        // תיקון: הוספת כפתור ההשמעה
         resultContainer.innerHTML = `<span>${translatedText}</span> <button onclick="window.speakText('${translatedText.replace(/'/g, "\\'")}', '${targetLangCode}')" class="btn btn-ghost p-1 h-auto"><i class="fa-solid fa-volume-high"></i></button>`;
-
-        // בונוס: הוספת התרגום להיסטוריה, בדיוק כמו בתרגום טקסט רגיל
         translationHistory.unshift({ sourceText: spokenText, translatedText: translatedText });
         if (translationHistory.length > 5) translationHistory.pop();
         localStorage.setItem('milanTripTranslationHistory', JSON.stringify(translationHistory));
         renderTranslationHistory();
     };
-
 } else {
     console.warn("Web Speech API is not supported in this browser.");
 }
-// ==========================================================
-// סוף: קוד מתוקן ומשופר לתרגום קולי
-// ==========================================================
 
-    // --- INIT ---
 document.addEventListener('DOMContentLoaded', () => {
-// קטע זה נמצא כנראה בתוך document.addEventListener('DOMContentLoaded', ...) או בסוף renderOverview()
 $('#birkat-hamazon-btn')?.addEventListener('click', () => {
     const brachaHTML = hebrewPrayers.birkatHaMazon;
-    
-    // 1. נקיון הטקסט המלא מ-HTML
     const brachaFullCleanText = cleanHtmlForTts(brachaHTML);
-    
-    // 2. פיצול: נחפש את נקודת הפיצול אחרי הברכה הראשונה (הזן)
-    // הברכה הראשונה מסתיימת ב: "בָּרוּךְ אַתָּה ה', הַזָּן אֶת הַכֹּל:"
-    // נשתמש בחלק הפתיחה בלבד כטקסט לניגון:
     const splitIndex = brachaFullCleanText.indexOf("בְּרָכָה שְׁנִיָּה (נוֹדֶה)");
     let textToSpeak = brachaFullCleanText;
-    
     if (splitIndex > -1) {
-        // אם נמצאה הברכה השנייה, נדבר רק עד אליה
         textToSpeak = brachaFullCleanText.substring(0, splitIndex).trim();
     } else {
-        // אם הפיצול נכשל, ננסה לדבר רק את 2000 התווים הראשונים (מגבלה בטוחה)
         textToSpeak = brachaFullCleanText.substring(0, 2000);
         console.warn("WARN: Could not split Birkat Hamazon by title, truncating to 2000 chars.");
     }
-    
-    // נשלח את ה-HTML לטקסט המוצג, ואת הטקסט הנקי (וחלקי) לניגון
     showAlert('ברכת המזון (עדות המזרח)', brachaHTML, true, { text: textToSpeak });
 });
     console.log("LOG: DOMContentLoaded event fired. Initializing app.");
-     // --- מאזיני כפתורים יהודיים חדשים ---
    $('#tefilat-haderech-btn')?.addEventListener('click', () => {
         const prayerText = hebrewPrayers.tefilatHaderech;
         showAlert('תפילת הדרך', prayerText, true, { text: prayerText });
-    });;
-    $('#bracha-achrona-btn')?.addEventListener('click', showBrachaAchronaOptions);
-
-    // --- חיבור כפתור סריקת ברקוד ---
-    $('#scan-kosher-barcode-btn').addEventListener('click', () => {
-        cameraMode = 'barcode'; // הגדרת המצב לברקוד
-        startCamera();          // פתיחת המצלמה
     });
-    
-    // --- הוספת הלוגיקה של הגדרות הקול וחיבור הכפתורים ---
+    $('#bracha-achrona-btn')?.addEventListener('click', showBrachaAchronaOptions);
+    $('#scan-kosher-barcode-btn').addEventListener('click', () => {
+        cameraMode = 'barcode'; 
+        startCamera(); 
+    });
     const voiceSettingsModal = $('#voice-settings-modal');
     const globalVoiceSelect = $('#global-voice-select');
-
-    // 1. טעינת בחירה שמורה ושמירה בשינוי
     const savedVoice = localStorage.getItem("selectedVoice");
     if (savedVoice && globalVoiceSelect) {
         globalVoiceSelect.value = savedVoice;
     }
-
     if (globalVoiceSelect) {
         globalVoiceSelect.addEventListener("change", (e) => {
             const selectedVoice = e.target.value;
-            localStorage.setItem("selectedVoice", selectedVoice); // שמירה
-            speakText(" שלום, זהו הקול שבחרת."); // דוגמת קול
+            localStorage.setItem("selectedVoice", selectedVoice); 
+            speakText(" שלום, זהו הקול שבחרת."); 
         });
     }
-
-    // 2. פתיחה/סגירת המודל
     $('#voice-settings-close-btn').addEventListener('click', () => voiceSettingsModal.classList.remove('flex'));
-    
-    // 3. חיבור הכפתורים לחלון הגדרות הקול (אלרט ותרגומון)
     document.addEventListener('click', (e) => {
         if (e.target.closest('#alert-modal-tts-settings-btn')) {
             voiceSettingsModal.classList.add('flex');
@@ -3481,7 +3105,6 @@ $('#birkat-hamazon-btn')?.addEventListener('click', () => {
     window.askGeneralGemini = askGeneralGemini; 
     initMetroHelper();
 
-    // --- PWA Service Worker Registration ---
     if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
             navigator.serviceWorker.register('sw.js')
@@ -3489,8 +3112,6 @@ $('#birkat-hamazon-btn')?.addEventListener('click', () => {
                 .catch(error => console.log('ERROR: Service Worker registration failed:', error));
         });
     }
-
-    // --- Firebase Initialization ---
     const firebaseConfig = {
       apiKey: "AIzaSyD47-qHc8vmGQt4n4LluKW64LEMB-UYrfk",
       authDomain: "trip-to-milan.firebaseapp.com",
@@ -3500,20 +3121,16 @@ $('#birkat-hamazon-btn')?.addEventListener('click', () => {
       appId: "1:305191186184:web:fff1488b64a06942dfc6bd",
       measurementId: "G-P17LYZJ2H0"
     };
-
     const app = initializeApp(firebaseConfig);
     auth = getAuth(app);
     db = getFirestore(app);
     enableIndexedDbPersistence(db).catch(err => console.warn(`WARN: Firestore persistence failed. Code: ${err.code}`));
-
-    // --- Caching and Sharing Logic ---
     let tripId = window.location.hash.substring(1);
     if (!tripId) {
         tripId = Math.random().toString(36).substring(2, 12);
         window.location.hash = tripId;
     }
     $('#user-name-input').value = localStorage.getItem('userName') || '';
-
     const cachedData = localStorage.getItem(`tripData_${tripId}`);
     if (cachedData) {
         try {
@@ -3523,18 +3140,14 @@ $('#birkat-hamazon-btn')?.addEventListener('click', () => {
             localStorage.removeItem(`tripData_${tripId}`);
         }
     }
-
     signInAnonymously(auth).catch(error => showAlert("שגיאת התחברות ל-Firebase", `ההתחברות האנונימית נכשלה. ${error.message}`));
-
     onAuthStateChanged(auth, (user) => {
       if (user) {
         currentUserId = user.uid;
         tripDocRef = doc(db, "milantrip", tripId);
         locationsColRef = collection(db, "milantrip", tripId, "locations");
-
         initLiveMap();
         listenForLocationUpdates();
-
         onSnapshot(tripDocRef, async (docSnap) => {
             if (!isFirebaseConnected) {
                 const statusIcon = $('#sync-status i');
@@ -3571,8 +3184,6 @@ $('#birkat-hamazon-btn')?.addEventListener('click', () => {
         });
       }
     });
-
-    // --- Initial Renders & Fetches ---
     console.log("LOG: Performing initial renders and fetches.");
     renderOverview();
     renderKosherFilters();
@@ -3585,15 +3196,12 @@ $('#birkat-hamazon-btn')?.addEventListener('click', () => {
     fetchZmanim();
     updateClocks();
     setInterval(updateClocks, 1000);
-
     const ctx = document.getElementById('transportChart').getContext('2d');
     new Chart(ctx, {
         type: 'bar',
         data: { labels: ['נסיעה בודדת', 'כרטיס יומי', 'כרטיס ל-3 ימים'], datasets: [{ label: 'עלות באירו', data: [2.20, 7.60, 15.50], backgroundColor: ['rgba(59,130,246,.6)','rgba(37,99,235,.6)','rgba(29,78,216,.6)'], borderColor: ['#3b82f6','#2563eb','#1d4ed8'], borderWidth: 1 }] },
         options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true } }, plugins: { legend: { display: false } } }
     });
-
-    // --- Event Listeners (החלק שחזר) ---
     console.log("LOG: Adding main event listeners.");
     if ('speechSynthesis' in window) {
         if (speechSynthesis.getVoices().length === 0) {
@@ -3603,17 +3211,14 @@ $('#birkat-hamazon-btn')?.addEventListener('click', () => {
             };
         }
     }
-    
-    // --- מאזיני כפתורים כלליים ---
     $('#theme-toggle').addEventListener('click', () => {
         const isDark = document.documentElement.classList.toggle('dark');
         if(tripDocRef && isFirebaseConnected) updateDoc(tripDocRef, { theme: isDark ? 'dark' : 'light' });
     });
-
-    $('#show-tip-btn').addEventListener('click', openTipModal); // טיפ יומי
-    $('#create-summary-btn').addEventListener('click', generateTripSummary); // סיכום טיול
+    $('#show-tip-btn').addEventListener('click', openTipModal); 
+    $('#create-summary-btn').addEventListener('click', generateTripSummary); 
     $('#refresh-warnings-btn').addEventListener('click', fetchSafetyWarnings);
-    $('#share-btn').addEventListener('click', () => { // שתף תוכנית
+    $('#share-btn').addEventListener('click', () => { 
         const url = window.location.href;
         if (navigator.share) {
             navigator.share({ title: 'תוכנית הטיול שלנו למילאנו', url: url });
@@ -3621,12 +3226,9 @@ $('#birkat-hamazon-btn')?.addEventListener('click', () => {
             navigator.clipboard.writeText(url).then(() => showAlert('הקישור הועתק!', 'הקישור הועתק ללוח.'));
         }
     });
-
     $('#collapse-all').addEventListener('click', () => $$('#plan-content-container details').forEach(d => d.removeAttribute('open')));
     $('#expand-all').addEventListener('click', () => $$('#plan-content-container details').forEach(d => d.setAttribute('open', true)));
     $('#print-btn').addEventListener('click', () => window.print());
-
-    // --- מאזיני טפסים ותקציב ---
     $('#add-checklist-item-form').addEventListener('submit', async e => {
         e.preventDefault();
         if(!isFirebaseConnected) { showAlert('שגיאת סנכרון', 'אין חיבור למסד הנתונים.'); return; }
@@ -3645,7 +3247,6 @@ $('#birkat-hamazon-btn')?.addEventListener('click', () => {
         await updateDoc(tripDocRef, { checklist: updatedChecklist });
         e.target.reset();
     });
-
     $('#expense-form').addEventListener('submit', async e => {
         e.preventDefault();
         if(!isFirebaseConnected) { showAlert('שגיאת סנכרון', 'אין חיבור למסד הנתונים.'); return; }
@@ -3666,31 +3267,25 @@ $('#birkat-hamazon-btn')?.addEventListener('click', () => {
         const newTotalBudget = parseFloat(e.target.value) || 0;
         if (tripDocRef) await updateDoc(tripDocRef, { totalBudget: newTotalBudget });
     });
-
     $('#include-estimated-costs').addEventListener('change', async e => {
         if(!isFirebaseConnected) { return; }
         const include = e.target.checked;
         await updateDoc(tripDocRef, { 'settings.includeEstimatedCostsInBalance': include });
     });
-
     $('#calculate-estimated-btn').addEventListener('click', () => {
         const estimatedCosts = calculateEstimatedCosts(localTripData.plan);
         showAlert('עלות משוערת', `העלות המשוערת לאטרקציות בתוכנית עבור זוג היא: €${estimatedCosts.toFixed(2)}.`);
     });
-    
     $('#toggle-suggestions-btn').addEventListener('click', e => {
         const container = $('#suggestions-container');
         const isHidden = container.classList.toggle('hidden');
         e.target.textContent = isHidden ? 'הצג הצעות נוספות' : 'הסתר הצעות';
     });
-
     $('#toggle-kosher-btn').addEventListener('click', e => {
         const container = $('#kosher-container');
         const isHidden = container.classList.toggle('hidden');
         e.target.textContent = isHidden ? 'הצג מדריך כשרות' : 'הסתר מדריך כשרות';
     });
-
-    // --- מאזיני תרגום ומטבע ---
     $('#eur-input').addEventListener('input', e => {
         const eur = parseFloat(e.target.value);
         $('#ils-input').value = isNaN(eur) ? '' : (eur * eurToIlsRate).toFixed(2);
@@ -3699,9 +3294,7 @@ $('#birkat-hamazon-btn')?.addEventListener('click', () => {
         const ils = parseFloat(e.target.value);
         $('#eur-input').value = isNaN(ils) ? '' : (ils / eurToIlsRate).toFixed(2);
     });
-
     $('#dictionary-form').addEventListener('submit', async e => { e.preventDefault(); const input = $('#dictionary-input').value.trim(); if (input) await translateText(input); });
-
     $('#swap-lang-btn').addEventListener('click', () => {
         const inputEl = $('#dictionary-input'); const labelEl = $('#lang-direction-label');
         currentLang = (currentLang === 'he-it') ? 'it-he' : 'he-it';
@@ -3709,22 +3302,18 @@ $('#birkat-hamazon-btn')?.addEventListener('click', () => {
         labelEl.innerHTML = (currentLang === 'he-it') ? 'עברית <i class="fa-solid fa-arrow-right-long"></i> איטלקית' : 'איטלקית <i class="fa-solid fa-arrow-right-long"></i> עברית';
         inputEl.value = '';
     });
-
-    // --- מאזיני העלאת קבצים ---
     $('#image-translate-upload').addEventListener('change', (e) => {
         const file = e.target.files[0]; if (!file) return;
         const reader = new FileReader();
         reader.onload = (event) => { const base64String = event.target.result.split(',')[1]; translateImage(base64String, file.type); };
         reader.readAsDataURL(file);
     });
-
     $('#document-upload-btn').addEventListener('click', () => $('#document-upload').click());
     $('#image-upload-btn').addEventListener('click', () => {
     const opts = $('#modal-upload-day-options');
     opts.innerHTML = Object.entries(localTripData.plan).sort((a,b) => a[0].localeCompare(b[0])).map(([dayId, dayData]) => 
         `<button class="btn btn-primary" data-day-id="${dayId}">${dayData.name}</button>`
     ).join('');
-
     $$('#modal-upload-day-options button').forEach(btn => {
         btn.onclick = () => {
             const selectedDayId = btn.dataset.dayId;
@@ -3733,17 +3322,14 @@ $('#birkat-hamazon-btn')?.addEventListener('click', () => {
             $('#image-upload').click();
         };
     });
-
     $('#select-day-for-upload-modal').classList.add('flex');
     });
-
     $('#alert-modal-copy-btn').addEventListener('click', (e) => {
         navigator.clipboard.writeText($('#alert-modal-body').textContent).then(() => {
             e.target.textContent = 'הועתק!';
             setTimeout(() => e.target.innerHTML = '<i class="fa-solid fa-copy mr-1"></i>העתק', 2000);
         });
     });
-
     $('#document-upload').addEventListener('change', (e) => {
         for (const file of e.target.files) {
             const reader = new FileReader();
@@ -3754,7 +3340,6 @@ $('#birkat-hamazon-btn')?.addEventListener('click', () => {
             reader.readAsDataURL(file);
         }
     });
-
     $('#image-upload').addEventListener('change', (e) => {
         const dayId = $('#image-upload').getAttribute('data-day-id');
         for (const file of e.target.files) {
@@ -3766,8 +3351,6 @@ $('#birkat-hamazon-btn')?.addEventListener('click', () => {
             reader.readAsDataURL(file);
         }
     });
-
-    // --- מאזיני Gemini ---
     const geminiModal = $('#gemini-modal');
     $('#gemini-btn').addEventListener('click', () => geminiModal.classList.add('flex'));
     $('#gemini-close-btn').addEventListener('click', () => geminiModal.classList.remove('flex'));
@@ -3777,7 +3360,6 @@ $('#birkat-hamazon-btn')?.addEventListener('click', () => {
         $$('#gemini-modal .content-section').forEach(s => s.classList.remove('active'));
         $(`#${e.currentTarget.dataset.content}`).classList.add('active');
     }));
-
     $('#get-smart-advice-btn').addEventListener('click', getSmartAdvice);
     $('#gemini-submit-btn').addEventListener('click', () => {
     const promptInput = $('#gemini-prompt');
@@ -3793,8 +3375,6 @@ $('#birkat-hamazon-btn')?.addEventListener('click', () => {
         $('#gemini-response').textContent = '';
         $('#gemini-prompt').value = '';
     });
-
-    // --- מאזיני שיתוף ומצלמה ---
     $('#share-btn').addEventListener('click', () => {
         const url = window.location.href;
         if (navigator.share) {
@@ -3803,27 +3383,21 @@ $('#birkat-hamazon-btn')?.addEventListener('click', () => {
             navigator.clipboard.writeText(url).then(() => showAlert('הקישור הועתק!', 'הקישור הועתק ללוח.'));
         }
     });
-
     $('#lookup-site-btn').addEventListener('click', () => {
         cameraMode = 'lookup';
         startCamera();
     });
-
     $('#translate-camera-btn').addEventListener('click', () => {
         cameraMode = 'translate';
         startCamera();
     });
-    
     $('#scan-receipt-btn').addEventListener('click', () => {
         cameraMode = 'receipt';
         startCamera();
     });
-
     $('#torch-btn').addEventListener('click', toggleTorch);
     $('#camera-close-btn').addEventListener('click', stopCamera);
     $('#capture-btn').addEventListener('click', captureFrame);
-
-    // --- מאזיני ניווט ---
     const planBtn = $('#floating-plan-btn');
     const toolsBtn = $('#floating-tools-btn');
     const planSubmenu = $('#plan-submenu');
@@ -3839,21 +3413,15 @@ $('#birkat-hamazon-btn')?.addEventListener('click', () => {
     }
     planBtn.addEventListener('click', (e) => { e.stopPropagation(); toggleSubmenu(planSubmenu, planBtn); });
     toolsBtn.addEventListener('click', (e) => { e.stopPropagation(); toggleSubmenu(toolsSubmenu, toolsBtn); });
-
     document.addEventListener('click', (e) => { 
         if (!e.target.closest('#floating-nav-container')) toggleSubmenu(null, null);
     });
     $$('#plan-submenu a, #tools-submenu a').forEach(link => link.addEventListener('click', () => toggleSubmenu(null, null)));
-
     window.addEventListener('beforeunload', () => {
         if (watchingLocation && currentUserId) deleteDoc(doc(locationsColRef, currentUserId));
     });
-
-    // --- מאזיני סגירה ---
     $('#alert-modal-close').addEventListener('click', () => $('#alert-modal').classList.remove('flex'));
     $('#daily-tip-close').addEventListener('click', () => $('#daily-tip-modal').classList.remove('flex'));
-    
-    // --- מאזיני קול קלט (היה חסר) ---
     const heBtn = $('#voice-translate-he-btn');
     const itBtn = $('#voice-translate-it-btn');
     if (speechRecognizer) {
@@ -3863,11 +3431,7 @@ $('#birkat-hamazon-btn')?.addEventListener('click', () => {
          if (heBtn) { heBtn.disabled = true; heBtn.innerHTML = 'לא נתמך'; }
          if (itBtn) { itBtn.disabled = true; itBtn.innerHTML = 'לא נתמך'; }
     }
-
-
- }); // סוגר את הפונקציה האנונימית של DOMContentLoaded
-
+ }); 
  </script> 
-
 </body>
 </html>
