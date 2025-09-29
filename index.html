@@ -1104,6 +1104,7 @@ function showAlert(title, message, isCopyable = false, speechOptions = null) {
 
         // 1. Event handler for the Play/Pause button
         playPauseBtn.onclick = () => {
+           playPauseBtn.onclick = () => {
             if (activeAudio) {
                 if (activeAudio.paused) {
                     activeAudio.play(); // השמעה מהנקודה המושהית
@@ -1242,9 +1243,16 @@ function renderOverview() {
             showAlert('תפילת הדרך', prayerText, true, { text: prayerText });
         });
     }
-   $('#birkat-hamazon-btn')?.addEventListener('click', () => {
-        const bracha = hebrewPrayers.birkatHaMazon;
-        showAlert('ברכת המזון (עדות המזרח)', bracha, true, { text: bracha });
+    $('#birkat-hamazon-btn')?.addEventListener('click', () => {
+        const brachaHTML = hebrewPrayers.birkatHaMazon;
+        
+        // יצירת DOMParser לחילוץ טקסט נקי מתגי HTML
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(brachaHTML, 'text/html');
+        // שימוש ב-textContent מוציא את כל הטקסט בלי תגיות
+        const brachaCleanText = doc.body.textContent.replace(/[\n\r]/g, ' ').trim(); 
+        
+        showAlert('ברכת המזון (עדות המזרח)', brachaHTML, true, { text: brachaCleanText });
     });
     $('#bracha-achrona-btn')?.addEventListener('click', showBrachaAchronaOptions);
 }
@@ -2549,7 +2557,10 @@ async function startCamera() {
             // 4. לוגיקה ספציפית למצב 'barcode' (בתוך בלוק ה-try)
             if (cameraMode === 'barcode') {
                 captureBtn.style.display = 'flex';  // הסתרת כפתור הצילום במצב ברקוד
-                captureBtn.onclick = captureFrame; 
+                                captureBtn.onclick = () => {.
+                   cameraMode = 'lookup';
+                   captureFrame(); 
+               }; 
 
                 window.Quagga.init({
                     inputStream: {
@@ -2788,22 +2799,20 @@ async function callGemini(payload, prompt, useSearch = false) {
         return `שגיאה: ${error.message}`;
     }
 }
+// קוד מתוקן ומלא של speakText:
 async function speakText(text) {
     // *************************************************************************************************************
     // חובה לוודא שזה המפתח התקין שלך!
-    const apiKey = "AIzaSyDzQFz_abwcxSwq8VhHCQS-HcsYk_Qug-I"; // ודא שזה המפתח שלך
+    const apiKey = "AIzaSyDzQFz_abwcxSwq8VhHCQS-HcsYk_Qug-I";
     // *************************************************************************************************************
     const url = `https://texttospeech.googleapis.com/v1/text:synthesize?key=${apiKey}`;
 
-    // 1. **בדיקה קריטית:** אם יש נגן פעיל (לא מושהה), אל תעשה כלום ואל תיצור חדש!
-    // הטיפול ב-pause/play נעשה ב-playPauseBtn.onclick ב-showAlert.
-    if (window.activeAudio && !window.activeAudio.paused) {
-        console.warn("WARN: speakText called while audio is already playing. Ignoring.");
-        return; 
+    // 1. **תיקון קריטי:** אם יש נגן קיים (פעיל או מושהה), עצור ושחרר אותו לפני ניגון חדש.
+    if (window.activeAudio) { 
+        window.activeAudio.pause();
+        window.activeAudio = null; // שחרור הנגן הגלובלי
+        // אם צריך, ניתן להוסיף כאן לוגיקה לעדכון כפתורים אם הם פתוחים
     }
-    
-    // 2. אם יש נגן קיים ומושהה, לא נכנסים לכאן אלא אם נלחץ כפתור ה-Play/Resume
-    // אך כדי להתחיל ניגון חדש בטוח (כמו בטופס התרגום), נמשיך.
 
     const selectedVoice = document.getElementById("global-voice-select")?.value || "he-IL-Wavenet-D"; 
     const gender = selectedVoice.endsWith('A') || selectedVoice.endsWith('C') ? "FEMALE" : "MALE"; 
@@ -2826,16 +2835,12 @@ async function speakText(text) {
         const data = await response.json();
 
         if (data.audioContent) {
-            // יצירת אובייקט Audio חדש ואחסונו במשתנה הגלובלי
-            // הערה: אם נכנסנו לכאן, window.activeAudio צריך להיות null (כפי שמוגדר ב-onended).
             window.activeAudio = new Audio("data:audio/mp3;base64," + data.audioContent);
             window.activeAudio.play();
             
             // טיפול בסיום הניגון
             window.activeAudio.onended = () => {
-                window.activeAudio = null; // שחרור הנגן הגלובלי בסיום
-                
-                // עדכון כפתורים במודל אם הוא פתוח (זה מבטיח שהכפתורים יחזרו למצב 'הפעל')
+                window.activeAudio = null; 
                 const playPauseBtn = document.getElementById('alert-modal-play-pause-btn');
                 if(playPauseBtn) playPauseBtn.innerHTML = '<i class="fa-solid fa-play mr-1"></i> הפעל';
                 const stopBtn = document.getElementById('alert-modal-stop-btn');
@@ -3347,9 +3352,16 @@ if (recognition) {
     // --- INIT ---
 document.addEventListener('DOMContentLoaded', () => {
   
-      $('#birkat-hamazon-btn')?.addEventListener('click', () => {
-        const bracha = hebrewPrayers.birkatHaMazon;
-        showAlert('ברכת המזון (עדות המזרח)', bracha, true, { text: bracha });
+    $('#birkat-hamazon-btn')?.addEventListener('click', () => {
+        const brachaHTML = hebrewPrayers.birkatHaMazon;
+        
+        // יצירת DOMParser לחילוץ טקסט נקי מתגי HTML
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(brachaHTML, 'text/html');
+        // שימוש ב-textContent מוציא את כל הטקסט בלי תגיות
+        const brachaCleanText = doc.body.textContent.replace(/[\n\r]/g, ' ').trim(); 
+        
+        showAlert('ברכת המזון (עדות המזרח)', brachaHTML, true, { text: brachaCleanText });
     });
     console.log("LOG: DOMContentLoaded event fired. Initializing app.");
      // --- מאזיני כפתורים יהודיים חדשים ---
