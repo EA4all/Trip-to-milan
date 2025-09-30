@@ -2726,14 +2726,7 @@ async function toggleTorch() {
     }
 }
 // ========================= סוף: קוד מתוקן ומשופר להפעלת הפנס =========================
-function stopCamera() {
-    console.log("LOG: stopCamera called.");
-    if (cameraStream) {
-        cameraStream.getTracks().forEach(track => track.stop());
-    }
-    activeVideoTrack = null; // Clear the stored track
-    $('#camera-modal').classList.remove('flex');
-}
+
 
     // ודא שהקוד שלך נראה כך
 // מצא את function captureFrame() והחלף אותה
