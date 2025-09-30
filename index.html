@@ -2618,39 +2618,41 @@ async function startCamera() {
             }
 
             // 4. הצגת המודל
-            $('#camera-modal').classList.add('flex');
+           $('#camera-modal').classList.add('flex');
 
-            // 5. לוגיקה ספציפית למצב 'barcode' 
-            if (cameraMode === 'barcode') {
-                captureBtn.style.display = 'flex'; 
-                captureBtn.onclick = () => {
-                    // לפני הצילום, נעצור את QuaggaJS אם פועל
-                    try { if (window.Quagga && Quagga.running) window.Quagga.stop(); } catch (e) { } 
-                    cameraMode = 'lookup'; // משנה את המצב לזיהוי אובייקט לצילום
-                    captureFrame(); 
-                }; 
-                
-                // ודא שהאזור של ה-QuaggaJS נראה בתוך המודל
-                const videoContainer = $('#camera-feed').closest('.p-4.flex-grow.relative');
-                if (videoContainer) videoContainer.id = 'interactive-barcode-area';
+                    // 5. לוגיקה ספציפית למצב 'barcode' 
+                    if (cameraMode === 'barcode') {
+                        captureBtn.style.display = 'flex'; 
+                        captureBtn.onclick = () => {
+                            // לפני הצילום, נעצור את QuaggaJS אם פועל
+                            try { if (window.Quagga && Quagga.running) window.Quagga.stop(); } catch (e) { } 
+                            cameraMode = 'lookup'; // משנה את המצב לזיהוי אובייקט לצילום
+                            captureFrame(); 
+                        }; 
+                        
+                        // ודא שהאזור של ה-QuaggaJS נראה בתוך המודל
+                        const videoContainer = $('#camera-feed').closest('.p-4.flex-grow.relative');
+                        if (videoContainer) videoContainer.id = 'interactive-barcode-area';
 
-                window.Quagga.init({
-                    inputStream: {
-                        type: "LiveStream",
-                        target: videoContainer,
-                        constraints: { facingMode: "environment" }
-                    },
-decoder: { readers: ["ean_reader", "upc_reader", "code_128_reader", "qr_reader"] }
+                        window.Quagga.init({
+                            inputStream: {
+                                type: "LiveStream",
+                                target: videoContainer,
+                                constraints: { facingMode: "environment" }
+                            },
+    decoder: { readers: ["ean_reader", "upc_reader", "code_128_reader", "qr_reader"] }
 
-                }, (err) => {
-                    if (err) { 
-                        console.error("QuaggaJS Init Error:", err); 
-                        showAlert("שגיאת ברקוד", err.message); 
-                        stopCamera(); 
-                        return; 
-                    }
-                    window.Quagga.start();
-                });
+                        }, (err) => {
+                            if (err) { 
+                                console.error("QuaggaJS Init Error:", err); 
+                                // **שינוי: לא קורא ל-stopCamera()!**
+                                document.getElementById("barcode-status-display").textContent = "❌ שגיאה: סורק הברקוד נכשל. מצלמה פעילה.";
+                                document.getElementById("barcode-status-display").classList.remove('text-yellow-500');
+                                document.getElementById("barcode-status-display").classList.add('text-red-500');
+                                return; 
+                            }
+                            window.Quagga.start();
+                        });
                 
                 // לוגיקה לעדכון הסטטוס החזותי של הסריקה
                 window.Quagga.onProcessed(function(result) {
@@ -3503,23 +3505,36 @@ if (recognition) {
 document.addEventListener('DOMContentLoaded', () => {
   
 // קטע מתוך ה-INIT
+// קטע מתוך ה-INIT (החלפה לניגון SpeechSynthesis פשוט)
 $('#birkat-hamazon-btn')?.addEventListener('click', () => {
-    // מנגן קובץ MP3 מקומי
-    if (window.activeAudio) {
-        window.activeAudio.pause();
-        window.activeAudio.currentTime = 0;
-    }
-    window.activeAudio = new Audio("birkat-hamazon.mp3");
-    window.activeAudio.play().catch(err => {
-        console.error("שגיאה בהפעלת האודיו:", err);
-        showAlert("שגיאה בהשמעה", "לא הצלחנו לנגן את קובץ ברכת המזון");
-    });
-
-    // מציג גם את הטקסט במודאל
+    // 1. ניקוי הטקסט מה-HTML המעוצב
     const brachaHTML = hebrewPrayers.birkatHaMazon;
-    document.getElementById("alert-modal-title").textContent = "ברכת המזון";
-    document.getElementById("alert-modal-body").innerHTML = brachaHTML;
-    document.getElementById("alert-modal").classList.add("flex");
+    const brachaTempDiv = document.createElement('div');
+    brachaTempDiv.innerHTML = brachaHTML;
+    // מחלץ רק את הטקסט הנקי לניגון
+    const brachaCleanText = brachaTempDiv.textContent.replace(/\n/g, ' ').replace(/\s+/g, ' ').trim(); 
+
+    // 2. ניגון עם SpeechSynthesis מובנה (חזק יותר לטקסט ארוך)
+    if ('speechSynthesis' in window) {
+        if (window.activeAudio) { window.activeAudio.pause(); window.activeAudio = null; }
+        if (window.speechSynthesis.speaking || window.speechSynthesis.pending || window.speechSynthesis.paused) { 
+            window.speechSynthesis.cancel(); 
+        }
+        const utterance = new SpeechSynthesisUtterance(brachaCleanText);
+        utterance.lang = "he-IL"; // עברית
+        
+        // הגדרת קול
+        const selectedVoiceName = document.getElementById("global-voice-select")?.value;
+        const selectedVoice = window.speechSynthesis.getVoices().find(v => v.name === selectedVoiceName);
+        if (selectedVoice) { utterance.voice = selectedVoice; }
+        
+        window.speechSynthesis.speak(utterance);
+    } else {
+        showAlert("ניגון קולי לא נתמך", "נראה שהדפדפן אינו תומך בניגון קולי מובנה.");
+    }
+
+    // 3. מציג גם את הטקסט במודאל
+    showAlert('ברכת המזון', brachaHTML, true, { text: brachaCleanText, lang: 'he-IL' });
 });
 
     console.log("LOG: DOMContentLoaded event fired. Initializing app.");
