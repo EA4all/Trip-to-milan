@@ -2640,9 +2640,8 @@ async function startCamera() {
                         target: videoContainer,
                         constraints: { facingMode: "environment" }
                     },
-                    decoder: {
-                        readers: ["ean_reader", "upc_reader"]
-                    }
+decoder: { readers: ["ean_reader", "upc_reader", "code_128_reader", "qr_reader"] }
+
                 }, (err) => {
                     if (err) { 
                         console.error("QuaggaJS Init Error:", err); 
@@ -3505,16 +3504,24 @@ document.addEventListener('DOMContentLoaded', () => {
   
 // קטע מתוך ה-INIT
 $('#birkat-hamazon-btn')?.addEventListener('click', () => {
+    // מנגן קובץ MP3 מקומי
+    if (window.activeAudio) {
+        window.activeAudio.pause();
+        window.activeAudio.currentTime = 0;
+    }
+    window.activeAudio = new Audio("birkat-hamazon.mp3");
+    window.activeAudio.play().catch(err => {
+        console.error("שגיאה בהפעלת האודיו:", err);
+        showAlert("שגיאה בהשמעה", "לא הצלחנו לנגן את קובץ ברכת המזון");
+    });
+
+    // מציג גם את הטקסט במודאל
     const brachaHTML = hebrewPrayers.birkatHaMazon;
-    
-    // חילוץ טקסט נקי
-    const parser = new DOMParser();
-    const doc = parser.parseFromString(brachaHTML, 'text/html');
-    const brachaCleanText = doc.body.textContent.replace(/[\n\r]/g, ' ').trim(); 
-    
-    // קריאה לפונקציה חדשה שתחליט כיצד לנגן:
-    window.speakTextSmartly(brachaCleanText, brachaHTML, 'ברכת המזון (עדות המזרח)');
+    document.getElementById("alert-modal-title").textContent = "ברכת המזון";
+    document.getElementById("alert-modal-body").innerHTML = brachaHTML;
+    document.getElementById("alert-modal").classList.add("flex");
 });
+
     console.log("LOG: DOMContentLoaded event fired. Initializing app.");
      // --- מאזיני כפתורים יהודיים חדשים ---
    $('#tefilat-haderech-btn')?.addEventListener('click', () => {
@@ -4001,13 +4008,15 @@ document.getElementById("birkat-hamazon-btn").addEventListener("click", () => {
   // מציג גם טקסט במודאל
   document.getElementById("alert-modal-title").textContent = "ברכת המזון";
   document.getElementById("alert-modal-body").textContent = "כאן יבוא טקסט ברכת המזון...";
-  document.getElementById("alert-modal").style.display = "flex";
+  document.getElementById("alert-modal").classList.add("flex");
+
 });
 
 // --- מצלמה לברקוד ---
 const cameraModal = document.getElementById("camera-modal");
 document.getElementById("scan-kosher-barcode-btn").addEventListener("click", async () => {
-  cameraModal.style.display = "flex";
+ cameraModal.classList.add("flex");
+
   try {
     const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
     const video = document.getElementById("camera-feed");
@@ -4021,7 +4030,7 @@ document.getElementById("scan-kosher-barcode-btn").addEventListener("click", asy
 
 // סגירת מצלמה
 document.getElementById("camera-close-btn").addEventListener("click", () => {
-  cameraModal.style.display = "none";
+  cameraModal.classList.remove("flex");
   if (activeVideoTrack) {
     activeVideoTrack.stop();
     activeVideoTrack = null;
