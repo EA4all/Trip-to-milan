@@ -2736,6 +2736,7 @@ function stopCamera() {
 }
 
     // ודא שהקוד שלך נראה כך
+// מצא את function captureFrame() והחלף אותה
 function captureFrame() {
     console.log(`LOG: Capturing frame for mode: ${cameraMode}`);
     const video = $('#camera-feed');
@@ -2749,7 +2750,12 @@ function captureFrame() {
     const dataUrl = canvas.toDataURL('image/jpeg');
     const base64ImageData = dataUrl.split(',')[1];
 
-    stopCamera();
+    // אם אנחנו במצב ברקוד/קבלה/זיהוי - אנחנו רוצים לסגור את המצלמה אחרי הצילום
+    if (cameraMode !== 'translate') {
+        stopCamera();
+    }
+    // הערה: אם נשאר רק 'translate', המשתמש יכול לצלם תמונה אחר תמונה בלי לפתוח מחדש.
+    // אם מצלמים תרגום, לא צריך לסגור אוטומטית.
 
     // *** זה הקטע הקריטי שמפריד בין המצבים:
     if (cameraMode === 'translate') {
@@ -2761,7 +2767,6 @@ function captureFrame() {
     } 
     // ***
 }
-
 // שינוי בפונקציה processReceiptImage
 async function processReceiptImage(base64ImageData) {
     showAlert('מעבד קבלה...', '<div class="text-center"><i class="fa-solid fa-spinner fa-spin fa-2x"></i><p class="mt-2">קורא את הפרטים מהקבלה בעזרת AI ומסווג את ההוצאה...</p></div>');
@@ -2952,6 +2957,7 @@ async function speakText(text) {
 window.speakText = speakText;
 const TTS_CHARACTER_LIMIT = 4800; 
 
+// החלף את כל הקוד בתוך speakTextLocally
 function speakTextLocally(text, title) {
     if ('speechSynthesis' in window) {
         
@@ -2962,32 +2968,52 @@ function speakTextLocally(text, title) {
         }
         
         const utterance = new SpeechSynthesisUtterance(text);
-        const hebrewVoice = window.speechSynthesis.getVoices().find(v => v.lang === 'he-IL' || v.lang === 'he');
-        if (hebrewVoice) {
-            utterance.voice = hebrewVoice;
+        
+        // **ייזום קולות:** חובה לטעון קולות לפני שימוש, לפעמים זה נכשל
+        const loadAndSetVoice = () => {
+             const voices = window.speechSynthesis.getVoices();
+             const selectedVoiceName = document.getElementById("global-voice-select")?.value;
+             const hebrewVoice = voices.find(v => v.name === selectedVoiceName) || voices.find(v => v.lang.startsWith('he'));
+
+             if (hebrewVoice) {
+                 utterance.voice = hebrewVoice;
+             }
+        };
+        
+        // נסה לטעון קולות באופן מיידי. אם לא הצליח, הוסף מאזין.
+        loadAndSetVoice();
+        if(window.speechSynthesis.onvoiceschanged) {
+             window.speechSynthesis.onvoiceschanged = loadAndSetVoice;
         }
+
 
         // 2. הפעלת הניגון המקומי
         window.speechSynthesis.speak(utterance);
         
-        // 3. טיפול בסיום (מבטיח שהכפתורים יתאפסו לאחר סיום הדיבור)
-    utterance.onerror = (event) => {
-            console.error("Local TTS Error:", event);
-            // אם הניגון נכשל, נציג הודעה עם כפתור לניסיון חוזר
-            showAlert("שגיאה בניגון מקומי", "לא הצלחנו להשמיע את הטקסט הארוך. ייתכן שיש צורך לאשר הרשאת דיבור במכשיר.", true);
-        };
-        
-        // **הגדרת שגיאה:** אם הניגון נכשל מסיבת הרשאה, זה יטופל כאן
+        // 3. טיפול בכשל
         utterance.onerror = (event) => {
-            console.error("Local TTS Error:", event);
+            console.error("Local TTS Error:", event.error, event);
+            // מציג שגיאה אבל לא מונע פתיחת המודאל
             showAlert("שגיאה בניגון מקומי", "לא הצלחנו להשמיע את הטקסט הארוך. ייתכן שיש צורך לאשר הרשאת דיבור במכשיר.", true);
         };
 
     } else {
-        // ... (הודעת שגיאה)
+        // Fallback קריטי
+        showAlert("ניגון קולי לא נתמך", "הדפדפן שלך אינו תומך בניגון קולי מובנה.");
     }
 }
 window.speakTextLocally = speakTextLocally; 
+
+    function stopCamera() {
+    console.log("LOG: stopCamera called.");
+    // בדיקה נוספת למניעת שגיאות אם cameraStream הוא null
+    if (cameraStream) { 
+        cameraStream.getTracks().forEach(track => track.stop());
+    }
+    cameraStream = null; // איפוס מלא של הזרם
+    activeVideoTrack = null; // Clear the stored track
+    $('#camera-modal').classList.remove('flex');
+}
 
 async function speakTextSmartly(cleanText, htmlMessage, title) {
     if (cleanText.length > TTS_CHARACTER_LIMIT) {
