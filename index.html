@@ -2559,60 +2559,57 @@ async function startCamera() {
     // קובעים את הכותרת לפני הפתיחה
     $('#camera-title').textContent = titles[cameraMode] || "מצלמה";
 
-    // הסתר את כפתור הסטטוס של הברקוד
+    // הסתר או הצג את כפתור הסטטוס של הברקוד
     const barcodeStatusDisplay = $('#barcode-status-display');
     if (barcodeStatusDisplay) barcodeStatusDisplay.style.display = (cameraMode === 'barcode' ? 'flex' : 'none');
     if (barcodeStatusDisplay) barcodeStatusDisplay.innerHTML = '🔍 טוען מצלמה...';
 
     if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
         try {
-            // 1. נסה להפעיל את המצלמה
+            // 1. נסה להפעיל את המצלמה: משתמשים בהגדרת ברירת מחדל פשוטה למניעת בעיות גודל
             cameraStream = await navigator.mediaDevices.getUserMedia({ 
-        video: { 
-         facingMode: 'environment',
-        width: { ideal: 1280 }, // רזולוציה מועדפת
-        height: { ideal: 720 }
-    } 
-});
+                video: { 
+                    facingMode: 'environment' // משתמשים בהגדרת ברירת המחדל ליציבות
+                } 
+            });
             video.srcObject = cameraStream;
             await video.play();
 
             activeVideoTrack = cameraStream.getVideoTracks()[0];
             
-            // **תיקון קריטי לבעיית כפתורים/יכולות חסרות:**
+            // **תיקון קריטי לבעיות יציבות וכפתורים:**
             // נכריח את ה-Track להכיר את יכולותיו (Apply Constraints)
             activeVideoTrack.applyConstraints({
                 advanced: [{ 
                     focusMode: 'continuous', // נסה פוקוס רציף
-                    zoom: activeVideoTrack.getCapabilities().zoom?.max ? activeVideoTrack.getCapabilities().zoom.max / 4 : undefined, // סט זום התחלתי
+                    // הסרנו את הגדרת ה-width/height/zoom הקשיחה כדי למנוע שבירת תצוגה
                 }]
-            }).catch(e => console.warn("WARN: Failed to set advanced camera constraints:", e)); // אם נכשל - לא שובר את הקוד
+            }).catch(e => console.warn("WARN: Failed to set advanced camera constraints:", e)); 
 
             // 2. ניהול כפתורי פנס וצילום
             const capabilities = activeVideoTrack.getCapabilities();
             
-            // בדיקת פנס: אם ה-Track מדווח על יכולת פנס
+            // בדיקת פנס
             if (capabilities.torch) {
                 torchBtn.style.display = 'flex';
-                // אם כפתור הפנס קיים, נפנה את כפתור הצילום למרכז אם הוא לא בשימוש
                 if (cameraMode !== 'barcode') {
                      captureBtn.classList.remove('mx-auto');
                 }
             } else {
                 torchBtn.style.display = 'none';
-                captureBtn.classList.add('mx-auto'); // מרכז את כפתור הצילום אם אין פנס
+                captureBtn.classList.add('mx-auto');
             }
 
             // 3. הצגת המודל
             $('#camera-modal').classList.add('flex');
 
-            // 4. לוגיקה ספציפית למצב 'barcode' (בתוך בלוק ה-try)
+            // 4. לוגיקה ספציפית למצב 'barcode' 
             if (cameraMode === 'barcode') {
                 captureBtn.style.display = 'flex'; 
                 captureBtn.onclick = () => {
                     // לפני הצילום, נעצור את QuaggaJS אם פועל
                     try { if (window.Quagga && Quagga.running) window.Quagga.stop(); } catch (e) { } 
-                    cameraMode = 'lookup';
+                    cameraMode = 'lookup'; // משנה את המצב לזיהוי אובייקט לצילום
                     captureFrame(); 
                 }; 
                 
@@ -2639,7 +2636,7 @@ async function startCamera() {
                     window.Quagga.start();
                 });
                 
-                // הוספת לוגיקה לעדכון הסטטוס החזותי של הסריקה
+                // לוגיקה לעדכון הסטטוס החזותי של הסריקה
                 window.Quagga.onProcessed(function(result) {
                     const statusEl = $('#barcode-status-display');
                     if (result && result.codeResult && statusEl) {
@@ -2668,15 +2665,17 @@ async function startCamera() {
             }
 
         } catch (err) {
-            // אם המצלמה נכשלה להיפתח (Permission Denied או Not Found), הודע למשתמש
+            // אם המצלמה נכשלה להיפתח, הודע למשתמש
             console.error("ERROR: Error accessing camera: ", err);
             showAlert("שגיאת מצלמה", `לא ניתן לגשת למצלמה. ודא שאישרת גישה ושאפליקציות אחרות לא משתמשות בה. (${err.name})`);
-            stopCamera(); // ודא שהמודל נסגר אם יש שגיאה
+            stopCamera(); 
+            cameraMode = 'translate'; // איפוס למצב ברירת מחדל במקרה של כשל קריטי
         }
     } else {
         showAlert("מצלמה לא נתמכת", "הדפדפן שלך לא תומך בגישה למצלמה.");
     }
 }
+window.startCamera = startCamera;
 // ========================= התחלה: קוד מתוקן ומשופר להפעלת הפנס =========================
 async function toggleTorch() {
     const torchBtn = $('#torch-btn');
@@ -2943,40 +2942,37 @@ function speakTextLocally(text, title) {
         
         // 1. ניקוי נגן קיים
         if (window.activeAudio) { window.activeAudio.pause(); window.activeAudio = null; }
-        if (window.speechSynthesis.speaking) { window.speechSynthesis.cancel(); }
+        if (window.speechSynthesis.speaking || window.speechSynthesis.pending || window.speechSynthesis.paused) { 
+             window.speechSynthesis.cancel(); 
+        }
         
-        // 2. יצירת ה-Utterance (משפט לדיבור)
         const utterance = new SpeechSynthesisUtterance(text);
         const hebrewVoice = window.speechSynthesis.getVoices().find(v => v.lang === 'he-IL' || v.lang === 'he');
         if (hebrewVoice) {
             utterance.voice = hebrewVoice;
         }
-        
-        // **תיקון קריטי:** ה-utterance הוא כעת הנגן הפעיל שלנו
-        window.activeLocalUtterance = utterance; // משתנה גלובלי חדש לנגן המקומי
-        window.activeAudio = { paused: false }; // סימון כדי שהלוגיקה ב-showAlert תדע שיש ניגון פעיל
 
-        // 3. הפעלת הנגן המקומי
+        // 2. הפעלת הניגון המקומי
         window.speechSynthesis.speak(utterance);
         
-        // 4. טיפול בסיום (מאפס את כפתורי המודל)
+        // 3. טיפול בסיום (מבטיח שהכפתורים יתאפסו לאחר סיום הדיבור)
         utterance.onend = () => {
-            window.activeLocalUtterance = null;
-            window.activeAudio = null;
-            const playPauseBtn = document.getElementById('alert-modal-play-pause-btn');
-            if(playPauseBtn) playPauseBtn.innerHTML = '<i class="fa-solid fa-play mr-1"></i> הפעל';
-            const stopBtn = document.getElementById('alert-modal-stop-btn');
-            if(stopBtn) stopBtn.style.display = 'none';
+             // שיטה ישירה לאיפוס המודל לאחר סיום הניגון המקומי
+             const stopBtn = document.getElementById('alert-modal-stop-btn');
+             if(stopBtn) stopBtn.click(); // שימוש בכפתור Stop כדי לאפס את המודל
+        };
+        
+        // **הגדרת שגיאה:** אם הניגון נכשל מסיבת הרשאה, זה יטופל כאן
+        utterance.onerror = (event) => {
+            console.error("Local TTS Error:", event);
+            showAlert("שגיאה בניגון מקומי", "לא הצלחנו להשמיע את הטקסט הארוך. ייתכן שיש צורך לאשר הרשאת דיבור במכשיר.", true);
         };
 
     } else {
-        showAlert(title, "שגיאה: ניגון קולי מקומי אינו נתמך בדפדפן זה.", true);
+        // ... (הודעת שגיאה)
     }
 }
 window.speakTextLocally = speakTextLocally; 
-window.activeLocalUtterance = null; // **חובה** להוסיף את ההגדרה הגלובלית הזו איפשהו ב-JS (במקום בו מוגדר activeAudio)
-
-
 
 async function speakTextSmartly(cleanText, htmlMessage, title) {
     if (cleanText.length > TTS_CHARACTER_LIMIT) {
