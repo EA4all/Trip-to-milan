@@ -3960,6 +3960,73 @@ $('#birkat-hamazon-btn')?.addEventListener('click', () => {
     }
     
   }); // <--- הסוגר הסופי של document.addEventListener('DOMContentLoaded')
+//------------
+    //------------
+    //------------
+    //------------
+    //------------
+  // --- בקרת אודיו ---
+function playAudio(src) {
+  if (activeAudio) {
+    activeAudio.pause();
+    activeAudio.currentTime = 0;
+  }
+  activeAudio = new Audio(src);
+  activeAudio.play().catch(err => {
+    console.error("שגיאה בהפעלת האודיו:", err);
+  });
+}
+
+function pauseAudio() {
+  if (activeAudio) {
+    if (activeAudio.paused) {
+      activeAudio.play();
+    } else {
+      activeAudio.pause();
+    }
+  }
+}
+
+function stopAudio() {
+  if (activeAudio) {
+    activeAudio.pause();
+    activeAudio.currentTime = 0;
+  }
+}
+
+// --- ברכת המזון ---
+document.getElementById("birkat-hamazon-btn").addEventListener("click", () => {
+  playAudio("birkat-hamazon.mp3"); // וודא שהקובץ קיים ליד index.html
+
+  // מציג גם טקסט במודאל
+  document.getElementById("alert-modal-title").textContent = "ברכת המזון";
+  document.getElementById("alert-modal-body").textContent = "כאן יבוא טקסט ברכת המזון...";
+  document.getElementById("alert-modal").style.display = "flex";
+});
+
+// --- מצלמה לברקוד ---
+const cameraModal = document.getElementById("camera-modal");
+document.getElementById("scan-kosher-barcode-btn").addEventListener("click", async () => {
+  cameraModal.style.display = "flex";
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
+    const video = document.getElementById("camera-feed");
+    video.srcObject = stream;
+    activeVideoTrack = stream.getTracks()[0];
+  } catch (err) {
+    console.error("שגיאה בהפעלת מצלמה:", err);
+    document.getElementById("barcode-status-display").textContent = "לא הצלחנו להפעיל מצלמה";
+  }
+});
+
+// סגירת מצלמה
+document.getElementById("camera-close-btn").addEventListener("click", () => {
+  cameraModal.style.display = "none";
+  if (activeVideoTrack) {
+    activeVideoTrack.stop();
+    activeVideoTrack = null;
+  }
+});
 
   </script>
 
