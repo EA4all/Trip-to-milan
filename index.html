@@ -2566,7 +2566,16 @@ async function startCamera() {
 
     if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
         try {
-            // 1. נסה להפעיל את המצלמה: משתמשים בהגדרת ברירת מחדל פשוטה למניעת בעיות גודל
+            // **תיקון קריטי לבעיית חוסר יציבות (Hard Stop)**
+            // 1. נסגור כל Track פתוח שעדיין מחזיק את המצלמה
+            if (cameraStream) {
+                cameraStream.getTracks().forEach(track => {
+                    track.stop();
+                });
+                cameraStream = null;
+            }
+            
+            // 2. נסה להפעיל את המצלמה: (הגדרת ברירת המחדל היציבה ביותר)
             cameraStream = await navigator.mediaDevices.getUserMedia({ 
                 video: { 
                     facingMode: 'environment' // משתמשים בהגדרת ברירת המחדל ליציבות
@@ -2582,11 +2591,19 @@ async function startCamera() {
             activeVideoTrack.applyConstraints({
                 advanced: [{ 
                     focusMode: 'continuous', // נסה פוקוס רציף
-                    // הסרנו את הגדרת ה-width/height/zoom הקשיחה כדי למנוע שבירת תצוגה
                 }]
-            }).catch(e => console.warn("WARN: Failed to set advanced camera constraints:", e)); 
+            }).catch(e => console.warn("WARN: Failed to set initial camera constraints:", e)); 
+            
+            // **נקודת המפתח לתיקון "כפתורים חסרים"**
+            // נכריח את הדפדפן לסיים את היישום לפני בדיקת היכולות
+            try {
+                // שלב 1: ודא שהאילוצים האחרונים מיושמים בהצלחה
+                await activeVideoTrack.applyConstraints({});
+            } catch (error) {
+                console.warn("WARN: Re-applying constraints failed, proceeding with current track state.", error);
+            }
 
-            // 2. ניהול כפתורי פנס וצילום
+            // 3. ניהול כפתורי פנס וצילום
             const capabilities = activeVideoTrack.getCapabilities();
             
             // בדיקת פנס
@@ -2600,10 +2617,10 @@ async function startCamera() {
                 captureBtn.classList.add('mx-auto');
             }
 
-            // 3. הצגת המודל
+            // 4. הצגת המודל
             $('#camera-modal').classList.add('flex');
 
-            // 4. לוגיקה ספציפית למצב 'barcode' 
+            // 5. לוגיקה ספציפית למצב 'barcode' 
             if (cameraMode === 'barcode') {
                 captureBtn.style.display = 'flex'; 
                 captureBtn.onclick = () => {
@@ -2956,10 +2973,11 @@ function speakTextLocally(text, title) {
         window.speechSynthesis.speak(utterance);
         
         // 3. טיפול בסיום (מבטיח שהכפתורים יתאפסו לאחר סיום הדיבור)
-        utterance.onend = () => {
-             // שיטה ישירה לאיפוס המודל לאחר סיום הניגון המקומי
-             const stopBtn = document.getElementById('alert-modal-stop-btn');
-             if(stopBtn) stopBtn.click(); // שימוש בכפתור Stop כדי לאפס את המודל
+    utterance.onerror = (event) => {
+            console.error("Local TTS Error:", event);
+            // אם הניגון נכשל, נציג הודעה עם כפתור לניסיון חוזר
+            const errorMsg = "לא הצלחנו להשמיע את הטקסט הארוך. ייתכן שיש צורך לאשר הרשאת דיבור במכשיר.";
+            showAlert("שגיאה בניגון מקומי", errorMsg, true);
         };
         
         // **הגדרת שגיאה:** אם הניגון נכשל מסיבת הרשאה, זה יטופל כאן
