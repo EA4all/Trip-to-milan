@@ -2546,150 +2546,187 @@ window.findNearbyAttractions = findNearbyAttractions;
 // --- החלפת הפונקציה startCamera הקיימת בקוד המתוקן ---
 // --- החלפת הפונקציה startCamera הקיימת בקוד המתוקן ---
 // --- החלפת הפונקציה startCamera הקיימת בקוד המתוקן ---
+// --- החלפה מלאה של startCamera ---
 async function startCamera() {
     console.log("LOG: startCamera called for mode: " + cameraMode);
     const video = $('#camera-feed');
-    // הוספת 'barcode' לרשימת הכותרות
+    const modal = $('#camera-modal');
     const titles = { translate: "תרגם מתמונה", receipt: "סרוק קבלה", lookup: "זיהוי אובייקט", barcode: "סריקת ברקוד" }; 
     const torchBtn = $('#torch-btn');
     const captureBtn = $('#capture-btn');
+    const uploadBtn = $('#upload-receipt-btn');
+    const zoomInBtn = $('#zoom-in-btn');
+    const zoomOutBtn = $('#zoom-out-btn');
+    const barcodeStatusDisplay = $('#barcode-status-display');
+    const zoomLevelDisplay = $('#zoom-level');
 
-    // **תיקון קריטי 1: עצירת כל זרם קיים לפני הכל**
-    try { 
-        if (window.Quagga && Quagga.running) window.Quagga.stop(); 
-    } catch (e) { } 
+    // עצירת כל מה שהיה פתוח קודם
+    try { if (window.Quagga && window.Quagga.running) window.Quagga.stop(); } catch(e){ console.warn('Quagga stop failed', e); }
     if (cameraStream) {
-        cameraStream.getTracks().forEach(track => track.stop());
+        cameraStream.getTracks().forEach(t => t.stop());
         cameraStream = null;
+        activeVideoTrack = null;
     }
-    // סוף תיקון 1
+    // איפוס סטטוס ברקוד
+    if (barcodeStatusDisplay) { barcodeStatusDisplay.style.display = 'none'; barcodeStatusDisplay.textContent = 'המתן להפעלת המצלמה...'; }
 
-    // קובעים את הכותרת לפני הפתיחה
+    // תצוגת המודל
+    if (modal) modal.classList.add('flex');
+
+    // עדכון כותרת
     $('#camera-title').textContent = titles[cameraMode] || "מצלמה";
 
-    // הסתר או הצג את כפתור הסטטוס של הברקוד
-    const barcodeStatusDisplay = $('#barcode-status-display');
-    if (barcodeStatusDisplay) barcodeStatusDisplay.style.display = (cameraMode === 'barcode' ? 'flex' : 'none');
-    if (barcodeStatusDisplay) barcodeStatusDisplay.innerHTML = '🔍 טוען מצלמה...';
+    // ודא שכל הכפתורים גלויים כברירת מחדל (במקרים מסוימים CSS היה מסתיר אותם)
+    [torchBtn, captureBtn, uploadBtn, zoomInBtn, zoomOutBtn].forEach(el => { if (el) el.style.display = 'flex'; });
 
+    // ברירת מחדל: הצגת כפתורי צילום/פנס, למעט במצב ברקוד שבו נסתיר את כפתור ה"צלם" (לא חובה)
+    if (cameraMode === 'barcode') {
+        // במצב ברקוד נרצה בעיקר את סטטוס הברקוד ותצוגת המצלמה; הכפתור לצילום יכול להישאר גלוי אם תרצה
+        if (captureBtn) captureBtn.style.display = 'none';
+        if (barcodeStatusDisplay) barcodeStatusDisplay.style.display = 'flex';
+    } else if (cameraMode === 'translate') {
+        // מצב תרגום — אפשר לצלם כמה תמונות רצופות
+        if (captureBtn) { captureBtn.style.display = 'flex'; captureBtn.onclick = captureFrame; }
+    } else {
+        // מצבי receipt / lookup — מצלמים פעם אחת ואז סוגרים
+        if (captureBtn) { captureBtn.style.display = 'flex'; captureBtn.onclick = captureFrame; }
+    }
+
+    // ניסיון לפתוח את המצלמה
     if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
         try {
-            
-            // 2. נסה להפעיל את המצלמה: (הגדרת ברירת המחדל היציבה ביותר)
-            cameraStream = await navigator.mediaDevices.getUserMedia({ 
-                video: { 
-                    facingMode: 'environment' // משתמשים בהגדרת ברירת המחדל ליציבות
-                } 
+            cameraStream = await navigator.mediaDevices.getUserMedia({
+                video: { facingMode: { ideal: 'environment' } },
+                audio: false
             });
             video.srcObject = cameraStream;
             await video.play();
 
+            // עדכון ה-activeVideoTrack (לשימוש בפנס)
             activeVideoTrack = cameraStream.getVideoTracks()[0];
-            
-            // נכריח את ה-Track להכיר את יכולותיו (Apply Constraints)
-            activeVideoTrack.applyConstraints({
-                advanced: [{ 
-                    focusMode: 'continuous', // נסה פוקוס רציף
-                }]
-            }).catch(e => console.warn("WARN: Failed to set initial camera constraints:", e)); 
-            
-            try {
-                await activeVideoTrack.applyConstraints({});
-            } catch (error) {
-                console.warn("WARN: Re-applying constraints failed, proceeding with current track state.", error);
+
+            // עדכון זום ברירת מחדל אם יש אפשרות
+            if (zoomLevelDisplay) zoomLevelDisplay.textContent = '1.0x';
+
+            // תיפעול פנס בהתאם ליכולות המכשיר
+            if (torchBtn) {
+                // בדיקה מהירה אם ניתן להפעיל פנס
+                try {
+                    const caps = activeVideoTrack && typeof activeVideoTrack.getCapabilities === 'function' ? activeVideoTrack.getCapabilities() : {};
+                    if (!caps || !caps.torch) {
+                        // אם אין תמיכה, עדיין נציג את הכפתור אך נעשה לו disabled ו-tooltip
+                        torchBtn.disabled = true;
+                        torchBtn.title = 'הפנס לא נתמך במכשיר זה';
+                        torchBtn.classList.remove('text-yellow-400');
+                    } else {
+                        torchBtn.disabled = false;
+                        torchBtn.title = 'הפעל/כבה פנס';
+                        // bind already-existing toggleTorch
+                        torchBtn.onclick = toggleTorch;
+                    }
+                } catch (e) {
+                    console.warn('Torch capability check failed', e);
+                    torchBtn.disabled = true;
+                }
             }
 
-            // 3. ניהול כפתורי פנס וצילום
-            const capabilities = activeVideoTrack.getCapabilities();
-            
-            // בדיקת פנס
-            if (capabilities.torch) {
-                torchBtn.style.display = 'flex';
-                if (cameraMode !== 'barcode') {
-                     captureBtn.classList.remove('mx-auto');
+            // אם מצב ברקוד — אתחל ופקח על Quagga
+            if (cameraMode === 'barcode') {
+                try {
+                    // הבטחה שעצרנו כל Quagga קודם
+                    if (window.Quagga && window.Quagga.running) {
+                        window.Quagga.stop();
+                    }
+
+                    // אתחול Quagga עם LiveStream לוידאו הנוכחי
+                    window.Quagga.init({
+                        inputStream: {
+                            type: "LiveStream",
+                            target: video,        // ישלח את הוידאו ישירות לאלמנט
+                            constraints: { facingMode: "environment" }
+                        },
+                        locator: { patchSize: "medium", halfSample: true },
+                        numOfWorkers: navigator.hardwareConcurrency ? Math.max(1, Math.floor(navigator.hardwareConcurrency/2)) : 2,
+                        decoder: {
+                            readers: ["ean_reader","ean_8_reader","code_128_reader","upc_reader","upc_e_reader"]
+                        },
+                        locate: true
+                    }, function(err) {
+                        if (err) {
+                            console.error("Quagga init error:", err);
+                            if (barcodeStatusDisplay) {
+                                barcodeStatusDisplay.innerHTML = `❌ שגיאה בהרצת סורק הברקוד: ${err.message || err}`;
+                                barcodeStatusDisplay.classList.remove('text-green-500');
+                                barcodeStatusDisplay.classList.add('text-red-500');
+                            }
+                            return;
+                        }
+                        try {
+                            window.Quagga.start();
+                            window.Quagga.running = true;
+                            if (barcodeStatusDisplay) {
+                                barcodeStatusDisplay.innerHTML = '🔍 מכוון...';
+                                barcodeStatusDisplay.classList.remove('text-red-500');
+                                barcodeStatusDisplay.classList.add('text-yellow-500');
+                            }
+                        } catch (e) {
+                            console.error("Quagga start failed:", e);
+                        }
+                    });
+
+                    // נווטו על אירועים
+                    window.Quagga.onProcessed(function(result) {
+                        const statusEl = $('#barcode-status-display');
+                        if (!statusEl) return;
+                        if (result && result.codeResult) {
+                            // מצב טוב
+                            statusEl.innerHTML = `✅ מוכן לזיהוי`;
+                            statusEl.classList.remove('text-red-500');
+                            statusEl.classList.add('text-green-500');
+                        } else {
+                            statusEl.innerHTML = '🔍 מכוון.';
+                            statusEl.classList.remove('text-green-500');
+                            statusEl.classList.add('text-red-500');
+                        }
+                    });
+
+                    window.Quagga.onDetected(function(result) {
+                        if (!result || !result.codeResult) return;
+                        lastScannedBarcode = result.codeResult.code;
+                        console.log("LOG: Barcode detected:", lastScannedBarcode);
+                        // עצור את הסורק והמצלמה (ניתן לשנות את ההתנהגות)
+                        try { window.Quagga.stop(); window.Quagga.running = false; } catch(e){}
+                        stopCamera();
+                        checkKosherStatus(lastScannedBarcode);
+                    });
+
+                } catch (e) {
+                    console.error("Barcode mode error:", e);
+                    if (barcodeStatusDisplay) {
+                        barcodeStatusDisplay.innerHTML = '❌ שגיאה בהפעלת סורק הברקוד.';
+                        barcodeStatusDisplay.classList.add('text-red-500');
+                    }
                 }
             } else {
-                torchBtn.style.display = 'none';
-                captureBtn.classList.add('mx-auto');
-            }
-
-            // 4. הצגת המודל
-            $('#camera-modal').classList.add('flex');
-
-            // 5. לוגיקה ספציפית למצב 'barcode' 
-            if (cameraMode === 'barcode') {
-                captureBtn.style.display = 'flex'; 
-                captureBtn.onclick = () => {
-                    // לפני הצילום, נעצור את QuaggaJS אם פועל
-                    try { if (window.Quagga && Quagga.running) window.Quagga.stop(); } catch (e) { } 
-                    cameraMode = 'lookup'; // משנה את המצב לזיהוי אובייקט לצילום
-                    captureFrame(); 
-                }; 
-                
-                // ודא שהאזור של ה-QuaggaJS נראה בתוך המודל
-                const videoContainer = $('#camera-feed').closest('.p-4.flex-grow.relative');
-                if (videoContainer) videoContainer.id = 'interactive-barcode-area';
-                // **תיקון קריטי 2: הסרנו את stopCamera() מ-Quagga init**
-                window.Quagga.init({
-                    inputStream: {
-                        type: "LiveStream",
-                        target: videoContainer,
-                        constraints: { facingMode: "environment" }
-                    },
-decoder: { readers: ["ean_reader", "upc_reader", "code_128_reader", "qr_reader"] }
-
-                }, (err) => {
-                    if (err) { 
-                        console.error("QuaggaJS Init Error:", err); 
-                        // אם נכשל, נשאר על המצלמה הפתוחה
-                        document.getElementById("barcode-status-display").textContent = "❌ שגיאה: סורק הברקוד נכשל. נסה לצלם תמונה.";
-                        document.getElementById("barcode-status-display").classList.remove('text-yellow-500');
-                        document.getElementById("barcode-status-display").classList.add('text-red-500');
-                        return; // לא סוגרים את המצלמה!
-                    }
-                    window.Quagga.start();
-                });
-                
-                // ... (שאר הלוגיקה של Quagga: onProcessed ו-onDetected)
-                window.Quagga.onProcessed(function(result) {
-                    const statusEl = $('#barcode-status-display');
-                    if (result && result.codeResult && statusEl) {
-                        lastScannedBarcode = result.codeResult.code;
-                        statusEl.innerHTML = `✅ זוהה ברקוד: <strong>${lastScannedBarcode}</strong>`;
-                        statusEl.classList.remove('text-red-500');
-                        statusEl.classList.add('text-green-500');
-                    } else if (statusEl) {
-                        statusEl.innerHTML = '🔍 מכוון...';
-                        statusEl.classList.remove('text-green-500');
-                        statusEl.classList.add('text-red-500');
-                    }
-                });
-
-                window.Quagga.onDetected((result) => {
-                    window.Quagga.stop();
-                    lastScannedBarcode = result.codeResult.code; 
-                    stopCamera();
-                    checkKosherStatus(lastScannedBarcode);
-                });
-                
-            } else {
-                // **הצגת כפתור הצילום למצבי תמונה**
-                captureBtn.style.display = 'flex'; 
-                captureBtn.onclick = captureFrame; 
+                // מצבים אחרים — דאגו ש־captureBtn יהיה bound
+                if (captureBtn) {
+                    captureBtn.onclick = captureFrame;
+                    captureBtn.style.display = 'flex';
+                }
             }
 
         } catch (err) {
-            // אם המצלמה נכשלה להיפתח, הודע למשתמש
             console.error("ERROR: Error accessing camera: ", err);
-            showAlert("שגיאת מצלמה", `לא ניתן לגשת למצלמה. ודא שאישרת גישה ושאפליקציות אחרות לא משתמשות בה. (${err.name})`);
-            stopCamera(); 
-            cameraMode = 'translate'; // איפוס למצב ברירת מחדל במקרה של כשל קריטי
+            showAlert("שגיאת מצלמה", `לא ניתן לגשת למצלמה. ודא שאישרת גישה ושאפליקציות אחרות לא משתמשות בה. (${err.name || err})`);
+            stopCamera();
+            cameraMode = 'translate';
         }
     } else {
         showAlert("מצלמה לא נתמכת", "הדפדפן שלך לא תומך בגישה למצלמה.");
     }
 }
 window.startCamera = startCamera;
+
 
 // ========================= התחלה: קוד מתוקן ומשופר להפעלת הפנס =========================
 async function toggleTorch() {
@@ -3522,21 +3559,79 @@ document.addEventListener('DOMContentLoaded', () => {
 // קטע מתוך ה-INIT
 // קטע מתוך ה-INIT (החלפה לניגון SpeechSynthesis פשוט)
 // קטע מתוך ה-INIT (תיקון סופי לברכת המזון)
+// --- מאזין מעודכן לברכת המזון - משחק תמיד דרך speechSynthesis מקומי ---
 $('#birkat-hamazon-btn')?.addEventListener('click', () => {
-    // 1. מנקה את ה-activeAudio גלובלי (אם יש)
-    if (window.activeAudio) {
-        window.activeAudio.pause();
-        window.activeAudio = null;
-    }
-    
-    // 2. מנקה את הטקסט מה-HTML המעוצב לטובת ניגון
-    const brachaHTML = hebrewPrayers.birkatHaMazon;
-    const brachaTempDiv = document.createElement('div');
-    brachaTempDiv.innerHTML = brachaHTML;
-    const brachaCleanText = brachaTempDiv.textContent.replace(/\n/g, ' ').replace(/\s+/g, ' ').trim(); 
+    // עצור כל ניגון קיים
+    try { if (window.activeAudio) { window.activeAudio.pause(); window.activeAudio = null; } } catch(e){}
+    try { if ('speechSynthesis' in window) window.speechSynthesis.cancel(); } catch(e){}
 
-    // 3. משתמש ב-speakTextSmartly (היא תפעיל SpeechSynthesis מקומי כי הטקסט ארוך)
-    window.speakTextSmartly(brachaCleanText, brachaHTML, 'ברכת המזון');
+    const brachaHTML = hebrewPrayers.birkatHaMazon || '<div>טקסט הברכה לא זמין</div>';
+    const tmp = document.createElement('div');
+    tmp.innerHTML = brachaHTML;
+    const brachaCleanText = (tmp.textContent || tmp.innerText || '').replace(/\n/g, ' ').replace(/\s+/g, ' ').trim();
+
+    // אם אין טקסט להקריא — פשוט הצג את ה־HTML
+    if (!brachaCleanText) {
+        showAlert('ברכת המזון', brachaHTML, true);
+        return;
+    }
+
+    // ניצור utterance ונשמיע אותו מיידית בעזרת speechSynthesis
+    const utter = new SpeechSynthesisUtterance(brachaCleanText);
+    utter.lang = 'he-IL';
+    utter.rate = 1.0;
+
+    // נסו לבחור קול לפי הבחירה של המשתמש (אם קיים)
+    const selectedVoiceName = document.getElementById('global-voice-select')?.value;
+    const voices = speechSynthesis.getVoices() || [];
+    if (selectedVoiceName && voices.length > 0) {
+        const found = voices.find(v => v.name === selectedVoiceName || v.voiceURI === selectedVoiceName);
+        if (found) {
+            utter.voice = found;
+        } else {
+            // נסה להתאים לפי שפה
+            const heVoice = voices.find(v => v.lang && v.lang.startsWith('he'));
+            if (heVoice) utter.voice = heVoice;
+        }
+    } else {
+        // אם עדיין אין קולות טעונים — נרשם לאירוע onvoiceschanged ונעדכן בלולאה
+        if (voices.length === 0) {
+            speechSynthesis.onvoiceschanged = () => {
+                const vs = speechSynthesis.getVoices();
+                const heVoice = vs.find(v => v.lang && v.lang.startsWith('he'));
+                if (heVoice) utter.voice = heVoice;
+            };
+        }
+    }
+
+    // שמירה גלובלית לשימוש בממשק:
+    window.activeLocalUtterance = utter;
+
+    // טיפול במצבי סיום/שגיאה
+    utter.onend = () => {
+        window.activeLocalUtterance = null;
+        // עדכון כפתורים במודל אם פתוח
+        const playPauseBtn = document.getElementById('alert-modal-play-pause-btn');
+        const stopBtn = document.getElementById('alert-modal-stop-btn');
+        if (playPauseBtn) playPauseBtn.innerHTML = '<i class="fa-solid fa-play mr-1"></i> הפעל';
+        if (stopBtn) stopBtn.style.display = 'none';
+    };
+    utter.onerror = (e) => {
+        console.error('TTS error', e);
+        window.activeLocalUtterance = null;
+        showAlert('שגיאת קול', 'אירעה שגיאה בעת ניסיון להקריא את הטקסט בדפדפן.');
+    };
+
+    // ראשית, הצג את התוכן במודל (כדי שיהיה ויזואלי) ואז נתחיל להשמיע
+    showAlert('ברכת המזון', brachaHTML, true, { text: brachaCleanText });
+
+    // ועתה השמע מייד
+    try {
+        speechSynthesis.speak(utter);
+    } catch (e) {
+        console.error('speak failed', e);
+        showAlert('שגיאת TTS', 'לא ניתן להפעיל TTS בדפדפן זה.');
+    }
 });
 
     console.log("LOG: DOMContentLoaded event fired. Initializing app.");
