@@ -1064,6 +1064,91 @@ const hebrewPrayers = {
         closeModal();
     };
     window.openAddToDayModal = openAddToDayModal;
+
+    // --- TTS controller מרכזי (שומר מצב) ---
+window.ttsState = {
+    mode: null,           // 'api' | 'local' | null
+    audio: null,          // Audio instance when using API audio
+    chunks: null,         // אם משתמשים ב-chunking — מערך הטקסטים
+    idx: 0,
+    playing: false,
+    paused: false,
+
+    // התחלת ניגון עם קובץ audio מה-API
+    startAudio(audioInstance) {
+        this.stop(); // נקה קודם
+        this.mode = 'api';
+        this.audio = audioInstance;
+        this.audio.onended = () => { this.stop(); updateAlertButtonsToStopped(); };
+        this.audio.onerror = (e) => { console.error('Audio error', e); showAlert('שגיאת ניגון','שגיאה בניגון ה־Audio'); this.stop(); updateAlertButtonsToStopped(); };
+        this.audio.play().catch(e => { console.error('play failed', e); showAlert('שגיאת ניגון','לא ניתן להפעיל את הקול.'); });
+        this.playing = true; this.paused = false;
+    },
+
+    // התחלת ניגון מקומי (אפשרות ל-chunks או טקסט ארוך יחיד)
+    startLocal(chunksOrText) {
+        this.stop();
+        this.mode = 'local';
+        this.chunks = Array.isArray(chunksOrText) ? chunksOrText.slice() : [String(chunksOrText)];
+        this.idx = 0;
+        this.playing = true; this.paused = false;
+        this._speakNextChunk();
+    },
+
+    _speakNextChunk() {
+        if (!this.chunks || this.idx >= this.chunks.length) { this.stop(); updateAlertButtonsToStopped(); return; }
+        try {
+            const u = new SpeechSynthesisUtterance(this.chunks[this.idx]);
+            u.lang = 'he-IL';
+            // voice selection if present
+            const sel = document.getElementById('global-voice-select')?.value;
+            const voices = speechSynthesis.getVoices() || [];
+            if (sel) { const v = voices.find(vv => vv.name === sel); if (v) u.voice = v; }
+            else { const he = voices.find(vv => vv.lang && vv.lang.startsWith('he')); if (he) u.voice = he; }
+            u.onend = () => { this.idx++; setTimeout(()=> this._speakNextChunk(), 80); };
+            u.onerror = (e) => { console.error('utter error', e); showAlert('שגיאת קול','אירעה שגיאה בניסיון להקריא'); this.stop(); updateAlertButtonsToStopped(); };
+            speechSynthesis.speak(u);
+        } catch (e) {
+            console.error('Local speak failed', e);
+            showAlert('שגיאת TTS','לא הצלחנו להפעיל TTS מקומי.');
+            this.stop(); updateAlertButtonsToStopped();
+        }
+    },
+
+    // השהה/המשך
+    togglePauseResume() {
+        if (this.mode === 'api' && this.audio) {
+            if (this.audio.paused) { this.audio.play(); this.paused = false; } 
+            else { this.audio.pause(); this.paused = true; }
+        } else if (this.mode === 'local') {
+            if (speechSynthesis.paused) { speechSynthesis.resume(); this.paused = false; }
+            else if (speechSynthesis.speaking && !speechSynthesis.paused) { speechSynthesis.pause(); this.paused = true; }
+            else if (!speechSynthesis.speaking && !speechSynthesis.paused && this.chunks && this.idx < this.chunks.length) {
+                // אם טרם התחיל (הפעל)
+                this._speakNextChunk();
+                this.paused = false;
+            }
+        }
+        this.playing = !this.paused;
+    },
+
+    stop() {
+        try {
+            if (this.mode === 'api' && this.audio) { try { this.audio.pause(); this.audio.currentTime = 0; } catch(e){} this.audio = null; }
+            if (this.mode === 'local' && 'speechSynthesis' in window) { try { speechSynthesis.cancel(); } catch(e){} }
+        } catch(e){ console.warn(e); }
+        this.mode = null; this.chunks = null; this.idx = 0; this.playing = false; this.paused = false;
+    }
+};
+
+// helper שמעדכן כפתורי המודל (מוסדר לשימוש ב-showAlert)
+function updateAlertButtonsToStopped() {
+    const playPauseBtn = document.getElementById('alert-modal-play-pause-btn');
+    const stopBtn = document.getElementById('alert-modal-stop-btn');
+    if (playPauseBtn) playPauseBtn.innerHTML = '<i class="fa-solid fa-play mr-1"></i> הפעל';
+    if (stopBtn) stopBtn.style.display = 'none';
+}
+
 function showAlert(title, body, allowCopy = false, speechOptions = null) {
     console.log("LOG showAlert called:", { title, hasBody: !!body, allowCopy, speechOptionsPresent: !!speechOptions });
     const modal = document.getElementById('alert-modal');
@@ -1086,94 +1171,83 @@ function showAlert(title, body, allowCopy = false, speechOptions = null) {
     });
 
     // אם יש טקסט להשמעה — צור כפתורי Play/Stop
-    if (speechOptions && speechOptions.text) {
-        const controlsDiv = document.createElement('div');
-        controlsDiv.id = 'alert-modal-tts-controls';
-        controlsDiv.className = 'flex gap-2 justify-center mt-3';
+if (speechOptions && speechOptions.text) {
+    // הסר כפתורים ישנים (כבר קיים אצלך, אבל נחזור על זה לוודא)
+    ['#alert-modal-play-pause-btn', '#alert-modal-stop-btn', '#alert-modal-tts-controls'].forEach(s => {
+        const e = document.querySelector(s); if (e) e.remove();
+    });
 
-        const playPauseBtn = document.createElement('button');
-        playPauseBtn.id = 'alert-modal-play-pause-btn';
-        playPauseBtn.className = 'btn btn-primary';
-        playPauseBtn.innerHTML = '<i class="fa-solid fa-play mr-1"></i> הפעל';
+    const controlsDiv = document.createElement('div');
+    controlsDiv.id = 'alert-modal-tts-controls';
+    controlsDiv.className = 'flex gap-2 justify-center mt-3';
 
-        const stopBtn = document.createElement('button');
-        stopBtn.id = 'alert-modal-stop-btn';
-        stopBtn.className = 'btn btn-ghost';
-        stopBtn.innerHTML = '<i class="fa-solid fa-stop mr-1"></i> עצור';
-        stopBtn.style.display = 'none';
+    const playPauseBtn = document.createElement('button');
+    playPauseBtn.id = 'alert-modal-play-pause-btn';
+    playPauseBtn.className = 'btn btn-primary';
+    playPauseBtn.innerHTML = '<i class="fa-solid fa-play mr-1"></i> הפעל';
 
-        controlsDiv.appendChild(playPauseBtn);
-        controlsDiv.appendChild(stopBtn);
-        modalBody.insertAdjacentElement('afterend', controlsDiv);
+    const stopBtn = document.createElement('button');
+    stopBtn.id = 'alert-modal-stop-btn';
+    stopBtn.className = 'btn btn-ghost';
+    stopBtn.innerHTML = '<i class="fa-solid fa-stop mr-1"></i> עצור';
+    stopBtn.style.display = 'none';
 
-        // handlers (מבוססים על window.activeAudio ו־window.activeLocalUtterance)
-        playPauseBtn.onclick = () => {
-            const textToSpeak = speechOptions.text;
-            // Audio API (API-generated audio)
-            if (window.activeAudio) {
-                if (window.activeAudio.paused) {
-                    window.activeAudio.play().catch(e => { console.error(e); showAlert('שגיאת ניגון','נכשל ניגון ה-Audio'); });
-                    playPauseBtn.innerHTML = '<i class="fa-solid fa-pause mr-1"></i> השהה';
-                    stopBtn.style.display = 'flex';
-                } else {
-                    window.activeAudio.pause();
-                    playPauseBtn.innerHTML = '<i class="fa-solid fa-play mr-1"></i> הפעל';
-                }
-                return;
-            }
+    controlsDiv.appendChild(playPauseBtn);
+    controlsDiv.appendChild(stopBtn);
+    modalBody.insertAdjacentElement('afterend', controlsDiv);
 
-            // אם יש utterance מקומי
-            if (window.activeLocalUtterance) {
-                if (speechSynthesis.speaking && !speechSynthesis.paused) {
-                    try { speechSynthesis.pause(); playPauseBtn.innerHTML = '<i class="fa-solid fa-play mr-1"></i> המשך'; } catch(e){ console.warn(e); }
-                } else if (speechSynthesis.paused) {
-                    try { speechSynthesis.resume(); playPauseBtn.innerHTML = '<i class="fa-solid fa-pause mr-1"></i> השהה'; stopBtn.style.display = 'flex'; } catch(e){ console.warn(e); }
-                }
-                return;
-            }
+    // handler יחיד ואחיד
+// בפנים של showAlert - להקצות לאלמנט playPauseBtn
+playPauseBtn.addEventListener('click', () => {
+  const text = speechOptions && speechOptions.text;
+  // אם כבר יש Audio מה-API:
+  if (window.activeAudio) {
+    window.ttsState = window.ttsState || {};
+    window.ttsState.mode = 'api';
+    window.ttsState.audio = window.activeAudio;
+    // toggle
+    if (window.ttsState.audio.paused) { window.ttsState.audio.play(); playPauseBtn.innerHTML = '<i class="fa-solid fa-pause mr-1"></i> השהה'; stopBtn.style.display='flex'; }
+    else { window.ttsState.audio.pause(); playPauseBtn.innerHTML = '<i class="fa-solid fa-play mr-1"></i> המשך'; }
+    return;
+  }
 
-            // אם אין utterance — צור אחד והפעל
-            if (textToSpeak && 'speechSynthesis' in window) {
-                try {
-                    const utter = new SpeechSynthesisUtterance(textToSpeak);
-                    utter.lang = speechOptions.lang || 'he-IL';
-                    // נסה לבחור קול לפי בחירת המשתמש (אם קיימת)
-                    const selName = document.getElementById('global-voice-select')?.value;
-                    const setVoice = () => {
-                        const voices = speechSynthesis.getVoices() || [];
-                        const v = selName ? voices.find(x => x.name === selName) : voices.find(x => x.lang && x.lang.startsWith('he'));
-                        if (v) utter.voice = v;
-                    };
-                    setVoice();
-                    if (!speechSynthesis.getVoices().length) speechSynthesis.onvoiceschanged = setVoice;
+  // אחרת - השתמש ב־speechSynthesis מקומי (או ב־ttsState.startLocal)
+  if (!window.ttsState) window.ttsState = {};
+  if (window.ttsState.mode === 'local' && (window.ttsState.playing || window.ttsState.paused)) {
+    // toggle pause/resume
+    if (speechSynthesis.paused) { speechSynthesis.resume(); playPauseBtn.innerHTML = '<i class="fa-solid fa-pause mr-1"></i> השהה'; }
+    else if (speechSynthesis.speaking && !speechSynthesis.paused) { speechSynthesis.pause(); playPauseBtn.innerHTML = '<i class="fa-solid fa-play mr-1"></i> המשך'; }
+    else { /* אם לא התחיל - נדאג להתחיל */ }
+    return;
+  }
 
-                    window.activeLocalUtterance = utter;
-                    utter.onend = () => { window.activeLocalUtterance = null; playPauseBtn.innerHTML = '<i class="fa-solid fa-play mr-1"></i> הפעל'; stopBtn.style.display = 'none'; };
-                    utter.onerror = (e) => { console.error('utter error', e); window.activeLocalUtterance = null; showAlert('שגיאת קול','שגיאה בניגון המקומי'); };
-
-                    speechSynthesis.cancel();
-                    speechSynthesis.speak(utter);
-                    playPauseBtn.innerHTML = '<i class="fa-solid fa-pause mr-1"></i> השהה';
-                    stopBtn.style.display = 'flex';
-                } catch (e) {
-                    console.error('speak failed', e);
-                    showAlert('שגיאת קול','לא ניתן להפעיל TTS בדפדפן זה.');
-                }
-                return;
-            }
-
-            showAlert('אין קול','אין טקסט להשמעה כעת.');
-        };
-
-        stopBtn.onclick = () => {
-            if (window.activeAudio) try { window.activeAudio.pause(); window.activeAudio.currentTime = 0; } catch(e){};
-            if ('speechSynthesis' in window) try { speechSynthesis.cancel(); } catch(e){};
-            window.activeLocalUtterance = null;
-            playPauseBtn.innerHTML = '<i class="fa-solid fa-play mr-1"></i> הפעל';
-            stopBtn.style.display = 'none';
-        };
-
+  // אם אין ניגון פעיל - התחלה
+  if (text && 'speechSynthesis' in window) {
+    // חיתוך לטקסטים קצרים ואז התחלת speakTextLocally/ttsState
+    const chunks = []; const approxMax = 1200;
+    text.split(/(?<=[.?!]\s)|\n/).forEach(p => { let s=p.trim(); if(!s) return; if(s.length<=approxMax) chunks.push(s); else for(let i=0;i<s.length;i+=approxMax) chunks.push(s.substring(i,i+approxMax)); });
+    // start local via ttsState or speakTextLocally
+    if (window.ttsState && typeof window.ttsState.startLocal === 'function') {
+      window.ttsState.startLocal(chunks);
     } else {
+      // fallback - use speakTextLocally on the joined text
+      if (typeof speakTextLocally === 'function') speakTextLocally(chunks.join(' '));
+    }
+    playPauseBtn.innerHTML = '<i class="fa-solid fa-pause mr-1"></i> השהה';
+    stopBtn.style.display = 'flex';
+    return;
+  }
+
+  showAlert('אין קול','אין טקסט להשמעה כעת.');
+});
+
+    stopBtn.addEventListener('click', () => {
+        window.ttsState.stop();
+        // אם היה activeAudio — אפס גם אותו
+        if (window.activeAudio) { try { window.activeAudio.pause(); window.activeAudio.currentTime = 0; } catch(e){} window.activeAudio = null; }
+        updateAlertButtonsToStopped();
+    });
+} else {
         // אין טקסט להשמעה — נוודא שאין כפתורים
         document.getElementById('alert-modal-play-pause-btn')?.remove();
         document.getElementById('alert-modal-stop-btn')?.remove();
@@ -2538,176 +2612,146 @@ window.findNearbyAttractions = findNearbyAttractions;
     };
 
     // --- Camera Functions ---
+// --- startCamera: גרסה סופית ומרוּכזת
 async function startCamera() {
-    console.log("LOG: startCamera called; mode =", cameraMode);
-    // אבטחה: וידוא שניתן להפעיל מדיה
-    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-        showAlert("מצלמה לא נתמכת", "הדפדפן שלך לא תומך בגישה למצלמה.");
-        return;
+    console.log('LOG: startCamera called for mode', cameraMode);
+    const video = document.getElementById('camera-feed');
+    const modal = document.getElementById('camera-modal');
+    if (modal) modal.classList.add('flex');
+
+    // אלמנטים UI
+    let torchBtn = document.getElementById('torch-btn');
+   // let captureBtn = document.getElementById('capture-btn');
+    let zoomInBtn = document.getElementById('zoom-in-btn');
+    let zoomOutBtn = document.getElementById('zoom-out-btn');
+    const barcodeStatus = document.getElementById('barcode-status-display');
+
+    // --- נקיון מאזינים ישנים: החלפה ב-cloneNode(true) כדי להסיר מאזינים ישנים לחלוטין
+    [torchBtn, captureBtn, zoomInBtn, zoomOutBtn].forEach(el => {
+        if (!el) return;
+        const cloned = el.cloneNode(true);
+        el.parentNode.replaceChild(cloned, el);
+    });
+
+    // קבל את ההפניות המעודכנות (הʼfreshʼ nodes)
+    torchBtn = document.getElementById('torch-btn');
+    //captureBtn = document.getElementById('capture-btn');
+    zoomInBtn = document.getElementById('zoom-in-btn');
+    zoomOutBtn = document.getElementById('zoom-out-btn');
+
+    // ודא שהאלמנטים גלויים
+    [torchBtn, captureBtn, zoomInBtn, zoomOutBtn].forEach(el => {
+        if (!el) return;
+        el.style.display = 'flex';
+        el.disabled = false;
+    });
+
+    // חיבור מאובטח של כפתורי זום (רק UI — אם תרצה לשלוט ב-zoom של הטרק תוסיף applyConstraints)
+    if (zoomInBtn) zoomInBtn.addEventListener('click', () => {
+        console.log('zoom in clicked');
+        const lvlEl = document.getElementById('zoom-level');
+        const cur = parseFloat((lvlEl?.textContent || '1.0').replace('x','')) || 1.0;
+        const next = Math.min(3.0, cur + 0.1);
+        if (lvlEl) lvlEl.textContent = next.toFixed(1) + 'x';
+    });
+    if (zoomOutBtn) zoomOutBtn.addEventListener('click', () => {
+        console.log('zoom out clicked');
+        const lvlEl = document.getElementById('zoom-level');
+        const cur = parseFloat((lvlEl?.textContent || '1.0').replace('x','')) || 1.0;
+        const next = Math.max(1.0, cur - 0.1);
+        if (lvlEl) lvlEl.textContent = next.toFixed(1) + 'x';
+    });
+
+    // חיבור כפתור הצילום — הקפדה שלא יהיו קריאות כפולות:
+    if (captureBtn) {
+        // החלטה האם לשמור את המצלמה פתוחה לפי מצב
+        const preserve = (cameraMode === 'barcode' || cameraMode === 'translate');
+        captureBtn.addEventListener('click', () => {
+            console.log('capture clicked (preserve=' + preserve + ')');
+            // לפני צילום - עצור Quagga אם רץ (מניעת התנגשות)
+            try { if (window.Quagga && window.Quagga.running) { window.Quagga.stop(); window.Quagga.running = false; } } catch(e){ console.warn(e); }
+            captureFrame(preserve);
+        });
     }
 
-    // הכנה של הכפתורים במודל — נבטל מאזינים קודמים כדי למנוע כפל
-    const captureBtnOld = document.getElementById('capture-btn');
-    if (captureBtnOld) {
-        const newCapture = captureBtnOld.cloneNode(true);
-        captureBtnOld.replaceWith(newCapture);
-    }
-    const torchBtnOld = document.getElementById('torch-btn');
-    if (torchBtnOld) {
-        const newTorch = torchBtnOld.cloneNode(true);
-        torchBtnOld.replaceWith(newTorch);
-    }
-    const zoomInBtnOld = document.getElementById('camera-zoom-in-btn');
-    const zoomOutBtnOld = document.getElementById('camera-zoom-out-btn');
-    if (zoomInBtnOld) { zoomInBtnOld.replaceWith(zoomInBtnOld.cloneNode(true)); }
-    if (zoomOutBtnOld) { zoomOutBtnOld.replaceWith(zoomOutBtnOld.cloneNode(true)); }
-
-    // השליפה מחדש לאחר החלפת nodes
-    const captureBtn = document.getElementById('capture-btn');
-    const torchBtn = document.getElementById('torch-btn');
-    const cameraCloseBtn = document.getElementById('camera-close-btn');
-    const videoEl = document.getElementById('camera-feed');
-    const statusEl = document.getElementById('barcode-status-display');
-
-    // וידוא סגירה/ניקוי קודם
-    try { if (window.activeAudio) { window.activeAudio.pause(); window.activeAudio = null; } } catch(e){}
-    try { if ('speechSynthesis' in window) speechSynthesis.cancel(); } catch(e){}
-
-    // בקשת מדיה
-    const constraints = { video: { facingMode: 'environment' }, audio: false };
+    // פנס (torch) - רק אם הטרק תומך
     try {
-        const stream = await navigator.mediaDevices.getUserMedia(constraints);
-        window.currentCameraStream = stream;
-        videoEl.srcObject = stream;
-        await videoEl.play();
-
-        // שמירת המסלול לשימוש בפונקציות פנס/zoom
-        const tracks = stream.getVideoTracks();
-        window.activeVideoTrack = tracks && tracks[0] ? tracks[0] : null;
-
-        // הצגת כפתור הצילום (בכל המצבים)
-        if (captureBtn) {
-            captureBtn.style.display = 'flex';
-            // הקצאה חכמה: התנהגות שונה לפי מצב המצלמה
-            captureBtn.onclick = () => {
-                // אם היינו במצב ברקוד — נרצה לצלם מבלי לסגור מיד
-                const preserve = (cameraMode === 'barcode' || cameraMode === 'translate');
-                // אם Quagga רץ - עצרנו אותו לפני צילום (כפי שהיה בקוד שלך)
-                try { if (window.Quagga && window.Quagga.running) window.Quagga.stop(); } catch(e){ console.warn(e); }
-                captureFrame(preserve);
-            };
-        }
-
-        // פנס (torch) אם זמין
         if (torchBtn) {
-            const caps = window.activeVideoTrack && window.activeVideoTrack.getCapabilities ? window.activeVideoTrack.getCapabilities() : {};
+            torchBtn.style.display = 'none';
+            const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+            // לא נשאיר את ה-stream הזה - רק מבדק יכולות
+            const track = stream.getVideoTracks()[0];
+            const caps = track && typeof track.getCapabilities === 'function' ? track.getCapabilities() : {};
+            track.stop();
             if (caps && caps.torch) {
                 torchBtn.style.display = 'flex';
-                torchBtn.onclick = async () => {
-                    const desired = !torchBtn.classList.contains('on');
+                torchBtn.addEventListener('click', async () => {
                     try {
-                        await window.activeVideoTrack.applyConstraints({ advanced: [{ torch: desired }] });
+                        const camTrack = activeVideoTrack;
+                        if (!camTrack) return;
+                        const desired = !torchBtn.classList.contains('on');
+                        await camTrack.applyConstraints({ advanced: [{ torch: desired }] });
                         torchBtn.classList.toggle('on', desired);
                     } catch (err) {
-                        console.error('Torch applyConstraints error', err);
-                        showAlert('שגיאת פנס', `לא הצלחנו לשנות מצב פנס: ${err.name}`);
+                        console.warn('Torch toggle failed', err);
+                        showAlert('שגיאת פנס', 'לא ניתן לשנות מצב הפנס בדפדפן/מכשיר זה.');
                     }
-                };
-            } else {
-                torchBtn.style.display = 'none';
+                });
             }
         }
+    } catch(e) { console.warn('torch capability check failed', e); }
 
-        // Zoom controls (אם הנתמך)
-        const zoomIn = document.getElementById('camera-zoom-in-btn');
-        const zoomOut = document.getElementById('camera-zoom-out-btn');
-        if (window.activeVideoTrack && window.activeVideoTrack.getCapabilities) {
-            const caps = window.activeVideoTrack.getCapabilities();
-            if (caps && typeof caps.zoom !== 'undefined') {
-                let currentZoom = window.activeVideoTrack.getSettings().zoom || caps.min || 1;
-                const step = (caps.max - caps.min) / 10 || 0.1;
-                if (zoomIn) {
-                    zoomIn.style.display = 'flex';
-                    zoomIn.onclick = async () => {
-                        currentZoom = Math.min((caps.max), (currentZoom + step));
-                        try { await window.activeVideoTrack.applyConstraints({ advanced: [{ zoom: currentZoom }] }); } catch(e){ console.warn(e); }
-                    };
-                }
-                if (zoomOut) {
-                    zoomOut.style.display = 'flex';
-                    zoomOut.onclick = async () => {
-                        currentZoom = Math.max((caps.min), (currentZoom - step));
-                        try { await window.activeVideoTrack.applyConstraints({ advanced: [{ zoom: currentZoom }] }); } catch(e){ console.warn(e); }
-                    };
-                }
-            } else {
-                if (zoomIn) zoomIn.style.display = 'none';
-                if (zoomOut) zoomOut.style.display = 'none';
-            }
+    // עכשיו נסו לפתוח את הזרם האמיתי (אם אפשר)
+    try {
+        // עצירה של זרמים קודמים (בטיחות)
+        if (window.cameraStream) {
+            window.cameraStream.getTracks().forEach(t => t.stop());
+            window.cameraStream = null;
+            window.activeVideoTrack = null;
         }
 
-        // חיבור כפתור סגירת המצלמה
-        if (cameraCloseBtn) {
-            cameraCloseBtn.onclick = () => {
-                stopCamera();
-            };
-        }
+        const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' } }, audio: false });
+        window.cameraStream = stream;
+        video.srcObject = stream;
+        await video.play();
 
-        // אם המצב הוא barcode — הפעל Quagga במקום הרגיל
+        window.activeVideoTrack = stream.getVideoTracks()[0];
+
+        // מצב ברקוד — אתחול Quagga (אם דרוש)
         if (cameraMode === 'barcode') {
-            const videoContainer = videoEl.closest('.p-4.flex-grow.relative');
-            if (videoContainer) videoContainer.id = 'interactive-barcode-area';
+            if (barcodeStatus) { barcodeStatus.style.display = 'block'; barcodeStatus.textContent = '🔍 מחפש...'; }
             try {
-                // אם Quagga כבר רץ — ודא שהוא עצר ונקה
-                if (window.Quagga && window.Quagga.running) {
-                    try { window.Quagga.stop(); } catch(e){ console.warn('Quagga stop warning', e); }
-                }
-                // אתחול Quagga
-                window.Quagga.init({
-                    inputStream: { type: "LiveStream", target: videoContainer, constraints: { facingMode: "environment" } },
+                if (window.Quagga && window.Quagga.running) { window.Quagga.stop(); window.Quagga.running = false; }
+                // אתחול Quagga — שמור את ה-target על ה-container של הווידאו
+                const container = document.querySelector('#camera-modal .p-4.flex-grow.relative') || document.getElementById('camera-feed');
+                window.Quagga?.init({
+                    inputStream: { type: "LiveStream", target: container, constraints: { facingMode: "environment" } },
                     decoder: { readers: ["ean_reader","upc_reader","code_128_reader","qr_reader"] }
                 }, (err) => {
-                    if (err) {
-                        console.error("Quagga init error", err);
-                        if (statusEl) { statusEl.textContent = "❌ שגיאה: סורק הברקוד נכשל. נסה לצלם תמונה."; statusEl.classList.add('text-red-500'); }
-                        return;
+                    if (!err) {
+                        try { window.Quagga.start(); window.Quagga.running = true; } catch(e){ console.warn('Quagga start failed', e); }
+                    } else {
+                        console.warn('Quagga init err', err);
+                        if (barcodeStatus) barcodeStatus.textContent = '❌ שגיאת סורק';
                     }
-                    window.Quagga.start();
                 });
-                window.Quagga.onDetected((result) => {
-                    try {
-                        window.Quagga.stop();
-                    } catch(e){}
-                    const code = result && result.codeResult && result.codeResult.code;
+                window.Quagga && window.Quagga.onDetected && window.Quagga.onDetected(result => {
+                    const code = result?.codeResult?.code;
                     if (code) {
+                        console.log('barcode detected', code);
+                        window.Quagga.stop();
+                        window.Quagga.running = false;
                         lastScannedBarcode = code;
-                        stopCamera(); // כאן נסגור את המצלמה כי זיהינו ברקוד
+                        stopCamera();
                         checkKosherStatus(code);
                     }
                 });
-                window.Quagga.onProcessed((result) => {
-                    const statusEl = document.getElementById('barcode-status-display');
-                    if (result && result.codeResult && statusEl) {
-                        lastScannedBarcode = result.codeResult.code;
-                        statusEl.innerHTML = `✅ זוהה ברקוד: <strong>${lastScannedBarcode}</strong>`;
-                        statusEl.classList.remove('text-red-500');
-                        statusEl.classList.add('text-green-500');
-                    } else if (statusEl) {
-                        statusEl.innerHTML = '🔍 מכוון.';
-                        statusEl.classList.remove('text-green-500');
-                        statusEl.classList.add('text-red-500');
-                    }
-                });
-            } catch (e) {
-                console.error('Barcode flow error', e);
-            }
+            } catch(e) { console.warn('barcode flow exception', e); }
         }
 
-        // הצגת המודל
-        document.getElementById('camera-modal')?.classList.add('flex');
     } catch (err) {
-        console.error("ERROR: opening camera failed", err);
-        showAlert("שגיאת מצלמה", `לא ניתן לגשת למצלמה. ודא שאישרת גישה ושאפליקציות אחרות לא משתמשות בה. (${err.name})`);
+        console.error('startCamera: cannot open camera', err);
+        showAlert('שגיאת מצלמה', `לא ניתן לגשת למצלמה: ${err && err.name ? err.name : err}`);
         stopCamera();
     }
 }
@@ -3572,11 +3616,62 @@ if (recognition) {
 
     // --- INIT ---
 document.addEventListener('DOMContentLoaded', () => {
-  
+  // guarded capture listener — חיבור חד-פעמי ומניעת double-bind
+(function(){
+  const el = document.getElementById('capture-btn');
+  if (!el) return;
+  if (el.dataset.captureBound) return;
+  el.addEventListener('click', () => {
+    const preserve = (cameraMode === 'barcode' || cameraMode === 'translate');
+    // עצירה מבוקרת של Quagga אם צריך
+    try { if (window.Quagga && window.Quagga.running) { window.Quagga.stop(); window.Quagga.running = false; } } catch(e){}
+    captureFrame(preserve);
+  });
+  el.dataset.captureBound = '1';
+})();
+
 // קטע מתוך ה-INIT
 
 // מאזין רשמי לברכת המזון - מוצג קודם, ואז משמיע דרך speakTextLocally
-const birkatBtn = document.getElementById('birkat-hamazon-btn');
+(function(){
+  const birkatBtn = document.getElementById('birkat-hamazon-btn');
+  if (!birkatBtn) return;
+  if (birkatBtn.dataset.birkatBound) return;
+
+  // נקה מאזינים ישנים
+  const newBtn = birkatBtn.cloneNode(true);
+  birkatBtn.replaceWith(newBtn);
+
+  newBtn.addEventListener('click', () => {
+    try { if (window.activeAudio) { window.activeAudio.pause(); window.activeAudio = null; } } catch(e){}
+    try { if ('speechSynthesis' in window) window.speechSynthesis.cancel(); } catch(e){}
+
+    const brachaHTML = hebrewPrayers.birkatHaMazon || '<div>טקסט הברכה לא זמין</div>';
+    const tmp = document.createElement('div');
+    tmp.innerHTML = brachaHTML;
+    const brachaCleanText = (tmp.textContent || tmp.innerText || '').replace(/\n/g, ' ').replace(/\s+/g, ' ').trim();
+
+    // הצג את המודאל עם טקסט וברירת אופציה לניגון מקומי
+    showAlert('ברכת המזון', brachaHTML, true, { text: brachaCleanText });
+
+    // המתנה קצרה כדי לוודא שכפתורי ה־modal נוצרו ואז הפעל TTS מקומי
+    setTimeout(() => {
+      // השתמש ב־speakTextLocally או ב־window.ttsState.startLocal אם יש לך אותו
+      if (typeof speakTextLocally === 'function') {
+        speakTextLocally(brachaCleanText, 'ברכת המזון');
+      } else if (window.ttsState && typeof window.ttsState.startLocal === 'function') {
+        // חותך לטקסטים קצרים אם צריך
+        const chunks = [];
+        const approxMax = 1200;
+        brachaCleanText.split(/(?<=[.?!]\s)|\n/).forEach(p => { let s = p.trim(); if(!s) return; if(s.length<=approxMax) chunks.push(s); else for(let i=0;i<s.length;i+=approxMax) chunks.push(s.substring(i,i+approxMax)); });
+        window.ttsState.startLocal(chunks);
+      }
+    }, 60);
+  });
+
+  // סמן שהכפתור כבר חובר
+  newBtn.dataset.birkatBound = '1';
+})();
 if (birkatBtn) {
     // נקה מאזינים ישנים למניעת כפילויות
     const newBtn = birkatBtn.cloneNode(true);
@@ -4000,9 +4095,27 @@ if (birkatBtn) {
         startCamera();
     });
 
-    $('#torch-btn').addEventListener('click', toggleTorch);
-    $('#camera-close-btn').addEventListener('click', stopCamera);
-  const globalCapture = document.getElementById('capture-btn');
+    //$('#torch-btn').addEventListener('click', toggleTorch);
+   // $('#camera-close-btn').addEventListener('click', stopCamera);
+  // guarded torch
+(function(){
+  const t = document.getElementById('torch-btn');
+  if (!t) return;
+  if (t.dataset.torchBound) return;
+  t.addEventListener('click', toggleTorch);
+  t.dataset.torchBound = '1';
+})();
+
+// guarded camera close
+(function(){
+  const c = document.getElementById('camera-close-btn');
+  if (!c) return;
+  if (c.dataset.closeBound) return;
+  c.addEventListener('click', stopCamera);
+  c.dataset.closeBound = '1';
+})();
+
+//  const globalCapture = document.getElementById('capture-btn');
 if (globalCapture) {
     // נקה מאזינים ישנים
     const cp = globalCapture.cloneNode(true);
