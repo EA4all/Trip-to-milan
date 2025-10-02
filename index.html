@@ -4084,16 +4084,7 @@ document.addEventListener('DOMContentLoaded', () => {
 })();
 
 //  const globalCapture = document.getElementById('capture-btn');
-if (globalCapture) {
-    // נקה מאזינים ישנים
-    const cp = globalCapture.cloneNode(true);
-    globalCapture.replaceWith(cp);
-    // מאזין גנרי חכם שמקבל החלטה לפי מצב המצלמה
-    cp.addEventListener('click', () => {
-        const preserve = (cameraMode === 'barcode' || cameraMode === 'translate');
-        captureFrame(preserve);
-    });
-}
+
 
     // --- מאזיני ניווט ---
     const planBtn = $('#floating-plan-btn');
