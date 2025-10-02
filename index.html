@@ -3642,35 +3642,26 @@ document.addEventListener('DOMContentLoaded', () => {
   birkatBtn.replaceWith(newBtn);
 
   newBtn.addEventListener('click', () => {
-    // כאן כל הטיפול בניגון ברכת המזון
+    try { if (window.activeAudio) { window.activeAudio.pause(); window.activeAudio = null; } } catch(e){}
+    try { if ('speechSynthesis' in window) window.speechSynthesis.cancel(); } catch(e){}
+
+    const brachaHTML = hebrewPrayers.birkatHaMazon || '<div>טקסט הברכה לא זמין</div>';
+    const tmp = document.createElement('div');
+    tmp.innerHTML = brachaHTML;
+    const brachaCleanText = (tmp.textContent || tmp.innerText || '').replace(/\n/g, ' ').replace(/\s+/g, ' ').trim();
+
+    // הצג את המודאל תמיד (עם הטקסט המעוצב) — וודא speechOptions.text קיים
+    showAlert('ברכת המזון', brachaHTML, true, { text: brachaCleanText });
+
+    // המתנה קצרה כדי לוודא שהמודאל וכל כפתורי ה־UI נוצרו, ואז הפעל TTS מקומי
+    setTimeout(() => {
+      speakTextLocally(brachaCleanText, 'ברכת המזון');
+    }, 60);
   });
 
   newBtn.dataset.birkatBound = '1';
 })();
 
-if (birkatBtn) {
-    // נקה מאזינים ישנים למניעת כפילויות
-    const newBtn = birkatBtn.cloneNode(true);
-    birkatBtn.replaceWith(newBtn);
-    newBtn.addEventListener('click', () => {
-        // עצירת ניגון קודם
-        try { if (window.activeAudio) { window.activeAudio.pause(); window.activeAudio = null; } } catch(e){}
-        try { if ('speechSynthesis' in window) window.speechSynthesis.cancel(); } catch(e){}
-
-        const brachaHTML = hebrewPrayers.birkatHaMazon || '<div>טקסט הברכה לא זמין</div>';
-        const tmp = document.createElement('div');
-        tmp.innerHTML = brachaHTML;
-        const brachaCleanText = (tmp.textContent || tmp.innerText || '').replace(/\n/g, ' ').replace(/\s+/g, ' ').trim();
-
-        // הצג את המודאל תמיד (עם הטקסט המעוצב) — וודא speechOptions.text קיים
-        showAlert('ברכת המזון', brachaHTML, true, { text: brachaCleanText });
-
-        // המתנה קצרה כדי להבטיח שהמודאל וכל כפתורי ה-UI נוצרו, ואז הפעל TTS מקומי
-        setTimeout(() => {
-            speakTextLocally(brachaCleanText, 'ברכת המזון');
-        }, 60);
-    });
-}
 
 
     console.log("LOG: DOMContentLoaded event fired. Initializing app.");
