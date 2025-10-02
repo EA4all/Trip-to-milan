@@ -3638,40 +3638,16 @@ document.addEventListener('DOMContentLoaded', () => {
   if (!birkatBtn) return;
   if (birkatBtn.dataset.birkatBound) return;
 
-  // נקה מאזינים ישנים
   const newBtn = birkatBtn.cloneNode(true);
   birkatBtn.replaceWith(newBtn);
 
   newBtn.addEventListener('click', () => {
-    try { if (window.activeAudio) { window.activeAudio.pause(); window.activeAudio = null; } } catch(e){}
-    try { if ('speechSynthesis' in window) window.speechSynthesis.cancel(); } catch(e){}
-
-    const brachaHTML = hebrewPrayers.birkatHaMazon || '<div>טקסט הברכה לא זמין</div>';
-    const tmp = document.createElement('div');
-    tmp.innerHTML = brachaHTML;
-    const brachaCleanText = (tmp.textContent || tmp.innerText || '').replace(/\n/g, ' ').replace(/\s+/g, ' ').trim();
-
-    // הצג את המודאל עם טקסט וברירת אופציה לניגון מקומי
-    showAlert('ברכת המזון', brachaHTML, true, { text: brachaCleanText });
-
-    // המתנה קצרה כדי לוודא שכפתורי ה־modal נוצרו ואז הפעל TTS מקומי
-    setTimeout(() => {
-      // השתמש ב־speakTextLocally או ב־window.ttsState.startLocal אם יש לך אותו
-      if (typeof speakTextLocally === 'function') {
-        speakTextLocally(brachaCleanText, 'ברכת המזון');
-      } else if (window.ttsState && typeof window.ttsState.startLocal === 'function') {
-        // חותך לטקסטים קצרים אם צריך
-        const chunks = [];
-        const approxMax = 1200;
-        brachaCleanText.split(/(?<=[.?!]\s)|\n/).forEach(p => { let s = p.trim(); if(!s) return; if(s.length<=approxMax) chunks.push(s); else for(let i=0;i<s.length;i+=approxMax) chunks.push(s.substring(i,i+approxMax)); });
-        window.ttsState.startLocal(chunks);
-      }
-    }, 60);
+    // כאן כל הטיפול בניגון ברכת המזון
   });
 
-  // סמן שהכפתור כבר חובר
   newBtn.dataset.birkatBound = '1';
 })();
+
 if (birkatBtn) {
     // נקה מאזינים ישנים למניעת כפילויות
     const newBtn = birkatBtn.cloneNode(true);
