@@ -2719,64 +2719,23 @@ async function startCamera() {
         activeVideoTrack = cameraStream.getVideoTracks()[0];
 
         // במצב ברקוד — אתחל Quagga על הוידאו
-        if (cameraMode === 'barcode') {
-            // ודא שעצרנו קודם
-            try { if (window.Quagga && window.Quagga.running) { window.Quagga.stop(); window.Quagga.running = false; } } catch(e){}
-
-            // אתחול מבוקר של Quagga
-            try {
-                window.Quagga.init({
-                    inputStream: {
-                        type: "LiveStream",
-                        target: video, // מצביע לוידאו
-                        constraints: { facingMode: "environment" }
-                    },
-                    locator: { patchSize: "medium", halfSample: true },
-                    numOfWorkers: navigator.hardwareConcurrency ? Math.max(1, Math.floor(navigator.hardwareConcurrency/2)) : 2,
-                    decoder: {
-                        readers: ["ean_reader","ean_8_reader","code_128_reader","upc_reader","upc_e_reader"]
-                    },
-                    locate: true
-                }, function(err) {
-                    if (err) {
-                        console.error("Quagga init error:", err);
-                        if (barcodeStatusDisplay) { barcodeStatusDisplay.innerHTML = `❌ שגיאה בהפעלת הסורק: ${err.message || err}`; }
-                        return;
-                    }
-                    try {
-                        window.Quagga.start();
-                        window.Quagga.running = true;
-                        if (barcodeStatusDisplay) { barcodeStatusDisplay.innerHTML = '🔍 מחפש ברקוד...'; }
-                    } catch (e) { console.error('Quagga start failed', e); }
-                });
-
-                // ניהול אירועים
-                window.Quagga.onProcessed(function(result) {
-                    if (!barcodeStatusDisplay) return;
-                    if (result && result.codeResult) {
-                        barcodeStatusDisplay.innerHTML = `✅ מוכן לזיהוי`;
-                        barcodeStatusDisplay.classList.remove('text-red-500');
-                        barcodeStatusDisplay.classList.add('text-green-500');
-                    } else {
-                        barcodeStatusDisplay.innerHTML = '🔍 מכוון.';
-                        barcodeStatusDisplay.classList.remove('text-green-500');
-                        barcodeStatusDisplay.classList.add('text-red-500');
-                    }
-                });
-
-                window.Quagga.onDetected(function(result) {
-                    if (!result || !result.codeResult) return;
-                    lastScannedBarcode = result.codeResult.code;
-                    console.log('LOG: Barcode detected:', lastScannedBarcode);
-                    try { window.Quagga.stop(); window.Quagga.running = false; } catch(e){}
-                    stopCamera();
-                    checkKosherStatus(lastScannedBarcode);
-                });
-            } catch (e) {
-                console.error('Barcode init overall failed:', e);
-                if (barcodeStatusDisplay) barcodeStatusDisplay.innerHTML = '❌ שגיאה בסורק הברקוד.';
-            }
-        } // end barcode init
+ // בתוך startCamera(), במקום החלק הישן של captureBtn handler עבור barcode:
+if (cameraMode === 'barcode') {
+    // capture ישמור על המצלמה פתוחה אחרי צילום
+    if (captureBtn) {
+        captureBtn.style.display = 'flex';
+        // נחתוך כל מאזין קודם ונוסיף חדש
+        try { captureBtn.replaceWith(captureBtn.cloneNode(true)); } catch(e){}
+        const freshCapture = document.querySelector('#capture-btn');
+        if (freshCapture) {
+            freshCapture.onclick = () => {
+                try { if (window.Quagga && window.Quagga.running) { window.Quagga.stop(); window.Quagga.running = false; } } catch(e){}
+                // צלם תמונה אבל שמור על המצלמה פתוחה (preserve=true)
+                captureFrame(true);
+            };
+        }
+    }
+}
 
     } catch (err) {
         console.error("ERROR accessing camera:", err);
@@ -3049,52 +3008,76 @@ async function speakText(text) {
 window.speakText = speakText;
 const TTS_CHARACTER_LIMIT = 4800; 
 
-// החלף את כל הקוד בתוך speakTextLocally
+// === speakTextLocally - גרסה משופרת ===
 function speakTextLocally(text, title) {
-    if ('speechSynthesis' in window) {
-        
-        // 1. ניקוי נגן קיים
-        if (window.activeAudio) { window.activeAudio.pause(); window.activeAudio = null; }
-        if (window.speechSynthesis.speaking || window.speechSynthesis.pending || window.speechSynthesis.paused) { 
-             window.speechSynthesis.cancel(); 
-        }
-        
-        const utterance = new SpeechSynthesisUtterance(text);
-        
-        // **ייזום קולות:** חובה לטעון קולות לפני שימוש, לפעמים זה נכשל
-        const loadAndSetVoice = () => {
-             const voices = window.speechSynthesis.getVoices();
-             const selectedVoiceName = document.getElementById("global-voice-select")?.value;
-             const hebrewVoice = voices.find(v => v.name === selectedVoiceName) || voices.find(v => v.lang.startsWith('he'));
+    if (!text || typeof text !== 'string') {
+        console.warn('speakTextLocally called with empty text');
+        return;
+    }
 
-             if (hebrewVoice) {
-                 utterance.voice = hebrewVoice;
-             }
-        };
-        
-        // נסה לטעון קולות באופן מיידי. אם לא הצליח, הוסף מאזין.
-        loadAndSetVoice();
-        if(window.speechSynthesis.onvoiceschanged) {
-             window.speechSynthesis.onvoiceschanged = loadAndSetVoice;
-        }
-
-
-        // 2. הפעלת הניגון המקומי
-        window.speechSynthesis.speak(utterance);
-        
-        // 3. טיפול בכשל
-        utterance.onerror = (event) => {
-            console.error("Local TTS Error:", event.error, event);
-            // מציג שגיאה אבל לא מונע פתיחת המודאל
-            showAlert("שגיאה בניגון מקומי", "לא הצלחנו להשמיע את הטקסט הארוך. ייתכן שיש צורך לאשר הרשאת דיבור במכשיר.", true);
-        };
-
-    } else {
-        // Fallback קריטי
+    if (!('speechSynthesis' in window)) {
         showAlert("ניגון קולי לא נתמך", "הדפדפן שלך אינו תומך בניגון קולי מובנה.");
+        return;
+    }
+
+    // עצור/נקה כל נגן קיים
+    try { if (window.activeAudio) { window.activeAudio.pause(); window.activeAudio = null; } } catch(e){ console.warn(e); }
+    try { if (window.speechSynthesis.speaking || window.speechSynthesis.pending || window.speechSynthesis.paused) window.speechSynthesis.cancel(); } catch(e){}
+
+    const utter = new SpeechSynthesisUtterance(text);
+    utter.lang = 'he-IL';
+    utter.rate = 1.0;
+
+    // בחר קול שמור או עברית כברירת מחדל
+    const loadAndSetVoice = () => {
+        const voices = window.speechSynthesis.getVoices() || [];
+        const selectedVoiceName = document.getElementById("global-voice-select")?.value;
+        let chosen = null;
+        if (selectedVoiceName) chosen = voices.find(v => v.name === selectedVoiceName || v.voiceURI === selectedVoiceName);
+        if (!chosen) chosen = voices.find(v => v.lang && v.lang.startsWith('he'));
+        if (chosen) utter.voice = chosen;
+    };
+
+    // נסה להעמיס קולות; אם עדיין לא טעונים, הירשם ל-onvoiceschanged
+    loadAndSetVoice();
+    if (!window.speechSynthesis.getVoices().length) {
+        window.speechSynthesis.onvoiceschanged = loadAndSetVoice;
+    }
+
+    // שמור את ה-utterance גלובלית — כך showAlert ו-Play/Pause ימצאו אותו
+    window.activeLocalUtterance = utter;
+
+    // handlers עדכונים UI
+    utter.onend = () => {
+        window.activeLocalUtterance = null;
+        const playBtn = document.getElementById('alert-modal-play-pause-btn');
+        const stopBtn = document.getElementById('alert-modal-stop-btn');
+        if (playBtn) playBtn.innerHTML = '<i class="fa-solid fa-play mr-1"></i> הפעל';
+        if (stopBtn) stopBtn.style.display = 'none';
+    };
+
+    utter.onerror = (ev) => {
+        console.error('Local TTS error event:', ev);
+        window.activeLocalUtterance = null;
+        // הודעה ידידותית יותר למשתמש
+        showAlert('שגיאת קול', 'אירעה שגיאה בניסיון להקריא את הטקסט בדפדפן. בדוק שהדפדפן תומך ב-speechSynthesis ושהרשאות לא נחסמות.', true);
+    };
+
+    try {
+        // חשוב: הצג את המודל (אם לא כבר מוצג) עם הטקסט לפני השמעת הקול
+        // showAlert קורא ליצירת כפתורי Play/Stop רק אם מקבלים speechOptions.text — עדיף לוודא ש־showAlert כבר נקרא
+        // אך אם רוצים, נוכל לקרוא showAlert כאן גם (לא חובה אם נקרא קודם)
+        // showAlert(title || 'ניגון', text, true, { text });
+
+        window.speechSynthesis.speak(utter);
+    } catch (e) {
+        console.error('speechSynthesis.speak threw', e);
+        window.activeLocalUtterance = null;
+        showAlert('שגיאת TTS', 'לא ניתן להפעיל TTS בדפדפן זה.');
     }
 }
-window.speakTextLocally = speakTextLocally; 
+window.speakTextLocally = speakTextLocally;
+
 
     function stopCamera() {
     console.log("LOG: stopCamera called.");
@@ -3619,82 +3602,32 @@ if (recognition) {
 document.addEventListener('DOMContentLoaded', () => {
   
 // קטע מתוך ה-INIT
-// קטע מתוך ה-INIT (החלפה לניגון SpeechSynthesis פשוט)
-// קטע מתוך ה-INIT (תיקון סופי לברכת המזון)
-// --- מאזין מעודכן לברכת המזון - משחק תמיד דרך speechSynthesis מקומי ---
-$('#birkat-hamazon-btn')?.addEventListener('click', () => {
-    // עצור כל ניגון קיים
-    try { if (window.activeAudio) { window.activeAudio.pause(); window.activeAudio = null; } } catch(e){}
-    try { if ('speechSynthesis' in window) window.speechSynthesis.cancel(); } catch(e){}
 
-    const brachaHTML = hebrewPrayers.birkatHaMazon || '<div>טקסט הברכה לא זמין</div>';
-    const tmp = document.createElement('div');
-    tmp.innerHTML = brachaHTML;
-    const brachaCleanText = (tmp.textContent || tmp.innerText || '').replace(/\n/g, ' ').replace(/\s+/g, ' ').trim();
+// מאזין רשמי לברכת המזון - מוצג קודם, ואז משמיע דרך speakTextLocally
+const birkatBtn = document.getElementById('birkat-hamazon-btn');
+if (birkatBtn) {
+    // נקה מאזינים ישנים למניעת כפילויות
+    const newBtn = birkatBtn.cloneNode(true);
+    birkatBtn.replaceWith(newBtn);
+    newBtn.addEventListener('click', () => {
+        // עצירת ניגון קודם
+        try { if (window.activeAudio) { window.activeAudio.pause(); window.activeAudio = null; } } catch(e){}
+        try { if ('speechSynthesis' in window) window.speechSynthesis.cancel(); } catch(e){}
 
-    // אם אין טקסט להקריא — פשוט הצג את ה־HTML
-    if (!brachaCleanText) {
-        showAlert('ברכת המזון', brachaHTML, true);
-        return;
-    }
+        const brachaHTML = hebrewPrayers.birkatHaMazon || '<div>טקסט הברכה לא זמין</div>';
+        const tmp = document.createElement('div');
+        tmp.innerHTML = brachaHTML;
+        const brachaCleanText = (tmp.textContent || tmp.innerText || '').replace(/\n/g, ' ').replace(/\s+/g, ' ').trim();
 
-    // ניצור utterance ונשמיע אותו מיידית בעזרת speechSynthesis
-    const utter = new SpeechSynthesisUtterance(brachaCleanText);
-    utter.lang = 'he-IL';
-    utter.rate = 1.0;
+        // הצג את המודאל תמיד (עם הטקסט המעוצב) — וודא speechOptions.text קיים
+        showAlert('ברכת המזון', brachaHTML, true, { text: brachaCleanText });
 
-    // נסו לבחור קול לפי הבחירה של המשתמש (אם קיים)
-    const selectedVoiceName = document.getElementById('global-voice-select')?.value;
-    const voices = speechSynthesis.getVoices() || [];
-    if (selectedVoiceName && voices.length > 0) {
-        const found = voices.find(v => v.name === selectedVoiceName || v.voiceURI === selectedVoiceName);
-        if (found) {
-            utter.voice = found;
-        } else {
-            // נסה להתאים לפי שפה
-            const heVoice = voices.find(v => v.lang && v.lang.startsWith('he'));
-            if (heVoice) utter.voice = heVoice;
-        }
-    } else {
-        // אם עדיין אין קולות טעונים — נרשם לאירוע onvoiceschanged ונעדכן בלולאה
-        if (voices.length === 0) {
-            speechSynthesis.onvoiceschanged = () => {
-                const vs = speechSynthesis.getVoices();
-                const heVoice = vs.find(v => v.lang && v.lang.startsWith('he'));
-                if (heVoice) utter.voice = heVoice;
-            };
-        }
-    }
-
-    // שמירה גלובלית לשימוש בממשק:
-    window.activeLocalUtterance = utter;
-
-    // טיפול במצבי סיום/שגיאה
-    utter.onend = () => {
-        window.activeLocalUtterance = null;
-        // עדכון כפתורים במודל אם פתוח
-        const playPauseBtn = document.getElementById('alert-modal-play-pause-btn');
-        const stopBtn = document.getElementById('alert-modal-stop-btn');
-        if (playPauseBtn) playPauseBtn.innerHTML = '<i class="fa-solid fa-play mr-1"></i> הפעל';
-        if (stopBtn) stopBtn.style.display = 'none';
-    };
-    utter.onerror = (e) => {
-        console.error('TTS error', e);
-        window.activeLocalUtterance = null;
-        showAlert('שגיאת קול', 'אירעה שגיאה בעת ניסיון להקריא את הטקסט בדפדפן.');
-    };
-
-    // ראשית, הצג את התוכן במודל (כדי שיהיה ויזואלי) ואז נתחיל להשמיע
-    showAlert('ברכת המזון', brachaHTML, true, { text: brachaCleanText });
-
-    // ועתה השמע מייד
-    try {
-        speechSynthesis.speak(utter);
-    } catch (e) {
-        console.error('speak failed', e);
-        showAlert('שגיאת TTS', 'לא ניתן להפעיל TTS בדפדפן זה.');
-    }
-});
+        // המתנה קצרה כדי להבטיח שהמודאל וכל כפתורי ה-UI נוצרו, ואז הפעל TTS מקומי
+        setTimeout(() => {
+            speakTextLocally(brachaCleanText, 'ברכת המזון');
+        }, 60);
+    });
+}
 
     console.log("LOG: DOMContentLoaded event fired. Initializing app.");
      // --- מאזיני כפתורים יהודיים חדשים ---
