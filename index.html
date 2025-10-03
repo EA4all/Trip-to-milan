@@ -674,21 +674,26 @@ body {
     </div>
 </div>
 ------
-  <div id="alert-modal" class="modal-backdrop">
+<div id="alert-modal" class="modal-backdrop">
     <div class="modal">
-<div class="p-4 border-b flex justify-between items-center">
-    <h3 id="alert-modal-title" class="text-lg font-bold"></h3>
-    <div class="flex items-center gap-2">
-        <button id="alert-modal-tts-settings-btn" class="btn btn-ghost btn-sm" title="הגדרות קול"><i class="fa-solid fa-cog"></i></button>
-        <button id="alert-modal-copy-btn" class="btn btn-ghost btn-sm hidden"><i class="fa-solid fa-copy mr-1"></i>העתק</button>
-    </div>
-</div>
+        <div class="p-4 border-b flex justify-between items-center">
+            <h3 id="alert-modal-title" class="text-lg font-bold"></h3>
+            <div class="flex items-center gap-2">
+                <button id="alert-modal-tts-settings-btn" class="btn btn-ghost btn-sm" title="הגדרות קול"><i class="fa-solid fa-cog"></i></button>
+                <button id="alert-modal-copy-btn" class="btn btn-ghost btn-sm hidden"><i class="fa-solid fa-copy mr-1"></i>העתק</button>
+            </div>
+        </div>
         <div id="alert-modal-body" class="p-6 whitespace-pre-wrap max-h-[50vh] overflow-y-auto"></div>
+        
+        <div id="alert-modal-tts-controls" class="p-4 border-t flex justify-center items-center gap-3">
+            <button id="alert-modal-play-pause" class="btn btn-primary" style="display: none;"><i class="fa-solid fa-play mr-1"></i> הפעל</button>
+            <button id="alert-modal-stop" class="btn btn-ghost" style="display: none;"><i class="fa-solid fa-stop mr-1"></i> עצור</button>
+        </div>
         <div class="p-4 border-t flex justify-end">
             <button id="alert-modal-close" class="btn btn-primary">הבנתי</button>
         </div>
     </div>
-  </div>
+</div>
     <div id="gemini-modal" class="modal-backdrop">
       <div class="modal">
           <div class="p-4 border-b flex justify-between items-center">
@@ -2578,21 +2583,27 @@ window.findNearbyAttractions = findNearbyAttractions;
     // --- Camera Functions ---
 // --- startCamera: גרסה סופית ומרוּכזת
 async function startCamera() {
-    const video = document.getElementById('camera-video');
-    const cameraModal = document.getElementById('camera-modal');
+    console.log('LOG: startCamera called for mode', cameraMode);
+    const video = document.getElementById('camera-feed');
+    const modal = document.getElementById('camera-modal');
+    if (modal) modal.classList.add('flex');
 
-    // ... (בדיקות ראשוניות) ...
-    
-    cameraModal.classList.add('flex');
-    $('#camera-status-text').textContent = 'ממתין למצלמה...';
-    $('#camera-video-container').classList.add('hidden');
+    // אלמנטים UI (שחזור ההפניות תוך שמירה מפני שגיאות null)
+    let torchBtn = document.getElementById('torch-btn');
+    const barcodeStatus = document.getElementById('barcode-status-display');
+    const captureBtn = document.getElementById('capture-btn'); // ודא שזה קיים ב-HTML!
 
-    // עצירה של זרמים קודמים
+    // --- 1. עצירה וניקוי זרמים קודמים ---
     if (window.cameraStream) {
         window.cameraStream.getTracks().forEach(track => track.stop());
         window.cameraStream = null;
+        window.activeVideoTrack = null;
     }
+    // עצירת Quagga אם רץ
+    try { if (window.Quagga && window.Quagga.running) { window.Quagga.stop(); window.Quagga.running = false; } } catch(e){ console.warn(e); }
 
+
+    // --- 2. פתיחת זרם הוידאו ---
     try {
         const stream = await navigator.mediaDevices.getUserMedia({ 
             video: { facingMode: { ideal: 'environment' } }, 
@@ -2601,20 +2612,59 @@ async function startCamera() {
 
         window.cameraStream = stream;
         
-        // --- שורות קריטיות לתיקון: קישור הזרם לאלמנט ---
-        video.srcObject = stream;
-        await video.play();
-        // ------------------------------------------------
+        // ** התיקון הקריטי: חיבור הזרם לאלמנט **
+        if(video) {
+            video.srcObject = stream;
+            await video.play();
+        }
+        window.activeVideoTrack = stream.getVideoTracks()[0];
 
-        $('#camera-status-text').textContent = 'מצלמה פעילה - מחפש ברקוד...';
-        $('#camera-video-container').classList.remove('hidden');
+        // --- 3. לוגיקת פנס (Torch) ---
+        const track = window.activeVideoTrack;
+        const caps = track && typeof track.getCapabilities === 'function' ? track.getCapabilities() : {};
 
-        // ... (המשך הלוגיקה של QuaggaJS נשאר כפי שהיה) ...
+        if (torchBtn) {
+             if (caps && caps.torch) {
+                torchBtn.style.display = 'flex';
+                // המאזין עצמו מטופל ב-DOMContentLoaded, רק מוודאים שהוא גלוי
+            } else {
+                torchBtn.style.display = 'none';
+            }
+        }
 
+        // --- 4. לוגיקת סורק ברקוד (QuaggaJS) ---
+        if (cameraMode === 'barcode') {
+            if (barcodeStatus) { barcodeStatus.style.display = 'block'; barcodeStatus.textContent = '🔍 מחפש ברקוד...'; }
+            
+            const container = document.querySelector('#camera-modal .p-4.flex-grow.relative') || video;
+            window.Quagga?.init({
+                inputStream: { type: "LiveStream", target: container, constraints: { facingMode: "environment" } },
+                decoder: { readers: ["ean_reader","upc_reader","code_128_reader","qr_reader"] }
+            }, (err) => {
+                if (!err) {
+                    try { window.Quagga.start(); window.Quagga.running = true; } catch(e){ console.warn('Quagga start failed', e); }
+                } else {
+                    console.warn('Quagga init err', err);
+                    if (barcodeStatus) barcodeStatus.textContent = '❌ שגיאת סורק';
+                }
+            });
+            window.Quagga?.onDetected(result => {
+                const code = result?.codeResult?.code;
+                if (code) {
+                    console.log('barcode detected', code);
+                    window.Quagga.stop();
+                    window.Quagga.running = false;
+                    lastScannedBarcode = code;
+                    stopCamera();
+                    checkKosherStatus(code);
+                }
+            });
+        }
+        
     } catch (err) {
-        console.error("Error accessing camera: ", err);
-        showAlert('שגיאת מצלמה', 'לא ניתן לגשת למצלמה. ודא שאישרת גישה לאתר. (' + err.name + ')');
-        cameraModal.classList.remove('flex');
+        console.error('startCamera: cannot open camera', err);
+        showAlert('שגיאת מצלמה', `לא ניתן לגשת למצלמה: ${err && err.name ? err.name : err}`);
+        stopCamera();
     }
 }
 window.startCamera = startCamera;
