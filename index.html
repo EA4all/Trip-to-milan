@@ -3760,9 +3760,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- חיבור כפתור סריקת ברקוד ---
 $('#scan-kosher-barcode-btn').addEventListener('click', () => {
+    // אין צורך לפתוח את המודל כאן, startCamera עושה זאת
+    
+    // הקריאה המקורית שלך ל-startCamera כבר מגדירה את cameraMode = 'barcode' 
     window.startCamera('barcode'); 
 });
-    
+
     // --- הוספת הלוגיקה של הגדרות הקול וחיבור הכפתורים ---
     const voiceSettingsModal = $('#voice-settings-modal');
     const globalVoiceSelect = $('#global-voice-select');
