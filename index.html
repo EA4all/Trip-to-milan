@@ -1147,7 +1147,12 @@ window.ttsState = {
 };
 
 // helper שמעדכן כפתורי המודל (מוסדר לשימוש ב-showAlert)
-
+function updateAlertButtonsToStopped() {
+    const playPauseBtn = document.getElementById('alert-modal-play-pause');
+    const stopBtn = document.getElementById('alert-modal-stop');
+    if (playPauseBtn) playPauseBtn.innerHTML = '<i class="fa-solid fa-play mr-1"></i> השמע';
+    if (stopBtn) stopBtn.style.display = 'none';
+}
 
 function showAlert(title, message, speechOptions = null) {
     const modal = document.getElementById('alert-modal');
@@ -2065,9 +2070,8 @@ async function checkKosherStatus(barcode) {
     showAlert(title, message, false);
 
     // הוספת מאזינים לכפתורים החדשים בתוך המודל
-document.getElementById('borei-nefashot-btn')?.addEventListener('click', () => {
     const brachaHTML = hebrewPrayers.boreiNefashot;
-    const cleanText = brachaHTML.replace(/<[^>]*>?/gm, '').trim(); // ניקוי הטקסט
+    const cleanText = brachaHTML.replace(/<[^>]*>?/gm, '').trim(); 
 
     showAlert('ברכת בורא נפשות (אחרונה)', brachaHTML, { text: cleanText, lang: 'he-IL' });
 });
@@ -3656,24 +3660,25 @@ document.addEventListener('DOMContentLoaded', () => {
   const newBtn = birkatBtn.cloneNode(true);
   birkatBtn.replaceWith(newBtn);
 
-  newBtn.addEventListener('click', () => {
+newBtn.addEventListener('click', () => {
+    // 1. עצור כל דיבור קיים (חובה לפני הפעלת ניגון חדש)
     try { if (window.activeAudio) { window.activeAudio.pause(); window.activeAudio = null; } } catch(e){}
     try { if ('speechSynthesis' in window) window.speechSynthesis.cancel(); } catch(e){}
 
-    
     const brachaHTML = hebrewPrayers.birkatHaMazon || '<div>טקסט הברכה לא זמין</div>';
     const tmp = document.createElement('div');
     tmp.innerHTML = brachaHTML;
     const brachaCleanText = (tmp.textContent || tmp.innerText || '').replace(/\n/g, ' ').replace(/\s+/g, ' ').trim();
 
-    // הצג את המודאל תמיד (עם הטקסט המעוצב) — וודא speechOptions.text קיים
-    showAlert('ברכת המזון', brachaHTML, { text: brachaCleanText, localOnly: true, lang: 'he-IL' });
-
-    // המתנה קצרה כדי לוודא שהמודאל וכל כפתורי ה־UI נוצרו, ואז הפעל TTS מקומי
-    setTimeout(() => {
-      speakTextLocally(brachaCleanText, 'ברכת המזון');
-    }, 60);
-  });
+    // 2. השתמש ב-showAlert כדי להציג את המודל ולומר לו להפעיל TTS מקומי
+    showAlert('ברכת המזון', brachaHTML, { 
+        text: brachaCleanText, 
+        localOnly: true, // זה מבטיח TTS דפדפן + כפתורים
+        lang: 'he-IL' 
+    });
+    
+    // אין צורך ב-setTimeout ו-speakTextLocally, ה-showAlert מטפל בזה.
+});
 
   newBtn.dataset.birkatBound = '1';
 })();
@@ -3684,8 +3689,8 @@ document.addEventListener('DOMContentLoaded', () => {
      // --- מאזיני כפתורים יהודיים חדשים ---
 $('#tefilat-haderech-btn')?.addEventListener('click', () => {
     const prayerText = hebrewPrayers.tefilatHaderech;
-    // חובה להוסיף את אובייקט ה-speechOptions
-    showAlert('תפילת הדרך', prayerText, { text: prayerText.replace(/<[^>]*>?/gm, '').trim(), lang: 'he-IL' });
+  const cleanText = prayerText.replace(/<[^>]*>?/gm, '').trim();
+   showAlert('תפילת הדרך', prayerText, { text: cleanText, lang: 'he-IL' });
 });
     $('#bracha-achrona-btn')?.addEventListener('click', showBrachaAchronaOptions);
 
