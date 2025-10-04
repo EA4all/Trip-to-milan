@@ -1153,8 +1153,8 @@ function showAlert(title, message, speechOptions = null) {
     const modal = document.getElementById('alert-modal');
     const titleEl = document.getElementById('alert-modal-title');
     const messageEl = document.getElementById('alert-modal-message');
-    const playPause = document.getElementById('alert-modal-play-pause');
-    const stop = document.getElementById('alert-modal-stop');
+    const playPauseBtn = document.getElementById('alert-modal-play-pause');
+    const stopBtn = document.getElementById('alert-modal-stop');
 
     titleEl.textContent = title;
     messageEl.innerHTML = message;
@@ -3085,62 +3085,45 @@ window.speakTextLocally = speakTextLocally;
 
 
 // --- סוף החלפת speakText ---
+// מצא והחלף את הפונקציה הקיימת בקוד שלך
 async function translateText(sourceLang, targetLang) {
-    const textInput = $('#translate-input');
-    const resultContainer = $('#translate-result');
-    const translateBtn = $('#translate-btn');
-    const spinner = $('#translate-spinner');
     
+    // שימוש ב-IDs הנכונים מה-HTML
+    const textInput = $('#dictionary-input'); 
+    const resultContainer = $('#translation-result-container');
+    const translateBtn = $('#dictionary-form button[type="submit"]'); 
+
+    // הגדרות טעינה ו-disable
     translateBtn.disabled = true;
-    spinner.classList.remove('hidden');
-    resultContainer.innerHTML = '... מתרגם';
+    resultContainer.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i>`;
     
     const text = textInput.value.trim();
     if (text.length === 0) {
-        resultContainer.innerHTML = 'אנא הכנס טקסט לתרגום.';
         translateBtn.disabled = false;
-        spinner.classList.add('hidden');
+        resultContainer.innerHTML = '<span>התרגום יופיע כאן...</span>';
         return;
     }
 
-    try {
-        const response = await fetch(`${SERVER_BASE_URL}/api/translate`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-App-Key': APP_KEY
-            },
-            body: JSON.stringify({
-                text: text,
-                source_lang: sourceLang,
-                target_lang: targetLang
-            })
-        });
-
-        const data = await response.json();
-        
-        let responseText = data.translated_text;
-        responseText = responseText.replace(/[\*\_`]/g, '').trim();
-
-        // קביעת קוד השפה הנכונה לניגון קולי (אם תרגום לעברית, נגן בעברית וכן הלאה)
-        const langCode = targetLang === 'he' ? 'he-IL' : 'it-IT'; 
-        
-        // --- התיקון: שימוש ב-speakTextSmartly ועדכון ה-onclick בכפתור הניגון ---
-        resultContainer.innerHTML = `<span>${responseText}</span> 
-            <button onclick="window.speakTextSmartly('${responseText.replace(/'/g, "\\'")}', '<span>${responseText}</span>', 'תרגום קולי', '${langCode}')" 
-            class="btn btn-ghost p-1 h-auto"><i class="fa-solid fa-volume-high"></i></button>`;
-
-    } catch (error) {
-        console.error('Translation error:', error);
-        resultContainer.innerHTML = 'אירעה שגיאה במהלך התרגום. נסה שוב מאוחר יותר.';
-    } finally {
-        translateBtn.disabled = false;
-        spinner.classList.add('hidden');
-    }
-}
-
+    const targetLangCode = currentLang === 'he-it' ? 'Italian' : 'Hebrew';
+    const prompt = `Translate the following to ${targetLangCode}. Provide ONLY the translated text, with no additional formatting or explanations. Text to translate: "${text}"`;
+    const payload = { contents: [{ parts: [{ text: "" }] }] };
     
+    let responseText = await callGemini(payload, prompt, false);
+    responseText = responseText.replace(/[\*\_`]/g, '').trim();
+
+    const langCode = currentLang === 'he-it' ? 'it-IT' : 'he-IL';
+    
+    // שימוש ב-speakTextSmartly כנדרש
+    resultContainer.innerHTML = `<span>${responseText}</span> 
+        <button onclick="window.speakTextSmartly('${responseText.replace(/'/g, "\\'")}', '<span>${responseText}</span>', 'תרגום קולי', '${langCode}')" 
+        class="btn btn-ghost p-1 h-auto"><i class="fa-solid fa-volume-high"></i></button>`;
+
+    // ... (שאר הקוד של שמירת היסטוריה) ...
+
+    translateBtn.disabled = false;
+}
 window.translateText = translateText;
+    
     // פונקציה לניהול מצב הקלטת קול
 function startRecognition(langCode, button) {
     if (!speechRecognizer) return;
@@ -4174,7 +4157,18 @@ document.addEventListener('DOMContentLoaded', () => {
     $('#daily-tip-close').addEventListener('click', () => $('#daily-tip-modal').classList.remove('flex'));
     
     // --- מאזיני קול קלט (היה חסר) ---
+// הוסף פונקציות אלו באזור ה-UTILS
+function showLoading(title, message) {
+    // משתמש בפונקציית showAlert הקיימת כדי להציג הודעת טעינה.
+    showAlert(title, `<div class="text-center"><i class="fa-solid fa-sync fa-spin fa-2x"></i><p class="mt-2">${message}</p></div>`);
+}
+window.showLoading = showLoading;
 
+function hideLoading() {
+    // סוגר את כל המודלים מסוג backdrop, כולל הטעינה
+    window.closeModal(); 
+}
+window.hideLoading = hideLoading;
     
   }); // <--- הסוגר הסופי של document.addEventListener('DOMContentLoaded')
 //------------
