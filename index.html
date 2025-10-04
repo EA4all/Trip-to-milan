@@ -4239,11 +4239,9 @@ if (receiptFileInput) {
         $('#receipt-file-input').click();
     });
 
-  $('#barcode-btn').addEventListener('click', () => {
-    // 1. ודא שהמודל נפתח
-    $('#camera-modal').classList.add('flex');
-    // 2. הפעל את המצלמה במצב ברקוד
-    window.startCamera('barcode'); // או startBarcodeCamera כפי שהצענו
+$('#scan-kosher-barcode-btn').addEventListener('click', () => {
+    // אין צורך לפתוח את המודל כאן, startCamera כבר עושה זאת
+    window.startCamera('barcode'); 
 });
     
   }); // <--- הסוגר הסופי של document.addEventListener('DOMContentLoaded')
