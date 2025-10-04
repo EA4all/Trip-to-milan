@@ -1147,19 +1147,14 @@ window.ttsState = {
 };
 
 // helper שמעדכן כפתורי המודל (מוסדר לשימוש ב-showAlert)
-function updateAlertButtonsToStopped() {
-    const playPauseBtn = document.getElementById('alert-modal-play-pause-btn');
-    const stopBtn = document.getElementById('alert-modal-stop-btn');
-    if (playPauseBtn) playPauseBtn.innerHTML = '<i class="fa-solid fa-play mr-1"></i> הפעל';
-    if (stopBtn) stopBtn.style.display = 'none';
-}
+
 
 function showAlert(title, message, speechOptions = null) {
     const modal = document.getElementById('alert-modal');
     const titleEl = document.getElementById('alert-modal-title');
     const messageEl = document.getElementById('alert-modal-message');
-    const playPauseBtn = document.getElementById('alert-modal-play-pause');
-    const stopBtn = document.getElementById('alert-modal-stop');
+    const playPause = document.getElementById('alert-modal-play-pause');
+    const stop = document.getElementById('alert-modal-stop');
 
     titleEl.textContent = title;
     messageEl.innerHTML = message;
@@ -2931,8 +2926,8 @@ async function speakText(text) {
             window.activeAudio.play();
 
             // --- חיבור כפתורים ---
-            const playPauseBtn = document.getElementById('alert-modal-play-pause-btn');
-            const stopBtn = document.getElementById('alert-modal-stop-btn');
+            const playPause = document.getElementById('alert-modal-play-pause-btn');
+            const stop = document.getElementById('alert-modal-stop-btn');
 
             if (playPauseBtn) {
                 playPauseBtn.innerHTML = '<i class="fa-solid fa-pause mr-1"></i> השהה';
@@ -3090,24 +3085,104 @@ window.speakTextLocally = speakTextLocally;
 
 
 // --- סוף החלפת speakText ---
-    async function translateText(text) {
-        console.log(`LOG: translateText called for text: ${text}`);
-        const resultContainer = $('#translation-result-container');
-        resultContainer.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i>`;
-        const targetLang = currentLang === 'he-it' ? 'Italian' : 'Hebrew';
-        const prompt = `Translate the following to ${targetLang}. Provide ONLY the translated text, with no additional formatting or explanations. Text to translate: "${text}"`;
-        const payload = { contents: [{ parts: [{ text: "" }] }] };
-        let responseText = await callGemini(payload, prompt, false);
-        responseText = responseText.replace(/[\*\_`]/g, '').trim();
-        const langCode = currentLang === 'he-it' ? 'it-IT' : 'he-IL';
-        resultContainer.innerHTML = `<span>${responseText}</span> <button onclick="window.speakText('${responseText.replace(/'/g, "\\'")}', '${langCode}')" class="btn btn-ghost p-1 h-auto"><i class="fa-solid fa-volume-high"></i></button>`;
-        
-        translationHistory.unshift({ sourceText: text, translatedText: responseText });
-        if (translationHistory.length > 5) translationHistory.pop(); // Keep last 5
-      localStorage.setItem('milanTripTranslationHistory', JSON.stringify(translationHistory));
-        renderTranslationHistory();
-    }
+async function translateText(sourceLang, targetLang) {
+    const textInput = $('#translate-input');
+    const resultContainer = $('#translate-result');
+    const translateBtn = $('#translate-btn');
+    const spinner = $('#translate-spinner');
     
+    translateBtn.disabled = true;
+    spinner.classList.remove('hidden');
+    resultContainer.innerHTML = '... מתרגם';
+    
+    const text = textInput.value.trim();
+    if (text.length === 0) {
+        resultContainer.innerHTML = 'אנא הכנס טקסט לתרגום.';
+        translateBtn.disabled = false;
+        spinner.classList.add('hidden');
+        return;
+    }
+
+    try {
+        const response = await fetch(`${SERVER_BASE_URL}/api/translate`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-App-Key': APP_KEY
+            },
+            body: JSON.stringify({
+                text: text,
+                source_lang: sourceLang,
+                target_lang: targetLang
+            })
+        });
+
+        const data = await response.json();
+        
+        let responseText = data.translated_text;
+        responseText = responseText.replace(/[\*\_`]/g, '').trim();
+
+        // קביעת קוד השפה הנכונה לניגון קולי (אם תרגום לעברית, נגן בעברית וכן הלאה)
+        const langCode = targetLang === 'he' ? 'he-IL' : 'it-IT'; 
+        
+        // --- התיקון: שימוש ב-speakTextSmartly ועדכון ה-onclick בכפתור הניגון ---
+        resultContainer.innerHTML = `<span>${responseText}</span> 
+            <button onclick="window.speakTextSmartly('${responseText.replace(/'/g, "\\'")}', '<span>${responseText}</span>', 'תרגום קולי', '${langCode}')" 
+            class="btn btn-ghost p-1 h-auto"><i class="fa-solid fa-volume-high"></i></button>`;
+
+    } catch (error) {
+        console.error('Translation error:', error);
+        resultContainer.innerHTML = 'אירעה שגיאה במהלך התרגום. נסה שוב מאוחר יותר.';
+    } finally {
+        translateBtn.disabled = false;
+        spinner.classList.add('hidden');
+    }
+}
+
+    
+window.translateText = translateText;
+    // פונקציה לניהול מצב הקלטת קול
+function startRecognition(langCode, button) {
+    if (!speechRecognizer) return;
+
+    if (window.isRecognizing) {
+        // אם כבר מקליטים - הפסק את ההקלטה
+        speechRecognizer.stop();
+        if (window.activeVoiceButton) {
+            window.activeVoiceButton.classList.remove('text-red-500');
+            window.activeVoiceButton.innerHTML = window.activeVoiceButton.id.includes('he') ? '<i class="fa-solid fa-microphone"></i> דבר בעברית' : '<i class="fa-solid fa-microphone"></i> Parla Italiano';
+        }
+        window.activeVoiceButton = null;
+        window.isRecognizing = false;
+        return;
+    }
+
+    // התחל הקלטה חדשה
+    try {
+        speechRecognizer.lang = langCode;
+        window.activeVoiceButton = button;
+        
+        // עדכון UI למצב הקלטה
+        window.activeVoiceButton.classList.add('text-red-500');
+        window.activeVoiceButton.innerHTML = '<i class="fa-solid fa-microphone-slash"></i> ...מקליט';
+
+        // ודא שהקלט הקודם נמחק
+        $('#translate-input').value = ''; 
+
+        speechRecognizer.start();
+        window.isRecognizing = true;
+    } catch (e) {
+        console.error("Error starting speech recognition:", e);
+        showAlert('שגיאה בזיהוי דיבור', 'לא הצלחנו להפעיל את המיקרופון. ודא שהדפדפן תומך בזיהוי קולי וניתנה הרשאה.');
+        // החזרת הכפתור למצב לא מקליט במקרה של שגיאה
+        if (window.activeVoiceButton) {
+            window.activeVoiceButton.classList.remove('text-red-500');
+            window.activeVoiceButton.innerHTML = window.activeVoiceButton.id.includes('he') ? '<i class="fa-solid fa-microphone"></i> דבר בעברית' : '<i class="fa-solid fa-microphone"></i> Parla Italiano';
+        }
+        window.isRecognizing = false;
+    }
+}
+window.startRecognition = startRecognition;
     async function translateImage(base64ImageData, mimeType) {
         console.log(`LOG: translateImage called for mimeType: ${mimeType}`);
         const resultContainer = $('#translation-result-container');
@@ -3582,6 +3657,22 @@ if (recognition) {
 
     // --- INIT ---
 document.addEventListener('DOMContentLoaded', () => {
+
+  const heBtn = $('#voice-translate-he-btn');
+    const itBtn = $('#voice-translate-it-btn');
+    
+    // ודא ש-speechRecognizer קיים לפני הוספת המאזינים
+    if (speechRecognizer) {
+        // ודא שאתה קורא לפונקציה שהגדרת בסעיף 3
+        heBtn.addEventListener('click', (e) => window.startRecognition('he-IL', e.currentTarget));
+        itBtn.addEventListener('click', (e) => window.startRecognition('it-IT', e.currentTarget));
+    } else {
+        // ... (הקוד הקיים שלך לטיפול במצב שבו אין Speech Recognition)
+        if (heBtn) { heBtn.disabled = true; heBtn.innerHTML = 'לא נתמך'; }
+        if (itBtn) { itBtn.disabled = true; itBtn.innerHTML = 'Non supportato'; }
+    }
+
+  
   // guarded capture listener — חיבור חד-פעמי ומניעת double-bind
 (function(){
   const el = document.getElementById('capture-btn');
