@@ -4174,15 +4174,7 @@ document.addEventListener('DOMContentLoaded', () => {
     $('#daily-tip-close').addEventListener('click', () => $('#daily-tip-modal').classList.remove('flex'));
     
     // --- מאזיני קול קלט (היה חסר) ---
-    const heBtn = $('#voice-translate-he-btn');
-    const itBtn = $('#voice-translate-it-btn');
-    if (speechRecognizer) {
-        heBtn.addEventListener('click', (e) => startRecognition('he-IL', e.currentTarget));
-        itBtn.addEventListener('click', (e) => startRecognition('it-IT', e.currentTarget));
-    } else {
-        if (heBtn) { heBtn.disabled = true; heBtn.innerHTML = 'לא נתמך'; }
-        if (itBtn) { itBtn.disabled = true; itBtn.innerHTML = 'לא נתמך'; }
-    }
+
     
   }); // <--- הסוגר הסופי של document.addEventListener('DOMContentLoaded')
 //------------
