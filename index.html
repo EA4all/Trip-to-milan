@@ -3020,7 +3020,7 @@ const TTS_CHARACTER_LIMIT = 4800;
 
 async function speakTextSmartly(cleanText, htmlMessage, title) {
     if (cleanText.length > TTS_CHARACTER_LIMIT) {
-        console.warn(`WARN: Text length (${cleanText.length}) exceeds TTS limit. Switching to local voice.`);
+         console.warn(`WARN: Text length (${cleanText.length}) exceeds TTS limit. Switching to local voice.`);
         
         // מציג את ההודעה המעוצבת, אך מנגן באופן מקומי
         showAlert(title, htmlMessage, true, { text: cleanText }); // מציג את המודל
@@ -3668,13 +3668,14 @@ speechRecognizer.onend = () => {
         // תיקון: הוספת כפתור ההשמעה
 resultContainer.innerHTML = `<span>${translatedText}</span> 
     <button onclick="window.speakTextSmartly('${translatedText.replace(/'/g, "\\'")}', '<span>${translatedText}</span>', 'תרגום קולי', '${targetLangCode}')" 
-    class="btn btn-ghost p-1 h-auto"><i class="fa-solid fa-volume-high"></i></button>
-        // בונוס: הוספת התרגום להיסטוריה, בדיוק כמו בתרגום טקסט רגיל
-        translationHistory.unshift({ sourceText: spokenText, translatedText: translatedText });
-        if (translationHistory.length > 5) translationHistory.pop();
-        localStorage.setItem('milanTripTranslationHistory', JSON.stringify(translationHistory));
-        renderTranslationHistory();
-    };
+    class="btn btn-ghost p-1 h-auto"><i class="fa-solid fa-volume-high"></i></button>`; // <--- חובה לסגור את המחרוזת כאן
+    
+    // בונוס: הוספת התרגום להיסטוריה, בדיוק כמו בתרגום טקסט רגיל
+    translationHistory.unshift({ sourceText: spokenText, translatedText: translatedText });
+    if (translationHistory.length > 5) translationHistory.pop();
+    localStorage.setItem('milanTripTranslationHistory', JSON.stringify(translationHistory));
+    renderTranslationHistory();
+}; 
 
 } else {
     console.warn("Web Speech API is not supported in this browser.");
