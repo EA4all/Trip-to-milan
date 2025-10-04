@@ -2065,11 +2065,11 @@ async function checkKosherStatus(barcode) {
     showAlert(title, message, false);
 
     // הוספת מאזינים לכפתורים החדשים בתוך המודל
-    document.getElementById('borei-nefashot-btn')?.addEventListener('click', () => {
-        const bracha = hebrewPrayers.boreiNefashot;
-        // מעביר ל-showAlert הסופי את הברכה
-        showAlert('ברכת בורא נפשות (אחרונה)', bracha, { text: bracha, lang: 'he-IL' }); 
-    });
+document.getElementById('borei-nefashot-btn')?.addEventListener('click', () => {
+    const bracha = hebrewPrayers.boreiNefashot;
+    // חובה להוסיף את אובייקט ה-speechOptions השלישי:
+    showAlert('ברכת בורא נפשות (אחרונה)', bracha, { text: bracha, lang: 'he-IL' });
+});
 
     document.getElementById('meein-shalosh-btn')?.addEventListener('click', () => {
         showMeEinShaloshOptions(); // קורא לבחירת המשנה של מעין שלוש
@@ -2089,10 +2089,11 @@ function showMeEinShaloshOptions() {
     showAlert(title, message, false);
 
     // הוספת מאזינים
-    document.getElementById('al-hamichya-btn')?.addEventListener('click', () => {
-        const bracha = hebrewPrayers.alHaMichya;
-        showAlert('ברכת על המחיה (מעין שלוש)', bracha, true, { text: bracha });
-    });
+document.getElementById('al-hamichya-btn')?.addEventListener('click', () => {
+    const bracha = hebrewPrayers.alHaMichya;
+    // הוספת אובייקט speechOptions כפרמטר שלישי
+    showAlert('ברכת על המחיה (מעין שלוש)', bracha, { text: bracha, lang: 'he-IL' });
+});
     document.getElementById('al-hagefen-btn')?.addEventListener('click', () => {
         const bracha = hebrewPrayers.alHaGefen;
         showAlert('ברכת על הגפן (מעין שלוש)', bracha, true, { text: bracha });
