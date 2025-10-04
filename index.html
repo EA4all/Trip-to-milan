@@ -2070,6 +2070,7 @@ async function checkKosherStatus(barcode) {
     showAlert(title, message, false);
 
     // הוספת מאזינים לכפתורים החדשים בתוך המודל
+document.getElementById('borei-nefashot-btn')?.addEventListener('click', () => {
     const brachaHTML = hebrewPrayers.boreiNefashot;
     const cleanText = brachaHTML.replace(/<[^>]*>?/gm, '').trim(); 
 
