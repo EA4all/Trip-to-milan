@@ -2588,22 +2588,19 @@ async function startCamera() {
     const modal = document.getElementById('camera-modal');
     if (modal) modal.classList.add('flex');
 
-    // אלמנטים UI (שחזור ההפניות תוך שמירה מפני שגיאות null)
     let torchBtn = document.getElementById('torch-btn');
     const barcodeStatus = document.getElementById('barcode-status-display');
-    const captureBtn = document.getElementById('capture-btn'); // ודא שזה קיים ב-HTML!
+    const captureBtn = document.getElementById('capture-btn');
 
-    // --- 1. עצירה וניקוי זרמים קודמים ---
+    // --- עצירה של זרמים קודמים ---
     if (window.cameraStream) {
         window.cameraStream.getTracks().forEach(track => track.stop());
         window.cameraStream = null;
         window.activeVideoTrack = null;
     }
-    // עצירת Quagga אם רץ
     try { if (window.Quagga && window.Quagga.running) { window.Quagga.stop(); window.Quagga.running = false; } } catch(e){ console.warn(e); }
 
-
-    // --- 2. פתיחת זרם הוידאו ---
+    // --- פתיחת מצלמה ---
     try {
         const stream = await navigator.mediaDevices.getUserMedia({ 
             video: { facingMode: { ideal: 'environment' } }, 
@@ -2612,27 +2609,53 @@ async function startCamera() {
 
         window.cameraStream = stream;
         
-        // ** התיקון הקריטי: חיבור הזרם לאלמנט **
         if(video) {
             video.srcObject = stream;
             await video.play();
         }
         window.activeVideoTrack = stream.getVideoTracks()[0];
 
-        // --- 3. לוגיקת פנס (Torch) ---
+        // --- Torch ---
         const track = window.activeVideoTrack;
         const caps = track && typeof track.getCapabilities === 'function' ? track.getCapabilities() : {};
 
         if (torchBtn) {
              if (caps && caps.torch) {
                 torchBtn.style.display = 'flex';
-                // המאזין עצמו מטופל ב-DOMContentLoaded, רק מוודאים שהוא גלוי
             } else {
                 torchBtn.style.display = 'none';
             }
         }
 
-        // --- 4. לוגיקת סורק ברקוד (QuaggaJS) ---
+        // --- Zoom ---
+        if (caps && 'zoom' in caps) {
+            const zoomInBtn = document.getElementById('zoom-in-btn');
+            const zoomOutBtn = document.getElementById('zoom-out-btn');
+            const zoomLevelDisplay = document.getElementById('zoom-level');
+            let currentZoom = caps.zoom.min;
+
+            const applyZoom = (newZoom) => {
+                track.applyConstraints({ advanced: [{ zoom: newZoom }] });
+                currentZoom = newZoom;
+                if (zoomLevelDisplay) zoomLevelDisplay.textContent = currentZoom.toFixed(1) + 'x';
+            };
+
+            if (zoomInBtn) zoomInBtn.onclick = () => {
+                if (currentZoom + caps.zoom.step <= caps.zoom.max) {
+                    applyZoom(currentZoom + caps.zoom.step);
+                }
+            };
+            if (zoomOutBtn) zoomOutBtn.onclick = () => {
+                if (currentZoom - caps.zoom.step >= caps.zoom.min) {
+                    applyZoom(currentZoom - caps.zoom.step);
+                }
+            };
+
+            // אתחול לערך מינימום
+            applyZoom(caps.zoom.min);
+        }
+
+        // --- Barcode scanner ---
         if (cameraMode === 'barcode') {
             if (barcodeStatus) { barcodeStatus.style.display = 'block'; barcodeStatus.textContent = '🔍 מחפש ברקוד...'; }
             
@@ -2667,6 +2690,7 @@ async function startCamera() {
         stopCamera();
     }
 }
+
 window.startCamera = startCamera;
 
 // ========================= התחלה: קוד מתוקן ומשופר להפעלת הפנס =========================
@@ -2872,16 +2896,15 @@ async function speakText(text) {
     // *************************************************************************************************************
     const url = `https://texttospeech.googleapis.com/v1/text:synthesize?key=${apiKey}`;
 
-    // 1. **תיקון קריטי:** אם יש נגן קיים (פעיל או מושהה), עצור ושחרר אותו לפני ניגון חדש.
+    // 1. עצירת נגן קודם
     if (window.activeAudio) { 
         window.activeAudio.pause();
         window.activeAudio = null; 
     }
-    // עצירת ניגון מקומי אם הוא פועל
+    // עצירת ניגון מקומי אם פעיל
     if ('speechSynthesis' in window && window.speechSynthesis.speaking) {
          window.speechSynthesis.cancel();
     }
-
 
     const selectedVoice = document.getElementById("global-voice-select")?.value || "he-IL-Wavenet-D"; 
     const gender = selectedVoice.endsWith('A') || selectedVoice.endsWith('C') ? "FEMALE" : "MALE"; 
@@ -2906,19 +2929,49 @@ async function speakText(text) {
         if (data.audioContent) {
             window.activeAudio = new Audio("data:audio/mp3;base64," + data.audioContent);
             window.activeAudio.play();
-            
+
+            // --- חיבור כפתורים ---
+            const playPauseBtn = document.getElementById('alert-modal-play-pause-btn');
+            const stopBtn = document.getElementById('alert-modal-stop-btn');
+
+            if (playPauseBtn) {
+                playPauseBtn.innerHTML = '<i class="fa-solid fa-pause mr-1"></i> השהה';
+                playPauseBtn.onclick = () => {
+                    if (window.activeAudio) {
+                        if (window.activeAudio.paused) {
+                            window.activeAudio.play();
+                            playPauseBtn.innerHTML = '<i class="fa-solid fa-pause mr-1"></i> השהה';
+                        } else {
+                            window.activeAudio.pause();
+                            playPauseBtn.innerHTML = '<i class="fa-solid fa-play mr-1"></i> המשך';
+                        }
+                        if (stopBtn) stopBtn.style.display = 'inline-block';
+                    }
+                };
+            }
+
+            if (stopBtn) {
+                stopBtn.style.display = 'inline-block';
+                stopBtn.onclick = () => {
+                    if (window.activeAudio) {
+                        window.activeAudio.pause();
+                        window.activeAudio.currentTime = 0;
+                        window.activeAudio = null;
+                        if (playPauseBtn) playPauseBtn.innerHTML = '<i class="fa-solid fa-play mr-1"></i> הפעל';
+                        stopBtn.style.display = 'none';
+                    }
+                };
+            }
+
             // טיפול בסיום הניגון
             window.activeAudio.onended = () => {
-                window.activeAudio = null; 
-                const playPauseBtn = document.getElementById('alert-modal-play-pause-btn');
-                if(playPauseBtn) playPauseBtn.innerHTML = '<i class="fa-solid fa-play mr-1"></i> הפעל';
-                const stopBtn = document.getElementById('alert-modal-stop-btn');
-                if(stopBtn) stopBtn.style.display = 'none';
+                window.activeAudio = null;
+                if (playPauseBtn) playPauseBtn.innerHTML = '<i class="fa-solid fa-play mr-1"></i> הפעל';
+                if (stopBtn) stopBtn.style.display = 'none';
             };
             
         } else {
             console.error("שגיאה ב-TTS:", data);
-            // אם ה-API נכשל, ננסה ניגון מקומי כפאלבק
             window.speakTextLocally(text, "שגיאה בניגון API"); 
         }
     } catch (err) {
@@ -2928,6 +2981,7 @@ async function speakText(text) {
 }
 window.speakText = speakText;
 const TTS_CHARACTER_LIMIT = 4800; 
+
 
 async function speakTextSmartly(cleanText, htmlMessage, title) {
     if (cleanText.length > TTS_CHARACTER_LIMIT) {
