@@ -2588,15 +2588,25 @@ function createVideoElement() {
 }
     
 function stopCamera() {
-    console.log("LOG: stopCamera called.");
+    console.log("LOG: stopCamera called for cleanup.");
+    
+    // קודם כל, עצירה וניקוי מלא של ספריית הברקודים
     if (window.Quagga) {
-        Quagga.offDetected();
+        Quagga.offDetected(); // הסרת מאזין כדי למנוע הפעלות כפולות
         if (window.Quagga.running) {
             Quagga.stop();
+            window.Quagga.running = false;
         }
     }
+
     if (window.cameraStream) {
         window.cameraStream.getTracks().forEach(track => track.stop());
+    }
+    
+    const video = document.getElementById('camera-feed');
+    if(video) {
+        video.srcObject = null; // ניתוק מלא של מקור הוידאו
+        video.oncanplay = null;
     }
     
     // איפוס כל המשתנים הגלובליים
@@ -2661,7 +2671,7 @@ async function openCamera() {
 // --------------------------------------------------------------------------
 async function startKosherBarcodeScanner() {
     window.cameraMode = 'barcode';
-    stopCamera();
+    stopCamera(); // מבטיח ניקוי מלא לפני התחלה חדשה
 
     $('#camera-title').textContent = 'סריקת כשרות (ברקוד)';
     $('#capture-btn').style.display = 'none';
@@ -2680,11 +2690,16 @@ async function startKosherBarcodeScanner() {
             showAlert('שגיאת סורק', 'לא הצלחנו להפעיל את סורק הברקודים.');
             stopCamera(); return;
         }
+        
+        // --- שינוי מרכזי: הגדרת מאזין הזיהוי רק כאן ---
         Quagga.onDetected(function(result) {
             const code = result.codeResult.code;
+            // הסר את המאזין מיד כדי למנוע זיהויים כפולים בזמן הסגירה
+            Quagga.offDetected(); 
             stopCamera();
             checkKosherStatus(code);
         });
+        
         Quagga.start();
         window.Quagga.running = true;
         $('#barcode-status-display').textContent = 'מחפש ברקוד...';
