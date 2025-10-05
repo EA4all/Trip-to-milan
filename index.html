@@ -975,12 +975,21 @@ async speak(text, useApi = true, lang = 'he-IL') {
         this.isPaused = !this.isPaused;
         this.updateUI();
     },
-    stop() {
-        if (this.audio) { this.audio.pause(); this.audio.currentTime = 0; }
-        if ('speechSynthesis' in window) { speechSynthesis.cancel(); }
-        this.audio = null; this.utterance = null; this.isPlaying = false; this.isPaused = false;
-        this.updateUI();
-    },
+stop() {
+    if (this.audio) {
+        this.audio.pause();
+        this.audio.currentTime = 0;
+        this.audio.src = ''; // -> מנקה את המשאב לחלוטין
+    }
+    if ('speechSynthesis' in window) {
+        speechSynthesis.cancel();
+    }
+    this.audio = null;
+    this.utterance = null;
+    this.isPlaying = false;
+    this.isPaused = false;
+    this.updateUI();
+},
     updateUI() {
         const playPauseBtn = document.getElementById('alert-modal-play-pause');
         const stopBtn = document.getElementById('alert-modal-stop');
