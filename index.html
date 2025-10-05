@@ -839,7 +839,9 @@ let userMarkers = {};
 let watchingLocation = false;
 let watchId = null;
 let currentUserId = null;
-
+let zoomInBtn, zoomOutBtn, zoomLevelDisplay;
+let currentZoom = 1;
+let zoomCapabilities = null;
 console.log("LOG: Global variables and utility functions defined.");
 //-----------------------------------------------------------
 
@@ -4295,41 +4297,41 @@ $('#scan-receipt-btn').addEventListener('click', window.startReceiptScanCamera);
 // 4. סריקת ברקוד (כשרות):
 $('#scan-kosher-barcode-btn').addEventListener('click', window.startKosherBarcodeScanner);
   // --- לוגיקה חדשה עבור זום המצלמה ---
-    const zoomInBtn = document.getElementById('zoom-in-btn');
-    const zoomOutBtn = document.getElementById('zoom-out-btn');
-    const zoomLevelDisplay = document.getElementById('zoom-level');
-    let currentZoom = 1;
-    let zoomCapabilities = null;
+    zoomInBtn = document.getElementById('zoom-in-btn');
+    zoomOutBtn = document.getElementById('zoom-out-btn');
+    zoomLevelDisplay = document.getElementById('zoom-level');
 
     async function applyZoom() {
         if (!activeVideoTrack || !zoomCapabilities) return;
         
-        // וידוא שהזום נשאר בגבולות המותרים
         currentZoom = Math.max(zoomCapabilities.min, Math.min(currentZoom, zoomCapabilities.max));
 
         try {
             await activeVideoTrack.applyConstraints({
                 advanced: [{ zoom: currentZoom }]
             });
-            zoomLevelDisplay.textContent = `${currentZoom.toFixed(1)}x`;
+            if (zoomLevelDisplay) {
+                zoomLevelDisplay.textContent = `${currentZoom.toFixed(1)}x`;
+            }
         } catch (error) {
             console.error('Zoom failed:', error);
         }
     }
 
-    zoomInBtn.addEventListener('click', () => {
-        if (!zoomCapabilities) return;
-        // הגדלה ב-step או ב-0.1
-        currentZoom += zoomCapabilities.step || 0.1;
-        applyZoom();
-    });
-
-    zoomOutBtn.addEventListener('click', () => {
-        if (!zoomCapabilities) return;
-         // הקטנה ב-step או ב-0.1
-        currentZoom -= zoomCapabilities.step || 0.1;
-        applyZoom();
-    });
+    if (zoomInBtn) {
+        zoomInBtn.addEventListener('click', () => {
+            if (!zoomCapabilities) return;
+            currentZoom += zoomCapabilities.step || 0.1;
+            applyZoom();
+        });
+    }
+     if (zoomOutBtn) {
+        zoomOutBtn.addEventListener('click', () => {
+            if (!zoomCapabilities) return;
+            currentZoom -= zoomCapabilities.step || 0.1;
+            applyZoom();
+        });
+    }
     
   }); // <--- הסוגר הסופי של document.addEventListener('DOMContentLoaded')
 //------------
