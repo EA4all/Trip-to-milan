@@ -848,28 +848,34 @@ const cameraManager = {
         }
     },
 
-    stop() {
-        this.isDetecting = false;
-        
-        // *** קריטי: עצירת QuaggaJS לפני ניתוק ה-stream ***
-        if (typeof Quagga !== 'undefined') {
+stop() {
+    this.isDetecting = false;
+    
+    // *** התיקון הקריטי מתחיל כאן ***
+    // מנסה לעצור את Quagga רק אם הוא קיים (typeof) ומונע את שגיאת TypeError 
+    // על ידי שימוש ב-try/catch סביב העצירה של Quagga.
+    if (typeof Quagga !== 'undefined' && Quagga.initialized) {
+        try {
             Quagga.stop();
             Quagga.offDetected();
+        } catch (e) {
+            // התעלם משגיאת TypeError ב-Quagga.stop() אם המצב פנימי שגוי
+            console.warn("WARN: Ignored Quagga.stop() error, likely due to internal state cleanup:", e.message);
         }
+    }
 
-        if (this.stream) {
-            this.stream.getTracks().forEach(track => track.stop());
-        }
-        // Reset all state properties
-        this.stream = null;
-        this.videoTrack = null;
-        this.mode = null;
-        this.zoomCapabilities = null;
-        this.currentZoom = 1;
-        
-        document.getElementById('camera-modal').classList.remove('flex');
-    },
-
+    if (this.stream) {
+        this.stream.getTracks().forEach(track => track.stop());
+    }
+    // Reset all state properties
+    this.stream = null;
+    this.videoTrack = null;
+    this.mode = null;
+    this.zoomCapabilities = null;
+    this.currentZoom = 1;
+    
+    document.getElementById('camera-modal').classList.remove('flex');
+},
     updateZoomUI() {
         document.getElementById('zoom-level').textContent = `${this.currentZoom.toFixed(1)}x`;
     },
