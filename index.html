@@ -40,6 +40,13 @@
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
 
   <style>
+    #video-container canvas.drawingBuffer {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+}
 .image-viewer-modal .modal {
     /* הופכים את המסגרת לשקופה כדי לתת תחושה של חלל פתוח */
     background: transparent;
@@ -2674,25 +2681,55 @@ document.getElementById('zoom-out-btn').addEventListener('click', () => cameraMa
 // פונקציה 1: סורק ברקוד (Kosher)
 // --------------------------------------------------------------------------
 async function startKosherBarcodeScanner() {
+    window.cameraMode = 'barcode';
+    stopCamera();
+
     $('#camera-title').textContent = 'סריקת כשרות (ברקוד)';
     $('#capture-btn').style.display = 'none';
+    $('#upload-receipt-btn').style.display = 'none';
     $('#barcode-status-display').style.display = 'block';
     $('#barcode-status-display').textContent = 'מפעיל מצלמה...';
 
     const video = await cameraManager.open('barcode');
     if (!video) return;
 
+    // ודא שאלמנט הקנבס נקי ומוכן לציור
+    const canvas = document.getElementById('camera-canvas');
+    const context = canvas.getContext('2d');
+
     Quagga.init({
         inputStream: { name: "Live", type: "LiveStream", target: video },
-        decoder: { readers: ["ean_reader"] },
+        decoder: { readers: ["ean_reader", "ean_8_reader", "code_128_reader"] },
     }, (err) => {
         if (err) { cameraManager.stop(); showAlert('שגיאת סורק', 'לא הצלחנו להפעיל את סורק הברקודים.'); return; }
+        
+        Quagga.start();
+        window.Quagga.running = true;
+        $('#barcode-status-display').textContent = 'מחפש ברקוד...';
+
+        // --- הוספה: מאזין שפועל על כל פריים של הוידאו ---
+        Quagga.onProcessed(function (result) {
+            const drawingCtx = Quagga.canvas.ctx.overlay;
+            const drawingCanvas = Quagga.canvas.dom.overlay;
+
+            drawingCtx.clearRect(0, 0, parseInt(drawingCanvas.getAttribute("width")), parseInt(drawingCanvas.getAttribute("height")));
+            
+            if (result && result.boxes) {
+                result.boxes.filter(box => box !== result.box).forEach(box => {
+                    Quagga.ImageDebug.drawPath(box, { x: 0, y: 1 }, drawingCtx, { color: "green", lineWidth: 2 });
+                });
+            }
+
+            if (result && result.box) {
+                Quagga.ImageDebug.drawPath(result.box, { x: 0, y: 1 }, drawingCtx, { color: "#00F", lineWidth: 2 });
+            }
+        });
+        // --- סוף ההוספה ---
+
         Quagga.onDetected(result => {
             cameraManager.stop();
             checkKosherStatus(result.codeResult.code);
         });
-        Quagga.start();
-        $('#barcode-status-display').textContent = 'מחפש ברקוד...';
     });
 }
 window.startKosherBarcodeScanner = startKosherBarcodeScanner;
