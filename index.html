@@ -2586,82 +2586,153 @@ window.findNearbyAttractions = findNearbyAttractions;
 
     // --- Camera Functions ---
 
-// --- startCamera: גרסה סופית ומרוּכזת
-async function startCamera(mode) {
-    console.log('LOG: startCamera called for mode', mode);
-    window.cameraMode = mode; 
-    
-    // 1. הגדרת אלמנטים
-    const video = document.getElementById('camera-feed');
-    const modal = document.getElementById('camera-modal');
-    const cameraModalTitle = $('#camera-title');
-    const barcodeStatus = $('#barcode-status-display');
-    const captureBtn = $('#capture-btn');
-    const zoomInBtn = $('#zoom-in-btn');
-    const zoomOutBtn = $('#zoom-out-btn');
-    const zoomLevelDisplay = $('#zoom-level');
-    const uploadReceiptBtn = $('#upload-receipt-btn'); // כפתור העלאה בקבלה
-
-    // --- עצירת זרמים קודמים וניקוי Quagga ---
-    if (window.cameraStream) {
+function stopCamera() {
+    console.log("LOG: stopCamera called.");
+    // 1. עצירת זרם הווידאו
+    if (window.cameraStream) { 
         window.cameraStream.getTracks().forEach(track => track.stop());
-        window.cameraStream = null;
-        window.activeVideoTrack = null;
     }
+    window.cameraStream = null; 
+    window.activeVideoTrack = null; 
+    
+    // 2. עצירת סורק Quagga
     try { 
         if (window.Quagga && window.Quagga.running) { 
             window.Quagga.stop(); 
             window.Quagga.running = false; 
         } 
     } catch(e){ console.warn(e); }
-
-    // --- ניהול UI וכותרת לפי המצב ---
-    const isScanMode = mode === 'translate' || mode === 'lookup'; // זיהוי/תרגום אתרים/תפריטים
-    const isReceiptMode = mode === 'receipt'; // סריקת קבלות
-    const isBarcodeMode = mode === 'barcode'; // סריקת ברקוד
-
-    // כותרת (פותר את ה"סורק קבלות" במסך זיהוי)
-    if (cameraModalTitle) {
-        if (mode === 'lookup') cameraModalTitle.textContent = 'זיהוי אתרים (מצלמה)';
-        else if (isReceiptMode) cameraModalTitle.textContent = 'סריקת קבלה';
-        else if (mode === 'translate') cameraModalTitle.textContent = 'תרגום תפריט / טקסט';
-        else if (isBarcodeMode) cameraModalTitle.textContent = 'סריקת כשרות (ברקוד)';
-    }
-
-    // כפתור צילום (Capture) - גלוי לזיהוי/קבלה/תרגום
-    if (captureBtn) captureBtn.style.display = (isScanMode || isReceiptMode) ? 'flex' : 'none'; 
     
-    // כפתור Upload (גלוי לקבלה ולברקוד, מוסתר באחרים כדי למנוע בלבול)
-    if (uploadReceiptBtn) uploadReceiptBtn.style.display = (isReceiptMode || isBarcodeMode) ? 'flex' : 'none';
+    // 3. סגירת המודל (בלי לגעת ב-UI הפנימי)
+    $('#camera-modal').classList.remove('flex');
+}
+window.stopCamera = stopCamera;
 
-    // כפתורי זום - גלויים רק במצבי צילום (לא ברקוד)
-    const showZoomControls = isScanMode || isReceiptMode;
-    if (zoomInBtn) zoomInBtn.style.display = showZoomControls ? 'flex' : 'none';
-    if (zoomOutBtn) zoomOutBtn.style.display = showZoomControls ? 'flex' : 'none';
-    if (zoomLevelDisplay) zoomLevelDisplay.style.display = showZoomControls ? 'block' : 'none';
+async function startKosherBarcodeScanner() {
+    window.cameraMode = 'barcode';
+    stopCamera(); // מתחילים נקי
 
-    // סטטוס ברקוד - גלוי רק בברקוד (כדי להסביר מה קורה)
-    if (barcodeStatus) barcodeStatus.style.display = isBarcodeMode ? 'block' : 'none'; 
+    // --- הגדרת UI ייעודית ---
+    $('#camera-title').textContent = 'סריקת כשרות (ברקוד)';
+    $('#capture-btn').style.display = 'none'; // אין כפתור צילום
+    $('#barcode-status-display').style.display = 'block'; // הצגת סטטוס
+    $('#upload-receipt-btn').style.display = 'flex'; // כפתור העלאה (אם קיים)
     
-    // --- המשך פתיחת המצלמה ---
+    // --- הפעלת חומרה (מבודדת) ---
+    const video = document.getElementById('camera-feed');
     try {
-        const stream = await navigator.mediaDevices.getUserMedia({ 
-            video: { facingMode: { ideal: 'environment' } }, 
-            audio: false 
+        const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' } }, audio: false });
+        window.cameraStream = stream;
+        video.srcObject = stream;
+        await video.play();
+        window.activeVideoTrack = stream.getVideoTracks()[0];
+        $('#camera-modal').classList.add('flex'); // פתיחת מודל
+
+        // --- הפעלת Quagga (מבודדת) ---
+        const container = video.parentNode;
+        window.Quagga.init({
+            inputStream: { type: "LiveStream", target: container, constraints: { facingMode: "environment" } },
+            decoder: { readers: ["ean_reader", "upc_reader", "code_128_reader"] }
+        }, (err) => {
+            if (err) {
+                document.getElementById('barcode-status-display').textContent = '❌ שגיאת סורק: לא הצליח לאתחל.';
+                return;
+            }
+            window.Quagga.start();
+            window.Quagga.running = true;
+            document.getElementById('barcode-status-display').textContent = '🔍 מחפש ברקוד...';
         });
-        // ... (המשך הלוגיקה של הפעלת מצלמה ו-Quagga כפי שהיא מופיעה בקובץ שלך) ...
-        
-        // --- פתיחת המודל ---
-        if (modal) modal.classList.add('flex');
 
-        // ... (טיפול בשאר הקוד הקיים, כולל Quagga.init) ...
-
+        // לוגיקת onDetected צריכה להיות מוגדרת פעם אחת גלובלית
     } catch (err) {
-        // ... (טיפול בשגיאות)
+        console.error('Barcode Camera Error:', err);
+        stopCamera();
+        showAlert('שגיאת מצלמה', `לא ניתן לגשת למצלמה לסריקת ברקוד.`);
     }
 }
-window.startCamera = startCamera;
+window.startKosherBarcodeScanner = startKosherBarcodeScanner;
 
+async function startSiteLookupCamera() {
+    window.cameraMode = 'lookup';
+    stopCamera(); 
+
+    // --- הגדרת UI ייעודית ---
+    $('#camera-title').textContent = 'זיהוי אתרים/אובייקטים';
+    $('#capture-btn').style.display = 'flex'; 
+    $('#barcode-status-display').style.display = 'none';
+    $('#upload-receipt-btn').style.display = 'none';
+    
+    // --- הפעלת חומרה (מבודדת) ---
+    const video = document.getElementById('camera-feed');
+    try {
+        const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' } }, audio: false });
+        window.cameraStream = stream;
+        video.srcObject = stream;
+        await video.play();
+        window.activeVideoTrack = stream.getVideoTracks()[0];
+        $('#camera-modal').classList.add('flex'); // פתיחת מודל
+    } catch (err) {
+        console.error('Lookup Camera Error:', err);
+        stopCamera();
+        showAlert('שגיאת מצלמה', `לא ניתן לגשת למצלמה לזיהוי.`);
+    }
+}
+window.startSiteLookupCamera = startSiteLookupCamera;
+
+  
+async function startReceiptScanCamera() {
+    window.cameraMode = 'receipt';
+    stopCamera(); 
+
+    // --- הגדרת UI ייעודית ---
+    $('#camera-title').textContent = 'סריקת קבלה (הכנסת הוצאה)';
+    $('#capture-btn').style.display = 'flex'; 
+    $('#barcode-status-display').style.display = 'none';
+    $('#upload-receipt-btn').style.display = 'flex'; // כפתור העלאת קובץ
+    
+    // --- הפעלת חומרה (מבודדת) ---
+    const video = document.getElementById('camera-feed');
+    try {
+        const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' } }, audio: false });
+        window.cameraStream = stream;
+        video.srcObject = stream;
+        await video.play();
+        window.activeVideoTrack = stream.getVideoTracks()[0];
+        $('#camera-modal').classList.add('flex'); // פתיחת מודל
+    } catch (err) {
+        console.error('Receipt Camera Error:', err);
+        stopCamera();
+        showAlert('שגיאת מצלמה', `לא ניתן לגשת למצלמה לסריקת קבלה.`);
+    }
+}
+window.startReceiptScanCamera = startReceiptScanCamera; // סוגר את הפונקציה
+// --- פונקציה 3: תרגומון (Translate) ---
+async function startTranslateCamera() {
+    window.cameraMode = 'translate';
+    stopCamera(); 
+
+    // --- הגדרת UI ייעודית ---
+    $('#camera-title').textContent = 'תרגום תפריט / טקסט';
+    $('#capture-btn').style.display = 'flex'; 
+    $('#barcode-status-display').style.display = 'none';
+    $('#upload-receipt-btn').style.display = 'none';
+    
+    // --- הפעלת חומרה (מבודדת) ---
+    const video = document.getElementById('camera-feed');
+    try {
+        const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' } }, audio: false });
+        window.cameraStream = stream;
+        video.srcObject = stream;
+        await video.play();
+        window.activeVideoTrack = stream.getVideoTracks()[0];
+        $('#camera-modal').classList.add('flex'); // פתיחת מודל
+    } catch (err) {
+        console.error('Translate Camera Error:', err);
+        stopCamera();
+        showAlert('שגיאת מצלמה', `לא ניתן לגשת למצלמה לתרגום.`);
+    }
+}
+window.startTranslateCamera = startTranslateCamera; // סוגר את הפונקציה
 // ========================= התחלה: קוד מתוקן ומשופר להפעלת הפנס =========================
 async function toggleTorch() {
     const torchBtn = $('#torch-btn');
@@ -2701,37 +2772,41 @@ async function toggleTorch() {
 
     // ודא שהקוד שלך נראה כך
 // מצא את function captureFrame() והחלף אותה
-function captureFrame(preserveCamera = false) {
-    console.log(`LOG: captureFrame called for mode=${cameraMode}, preserve=${preserveCamera}`);
+function captureFrame() {
+    console.log(`LOG: captureFrame called for mode=${window.cameraMode}`);
     const video = document.getElementById('camera-feed');
     const canvas = document.getElementById('camera-canvas');
     if (!video || !canvas) { console.error('video/canvas missing'); return; }
     const ctx = canvas.getContext('2d');
 
+    // 1. לכידת התמונה
     canvas.width = video.videoWidth || 1280;
     canvas.height = video.videoHeight || 720;
     ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
     const dataUrl = canvas.toDataURL('image/jpeg');
     const base64 = dataUrl.split(',')[1];
-
-    // סגירה מבוקרת
-    if (!preserveCamera && cameraMode !== 'translate') {
-        stopCamera();
-    }
-
-    if (cameraMode === 'translate') translateImage(base64, 'image/jpeg');
-    else if (cameraMode === 'receipt') processReceiptImage(base64);
-    else if (cameraMode === 'lookup') processLookupImage(base64);
-    else if (cameraMode === 'barcode') {
-        // אם רוצים — עיבוד תמונת ברקוד (או שמירת תמונה)
-        console.log('Captured in barcode mode');
+    
+    // 2. ניתוב לעיבוד לפי המצב הגלובלי (SRP)
+    if (window.cameraMode === 'translate') {
+        translateImage(base64, 'image/jpeg');
+    } else if (window.cameraMode === 'receipt') {
+        processReceiptImage(base64);
+    } else if (window.cameraMode === 'lookup') {
+        processLookupImage(base64);
+    } else if (window.cameraMode === 'barcode') {
+        // במצב ברקוד, כפתור הצילום אמור להיות מוסתר. 
+        console.warn('Capture button pressed in Barcode Mode - ignoring.');
+        // אנחנו לא סוגרים כאן, Quagga יעצור ויסגור אוטומטית כשיזהה ברקוד.
+        return; 
     } else {
-        console.warn('captureFrame: unknown cameraMode', cameraMode);
+        console.warn('captureFrame: unknown cameraMode', window.cameraMode);
     }
+    
+    // 3. סגירת המצלמה לאחר העיבוד (חיוני למצבי צילום ידני)
+    stopCamera(); 
 }
 window.captureFrame = captureFrame;
-
 // שינוי בפונקציה processReceiptImage
 async function processReceiptImage(base64ImageData) {
     showAlert('מעבד קבלה...', '<div class="text-center"><i class="fa-solid fa-spinner fa-spin fa-2x"></i><p class="mt-2">קורא את הפרטים מהקבלה בעזרת AI ומסווג את ההוצאה...</p></div>');
@@ -4070,24 +4145,9 @@ $('#scan-kosher-barcode-btn').addEventListener('click', () => {
         }
     });
 
-    $('#lookup-site-btn').addEventListener('click', () => {
-        cameraMode = 'lookup';
-        startCamera();
-    });
 
-    $('#translate-camera-btn').addEventListener('click', () => {
-        cameraMode = 'translate';
-        startCamera();
-    });
-    
-    $('#scan-receipt-btn').addEventListener('click', () => {
-        cameraMode = 'receipt';
-        startCamera();
-    });
 
-    //$('#torch-btn').addEventListener('click', toggleTorch);
-   // $('#camera-close-btn').addEventListener('click', stopCamera);
-  // guarded torch
+
 (function(){
   const t = document.getElementById('torch-btn');
   if (!t) return;
@@ -4173,10 +4233,20 @@ if (receiptFileInput) {
         $('#receipt-file-input').click();
     });
 
-$('#scan-kosher-barcode-btn').addEventListener('click', () => {
-    // אין צורך לפתוח את המודל כאן, startCamera כבר עושה זאת
-    window.startCamera('barcode'); 
-});
+
+  // --- מאזיני שיתוף ומצלמה ---
+
+// 1. זיהוי אתרים/אובייקטים:
+$('#lookup-site-btn').addEventListener('click', window.startSiteLookupCamera);
+
+// 2. תרגום מצלמה:
+$('#translate-camera-btn').addEventListener('click', window.startTranslateCamera);
+ 
+// 3. סריקת קבלה (הכנסת הוצאה):
+$('#scan-receipt-btn').addEventListener('click', window.startReceiptScanCamera);
+
+// 4. סריקת ברקוד (כשרות):
+$('#scan-kosher-barcode-btn').addEventListener('click', window.startKosherBarcodeScanner);
     
   }); // <--- הסוגר הסופי של document.addEventListener('DOMContentLoaded')
 //------------
