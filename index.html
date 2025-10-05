@@ -3642,23 +3642,6 @@ document.addEventListener('DOMContentLoaded', () => {
         if (itBtn) { itBtn.disabled = true; itBtn.innerHTML = 'Non supportato'; }
     }
 
-  
-  // guarded capture listener — חיבור חד-פעמי ומניעת double-bind
-(function(){
-  const el = document.getElementById('capture-btn');
-  if (!el) return;
-  if (el.dataset.captureBound) return;
-  el.addEventListener('click', () => {
-    const preserve = (cameraMode === 'barcode' || cameraMode === 'translate');
-    // עצירה מבוקרת של Quagga אם צריך
-    try { if (window.Quagga && window.Quagga.running) { window.Quagga.stop(); window.Quagga.running = false; } } catch(e){}
-    captureFrame(preserve);
-  });
-  el.dataset.captureBound = '1';
-})();
-
-// קטע מתוך ה-INIT
-
 // מאזין רשמי לברכת המזון - מוצג קודם, ואז משמיע דרך speakTextLocally
 (function(){
   const birkatBtn = document.getElementById('birkat-hamazon-btn');
@@ -4075,25 +4058,6 @@ $('#tefilat-haderech-btn')?.addEventListener('click', () => {
         }
     });
 
-
-
-
-(function(){
-  const t = document.getElementById('torch-btn');
-  if (!t) return;
-  if (t.dataset.torchBound) return;
-  t.addEventListener('click', toggleTorch);
-  t.dataset.torchBound = '1';
-})();
-
-// guarded camera close
-(function(){
-  const c = document.getElementById('camera-close-btn');
-  if (!c) return;
-  if (c.dataset.closeBound) return;
-  c.addEventListener('click', stopCamera);
-  c.dataset.closeBound = '1';
-})();
 
 //  const globalCapture = document.getElementById('capture-btn');
 
