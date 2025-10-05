@@ -2587,13 +2587,17 @@ async function startKosherBarcodeScanner() {
     window.stopCamera(); 
 
     // --- הגדרת UI: הכל גלוי, אבל כפתור הצילום מנוטרל ---
+    // --- הגדרת UI ייעודית (חובה להצגת כפתורים וסטטוס) ---
     $('#camera-title').textContent = 'סריקת כשרות (ברקוד)';
     
+    // הצגת כל כפתורי העזר:
     $('#capture-btn').style.display = 'flex'; 
-    $('#capture-btn').disabled = true; // ❌ נטרול חובה למניעת קריסה ב-Quagga
-    
-    $('#upload-receipt-btn').style.display = 'flex'; // כפתור העלאה גלוי
-    $('#barcode-status-display').style.display = 'block'; // הצגת סטטוס
+    $('#capture-btn').disabled = true; // נטרול הצילום האוטומטי
+    $('#upload-receipt-btn').style.display = 'flex'; 
+    $('#barcode-status-display').style.display = 'block'; // סטטוס חיוני
+    $('#torch-btn').style.display = 'flex';
+    $('#zoom-in-btn').style.display = 'flex';
+    $('#zoom-out-btn').style.display = 'flex';
     
     // --- הפעלת חומרה + Quagga ---
     const video = document.getElementById('camera-feed');
@@ -4197,10 +4201,16 @@ if (receiptFileInput) {
     });
 }
     // --- מאזין לכפתור הפתיחה של קלט הקבצים ---
-    $('#upload-receipt-btn').addEventListener('click', () => {
-        $('#receipt-file-input').click();
-    });
+const uploadReceiptBtn = document.getElementById('upload-receipt-btn');
+const receiptFileInput = document.getElementById('receipt-file-input'); // הפנייה לאלמנט הקלט הנסתר
 
+if (uploadReceiptBtn) { 
+    uploadReceiptBtn.addEventListener('click', () => {
+        if (receiptFileInput) {
+             receiptFileInput.click();
+        }
+    });
+}
 
   // --- מאזיני שיתוף ומצלמה ---
 
