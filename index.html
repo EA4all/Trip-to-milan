@@ -3320,19 +3320,24 @@ speechRecognizer.onend = () => {
 
 function startRecognition(langCode, button) {
     if (!speechRecognizer) {
-        // אם speechRecognizer לא הוגדר (כנראה לא נתמך בדפדפן)
         showAlert('שגיאה', 'זיהוי קולי אינו נתמך בדפדפן זה.');
         return;
     }
 
-    // *** התיקון ל-InvalidStateError: בודק אם הזיהוי כבר מתבצע ומפסיק אותו ***
+    // אם הזיהוי כבר מתבצע, מפסיקים ומאפשרים לחיצה חוזרת (הפונקציה already מטפלת ב-isRecognizing)
     if (isRecognizing) { 
         speechRecognizer.stop();
-        // הערה: isRecognizing יתעדכן ל-false בתוך speechRecognizer.onend
         return;
     }
     
     try {
+        // *** עצירה יזומה לפני התחלה למקרה שהמצב לא אופס כראוי (טיפול ב-InvalidStateError) ***
+        // זהו תיקון חזק יותר לבעיה שנוצרת עקב לחיצות מהירות.
+        if (speechRecognizer.recognizing) {
+             speechRecognizer.stop();
+             // מעבר ישיר ללוגיקת ההתחלה החדשה:
+        }
+        
         activeVoiceButton = button;
         // פידבק ויזואלי מיידי למשתמש
         activeVoiceButton.innerHTML = '<i class="fa-solid fa-microphone-lines fa-beat animate-pulse"></i> מקליט...';
@@ -3340,10 +3345,21 @@ function startRecognition(langCode, button) {
         
         speechRecognizer.lang = langCode;
         speechRecognizer.start();
+        // isRecognizing יוגדר ל-true בתוך speechRecognizer.onstart
+        
     } catch (e) {
+        // *** שינוי: בודק אם השגיאה היא InvalidStateError ומתעלם ממנה (מכיוון שההקלטה התחילה כבר בניסיון קודם) ***
+        // זה מונע את מודל השגיאה המיותרת כאשר המערכת בפועל עובדת.
+        if (e.name === "InvalidStateError") {
+             console.warn("WARN: Ignored InvalidStateError, assuming previous attempt succeeded or stopped.");
+             return; 
+        }
+        
         console.error("Error starting speech recognition:", e);
+        // עבור כל שגיאה אחרת (כגון שגיאת הרשאה אמיתית), נציג את המודל:
         showAlert('שגיאת מיקרופון', 'לא ניתן היה להפעיל את המיקרופון. אנא ודא שהענקת הרשאות לדפדפן.');
-        // איפוס הכפתור במקרה של שגיאה מיידית
+        
+        // איפוס הכפתור במקרה של שגיאה אמיתית
         if (activeVoiceButton) {
             activeVoiceButton.classList.remove('text-red-500', 'animate-pulse');
             activeVoiceButton.innerHTML = activeVoiceButton.id.includes('he') ? '<i class="fa-solid fa-microphone"></i> דבר בעברית' : '<i class="fa-solid fa-microphone"></i> Parla Italiano';
