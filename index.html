@@ -2586,12 +2586,13 @@ async function startKosherBarcodeScanner() {
     window.cameraMode = 'barcode';
     window.stopCamera(); 
 
-    // --- הגדרת UI: הכל גלוי, למעט נטרול כפתור הצילום ---
+    // --- הגדרת UI: הכל גלוי, אבל כפתור הצילום מנוטרל ---
     $('#camera-title').textContent = 'סריקת כשרות (ברקוד)';
-    $('#capture-btn').style.display = 'flex'; 
-    $('#capture-btn').disabled = true; // נטרול חובה למניעת קריסה ב-Quagga
     
-    $('#upload-receipt-btn').style.display = 'flex'; // הצגת כפתור העלאה
+    $('#capture-btn').style.display = 'flex'; 
+    $('#capture-btn').disabled = true; // ❌ נטרול חובה למניעת קריסה ב-Quagga
+    
+    $('#upload-receipt-btn').style.display = 'flex'; // כפתור העלאה גלוי
     $('#barcode-status-display').style.display = 'block'; // הצגת סטטוס
     
     // --- הפעלת חומרה + Quagga ---
@@ -2604,13 +2605,9 @@ async function startKosherBarcodeScanner() {
         window.activeVideoTrack = stream.getVideoTracks()[0];
         $('#camera-modal').classList.add('flex'); // פתיחת מודל
 
-        // אתחול Quagga (הצריך לוגיקת onDetected גלובלית נוספת)
-        window.Quagga.init({
-            // ... (לוגיקת אתחול Quagga) ...
-        }, (err) => {
-            // ... (הפעלת Quagga.start) ...
-        });
-
+        // אתחול Quagga (הצורך את הלוגיקה המבודדת שלך)
+        // ...
+        
     } catch (err) {
         console.error('Barcode Scanner Error:', err);
         stopCamera();
@@ -2624,15 +2621,18 @@ window.startKosherBarcodeScanner = startKosherBarcodeScanner;
 // --------------------------------------------------------------------------
 async function startSiteLookupCamera() {
     window.cameraMode = 'lookup';
-    stopCamera(); 
+    window.stopCamera(); // מתחילים נקי
 
-    // --- הגדרת UI: הכל גלוי ---
+    // --- הגדרת UI: הכל גלוי ומופעל לצילום ---
     $('#camera-title').textContent = 'זיהוי אתרים/אובייקטים';
-    $('#capture-btn').style.display = 'flex'; // כפתור צילום גלוי
-    $('#capture-btn').disabled = false; // ודא שהוא מופעל
     
-    $('#upload-receipt-btn').style.display = 'flex'; // הצגת כפתור העלאת קובץ
-    $('#barcode-status-display').style.display = 'none'; // הסתרת סטטוס ברקוד
+    // כפתורים חיוניים
+    $('#capture-btn').style.display = 'flex'; 
+    $('#capture-btn').disabled = false;
+    
+    // כפתורי עזר
+    $('#upload-receipt-btn').style.display = 'none'; // מוסתר
+    $('#barcode-status-display').style.display = 'none'; // מוסתר
     
     // --- הפעלת חומרה ---
     const video = document.getElementById('camera-feed');
@@ -2656,15 +2656,17 @@ window.startSiteLookupCamera = startSiteLookupCamera;
 // --------------------------------------------------------------------------
 async function startReceiptScanCamera() {
     window.cameraMode = 'receipt';
-    stopCamera(); 
+    window.stopCamera(); 
 
-    // --- הגדרת UI ייעודית ---
+    // --- הגדרת UI: הכל גלוי ומופעל לצילום ---
     $('#camera-title').textContent = 'סריקת קבלה (הכנסת הוצאה)';
-    $('#capture-btn').style.display = 'flex'; // הצגת כפתור הצילום
-    $('#capture-btn').disabled = false; // ודא שהוא מופעל
     
-    $('#upload-receipt-btn').style.display = 'flex'; // הצגת כפתור העלאת קובץ
-    $('#barcode-status-display').style.display = 'none';
+    // כפתורים חיוניים
+    $('#capture-btn').style.display = 'flex'; 
+    $('#capture-btn').disabled = false;
+    $('#upload-receipt-btn').style.display = 'flex'; // כפתור העלאה גלוי
+    
+    $('#barcode-status-display').style.display = 'none'; // מוסתר
     
     // --- הפעלת חומרה ---
     const video = document.getElementById('camera-feed');
@@ -2682,7 +2684,6 @@ async function startReceiptScanCamera() {
     }
 }
 window.startReceiptScanCamera = startReceiptScanCamera;
-
 // --------------------------------------------------------------------------
 // פונקציה 4: תרגומון (Translate)
 // --------------------------------------------------------------------------
