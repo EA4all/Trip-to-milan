@@ -2698,7 +2698,7 @@ async function startKosherBarcodeScanner() {
     Quagga.init({
         inputStream: { name: "Live", type: "LiveStream", target: video },
         decoder: { readers: ["ean_reader", "ean_8_reader", "code_128_reader"] },
-        locate: true, // פרמטר חשוב לציור המסגרת
+        locate: true,
     }, (err) => {
         if (err) { cameraManager.stop(); showAlert('שגיאת סורק', 'לא הצלחנו להפעיל את סורק הברקודים.'); return; }
         
@@ -2709,24 +2709,30 @@ async function startKosherBarcodeScanner() {
         Quagga.onProcessed(function (result) {
             const drawingCtx = Quagga.canvas.ctx.overlay;
             const drawingCanvas = Quagga.canvas.dom.overlay;
+
             if (drawingCtx && drawingCanvas) {
                 drawingCtx.clearRect(0, 0, parseInt(drawingCanvas.getAttribute("width")), parseInt(drawingCanvas.getAttribute("height")));
+                
+                // כאן נבדוק אם הסורק מזהה קופסה של ברקוד
                 if (result && result.box) {
-                    Quagga.ImageDebug.drawPath(result.box, { x: 0, y: 1 }, drawingCtx, { color: "green", lineWidth: 4 });
+                    // אם כן, נדפיס לקונסול ונצייר ידנית
+                    console.log("Barcode box detected:", result.box);
+                    drawingCtx.beginPath();
+                    drawingCtx.moveTo(result.box[0][0], result.box[0][1]);
+                    for (var i = 1; i < result.box.length; i++) {
+                        drawingCtx.lineTo(result.box[i][0], result.box[i][1]);
+                    }
+                    drawingCtx.closePath();
+                    drawingCtx.strokeStyle = 'green';
+                    drawingCtx.lineWidth = 4;
+                    drawingCtx.stroke();
                 }
             }
         });
 
         Quagga.onDetected(result => {
-            // --- הוספה: עדכון הסטטוס לפני הסגירה ---
-            $('#barcode-status-display').textContent = 'ברקוד זוהה! מאמת נתונים...';
-            // ------------------------------------------
-            
-            // השהייה קצרה כדי שהמשתמש יספיק לראות את ההודעה
-            setTimeout(() => {
-                cameraManager.stop();
-                checkKosherStatus(result.codeResult.code);
-            }, 500); // חצי שנייה
+            cameraManager.stop();
+            checkKosherStatus(result.codeResult.code);
         });
     });
 }
