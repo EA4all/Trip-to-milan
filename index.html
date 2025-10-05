@@ -3121,20 +3121,7 @@ function speakTextLocally(text, title) {
 window.speakTextLocally = speakTextLocally;
 
 
-    function stopCamera() {
-    console.log("LOG: stopCamera called.");
-    // בדיקה נוספת למניעת שגיאות אם cameraStream הוא null
-    if (cameraStream) { 
-        cameraStream.getTracks().forEach(track => track.stop());
-    }
-    cameraStream = null; // איפוס מלא של הזרם
-    activeVideoTrack = null; // Clear the stored track
-    $('#camera-modal').classList.remove('flex');
-}
-
-
 // --- סוף החלפת speakText ---
-// מצא והחלף את הפונקציה הקיימת בקוד שלך
 async function translateText(sourceLang, targetLang) {
     
     // שימוש ב-IDs הנכונים מה-HTML
