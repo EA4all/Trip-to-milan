@@ -850,19 +850,18 @@ const cameraManager = {
     },
 
 stop() {
-    if (this.audio) {
-        this.audio.pause();
-        this.audio.currentTime = 0;
-        this.audio.src = ''; // -> מנקה את המשאב לחלוטין
+    this.isDetecting = false; // Stop any active barcode scanning loop
+    if (this.stream) {
+        this.stream.getTracks().forEach(track => track.stop());
     }
-    if ('speechSynthesis' in window) {
-        speechSynthesis.cancel();
-    }
-    this.audio = null;
-    this.utterance = null;
-    this.isPlaying = false;
-    this.isPaused = false;
-    this.updateUI();
+    // Reset all state properties
+    this.stream = null;
+    this.videoTrack = null;
+    this.mode = null;
+    this.zoomCapabilities = null;
+    this.currentZoom = 1;
+    
+    document.getElementById('camera-modal').classList.remove('flex');
 },
 
     updateZoomUI() {
