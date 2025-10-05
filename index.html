@@ -622,56 +622,28 @@ body {
 -----
 <div id="camera-modal" class="modal-backdrop">
     <div class="modal">
-        <div class="p-4 border-b flex justify-between items-center">
-            <h3 id="camera-title" class="text-lg font-bold">סרוק קבלה</h3>
-            <button id="camera-close-btn" class="text-2xl">×</button>
-        </div>
         <div class="p-4 flex-grow relative">
             <video id="camera-feed" class="w-full h-full object-cover bg-black rounded-lg" playsinline autoplay></video>
             <canvas id="camera-canvas" class="hidden"></canvas>
         </div>
-<div class="p-4 border-t flex justify-center items-center gap-2">
-      <button id="zoom-out-btn" class="btn btn-ghost rounded-full w-8 h-8 text-xl" title="הקטן">
-        <i class="fa-solid fa-magnifying-glass-minus"></i>
-    </button>
-    <!-- Upload -->
-    <div class="flex flex-col items-center">
-        <button id="upload-receipt-btn" class="btn btn-ghost w-16 h-16 rounded-full text-2xl" title="העלה מהגלריה">
-            <i class="fa-solid fa-folder-open"></i>
-        </button>
-        <input type="file" id="receipt-file-input" accept="image/*" class="hidden">
-    </div>
 
-    <!-- Capture -->
-    <div class="flex flex-col items-center">
-        <button id="capture-btn" class="btn btn-primary w-16 h-16 rounded-full" title="צלם">
-            <i class="fa-solid fa-camera fa-2x"></i>
-        </button>
-    </div>
-
-    <!-- Torch -->
-    <div class="flex flex-col items-center">
-        <button id="torch-btn" class="btn btn-ghost w-16 h-16 rounded-full text-2xl" title="פנס">
-            <i class="fa-solid fa-lightbulb"></i>
-        </button>
-    </div>
-
-<!-- Zoom row -->
-
-
-    <button id="zoom-in-btn" class="btn btn-ghost rounded-full w-8 h-8 text-xl" title="הגדל">
-        <i class="fa-solid fa-magnifying-glass-plus"></i>
-    </button>
-
-</div>
-
-  <div class="p-4 border-t flex justify-center items-center gap-2">
-    <span id="zoom-level">1.0x</span>
+        <div id="main-controls-container"> 
+            <div class="p-4 border-t flex justify-center items-center gap-2">
+                <button id="zoom-out-btn" class="btn btn-ghost rounded-full w-8 h-8 text-xl" title="הקטן">
+                    <i class="fa-solid fa-magnifying-glass-minus"></i>
+                </button>
+                <button id="zoom-in-btn" class="btn btn-ghost rounded-full w-8 h-8 text-xl" title="הגדל">
+                    <i class="fa-solid fa-magnifying-glass-plus"></i>
+                </button>
+            </div>
+            <div class="p-4 border-t flex justify-center items-center gap-2">
+                <span id="zoom-level">1.0x</span>
+            </div>
+            <div id="barcode-status-container" class="p-2 border-t text-center">
+                <span id="barcode-status-display" class="text-sm text-gray-400">המתן להפעלת המצלמה...</span>
+            </div>
         </div>
-      <div id="barcode-status-container" class="p-2 border-t text-center">
-    <span id="barcode-status-display" class="text-sm text-gray-400">המתן להפעלת המצלמה...</span>
-  </div>
-    </div>
+        </div>
 </div>
 ------
 <div id="alert-modal" class="modal-backdrop">
@@ -2607,20 +2579,20 @@ function stopCamera() {
     $('#camera-modal').classList.remove('flex');
 }
 window.stopCamera = stopCamera;
+// --------------------------------------------------------------------------
+// פונקציה 1: סורק ברקוד (Kosher)
+// --------------------------------------------------------------------------
 async function startKosherBarcodeScanner() {
     window.cameraMode = 'barcode';
-    stopCamera(); 
+    window.stopCamera(); 
 
-    // --- איפוס קונטיינרים ראשיים (חובה!) ---
-    $('#camera-controls-bottom').style.display = 'flex';
-    $('#main-controls').style.display = 'flex';
-    $('#torch-btn').style.display = 'flex'; // הפנס צריך להיות גלוי
+    // --- הגדרת UI: הכל גלוי, למעט נטרול כפתור הצילום ---
+    $('#camera-title').textContent = 'סריקת כשרות (ברקוד)';
+    $('#capture-btn').style.display = 'flex'; 
+    $('#capture-btn').disabled = true; // נטרול חובה למניעת קריסה ב-Quagga
     
-    // --- הגדרת UI ייעודית ---
-    $('#camera-title').textContent = 'סריקת ברקוד (כשרות)';
-    $('#capture-btn').style.display = 'none'; // הסתרת כפתור הצילום (סורק אוטומטי)
-    $('#upload-receipt-btn').style.display = 'none'; // הסתרת העלאת קבלה
-    $('#barcode-status-display').style.display = 'flex'; // הצגת שדה הסטטוס
+    $('#upload-receipt-btn').style.display = 'flex'; // הצגת כפתור העלאה
+    $('#barcode-status-display').style.display = 'block'; // הצגת סטטוס
     
     // --- הפעלת חומרה + Quagga ---
     const video = document.getElementById('camera-feed');
@@ -2630,11 +2602,15 @@ async function startKosherBarcodeScanner() {
         video.srcObject = stream;
         await video.play();
         window.activeVideoTrack = stream.getVideoTracks()[0];
-        $('#camera-modal').classList.add('flex');
-        
-        // אתחול Quagga
-        await initQuagga(video);
-        
+        $('#camera-modal').classList.add('flex'); // פתיחת מודל
+
+        // אתחול Quagga (הצריך לוגיקת onDetected גלובלית נוספת)
+        window.Quagga.init({
+            // ... (לוגיקת אתחול Quagga) ...
+        }, (err) => {
+            // ... (הפעלת Quagga.start) ...
+        });
+
     } catch (err) {
         console.error('Barcode Scanner Error:', err);
         stopCamera();
@@ -2643,20 +2619,20 @@ async function startKosherBarcodeScanner() {
 }
 window.startKosherBarcodeScanner = startKosherBarcodeScanner;
 
+// --------------------------------------------------------------------------
+// פונקציה 2: זיהוי אתרים (Lookup)
+// --------------------------------------------------------------------------
 async function startSiteLookupCamera() {
     window.cameraMode = 'lookup';
     stopCamera(); 
 
-    // --- איפוס קונטיינרים ראשיים (חובה!) ---
-    $('#camera-controls-bottom').style.display = 'flex';
-    $('#main-controls').style.display = 'flex';
-    $('#torch-btn').style.display = 'flex'; // הפנס צריך להיות גלוי
-    
-    // --- הגדרת UI ייעודית ---
+    // --- הגדרת UI: הכל גלוי ---
     $('#camera-title').textContent = 'זיהוי אתרים/אובייקטים';
-    $('#capture-btn').style.display = 'flex'; // הצגת כפתור הצילום
-    $('#upload-receipt-btn').style.display = 'none'; // הסתרת העלאת קבלה
-    $('#barcode-status-display').style.display = 'none';
+    $('#capture-btn').style.display = 'flex'; // כפתור צילום גלוי
+    $('#capture-btn').disabled = false; // ודא שהוא מופעל
+    
+    $('#upload-receipt-btn').style.display = 'flex'; // הצגת כפתור העלאת קובץ
+    $('#barcode-status-display').style.display = 'none'; // הסתרת סטטוס ברקוד
     
     // --- הפעלת חומרה ---
     const video = document.getElementById('camera-feed');
@@ -2666,7 +2642,7 @@ async function startSiteLookupCamera() {
         video.srcObject = stream;
         await video.play();
         window.activeVideoTrack = stream.getVideoTracks()[0];
-        $('#camera-modal').classList.add('flex');
+        $('#camera-modal').classList.add('flex'); // פתיחת מודל
     } catch (err) {
         console.error('Lookup Camera Error:', err);
         stopCamera();
@@ -2674,18 +2650,19 @@ async function startSiteLookupCamera() {
     }
 }
 window.startSiteLookupCamera = startSiteLookupCamera;
+
+// --------------------------------------------------------------------------
+// פונקציה 3: סורק קבלות (Receipt)
+// --------------------------------------------------------------------------
 async function startReceiptScanCamera() {
     window.cameraMode = 'receipt';
     stopCamera(); 
 
-    // --- איפוס קונטיינרים ראשיים (חובה!) ---
-    $('#camera-controls-bottom').style.display = 'flex';
-    $('#main-controls').style.display = 'flex';
-    $('#torch-btn').style.display = 'flex'; // הפנס צריך להיות גלוי
-    
     // --- הגדרת UI ייעודית ---
     $('#camera-title').textContent = 'סריקת קבלה (הכנסת הוצאה)';
     $('#capture-btn').style.display = 'flex'; // הצגת כפתור הצילום
+    $('#capture-btn').disabled = false; // ודא שהוא מופעל
+    
     $('#upload-receipt-btn').style.display = 'flex'; // הצגת כפתור העלאת קובץ
     $('#barcode-status-display').style.display = 'none';
     
@@ -2697,7 +2674,7 @@ async function startReceiptScanCamera() {
         video.srcObject = stream;
         await video.play();
         window.activeVideoTrack = stream.getVideoTracks()[0];
-        $('#camera-modal').classList.add('flex');
+        $('#camera-modal').classList.add('flex'); // פתיחת מודל
     } catch (err) {
         console.error('Receipt Camera Error:', err);
         stopCamera();
@@ -2705,20 +2682,20 @@ async function startReceiptScanCamera() {
     }
 }
 window.startReceiptScanCamera = startReceiptScanCamera;
-// --- פונקציה 3: תרגומון (Translate) ---
+
+// --------------------------------------------------------------------------
+// פונקציה 4: תרגומון (Translate)
+// --------------------------------------------------------------------------
 async function startTranslateCamera() {
     window.cameraMode = 'translate';
     stopCamera(); 
 
-    // --- איפוס קונטיינרים ראשיים (חובה!) ---
-    $('#camera-controls-bottom').style.display = 'flex';
-    $('#main-controls').style.display = 'flex';
-    $('#torch-btn').style.display = 'flex'; // הפנס צריך להיות גלוי
-    
     // --- הגדרת UI ייעודית ---
-    $('#camera-title').textContent = 'תרגום טקסט מיידי';
+    $('#camera-title').textContent = 'תרגום תפריט / טקסט';
     $('#capture-btn').style.display = 'flex'; // הצגת כפתור הצילום
-    //$('#upload-receipt-btn').style.display = 'none'; // הסתרת העלאת קבלה
+    $('#capture-btn').disabled = false; // ודא שהוא מופעל
+    
+    $('#upload-receipt-btn').style.display = 'none'; // הסתרת העלאת קבלה
     $('#barcode-status-display').style.display = 'none';
     
     // --- הפעלת חומרה ---
@@ -2729,7 +2706,7 @@ async function startTranslateCamera() {
         video.srcObject = stream;
         await video.play();
         window.activeVideoTrack = stream.getVideoTracks()[0];
-        $('#camera-modal').classList.add('flex');
+        $('#camera-modal').classList.add('flex'); // פתיחת מודל
     } catch (err) {
         console.error('Translate Camera Error:', err);
         stopCamera();
@@ -2737,6 +2714,7 @@ async function startTranslateCamera() {
     }
 }
 window.startTranslateCamera = startTranslateCamera;
+    
 // ========================= התחלה: קוד מתוקן ומשופר להפעלת הפנס =========================
 async function toggleTorch() {
     const torchBtn = $('#torch-btn');
