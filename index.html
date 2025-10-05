@@ -2693,7 +2693,11 @@ async function startSiteLookupCamera() {
     await openCamera();
 }
 
-// פונקציה 3: סורק קבלות
+window.startSiteLookupCamera = startSiteLookupCamera;
+
+// --------------------------------------------------------------------------
+// פונקציה 3: סורק קבלות (Receipt)
+// --------------------------------------------------------------------------
 async function startReceiptScanCamera() {
     window.cameraMode = 'receipt';
     stopCamera();
@@ -2703,53 +2707,6 @@ async function startReceiptScanCamera() {
     $('#upload-receipt-btn').style.display = 'flex';
     $('#barcode-status-display').style.display = 'none';
     await openCamera();
-}
-window.startSiteLookupCamera = startSiteLookupCamera;
-
-// --------------------------------------------------------------------------
-// פונקציה 3: סורק קבלות (Receipt)
-// --------------------------------------------------------------------------
-async function startReceiptScanCamera() {
-    window.cameraMode = 'receipt';
-    stopCamera();
-
-    $('#camera-title').textContent = 'סריקת קבלה';
-    $('#capture-btn').style.display = 'flex';
-    $('#capture-btn').disabled = false;
-    $('#upload-receipt-btn').style.display = 'flex';
-    $('#barcode-status-display').style.display = 'none';
-    
-    const video = document.getElementById('camera-feed');
-    try {
-        const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' }, torch: false } });
-        window.cameraStream = stream;
-        video.srcObject = stream;
-        await video.play();
-
-        // --- תיקון קריטי: המתנה קצרה ---
-        await new Promise(resolve => setTimeout(resolve, 100));
-
-        window.activeVideoTrack = stream.getVideoTracks()[0];
-        if (!window.activeVideoTrack) {
-            throw new Error("No video track found in the stream.");
-        }
-
-        $('#camera-modal').classList.add('flex');
-
-        if ('zoom' in activeVideoTrack.getCapabilities()) {
-            zoomCapabilities = activeVideoTrack.getCapabilities().zoom;
-            console.log('Zoom capabilities:', zoomCapabilities);
-            currentZoom = activeVideoTrack.getSettings().zoom || 1;
-            zoomLevelDisplay.textContent = `${currentZoom.toFixed(1)}x`;
-        } else {
-            console.log('Zoom not supported on this device.');
-            zoomCapabilities = null;
-        }
-    } catch (err) {
-        console.error('Camera Error:', err);
-        stopCamera();
-        showAlert('שגיאת מצלמה', 'לא ניתן היה להפעיל את המצלמה. אנא ודא שהענקת הרשאות מתאימות לדפדפן.');
-    }
 }
 window.startReceiptScanCamera = startReceiptScanCamera;
 // --------------------------------------------------------------------------
