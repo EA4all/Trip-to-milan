@@ -2609,7 +2609,6 @@ function stopCamera() {
 }
 window.stopCamera = stopCamera;
 
-    
 async function openCamera() {
     const video = createVideoElement(); // יצירת אלמנט וידאו חדש ונקי
     
@@ -2617,30 +2616,39 @@ async function openCamera() {
         const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' }, torch: false } });
         window.cameraStream = stream;
         video.srcObject = stream;
-        await video.play();
-
-        await new Promise(resolve => setTimeout(resolve, 100));
+        
+        // --- שינוי מרכזי: ממתינים באופן אקטיבי לאירוע שהוידאו באמת מוכן ---
+        await new Promise((resolve, reject) => {
+            // אם הוידאו מוכן לניגון, הבטחת ה-Promise מסתיימת והקוד ממשיך
+            video.oncanplay = () => resolve();
+            
+            // מנגנון בטיחות: אם המצלמה לא עולה תוך 5 שניות, זרוק שגיאה
+            setTimeout(() => reject(new Error("Camera timed out")), 5000);
+        });
+        
+        video.play(); // נפעיל את הנגן רק אחרי שווידאנו שהוא מוכן
 
         window.activeVideoTrack = stream.getVideoTracks()[0];
         if (!window.activeVideoTrack) {
             throw new Error("No video track found.");
         }
-
+        
         $('#camera-modal').classList.add('flex');
         
         if ('zoom' in activeVideoTrack.getCapabilities()) {
             zoomCapabilities = activeVideoTrack.getCapabilities().zoom;
             currentZoom = activeVideoTrack.getSettings().zoom || 1;
-            zoomLevelDisplay.textContent = `${currentZoom.toFixed(1)}x`;
+            if (zoomLevelDisplay) zoomLevelDisplay.textContent = `${currentZoom.toFixed(1)}x`;
         } else {
             zoomCapabilities = null;
         }
-        return video; // החזרת אלמנט הוידאו כדי שפונקציות אחרות יוכלו להשתמש בו
+        return video; // החזרת אלמנט הוידאו לשימוש בפונקציות אחרות
+        
     } catch (err) {
         console.error('Camera Error:', err);
         stopCamera();
         showAlert('שגיאת מצלמה', 'לא ניתן היה להפעיל את המצלמה. אנא ודא שהענקת הרשאות מתאימות לדפדפן.');
-        return null; // החזרת null במקרה של שגיאה
+        return null;
     }
 }
 // --------------------------------------------------------------------------
