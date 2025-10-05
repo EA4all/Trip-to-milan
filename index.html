@@ -632,7 +632,7 @@ body {
     <div class="modal">
         <div class="p-4 border-b flex justify-between items-center">
             <h3 id="camera-title" class="text-lg font-bold">מצלמה</h3>
-            <button id="camera-close-btn" class="text-2xl" onclick="window.stopCamera()">×</button>
+            <button id="camera-close-btn" class="text-2xl">×</button>
         </div>
 
 <div class="p-4 flex-grow relative" id="video-container">
@@ -878,6 +878,7 @@ const cameraManager = {
         }
     }
 };
+    window.cameraManager = cameraManager;
 // --- סוף Camera Manager ---
     
     // --- Firebase SDK ---
@@ -2681,11 +2682,13 @@ document.getElementById('zoom-out-btn').addEventListener('click', () => cameraMa
 // פונקציה 1: סורק ברקוד (Kosher)
 // --------------------------------------------------------------------------
 async function startKosherBarcodeScanner() {
-    cameraManager.stop(); // <-- התיקון כאן
+    // השארנו את הקריאה ל-stop() בתוך המנהל כאן בכוונה
+    cameraManager.stop();
     window.cameraMode = 'barcode';
 
     $('#camera-title').textContent = 'סריקת כשרות (ברקוד)';
     $('#capture-btn').style.display = 'none';
+    $('#upload-receipt-btn').style.display = 'none';
     $('#barcode-status-display').style.display = 'block';
     $('#barcode-status-display').textContent = 'מפעיל מצלמה...';
 
@@ -2694,14 +2697,28 @@ async function startKosherBarcodeScanner() {
 
     Quagga.init({
         inputStream: { name: "Live", type: "LiveStream", target: video },
-        decoder: { readers: ["ean_reader"] },
+        decoder: { readers: ["ean_reader", "ean_8_reader", "code_128_reader"] },
     }, (err) => {
         if (err) { cameraManager.stop(); showAlert('שגיאת סורק', 'לא הצלחנו להפעיל את סורק הברקודים.'); return; }
+
         Quagga.onDetected(result => {
             cameraManager.stop();
             checkKosherStatus(result.codeResult.code);
         });
+        
+        // --- הוספת מאזין הציור שוב ---
+        Quagga.onProcessed(function (result) {
+            const drawingCtx = Quagga.canvas.ctx.overlay;
+            const drawingCanvas = Quagga.canvas.dom.overlay;
+            drawingCtx.clearRect(0, 0, parseInt(drawingCanvas.getAttribute("width")), parseInt(drawingCanvas.getAttribute("height")));
+            if (result && result.box) {
+                Quagga.ImageDebug.drawPath(result.box, { x: 0, y: 1 }, drawingCtx, { color: "green", lineWidth: 4 });
+            }
+        });
+        // --- סוף הוספת מאזין הציור ---
+
         Quagga.start();
+        window.Quagga.running = true;
         $('#barcode-status-display').textContent = 'מחפש ברקוד...';
     });
 }
@@ -4074,10 +4091,6 @@ $('#tefilat-haderech-btn')?.addEventListener('click', () => {
         }
     });
 
-
-//  const globalCapture = document.getElementById('capture-btn');
-
-
     // --- מאזיני ניווט ---
     const planBtn = $('#floating-plan-btn');
     const toolsBtn = $('#floating-tools-btn');
@@ -4156,41 +4169,14 @@ $('#scan-receipt-btn').addEventListener('click', window.startReceiptScanCamera);
 // 4. סריקת ברקוד (כשרות):
 $('#scan-kosher-barcode-btn').addEventListener('click', window.startKosherBarcodeScanner);
   // --- לוגיקה חדשה עבור זום המצלמה ---
-    zoomInBtn = document.getElementById('zoom-in-btn');
-    zoomOutBtn = document.getElementById('zoom-out-btn');
-    zoomLevelDisplay = document.getElementById('zoom-level');
+    
 
-    async function applyZoom() {
-        if (!activeVideoTrack || !zoomCapabilities) return;
-        
-        currentZoom = Math.max(zoomCapabilities.min, Math.min(currentZoom, zoomCapabilities.max));
+    document.getElementById('capture-btn').addEventListener('click', captureFrame);
+    document.getElementById('lookup-site-btn').addEventListener('click', startSiteLookupCamera);
+    document.getElementById('translate-camera-btn').addEventListener('click', startTranslateCamera);
+    document.getElementById('scan-receipt-btn').addEventListener('click', startReceiptScanCamera);
+    document.getElementById('scan-kosher-barcode-btn').addEventListener('click', startKosherBarcodeScanner);
 
-        try {
-            await activeVideoTrack.applyConstraints({
-                advanced: [{ zoom: currentZoom }]
-            });
-            if (zoomLevelDisplay) {
-                zoomLevelDisplay.textContent = `${currentZoom.toFixed(1)}x`;
-            }
-        } catch (error) {
-            console.error('Zoom failed:', error);
-        }
-    }
-
-    if (zoomInBtn) {
-        zoomInBtn.addEventListener('click', () => {
-            if (!zoomCapabilities) return;
-            currentZoom += zoomCapabilities.step || 0.1;
-            applyZoom();
-        });
-    }
-     if (zoomOutBtn) {
-        zoomOutBtn.addEventListener('click', () => {
-            if (!zoomCapabilities) return;
-            currentZoom -= zoomCapabilities.step || 0.1;
-            applyZoom();
-        });
-    }
     
   }); // <--- הסוגר הסופי של document.addEventListener('DOMContentLoaded')
 //------------
