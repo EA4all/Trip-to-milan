@@ -2826,49 +2826,7 @@ async function translateText(sourceLang, targetLang) {
     translateBtn.disabled = false;
 }
 window.translateText = translateText;
-    
-    // פונקציה לניהול מצב הקלטת קול
-function startRecognition(langCode, button) {
-    if (!speechRecognizer) return;
 
-    if (window.isRecognizing) {
-        // אם כבר מקליטים - הפסק את ההקלטה
-        speechRecognizer.stop();
-        if (window.activeVoiceButton) {
-            window.activeVoiceButton.classList.remove('text-red-500');
-            window.activeVoiceButton.innerHTML = window.activeVoiceButton.id.includes('he') ? '<i class="fa-solid fa-microphone"></i> דבר בעברית' : '<i class="fa-solid fa-microphone"></i> Parla Italiano';
-        }
-        window.activeVoiceButton = null;
-        window.isRecognizing = false;
-        return;
-    }
-
-    // התחל הקלטה חדשה
-    try {
-        speechRecognizer.lang = langCode;
-        window.activeVoiceButton = button;
-        
-        // עדכון UI למצב הקלטה
-        window.activeVoiceButton.classList.add('text-red-500');
-        window.activeVoiceButton.innerHTML = '<i class="fa-solid fa-microphone-slash"></i> ...מקליט';
-
-        // ודא שהקלט הקודם נמחק
-        $('#translate-input').value = ''; 
-
-        speechRecognizer.start();
-        window.isRecognizing = true;
-    } catch (e) {
-        console.error("Error starting speech recognition:", e);
-        showAlert('שגיאה בזיהוי דיבור', 'לא הצלחנו להפעיל את המיקרופון. ודא שהדפדפן תומך בזיהוי קולי וניתנה הרשאה.');
-        // החזרת הכפתור למצב לא מקליט במקרה של שגיאה
-        if (window.activeVoiceButton) {
-            window.activeVoiceButton.classList.remove('text-red-500');
-            window.activeVoiceButton.innerHTML = window.activeVoiceButton.id.includes('he') ? '<i class="fa-solid fa-microphone"></i> דבר בעברית' : '<i class="fa-solid fa-microphone"></i> Parla Italiano';
-        }
-        window.isRecognizing = false;
-    }
-}
-window.startRecognition = startRecognition;
     async function translateImage(base64ImageData, mimeType) {
         console.log(`LOG: translateImage called for mimeType: ${mimeType}`);
         const resultContainer = $('#translation-result-container');
