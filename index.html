@@ -1065,19 +1065,17 @@ async function generateDailySummary(dayId) {
     hideLoading();
     showAlert(`סיכום יומי: ${dayData.name}`, podcastScript, { text: podcastScript, useApi: true });
 }
-    function startRecognition(langCode, buttonElement) { // <-- הוספנו את buttonElement
-    if (!speechRecognizer) {
-        showAlert('שגיאה', 'זיהוי קולי אינו נתמך בדפדפן זה.');
-        return;
-    }
+// הדבק את כל הקטע הבא בקוד שלך
+function startRecognition(langCode, buttonElement) {
     if (isRecognizing) {
         speechRecognizer.stop();
         return;
     }
-
-    // <-- הוספנו את השורה הזו כדי לשמור את הכפתור שנלחץ
+    if (!speechRecognizer) {
+        showAlert('שגיאה', 'זיהוי קולי אינו נתמך בדפדפן זה.');
+        return;
+    }
     activeVoiceButton = buttonElement;
-
     try {
         speechRecognizer.lang = langCode;
         speechRecognizer.start();
@@ -1085,8 +1083,9 @@ async function generateDailySummary(dayId) {
         console.error("Error starting speech recognition:", e);
         showAlert('שגיאה בזיהוי דיבור', 'לא הצלחנו להפעיל את המיקרופון. ודא שהענקת הרשאות לדפדפן ונסה שוב.');
     }
-    }
-    
+}
+// הופכים את הפונקציה לזמינה באופן גלובלי
+window.startRecognition = startRecognition;
     // --- UTILS ---
     const $ = (s, p = document) => p.querySelector(s);
     const $$ = (s, p = document) => Array.from(p.querySelectorAll(s));
