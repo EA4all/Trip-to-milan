@@ -40,8 +40,10 @@
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
 
   <style>
-    #video-container {
-    min-height: 250px;
+#video-container {
+    height: 50vh; /* נסה לתפוס 50% מגובה המסך */
+    max-height: 400px; /* אבל לא יותר מ-400 פיקסלים */
+    min-height: 250px; /* ולא פחות מ-250 פיקסלים */
 }
     #video-container canvas.drawingBuffer {
     position: absolute;
@@ -639,7 +641,7 @@ body {
             <button id="camera-close-btn" class="text-2xl">×</button>
         </div>
 
-<div class="p-4 flex-grow relative" id="video-container">
+<div class="p-4 relative" id="video-container">
     <canvas id="camera-canvas" class="hidden"></canvas>
 </div>
 
