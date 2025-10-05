@@ -2746,15 +2746,16 @@ async function processReceiptImage(base64ImageData) {
 async function processLookupImage(base64ImageData) {
     // הצגת הודעת טעינה
     showAlert('מזהה אובייקט...', '<div class="text-center"><i class="fa-solid fa-spinner fa-spin fa-2x"></i><p class="mt-2">מנתח את התמונה ושולח לזיהוי...</p></div>');
-    cameraManager.stop(); // סגירת המצלמה רק אחרי שהודעת הטעינה מוצגת
-
+    
     const prompt = `You are an AI assistant that responds ONLY in Hebrew. Your task is to identify the landmark, artwork, or object in the provided image. Analyze the image and provide an interesting and detailed paragraph about it. Your entire response must be in Hebrew. If you cannot identify the object, respond with the single Hebrew sentence: 'לא הצלחתי לזהות את מה שבתמונה.'. Do not include any English words or preambles.`;
     const payload = { contents: [{ parts: [{ text: prompt }, { inlineData: { mimeType: 'image/jpeg', data: base64ImageData } }] }] };
     
-    const description = await callGemini(payload);
+    // =================  התיקון כאן  =================
+    // החזרנו את שני הפרמטרים החסרים שהיו בגרסה שעבדה
+    const description = await callGemini(payload, '', false);
+    // ===============================================
 
-    // --- התיקון המרכזי כאן ---
-    // הצגת התוצאה והפעלת הניגון דרך גוגל
+    // משתמשים בקריאה המעודכנת ל-showAlert, שהיא נכונה
     showAlert('זיהוי אובייקט', description, { text: description, useApi: true });
 }
 
