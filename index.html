@@ -2682,10 +2682,8 @@ document.getElementById('zoom-out-btn').addEventListener('click', () => cameraMa
 // פונקציה 1: סורק ברקוד (Kosher)
 // --------------------------------------------------------------------------
 async function startKosherBarcodeScanner() {
-    // השארנו את הקריאה ל-stop() בתוך המנהל כאן בכוונה
     cameraManager.stop();
-    window.cameraMode = 'barcode';
-
+  
     $('#camera-title').textContent = 'סריקת כשרות (ברקוד)';
     $('#capture-btn').style.display = 'none';
     $('#upload-receipt-btn').style.display = 'none';
@@ -2700,22 +2698,24 @@ async function startKosherBarcodeScanner() {
         decoder: { readers: ["ean_reader", "ean_8_reader", "code_128_reader"] },
     }, (err) => {
         if (err) { cameraManager.stop(); showAlert('שגיאת סורק', 'לא הצלחנו להפעיל את סורק הברקודים.'); return; }
-
-        Quagga.onDetected(result => {
-            cameraManager.stop();
-            checkKosherStatus(result.codeResult.code);
-        });
         
-        // --- הוספת מאזין הציור שוב ---
+        // --- הוספה מחדש: מאזין שפועל על כל פריים ואחראי על הציור ---
         Quagga.onProcessed(function (result) {
             const drawingCtx = Quagga.canvas.ctx.overlay;
             const drawingCanvas = Quagga.canvas.dom.overlay;
+
             drawingCtx.clearRect(0, 0, parseInt(drawingCanvas.getAttribute("width")), parseInt(drawingCanvas.getAttribute("height")));
+            
             if (result && result.box) {
                 Quagga.ImageDebug.drawPath(result.box, { x: 0, y: 1 }, drawingCtx, { color: "green", lineWidth: 4 });
             }
         });
         // --- סוף הוספת מאזין הציור ---
+
+        Quagga.onDetected(result => {
+            cameraManager.stop();
+            checkKosherStatus(result.codeResult.code);
+        });
 
         Quagga.start();
         window.Quagga.running = true;
@@ -2729,7 +2729,6 @@ window.startKosherBarcodeScanner = startKosherBarcodeScanner;
 // --------------------------------------------------------------------------
 async function startSiteLookupCamera() {
     cameraManager.stop(); // <-- הוסף שורה זו
-    window.cameraMode = 'lookup';
     $('#camera-title').textContent = 'זיהוי אתרים/אובייקטים';
     $('#capture-btn').style.display = 'flex';
     $('#barcode-status-display').style.display = 'none';
@@ -2743,7 +2742,6 @@ window.startSiteLookupCamera = startSiteLookupCamera;
 // --------------------------------------------------------------------------
 async function startReceiptScanCamera() {
       cameraManager.stop(); // <-- הוסף שורה זו
-    window.cameraMode = 'receipt';
     $('#camera-title').textContent = 'סריקת קבלה';
     $('#capture-btn').style.display = 'flex';
     $('#upload-receipt-btn').style.display = 'flex';
@@ -2756,7 +2754,6 @@ window.startReceiptScanCamera = startReceiptScanCamera;
 // --------------------------------------------------------------------------
 async function startTranslateCamera() {
       cameraManager.stop(); // <-- הוסף שורה זו
-    window.cameraMode = 'translate';
     $('#camera-title').textContent = 'תרגום תפריט / טקסט';
     $('#capture-btn').style.display = 'flex';
     $('#upload-receipt-btn').style.display = 'none';
@@ -2767,6 +2764,10 @@ window.startTranslateCamera = startTranslateCamera;
     
 
 function captureFrame() {
+    const currentMode = cameraManager.mode;
+    // הדפסת בדיקה כדי לוודא שהמצב הנכון נקרא
+    console.log(`Capture button pressed in mode: ${currentMode}`);
+
     const video = cameraManager.videoElement;
     const canvas = document.getElementById('camera-canvas');
     if (!video || !canvas) return;
@@ -2777,7 +2778,6 @@ function captureFrame() {
     ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
     const base64 = canvas.toDataURL('image/jpeg').split(',')[1];
     
-    const currentMode = cameraManager.mode;
     cameraManager.stop(); // סגור את המצלמה מיד לאחר הצילום
 
     if (currentMode === 'translate') translateImage(base64, 'image/jpeg');
