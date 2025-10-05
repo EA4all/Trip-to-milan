@@ -2600,77 +2600,59 @@ async function startKosherBarcodeScanner() {
     window.cameraMode = 'barcode';
     window.stopCamera();
 
-    // --- הגדרת UI ייעודית ---
+    // הגדרות UI
     $('#camera-title').textContent = 'סריקת כשרות (ברקוד)';
-    $('#capture-btn').style.display = 'none'; // אין צורך בצילום ידני
+    $('#capture-btn').style.display = 'none';
     $('#upload-receipt-btn').style.display = 'none';
     $('#barcode-status-display').style.display = 'block';
     $('#barcode-status-display').textContent = 'מפעיל מצלמה...';
 
     const video = document.getElementById('camera-feed');
     try {
-        const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' } }, audio: false });
+        const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' } } });
         window.cameraStream = stream;
         video.srcObject = stream;
-        await video.play();
-        window.activeVideoTrack = stream.getVideoTracks()[0];
-        $('#camera-modal').classList.add('flex');
-        
-        // אתחול יכולות הזום (כמו בתיקון הקודם)
-        if ('zoom' in activeVideoTrack.getCapabilities()) {
-            zoomCapabilities = activeVideoTrack.getCapabilities().zoom;
-            currentZoom = activeVideoTrack.getSettings().zoom || 1;
-            $('#zoom-level').textContent = `${currentZoom.toFixed(1)}x`;
-        } else {
-            zoomCapabilities = null;
-        }
+        video.play(); // -> הפעלת הנגן כדי שהאירוע oncanplay יופעל
 
-        // --- התחלה: הפעלת QuaggaJS ---
-        Quagga.init({
-            inputStream: {
-                name: "Live",
-                type: "LiveStream",
-                target: video,
-                constraints: {
-                    width: { min: 640 },
-                    height: { min: 480 },
-                    facingMode: "environment"
-                },
-            },
-            decoder: {
-                readers: ["ean_reader", "ean_8_reader", "code_128_reader"] // סוגי ברקודים נפוצים
-            },
-        }, function(err) {
-            if (err) {
-                console.error(err);
-                showAlert('שגיאת סורק', 'לא הצלחנו להפעיל את סורק הברקודים.');
+        video.oncanplay = () => {
+            window.activeVideoTrack = stream.getVideoTracks()[0];
+            if (!window.activeVideoTrack) {
+                showAlert('שגיאת מצלמה', 'לא נמצא שידור וידאו תקין מהמצלמה.');
                 stopCamera();
                 return;
             }
-            console.log("LOG: QuaggaJS initialization finished. Ready to start.");
-            Quagga.start();
-            window.Quagga.running = true;
-            $('#barcode-status-display').textContent = 'מחפש ברקוד...';
-        });
-
-        // מאזין לאירוע זיהוי ברקוד
+            $('#camera-modal').classList.add('flex');
+            if ('zoom' in activeVideoTrack.getCapabilities()) {
+                zoomCapabilities = activeVideoTrack.getCapabilities().zoom;
+                currentZoom = activeVideoTrack.getSettings().zoom || 1;
+                $('#zoom-level').textContent = `${currentZoom.toFixed(1)}x`;
+            } else {
+                zoomCapabilities = null;
+            }
+            Quagga.init({
+                inputStream: { name: "Live", type: "LiveStream", target: video },
+                decoder: { readers: ["ean_reader", "ean_8_reader", "code_128_reader"] },
+            }, (err) => {
+                if (err) {
+                    showAlert('שגיאת סורק', 'לא הצלחנו להפעיל את סורק הברקודים.');
+                    stopCamera(); return;
+                }
+                Quagga.start();
+                window.Quagga.running = true;
+                $('#barcode-status-display').textContent = 'מחפש ברקוד...';
+            });
+        };
+        
         Quagga.onDetected(function(result) {
             const code = result.codeResult.code;
-            console.log(`LOG: Barcode detected: ${code}`);
-            $('#barcode-status-display').textContent = `נמצא ברקוד: ${code}`;
-            
-            // עוצרים את הסריקה והמצלמה
-            stopCamera(); // הפונקציה הזו כבר עוצרת את Quagga ואת הוידאו
-            
-            // שולחים את הברקוד לבדיקת כשרות
+            stopCamera();
             checkKosherStatus(code);
         });
-        // --- סוף: הפעלת QuaggaJS ---
 
     } catch (err) {
         console.error('Barcode Scanner Error:', err);
         stopCamera();
-        showAlert('שגיאת מצלמה', 'לא ניתן לגשת למצלמה לסריקת ברקוד.');
+        showAlert('שגיאת מצלמה', 'לא ניתן היה להפעיל את המצלמה. אנא ודא שהענקת הרשאות מתאימות לדפדפן.');
     }
 }
 window.startKosherBarcodeScanner = startKosherBarcodeScanner;
@@ -2680,40 +2662,40 @@ window.startKosherBarcodeScanner = startKosherBarcodeScanner;
 // --------------------------------------------------------------------------
 async function startSiteLookupCamera() {
     window.cameraMode = 'lookup';
-    window.stopCamera(); // מתחילים נקי
+    window.stopCamera();
 
-    // --- הגדרת UI: הכל גלוי ומופעל לצילום ---
     $('#camera-title').textContent = 'זיהוי אתרים/אובייקטים';
-    
-    // כפתורים חיוניים
-    $('#capture-btn').style.display = 'flex'; 
+    $('#capture-btn').style.display = 'flex';
     $('#capture-btn').disabled = false;
+    $('#upload-receipt-btn').style.display = 'none';
+    $('#barcode-status-display').style.display = 'none';
     
-    // כפתורי עזר
-    $('#upload-receipt-btn').style.display = 'none'; // מוסתר
-    $('#barcode-status-display').style.display = 'none'; // מוסתר
-    
-    // --- הפעלת חומרה ---
     const video = document.getElementById('camera-feed');
     try {
-        const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' } }, audio: false });
+        const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' } } });
         window.cameraStream = stream;
         video.srcObject = stream;
-        await video.play();
-        window.activeVideoTrack = stream.getVideoTracks()[0];
-      // אתחול יכולות הזום
-        if ('zoom' in activeVideoTrack.getCapabilities()) {
-            zoomCapabilities = activeVideoTrack.getCapabilities().zoom;
-            currentZoom = activeVideoTrack.getSettings().zoom || 1;
-            zoomLevelDisplay.textContent = `${currentZoom.toFixed(1)}x`;
-        } else {
-            zoomCapabilities = null; // איפוס למקרה שהמצלמה הקודמת תמכה והחדשה לא
-        }
-        $('#camera-modal').classList.add('flex'); // פתיחת מודל
+        video.play(); // -> הפעלת הנגן
+
+        video.oncanplay = () => {
+            window.activeVideoTrack = stream.getVideoTracks()[0];
+            if (!window.activeVideoTrack) {
+                showAlert('שגיאת מצלמה', 'לא נמצא שידור וידאו תקין.');
+                stopCamera(); return;
+            }
+            $('#camera-modal').classList.add('flex');
+            if ('zoom' in activeVideoTrack.getCapabilities()) {
+                zoomCapabilities = activeVideoTrack.getCapabilities().zoom;
+                currentZoom = activeVideoTrack.getSettings().zoom || 1;
+                zoomLevelDisplay.textContent = `${currentZoom.toFixed(1)}x`;
+            } else {
+                zoomCapabilities = null;
+            }
+        };
     } catch (err) {
         console.error('Lookup Camera Error:', err);
         stopCamera();
-        showAlert('שגיאת מצלמה', `לא ניתן לגשת למצלמה לזיהוי.`);
+        showAlert('שגיאת מצלמה', 'לא ניתן היה להפעיל את המצלמה. אנא ודא שהענקת הרשאות מתאימות לדפדפן.');
     }
 }
 window.startSiteLookupCamera = startSiteLookupCamera;
@@ -2723,78 +2705,83 @@ window.startSiteLookupCamera = startSiteLookupCamera;
 // --------------------------------------------------------------------------
 async function startReceiptScanCamera() {
     window.cameraMode = 'receipt';
-    window.stopCamera(); 
+    window.stopCamera();
 
-    // --- הגדרת UI: הכל גלוי ומופעל לצילום ---
     $('#camera-title').textContent = 'סריקת קבלה (הכנסת הוצאה)';
-    
-    // כפתורים חיוניים
-    $('#capture-btn').style.display = 'flex'; 
+    $('#capture-btn').style.display = 'flex';
     $('#capture-btn').disabled = false;
-    $('#upload-receipt-btn').style.display = 'flex'; // כפתור העלאה גלוי
+    $('#upload-receipt-btn').style.display = 'flex';
+    $('#barcode-status-display').style.display = 'none';
     
-    $('#barcode-status-display').style.display = 'none'; // מוסתר
-    
-    // --- הפעלת חומרה ---
     const video = document.getElementById('camera-feed');
     try {
-        const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' } }, audio: false });
+        const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' } } });
         window.cameraStream = stream;
         video.srcObject = stream;
-        await video.play();
-        window.activeVideoTrack = stream.getVideoTracks()[0];
-      // אתחול יכולות הזום
-        if ('zoom' in activeVideoTrack.getCapabilities()) {
-            zoomCapabilities = activeVideoTrack.getCapabilities().zoom;
-            currentZoom = activeVideoTrack.getSettings().zoom || 1;
-            zoomLevelDisplay.textContent = `${currentZoom.toFixed(1)}x`;
-        } else {
-            zoomCapabilities = null; // איפוס למקרה שהמצלמה הקודמת תמכה והחדשה לא
-        }
-        $('#camera-modal').classList.add('flex'); // פתיחת מודל
+        video.play(); // -> הפעלת הנגן
+
+        video.oncanplay = () => {
+            window.activeVideoTrack = stream.getVideoTracks()[0];
+            if (!window.activeVideoTrack) {
+                showAlert('שגיאת מצלמה', 'לא נמצא שידור וידאו תקין.');
+                stopCamera(); return;
+            }
+            $('#camera-modal').classList.add('flex');
+            if ('zoom' in activeVideoTrack.getCapabilities()) {
+                zoomCapabilities = activeVideoTrack.getCapabilities().zoom;
+                currentZoom = activeVideoTrack.getSettings().zoom || 1;
+                zoomLevelDisplay.textContent = `${currentZoom.toFixed(1)}x`;
+            } else {
+                zoomCapabilities = null;
+            }
+        };
     } catch (err) {
         console.error('Receipt Camera Error:', err);
         stopCamera();
-        showAlert('שגיאת מצלמה', `לא ניתן לגשת למצלמה לסריקת קבלה.`);
+        showAlert('שגיאת מצלמה', 'לא ניתן היה להפעיל את המצלמה. אנא ודא שהענקת הרשאות מתאימות לדפדפן.');
     }
 }
+
 window.startReceiptScanCamera = startReceiptScanCamera;
 // --------------------------------------------------------------------------
 // פונקציה 4: תרגומון (Translate)
 // --------------------------------------------------------------------------
 async function startTranslateCamera() {
     window.cameraMode = 'translate';
-    stopCamera(); 
+    stopCamera();
 
-    // --- הגדרת UI ייעודית ---
     $('#camera-title').textContent = 'תרגום תפריט / טקסט';
-    $('#capture-btn').style.display = 'flex'; // הצגת כפתור הצילום
-    $('#capture-btn').disabled = false; // ודא שהוא מופעל
-    
-    $('#upload-receipt-btn').style.display = 'none'; // הסתרת העלאת קבלה
+    $('#capture-btn').style.display = 'flex';
+    $('#capture-btn').disabled = false;
+    $('#upload-receipt-btn').style.display = 'none';
     $('#barcode-status-display').style.display = 'none';
     
-    // --- הפעלת חומרה ---
     const video = document.getElementById('camera-feed');
     try {
-        const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' } }, audio: false });
+        const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' } } });
         window.cameraStream = stream;
         video.srcObject = stream;
-        await video.play();
-        window.activeVideoTrack = stream.getVideoTracks()[0];
-      // אתחול יכולות הזום
-        if ('zoom' in activeVideoTrack.getCapabilities()) {
-            zoomCapabilities = activeVideoTrack.getCapabilities().zoom;
-            currentZoom = activeVideoTrack.getSettings().zoom || 1;
-            zoomLevelDisplay.textContent = `${currentZoom.toFixed(1)}x`;
-        } else {
-            zoomCapabilities = null; // איפוס למקרה שהמצלמה הקודמת תמכה והחדשה לא
-        }
-        $('#camera-modal').classList.add('flex'); // פתיחת מודל
+        video.play(); // -> הפעלת הנגן
+
+        video.oncanplay = () => {
+            window.activeVideoTrack = stream.getVideoTracks()[0];
+            if (!window.activeVideoTrack) {
+                showAlert('שגיאת מצלמה', 'לא נמצא שידור וידאו תקין.');
+                stopCamera(); return;
+            }
+            $('#camera-modal').classList.add('flex');
+            if ('zoom' in activeVideoTrack.getCapabilities()) {
+                zoomCapabilities = activeVideoTrack.getCapabilities().zoom;
+                currentZoom = activeVideoTrack.getSettings().zoom || 1;
+                zoomLevelDisplay.textContent = `${currentZoom.toFixed(1)}x`;
+            } else {
+                zoomCapabilities = null;
+            }
+        };
     } catch (err) {
         console.error('Translate Camera Error:', err);
         stopCamera();
-        showAlert('שגיאת מצלמה', `לא ניתן לגשת למצלמה לתרגום.`);
+        showAlert('שגיאת מצלמה', 'לא ניתן היה להפעיל את המצלמה. אנא ודא שהענקת הרשאות מתאימות לדפדפן.');
     }
 }
 window.startTranslateCamera = startTranslateCamera;
