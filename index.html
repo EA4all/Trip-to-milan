@@ -2666,7 +2666,6 @@ window.startTranslateCamera = startTranslateCamera;
 
 function captureFrame() {
     const currentMode = cameraManager.mode;
-    // הדפסת בדיקה כדי לוודא שהמצב הנכון נקרא
     console.log(`Capture button pressed in mode: ${currentMode}`);
 
     const video = cameraManager.videoElement;
@@ -2679,8 +2678,8 @@ function captureFrame() {
     ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
     const base64 = canvas.toDataURL('image/jpeg').split(',')[1];
     
-    cameraManager.stop(); // סגור את המצלמה מיד לאחר הצילום
-
+    // הסרנו את סגירת המצלמה מכאן כדי לשפר את חווית המשתמש
+    
     if (currentMode === 'translate') translateImage(base64, 'image/jpeg');
     else if (currentMode === 'receipt') processReceiptImage(base64);
     else if (currentMode === 'lookup') processLookupImage(base64);
@@ -2745,12 +2744,18 @@ async function processReceiptImage(base64ImageData) {
     }
 }
 async function processLookupImage(base64ImageData) {
-   showAlert('מזהה אובייקט...', '<div class="text-center"><i class="fa-solid fa-spinner fa-spin fa-2x"></i><p class="mt-2">מנתח את התמונה. **זה עלול לקחת 10-20 שניות.** אנא המתן בסבלנות...</p></div>');
+    // הצגת הודעת טעינה
     showAlert('מזהה אובייקט...', '<div class="text-center"><i class="fa-solid fa-spinner fa-spin fa-2x"></i><p class="mt-2">מנתח את התמונה ושולח לזיהוי...</p></div>');
-   const prompt = `You are an AI assistant that responds ONLY in Hebrew. Your task is to identify the landmark, artwork, or object in the provided image. Analyze the image and provide an interesting and detailed paragraph about it. Your entire response must be in Hebrew. If you cannot identify the object, respond with the single Hebrew sentence: 'לא הצלחתי לזהות את מה שבתמונה.'. Do not include any English words or preambles.`;
+    cameraManager.stop(); // סגירת המצלמה רק אחרי שהודעת הטעינה מוצגת
+
+    const prompt = `You are an AI assistant that responds ONLY in Hebrew. Your task is to identify the landmark, artwork, or object in the provided image. Analyze the image and provide an interesting and detailed paragraph about it. Your entire response must be in Hebrew. If you cannot identify the object, respond with the single Hebrew sentence: 'לא הצלחתי לזהות את מה שבתמונה.'. Do not include any English words or preambles.`;
     const payload = { contents: [{ parts: [{ text: prompt }, { inlineData: { mimeType: 'image/jpeg', data: base64ImageData } }] }] };
-    const description = await callGemini(payload, '', false);
-    showAlert('זיהוי אובייקט', description, true, { text: description, lang: 'he-IL' });
+    
+    const description = await callGemini(payload);
+
+    // --- התיקון המרכזי כאן ---
+    // הצגת התוצאה והפעלת הניגון דרך גוגל
+    showAlert('זיהוי אובייקט', description, { text: description, useApi: true });
 }
 
 
