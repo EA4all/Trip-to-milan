@@ -2647,13 +2647,18 @@ async function startSiteLookupCamera() {
     window.cameraMode = 'lookup';
     stopCamera(); 
 
+    // --- איפוס קונטיינרים ראשיים (חובה!) ---
+    $('#camera-controls-bottom').style.display = 'flex';
+    $('#main-controls').style.display = 'flex';
+    $('#torch-btn').style.display = 'flex'; // הפנס צריך להיות גלוי
+    
     // --- הגדרת UI ייעודית ---
     $('#camera-title').textContent = 'זיהוי אתרים/אובייקטים';
-    $('#capture-btn').style.display = 'flex'; 
+    $('#capture-btn').style.display = 'flex'; // הצגת כפתור הצילום
+    $('#upload-receipt-btn').style.display = 'none'; // הסתרת העלאת קבלה
     $('#barcode-status-display').style.display = 'none';
-    $('#upload-receipt-btn').style.display = 'none';
     
-    // --- הפעלת חומרה (מבודדת) ---
+    // --- הפעלת חומרה ---
     const video = document.getElementById('camera-feed');
     try {
         const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' } }, audio: false });
@@ -2661,13 +2666,14 @@ async function startSiteLookupCamera() {
         video.srcObject = stream;
         await video.play();
         window.activeVideoTrack = stream.getVideoTracks()[0];
-        $('#camera-modal').classList.add('flex'); // פתיחת מודל
+        $('#camera-modal').classList.add('flex');
     } catch (err) {
         console.error('Lookup Camera Error:', err);
         stopCamera();
         showAlert('שגיאת מצלמה', `לא ניתן לגשת למצלמה לזיהוי.`);
     }
 }
+window.startSiteLookupCamera = startSiteLookupCamera;
 async function startReceiptScanCamera() {
     window.cameraMode = 'receipt';
     stopCamera(); 
