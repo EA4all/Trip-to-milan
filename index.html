@@ -1072,17 +1072,27 @@ function startRecognition(langCode, button) {
         return;
     }
 
-    // אם מקליטים -> עצור. אם לא -> התחל.
     if (isRecognizing) {
         speechRecognizer.stop();
-    } else {
-        try {
-            activeVoiceButton = button;
-            speechRecognizer.lang = langCode;
-            speechRecognizer.start();
-        } catch (e) {
-            console.error("Error starting speech recognition:", e);
-            showAlert('שגיאת מיקרופון', 'לא ניתן היה להפעיל את המיקרופון. אנא ודא שהענקת הרשאות לדפדפן.');
+        return;
+    }
+    
+    try {
+        activeVoiceButton = button;
+        // פידבק ויזואלי מיידי למשתמש
+        activeVoiceButton.innerHTML = '<i class="fa-solid fa-microphone-lines fa-beat animate-pulse"></i> מקליט...';
+        activeVoiceButton.classList.add('text-red-500');
+        
+        speechRecognizer.lang = langCode;
+        speechRecognizer.start();
+    } catch (e) {
+        console.error("Error starting speech recognition:", e);
+        showAlert('שגיאת מיקרופון', 'לא ניתן היה להפעיל את המיקרופון. אנא ודא שהענקת הרשאות לדפדפן.');
+        // איפוס הכפתור במקרה של שגיאה מיידית
+        if (activeVoiceButton) {
+            activeVoiceButton.classList.remove('text-red-500', 'animate-pulse');
+            activeVoiceButton.innerHTML = activeVoiceButton.id.includes('he') ? '<i class="fa-solid fa-microphone"></i> דבר בעברית' : '<i class="fa-solid fa-microphone"></i> Parla Italiano';
+            activeVoiceButton = null;
         }
     }
 }
@@ -3275,32 +3285,53 @@ if (recognition) {
 
     speechRecognizer.onstart = () => {
         isRecognizing = true;
-        if (activeVoiceButton) {
-            activeVoiceButton.innerHTML = '<i class="fa-solid fa-microphone-lines fa-beat"></i> מקשיב...';
-            activeVoiceButton.classList.add('text-red-500');
-        }
+        console.log("Speech recognition started.");
         $('#translation-result-container').innerHTML = '<span>מקשיב...</span>';
     };
-   speechRecognizer.onend = () => {
+
+    speechRecognizer.onend = () => {
         isRecognizing = false;
         if (activeVoiceButton) {
-            activeVoiceButton.classList.remove('text-red-500');
+            activeVoiceButton.classList.remove('text-red-500', 'animate-pulse');
             activeVoiceButton.innerHTML = activeVoiceButton.id.includes('he') ? '<i class="fa-solid fa-microphone"></i> דבר בעברית' : '<i class="fa-solid fa-microphone"></i> Parla Italiano';
         }
         activeVoiceButton = null;
     };
-  speechRecognizer.onerror = (event) => {
-        console.error("Speech recognition error", event.error);
-        $('#translation-result-container').innerHTML = `<span class="text-red-500">שגיאה: ${event.error}</span>`;
-        // onend יופעל אוטומטית ויאפס את המצב
+
+    speechRecognizer.onerror = (event) => {
+        console.error("Speech recognition error:", event.error);
+        let errorMessage = 'אירעה שגיאה בזיהוי';
+        if (event.error === 'no-speech') {
+            errorMessage = 'לא זוהה דיבור. נסה שוב.';
+        } else if (event.error === 'not-allowed' || event.error === 'service-not-allowed') {
+            errorMessage = 'הגישה למיקרופון נחסמה או נדחתה.';
+        }
+        $('#translation-result-container').innerHTML = `<span class="text-red-500">${errorMessage}</span>`;
     };
 
     speechRecognizer.onresult = async (event) => {
         const spokenText = event.results[0][0].transcript;
+        const sourceLang = speechRecognizer.lang;
+        const resultContainer = $('#translation-result-container');
+        resultContainer.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> מתרגם...`;
+
+        const targetLangFull = (sourceLang === 'he-IL') ? 'Italian' : 'Hebrew';
+        const prompt = `Translate this to ${targetLangFull}. Provide ONLY the translated text: "${spokenText}"`;
         
-        // עדכן את תיבת הטקסט ותרגם אוטומטית
-        $('#dictionary-input').value = spokenText;
-        $('#dictionary-form').requestSubmit(); // מפעיל את התרגום
+        let translatedText = await callGemini({ contents: [{ parts: [{ text: prompt }] }] });
+        translatedText = translatedText.replace(/[\*\_`\.]/g, '').trim();
+        const targetLangCode = (sourceLang === 'he-IL') ? 'it-IT' : 'he-IL';
+        const escapedText = translatedText.replace(/'/g, "\\'");
+
+        // קבע אם להשתמש ב-API לפי השפה
+        const useApiForPlayback = (targetLangCode === 'he-IL');
+
+        resultContainer.innerHTML = `<span>${translatedText}</span> 
+            <button onclick="ttsManager.speak('${escapedText}', ${useApiForPlayback}, '${targetLangCode}')" 
+            class="btn btn-ghost p-1 h-auto"><i class="fa-solid fa-volume-high"></i></button>`;
+
+        // ניגון אוטומטי
+        ttsManager.speak(translatedText, useApiForPlayback, targetLangCode);
     };
 }
  else {
