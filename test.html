@@ -896,7 +896,159 @@ window.cameraManager = cameraManager;
     import { getFirestore, doc, onSnapshot, setDoc, updateDoc, arrayUnion, arrayRemove, getDoc, enableIndexedDbPersistence, collection, serverTimestamp, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
     
     console.log("LOG: Script start. Initializing variables.");
+// ==========================================================================
+// --- מערכת TTS וחיבורים חדשה ומאוחדת ---
+// ==========================================================================
 
+// 1. מנהל הקול (TTS) המרכזי
+const ttsManager = {
+    audio: null, utterance: null, isPlaying: false, isPaused: false,
+
+    async speak(text, useApi = true, lang = 'he-IL') {
+        this.stop();
+        if (!text) { console.error("TTS Error: No text provided."); return; }
+
+        const characterLimit = 4800;
+        if (useApi && text.length < characterLimit) {
+            const apiKey = "AIzaSyDzQFz_abwcxSwq8VhHCQS-HcsYk_Qug-I";
+            const url = `https://texttospeech.googleapis.com/v1/text:synthesize?key=${apiKey}`;
+            const selectedVoice = document.getElementById("global-voice-select")?.value || "he-IL-Wavenet-D";
+            
+            try {
+                const response = await fetch(url, {
+                    method: "POST", headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        input: { text },
+                        voice: { languageCode: lang, name: selectedVoice },
+                        audioConfig: { audioEncoding: "MP3" }
+                    })
+                });
+                const data = await response.json();
+                if (!data.audioContent) throw new Error("No audio content in API response");
+                this.audio = new Audio("data:audio/mp3;base64," + data.audioContent);
+                this.audio.play();
+                this.isPlaying = true;
+                this.updateUI();
+                this.audio.onended = () => this.stop();
+            } catch (err) {
+                console.error("Google TTS API failed, falling back to local TTS:", err);
+                this.speak(text, false, lang);
+            }
+        } else {
+            if (!('speechSynthesis' in window)) { showAlert('שגיאה', 'הדפדפן שלך אינו תומך בהקראת טקסט.'); return; }
+            this.utterance = new SpeechSynthesisUtterance(text);
+            this.utterance.lang = lang;
+            const voices = speechSynthesis.getVoices() || [];
+            const selectedVoiceName = document.getElementById("global-voice-select")?.value;
+            if(selectedVoiceName) this.utterance.voice = voices.find(v => v.name === selectedVoiceName);
+            this.utterance.onend = () => this.stop();
+            speechSynthesis.speak(this.utterance);
+            this.isPlaying = true;
+            this.updateUI();
+        }
+    },
+    togglePause() {
+        if (!this.isPlaying && !this.isPaused) return;
+        if (this.audio) {
+            if (this.isPaused) this.audio.play(); else this.audio.pause();
+        } else if (this.utterance) {
+            if (this.isPaused) speechSynthesis.resume(); else speechSynthesis.pause();
+        }
+        this.isPaused = !this.isPaused;
+        this.updateUI();
+    },
+    stop() {
+        if (this.audio) { this.audio.pause(); this.audio.currentTime = 0; }
+        if ('speechSynthesis' in window) { speechSynthesis.cancel(); }
+        this.audio = null; this.utterance = null; this.isPlaying = false; this.isPaused = false;
+        this.updateUI();
+    },
+    updateUI() {
+        const playPauseBtn = document.getElementById('alert-modal-play-pause');
+        const stopBtn = document.getElementById('alert-modal-stop');
+        if (!playPauseBtn || !stopBtn) return;
+        if (this.isPlaying || this.isPaused) {
+            stopBtn.style.display = 'flex';
+            playPauseBtn.innerHTML = this.isPaused ? '<i class="fa-solid fa-play mr-1"></i> המשך' : '<i class="fa-solid fa-pause mr-1"></i> השהה';
+        } else {
+            playPauseBtn.innerHTML = '<i class="fa-solid fa-play mr-1"></i> השמע';
+            stopBtn.style.display = 'none';
+        }
+    }
+};
+
+// 2. פונקציית showAlert המעודכנת
+function showAlert(title, message, speechOptions = null) {
+    ttsManager.stop(); // עצור כל ניגון קודם בפתיחת חלון חדש
+    const modal = document.getElementById('alert-modal');
+    document.getElementById('alert-modal-title').textContent = title;
+    document.getElementById('alert-modal-message').innerHTML = message;
+    const playPauseBtn = document.getElementById('alert-modal-play-pause');
+    const stopBtn = document.getElementById('alert-modal-stop');
+
+    playPauseBtn.onclick = null;
+    stopBtn.onclick = null;
+
+    if (speechOptions && speechOptions.text) {
+        playPauseBtn.style.display = 'flex';
+        playPauseBtn.onclick = () => {
+            if (ttsManager.isPlaying || ttsManager.isPaused) {
+                ttsManager.togglePause();
+            } else {
+                ttsManager.speak(speechOptions.text, speechOptions.useApi, speechOptions.lang);
+            }
+        };
+        stopBtn.onclick = () => ttsManager.stop();
+    } else {
+        playPauseBtn.style.display = 'none';
+    }
+    ttsManager.updateUI();
+    modal.classList.add('flex');
+}
+
+// 3. פונקציות מעטפת חדשות
+function showBrachaAchronaOptions() {
+    const message = `<div class="grid grid-cols-1 gap-2">
+        <button onclick="window.playBracha('boreiNefashot')" class="btn btn-primary">בורא נפשות</button>
+        <button onclick="window.playBracha('alHaMichya')" class="btn btn-primary">על המחיה</button>
+        <button onclick="window.playBracha('alHaGefen')" class="btn btn-primary">על הגפן</button>
+        <button onclick="window.playBracha('alHaEtz')" class="btn btn-primary">על העץ</button>
+    </div>`;
+    showAlert('בחר ברכה אחרונה', message);
+}
+window.playBracha = (brachaKey) => {
+    const titleMap = { boreiNefashot: 'ברכת בורא נפשות', alHaMichya: 'ברכת על המחיה', alHaGefen: 'ברכת על הגפן', alHaEtz: 'ברכת על העץ' };
+    const text = hebrewPrayers[brachaKey].replace(/<[^>]*>?/gm, '');
+    showAlert(titleMap[brachaKey], hebrewPrayers[brachaKey], { text, useApi: true });
+};
+async function getAudioGuide(placeName) {
+    showLoading('מכין מדריך קולי...', `המערכת מייצרת מדריך על ${placeName}.`);
+    const prompt = `צור מדריך קולי מפורט ותמציתי על ${placeName} במילאנו. המדריך צריך להיות כתוב בעברית ברורה, בטון ידידותי ומעניין, באורך של כ-1000 תווים.`;
+    const scriptText = await callGemini({ contents: [{ parts: [{ text: prompt }] }] });
+    hideLoading();
+    showAlert(`מדריך קולי: ${placeName}`, scriptText, { text: scriptText, useApi: true });
+}
+async function generateDailySummary(dayId) {
+    const dayData = localTripData.plan[dayId];
+    if (!dayData) return;
+    showLoading(`מכין פודקאסט יומי...`, `מסכם את יום ${dayData.name}.`);
+    const placesNames = dayData.activities.map(p => p.name).join(', ');
+    const prompt = `אתה קריין פודקאסט. כתוב פודקאסט קצר (כ-800 תווים) בעברית המסכם את יום ${dayData.name} בטיול. התחל במשפט: "שלום לכולם וברוכים הבאים לסיכום היומי שלנו!" וסכם את היעדים המרכזיים שהיו: ${placesNames}.`;
+    const podcastScript = await callGemini({ contents: [{ parts: [{ text: prompt }] }] });
+    hideLoading();
+    showAlert(`סיכום יומי: ${dayData.name}`, podcastScript, { text: podcastScript, useApi: true });
+}
+function startRecognition(langCode) {
+    if (!speechRecognizer) { showAlert('שגיאה', 'זיהוי קולי אינו נתמך בדפדפן זה.'); return; }
+    if (isRecognizing) { speechRecognizer.stop(); return; }
+    try {
+        speechRecognizer.lang = langCode;
+        speechRecognizer.start();
+    } catch (e) {
+        console.error("Error starting speech recognition:", e);
+        showAlert('שגיאה בזיהוי דיבור', 'לא הצלחנו להפעיל את המיקרופון. ודא שהענקת הרשאות לדפדפן ונסה שוב.');
+    }
+}
     // --- UTILS ---
     const $ = (s, p = document) => p.querySelector(s);
     const $$ = (s, p = document) => Array.from(p.querySelectorAll(s));
@@ -1171,98 +1323,6 @@ const hebrewPrayers = {
 // helper שמעדכן כפתורי המודל (מוסדר לשימוש ב-showAlert)
 
 
-function showAlert(title, message, speechOptions = null) {
-    const modal = document.getElementById('alert-modal');
-    const titleEl = document.getElementById('alert-modal-title');
-    const messageEl = document.getElementById('alert-modal-message');
-    const playPauseBtn = document.getElementById('alert-modal-play-pause');
-    const stopBtn = document.getElementById('alert-modal-stop');
-
-    titleEl.textContent = title;
-    messageEl.innerHTML = message;
-
-    // הגדרת כפתורי הניגון
-    if (speechOptions && speechOptions.text) {
-        playPauseBtn.style.display = 'flex';
-        // עדכון מצב הכפתור לפי מצב הניגון הקיים (API או מקומי)
-        if (window.activeAudio && !window.activeAudio.paused || ('speechSynthesis' in window && speechSynthesis.speaking && !speechSynthesis.paused)) {
-            playPauseBtn.innerHTML = '<i class="fa-solid fa-pause mr-1"></i> השהה';
-            stopBtn.style.display = 'flex';
-        } else {
-            playPauseBtn.innerHTML = '<i class="fa-solid fa-play mr-1"></i> השמע';
-            stopBtn.style.display = 'none';
-        }
-    } else {
-        playPauseBtn.style.display = 'none';
-        stopBtn.style.display = 'none';
-    }
-
-    // --- התיקון הקריטי בלוגיקת כפתור ההשהיה/המשך ---
-    playPauseBtn.removeEventListener('click', playPauseBtn.clickHandler);
-    playPauseBtn.clickHandler = () => {
-        const text = speechOptions && speechOptions.text;
-
-        // 1. אם יש ניגון קיים (TTS API - האיכותי) - בצע toggle pause/resume
-        if (window.activeAudio) {
-            if (window.activeAudio.paused) {
-                window.activeAudio.play();
-                playPauseBtn.innerHTML = '<i class="fa-solid fa-pause mr-1"></i> השהה';
-            } else {
-                window.activeAudio.pause();
-                playPauseBtn.innerHTML = '<i class="fa-solid fa-play mr-1"></i> המשך';
-            }
-            return;
-        }
-
-        // 2. אם יש ניגון קיים (TTS מקומי - של ברכת המזון) - בצע toggle pause/resume
-        if ('speechSynthesis' in window && window.speechSynthesis.speaking) {
-            if (speechSynthesis.paused) {
-                speechSynthesis.resume();
-                playPauseBtn.innerHTML = '<i class="fa-solid fa-pause mr-1"></i> השהה';
-            } else { // אם לא מושהה
-                speechSynthesis.pause();
-                playPauseBtn.innerHTML = '<i class="fa-solid fa-play mr-1"></i> המשך';
-            }
-            return;
-        }
-
-        // 3. אם אין ניגון פעיל - התחלה (באופן מקומי - רק לברכת המזון)
-        if (text && 'speechSynthesis' in window && speechOptions.localOnly) {
-            speakTextLocally(text, title); // ההשמעה מתחילה
-            playPauseBtn.innerHTML = '<i class="fa-solid fa-pause mr-1"></i> השהה';
-            stopBtn.style.display = 'flex';
-            return;
-        }
-        
-        // 4. אם אין קול להשמעה
-        showAlert('אין קול', 'אין טקסט להשמעה כעת.');
-    };
-    playPauseBtn.addEventListener('click', playPauseBtn.clickHandler);
-    //-------------------------------------------------------------------
-
-    // --- התיקון הקריטי בלוגיקת כפתור העצירה ---
-    stopBtn.removeEventListener('click', stopBtn.clickHandler);
-    stopBtn.clickHandler = () => {
-        // עצירת ניגון API (איכותי)
-        if (window.activeAudio) {
-            try { window.activeAudio.pause(); window.activeAudio.currentTime = 0; } catch (e) { }
-            window.activeAudio = null;
-        }
-        // עצירת ניגון מקומי (ברכת המזון)
-        if ('speechSynthesis' in window) {
-            try { speechSynthesis.cancel(); } catch (e) { }
-            window.activeLocalUtterance = null;
-        }
-        // פונקציית עזר שמעדכנת את כפתור ההשהיה/המשך ל-"השמע"
-        updateAlertButtonsToStopped();
-    };
-    stopBtn.addEventListener('click', stopBtn.clickHandler);
-    //------------------------------------------
-
-    // ... (שאר הלוגיקה של הפונקציה נשארת כפי שהייתה)
-    modal.classList.add('flex');
-}
-window.showAlert = showAlert;
 
     
     function openTipModal() {
@@ -2076,59 +2136,9 @@ async function checkKosherStatus(barcode) {
             </div>
         `).join('');
     }
-    function showBrachaAchronaOptions() {
-    const title = 'בחר ברכה אחרונה';
-    const message = `
-        <p class="mb-4">בחר את הברכה האחרונה הרלוונטית:</p>
-        <div class="grid grid-cols-2 gap-2 mt-4" id="brachot-selection-buttons">
-            <button id="borei-nefashot-btn" class="btn btn-neutral">בורא נפשות</button>
-            <button id="meein-shalosh-btn" class="btn btn-neutral">מעין שלוש</button>
-        </div>
-    `;
-    showAlert(title, message, false);
 
-    // הוספת מאזינים לכפתורים החדשים בתוך המודל
-document.getElementById('borei-nefashot-btn')?.addEventListener('click', () => {
-    const brachaHTML = hebrewPrayers.boreiNefashot;
-    const cleanText = brachaHTML.replace(/<[^>]*>?/gm, '').trim(); 
 
-    showAlert('ברכת בורא נפשות (אחרונה)', brachaHTML, { text: cleanText, lang: 'he-IL' });
-});
-    document.getElementById('meein-shalosh-btn')?.addEventListener('click', () => {
-        showMeEinShaloshOptions(); // קורא לבחירת המשנה של מעין שלוש
-    });
-}
 
-function showMeEinShaloshOptions() {
-    const title = 'ברכת מעין שלוש (עדות המזרח)';
-    const message = `
-        <p class="mb-4">בחר את סוג המזון:</p>
-        <div class="grid grid-cols-3 gap-2 mt-4" id="meein-shalosh-selection-buttons">
-            <button id="al-hamichya-btn" class="btn btn-warning">על המחיה</button>
-            <button id="al-hagefen-btn" class="btn btn-warning">על הגפן</button>
-            <button id="al-haetz-btn" class="btn btn-warning">על העץ</button>
-        </div>
-    `;
-    showAlert(title, message, false);
-
-    // הוספת מאזינים
-document.getElementById('al-hamichya-btn')?.addEventListener('click', () => {
-    const brachaHTML = hebrewPrayers.boreiNefashot;
-    const cleanText = brachaHTML.replace(/<[^>]*>?/gm, '').trim(); // ניקוי הטקסט
-   showAlert('ברכת על המחיה (אחרונה)', brachaHTML, { text: cleanText, lang: 'he-IL' });
-});
-    document.getElementById('al-hagefen-btn')?.addEventListener('click', () => {
-        const bracha = hebrewPrayers.alHaGefen;
-        const cleanText = brachaHTML.replace(/<[^>]*>?/gm, '').trim(); 
-        showAlert('ברכת על הגפן (מעין שלוש)', brachaHTML, { text: cleanText, lang: 'he-IL' }); 
-    });
-    document.getElementById('al-haetz-btn')?.addEventListener('click', () => {
-        const bracha = hebrewPrayers.alHaEtz;
-        const cleanText = brachaHTML.replace(/<[^>]*>?/gm, '').trim(); 
-       showAlert('ברכת על העץ (מעין שלוש)', brachaHTML, { text: cleanText, lang: 'he-IL' }); 
-      
-    });
-}
     // ========================= התחלה: פונקציית שעונים =========================
 function updateClocks() {
     const milanTimeEl = $('#milan-time');
@@ -3431,12 +3441,8 @@ newBtn.addEventListener('click', () => {
 
     console.log("LOG: DOMContentLoaded event fired. Initializing app.");
      // --- מאזיני כפתורים יהודיים חדשים ---
-$('#tefilat-haderech-btn')?.addEventListener('click', () => {
-    const prayerText = hebrewPrayers.tefilatHaderech;
-  const cleanText = prayerText.replace(/<[^>]*>?/gm, '').trim();
-   showAlert('תפילת הדרך', prayerText, { text: cleanText, lang: 'he-IL' });
-});
-    $('#bracha-achrona-btn')?.addEventListener('click', showBrachaAchronaOptions);
+
+   
 
     // --- חיבור כפתור סריקת ברקוד ---
 
@@ -3901,7 +3907,29 @@ $('#scan-kosher-barcode-btn').addEventListener('click', window.startKosherBarcod
     document.getElementById('zoom-in-btn').addEventListener('click', () => cameraManager.changeZoom(1));
     document.getElementById('zoom-out-btn').addEventListener('click', () => cameraManager.changeZoom(-1));
 
+    // --- חיבור כפתורי מצלמה ראשיים ---
+    document.getElementById('lookup-site-btn').addEventListener('click', startSiteLookupCamera);
+    document.getElementById('translate-camera-btn').addEventListener('click', startTranslateCamera);
+    document.getElementById('scan-receipt-btn').addEventListener('click', startReceiptScanCamera);
+    document.getElementById('scan-kosher-barcode-btn').addEventListener('click', startKosherBarcodeScanner);
     
+    // --- חיבור כפתורי שליטה במצלמה ---
+    document.getElementById('camera-close-btn').addEventListener('click', () => cameraManager.stop());
+    document.getElementById('capture-btn').addEventListener('click', captureFrame);
+    document.getElementById('torch-btn').addEventListener('click', () => cameraManager.toggleTorch());
+    document.getElementById('zoom-in-btn').addEventListener('click', () => cameraManager.changeZoom(1));
+    document.getElementById('zoom-out-btn').addEventListener('click', () => cameraManager.changeZoom(-1));
+
+    // --- חיבור כפתורי תפילות ---
+    document.getElementById('tefilat-haderech-btn').addEventListener('click', () => {
+        const text = hebrewPrayers.tefilatHaderech.replace(/<[^>]*>?/gm, '');
+        showAlert('תפילת הדרך', hebrewPrayers.tefilatHaderech, { text, useApi: false }); // ארוך מדי ל-API
+    });
+    document.getElementById('birkat-hamazon-btn').addEventListener('click', () => {
+        const text = hebrewPrayers.birkatHaMazon.replace(/<[^>]*>?/gm, '');
+        showAlert('ברכת המזון', hebrewPrayers.birkatHaMazon, { text, useApi: false }); // ארוך מדי ל-API
+    });
+    document.getElementById('bracha-achrona-btn').addEventListener('click', showBrachaAchronaOptions);
   }); // <--- הסוגר הסופי של document.addEventListener('DOMContentLoaded')
 //------------
 
