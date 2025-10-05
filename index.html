@@ -1067,17 +1067,22 @@ async function generateDailySummary(dayId) {
 }
 // הדבק את כל הקטע הבא בקוד שלך
 function startRecognition(langCode, buttonElement) {
-    // אם ההקלטה כבר פעילה, הלחיצה תעצור אותה
+    // === החלק שהשתנה: טיפול בעצירה ===
     if (isRecognizing) {
         speechRecognizer.stop();
+        // עדכון מיידי של מראה הכפתור כדי שתדע שההקלטה נעצרה
+        if (activeVoiceButton) {
+            activeVoiceButton.classList.remove('text-red-500');
+            const buttonText = activeVoiceButton.id.includes('he') ? '<i class="fa-solid fa-microphone"></i> דבר בעברית' : '<i class="fa-solid fa-microphone"></i> Parla Italiano';
+            activeVoiceButton.innerHTML = buttonText;
+        }
         return;
     }
+    // ===================================
 
-    // "נועלים" את הפונקציה כדי למנוע דאבל-קליק
     isRecognizing = true; 
     activeVoiceButton = buttonElement;
 
-    // מעדכנים את מראה הכפתור מיד, בלי לחכות
     if (activeVoiceButton) {
         activeVoiceButton.innerHTML = '<i class="fa-solid fa-microphone-lines fa-beat"></i> מקשיב...';
         activeVoiceButton.classList.add('text-red-500');
@@ -1090,7 +1095,6 @@ function startRecognition(langCode, buttonElement) {
         console.error("Error starting speech recognition:", e);
         showAlert('שגיאה בזיהוי דיבור', 'לא הצלחנו להפעיל את המיקרופון. ודא שהענקת הרשאות לדפדפן ונסה שוב.');
         
-        // משחררים את הנעילה במקרה של שגיאה
         isRecognizing = false;
         if(activeVoiceButton) {
              activeVoiceButton.classList.remove('text-red-500');
@@ -3311,45 +3315,34 @@ speechRecognizer.onend = () => {
         $('#translation-result-container').innerHTML = `<span class="text-red-500">שגיאה בזיהוי הדיבור: ${event.error}</span>`;
     };
 
-    speechRecognizer.onresult = async (event) => {
-        const spokenText = event.results[0][0].transcript;
-        const sourceLang = speechRecognizer.lang;
-        console.log(`Speech recognized in ${sourceLang}: ${spokenText}`);
+speechRecognizer.onresult = async (event) => {
+    const spokenText = event.results[0][0].transcript;
+    const sourceLang = speechRecognizer.lang;
+    console.log(`Speech recognized in ${sourceLang}: ${spokenText}`);
 
-        let sourceLangFull, targetLangFull, targetLangCode;
+    const resultContainer = $('#translation-result-container');
+    resultContainer.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> מתרגם...`;
 
-        if (sourceLang === 'he-IL') {
-            sourceLangFull = 'Hebrew';
-            targetLangFull = 'Italian';
-            targetLangCode = 'it-IT';
-        } else { // 'it-IT'
-            sourceLangFull = 'Italian';
-            targetLangFull = 'Hebrew';
-            targetLangCode = 'he-IL';
-        }
+    const targetLangFull = (sourceLang === 'he-IL') ? 'Italian' : 'Hebrew';
+    const prompt = `Translate the following word/phrase from ${sourceLang.split('-')[0]} to ${targetLangFull}. Provide ONLY the translated text, with no additional formatting or explanations. Text to translate: "${spokenText}"`;
+    const payload = { contents: [{ parts: [{ text: prompt }] }] };
 
-        $('#dictionary-input').value = spokenText;
+    let translatedText = await callGemini(payload);
+    translatedText = translatedText.replace(/[\*\_`\.]/g, '').trim();
 
-        const resultContainer = $('#translation-result-container');
-        resultContainer.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> מתרגם...`;
+    const targetLangCode = (sourceLang === 'he-IL') ? 'it-IT' : 'he-IL';
+    const escapedText = translatedText.replace(/'/g, "\\'");
 
-        // Prompt משופר כדי להבטיח תרגום ולא תעתיק
-        const prompt = `Translate the meaning of the following word/phrase from ${sourceLangFull} to ${targetLangFull}. Provide ONLY the single, most common translated word/phrase, with no additional formatting or explanations. Word/phrase to translate: "${spokenText}"`;
-        const payload = { contents: [{ parts: [{ text: "" }] }] };
-        let translatedText = await callGemini(payload, prompt, false);
-        translatedText = translatedText.replace(/[\*\_`\.]/g, '').trim();
+    // מעדכנים את התצוגה עם התרגום וכפתור להשמעה חוזרת
+    resultContainer.innerHTML = `<span>${translatedText}</span> 
+        <button onclick="ttsManager.speak('${escapedText}', false, '${targetLangCode}')" 
+        class="btn btn-ghost p-1 h-auto"><i class="fa-solid fa-volume-up"></i></button>`;
 
-        // תיקון: הוספת כפתור ההשמעה
-resultContainer.innerHTML = `<span>${translatedText}</span> 
-    <button onclick="window.speakTextSmartly('${translatedText.replace(/'/g, "\\'")}', '<span>${translatedText}</span>', 'תרגום קולי', '${targetLangCode}')" 
-    class="btn btn-ghost p-1 h-auto"><i class="fa-solid fa-volume-high"></i></button>`; // <--- חובה לסגור את המחרוזת כאן
-    
-    // בונוס: הוספת התרגום להיסטוריה, בדיוק כמו בתרגום טקסט רגיל
-    translationHistory.unshift({ sourceText: spokenText, translatedText: translatedText });
-    if (translationHistory.length > 5) translationHistory.pop();
-    localStorage.setItem('milanTripTranslationHistory', JSON.stringify(translationHistory));
-    renderTranslationHistory();
-}; 
+    // === החלק שהשתנה: השמעה אוטומטית ===
+    // מפעילים את מנהל הקול במצב "דפדפן בלבד" (useApi = false)
+    ttsManager.speak(translatedText, false, targetLangCode);
+    // ======================================
+};
 
 } else {
     console.warn("Web Speech API is not supported in this browser.");
