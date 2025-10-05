@@ -1003,7 +1003,8 @@ stop() {
         }
     }
 };
-
+window.ttsManager = ttsManager; 
+console.log("LOG: ttsManager exposed globally."); 
 // 2. פונקציית showAlert המעודכנת
 function showAlert(title, message, speechOptions = null) {
     ttsManager.stop(); // עצור כל ניגון קודם בפתיחת חלון חדש
@@ -3271,15 +3272,15 @@ if (recognition) {
         $('#translation-result-container').innerHTML = '<span>מקשיב...</span>';
     };
 
-    speechRecognizer.onend = () => {
-        isRecognizing = false;
+speechRecognizer.onend = () => {
+        isRecognizing = false; // ודא שזה מתעדכן ל-false
+        console.log("Speech recognition ended."); // הוסף לוג
         if (activeVoiceButton) {
             activeVoiceButton.classList.remove('text-red-500', 'animate-pulse');
             activeVoiceButton.innerHTML = activeVoiceButton.id.includes('he') ? '<i class="fa-solid fa-microphone"></i> דבר בעברית' : '<i class="fa-solid fa-microphone"></i> Parla Italiano';
         }
         activeVoiceButton = null;
     };
-
     speechRecognizer.onerror = (event) => {
         console.error("Speech recognition error:", event.error);
         let errorMessage = 'אירעה שגיאה בזיהוי';
@@ -3319,13 +3320,15 @@ if (recognition) {
 
 function startRecognition(langCode, button) {
     if (!speechRecognizer) {
+        // אם speechRecognizer לא הוגדר (כנראה לא נתמך בדפדפן)
         showAlert('שגיאה', 'זיהוי קולי אינו נתמך בדפדפן זה.');
         return;
     }
 
-    // התיקון הקריטי: בודק אם הזיהוי כבר מתבצע ומפסיק אותו
-    if (isRecognizing) {
+    // *** התיקון ל-InvalidStateError: בודק אם הזיהוי כבר מתבצע ומפסיק אותו ***
+    if (isRecognizing) { 
         speechRecognizer.stop();
+        // הערה: isRecognizing יתעדכן ל-false בתוך speechRecognizer.onend
         return;
     }
     
