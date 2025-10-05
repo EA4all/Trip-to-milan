@@ -2684,8 +2684,8 @@ document.getElementById('zoom-out-btn').addEventListener('click', () => cameraMa
 // --------------------------------------------------------------------------
 async function startKosherBarcodeScanner() {
     cameraManager.stop();
-    window.cameraMode = 'barcode';
-
+    // window.cameraMode נמחק בכוונה, כפי שסיכמנו
+    
     $('#camera-title').textContent = 'סריקת כשרות (ברקוד)';
     $('#capture-btn').style.display = 'none';
     $('#upload-receipt-btn').style.display = 'none';
@@ -2713,19 +2713,24 @@ async function startKosherBarcodeScanner() {
             if (drawingCtx && drawingCanvas) {
                 drawingCtx.clearRect(0, 0, parseInt(drawingCanvas.getAttribute("width")), parseInt(drawingCanvas.getAttribute("height")));
                 
-                // כאן נבדוק אם הסורק מזהה קופסה של ברקוד
+                // --- התחלה: ציור "כוונת" קבועה ---
+                const width = parseInt(drawingCanvas.getAttribute("width"));
+                const height = parseInt(drawingCanvas.getAttribute("height"));
+                
+                drawingCtx.beginPath();
+                drawingCtx.strokeStyle = 'rgba(255, 255, 255, 0.5)'; // לבן חצי-שקוף
+                drawingCtx.lineWidth = 3;
+                
+                const rectWidth = width * 0.8;
+                const rectHeight = height * 0.4;
+                const rectX = (width - rectWidth) / 2;
+                const rectY = (height - rectHeight) / 2;
+                drawingCtx.strokeRect(rectX, rectY, rectWidth, rectHeight);
+                // --- סוף: ציור "כוונת" קבועה ---
+                
                 if (result && result.box) {
-                    // אם כן, נדפיס לקונסול ונצייר ידנית
-                    console.log("Barcode box detected:", result.box);
-                    drawingCtx.beginPath();
-                    drawingCtx.moveTo(result.box[0][0], result.box[0][1]);
-                    for (var i = 1; i < result.box.length; i++) {
-                        drawingCtx.lineTo(result.box[i][0], result.box[i][1]);
-                    }
-                    drawingCtx.closePath();
-                    drawingCtx.strokeStyle = 'green';
-                    drawingCtx.lineWidth = 4;
-                    drawingCtx.stroke();
+                    // ציור מסגרת ירוקה כאשר יש זיהוי פוטנציאלי
+                    Quagga.ImageDebug.drawPath(result.box, { x: 0, y: 1 }, drawingCtx, { color: "green", lineWidth: 4 });
                 }
             }
         });
