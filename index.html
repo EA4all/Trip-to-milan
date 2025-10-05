@@ -40,6 +40,9 @@
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
 
   <style>
+    #video-container {
+    min-height: 250px;
+}
     #video-container canvas.drawingBuffer {
     position: absolute;
     top: 0;
@@ -150,12 +153,13 @@ body {
         backdrop-filter: blur(4px);
     }
     .modal-backdrop.flex { display: flex; }
-    .modal {
-        background: var(--card); color: var(--fg);
-        width: 90%; max-width: 500px; border-radius: 1rem;
-        box-shadow: 0 10px 25px rgba(0,0,0,0.1);
-        display: flex; flex-direction: column; max-height: 80vh;
-    }
+.modal {
+    background: var(--card); color: var(--fg);
+    width: 90%; max-width: 500px; border-radius: 1rem;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+    display: flex; flex-direction: column; max-height: 80vh;
+    overflow-y: auto; /* <-- הוסף שורה זו */
+}
     .image-carousel { position: relative; flex-shrink:0; width:100%; }
     @media (min-width: 768px) { .image-carousel { width: 33.333333%; } }
     .image-carousel button {
