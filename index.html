@@ -2092,13 +2092,15 @@ async function checkKosherStatus(barcode) {
     showAlert('בודק כשרות...', `<div class="text-center"><i class="fa-solid fa-sync fa-spin fa-2x"></i><p class="mt-2">מחפש ברקוד **${barcode}** ב-Open Food Facts...</p></div>`);
 
     const url = `https://world.openfoodfacts.org/api/v2/product/${barcode}.json`;
+    // --- הוספה: קישור לאימות ידני ---
+    const verificationLink = `\n\n<a href="https://world.openfoodfacts.org/product/${barcode}" target="_blank" class="text-sm text-brand-500 hover:underline">לחץ כאן לאימות ידני ב-Open Food Facts</a>`;
 
     try {
         const response = await fetch(url);
         const data = await response.json();
 
         if (data.status === 0) {
-            showAlert('לא נמצא מוצר', `הברקוד **${barcode}** לא נמצא במאגר **Open Food Facts**.`);
+            showAlert('לא נמצא מוצר', `הברקוד **${barcode}** לא נמצא במאגר.` + verificationLink);
             return;
         }
 
@@ -2107,23 +2109,22 @@ async function checkKosherStatus(barcode) {
         const labels = product.labels_tags || [];
         
         let kosherFound = labels.some(tag => tag.includes('kosher'));
-
         let summary = `**שם המוצר:** ${productName}\n\n`;
 
         if (kosherFound) {
-            summary += '✅ **כשרות:** נראה שהתווית "כשר" מופיעה ברשימת התוויות של המוצר.\n';
-            summary += '***שימו לב!*** המידע מוזן על ידי משתמשים. יש לוודא שיש חותמת כשרות מוכרת על המוצר עצמו (כמו OU, OK, וכד\').\n\n';
+            summary += '✅ **כשרות:** נראה שהתווית "כשר" מופיעה ברשומות המוצר.\n';
+            summary += '***שימו לב!*** יש לוודא חותמת כשרות מוכרת על המוצר עצמו.\n';
         } else {
-            summary += '❌ **כשרות:** התווית "כשר" לא נמצאה ברשומות של Open Food Facts.\n\n';
+            summary += '❌ **כשרות:** התווית "כשר" לא נמצאה ברשומות של מוצר זה.\n';
         }
-
-        summary += `**תוויות נוספות:** ${labels.filter(tag => tag.startsWith('en:')).map(tag => tag.replace('en:', '').replace(/-/g, ' ')).join(', ') || 'אין'}`;
+        
+        summary += verificationLink; // הוספת הקישור בסוף ההודעה
         
         showAlert(`תוצאות סריקת כשרות`, summary, true);
 
     } catch (error) {
         console.error("Error in Open Food Facts lookup:", error);
-        showAlert('שגיאה', 'שגיאה בחיבור לשרת Open Food Facts.');
+        showAlert('שגיאה', 'שגיאה בחיבור לשרת Open Food Facts.' + verificationLink);
     }
 }
 
@@ -2694,38 +2695,39 @@ async function startKosherBarcodeScanner() {
     const video = await cameraManager.open('barcode');
     if (!video) return;
 
-    // --- שינוי מרכזי: הגדרת המאזינים לפני האתחול ---
-    Quagga.onProcessed(function (result) {
-        const drawingCtx = Quagga.canvas.ctx.overlay;
-        const drawingCanvas = Quagga.canvas.dom.overlay;
-        if (drawingCtx && drawingCanvas) {
-            drawingCtx.clearRect(0, 0, parseInt(drawingCanvas.getAttribute("width")), parseInt(drawingCanvas.getAttribute("height")));
-            if (result && result.box) {
-                Quagga.ImageDebug.drawPath(result.box, { x: 0, y: 1 }, drawingCtx, { color: "green", lineWidth: 4 });
-            }
-        }
-    });
-
-    Quagga.onDetected(result => {
-        cameraManager.stop(); // הפונקציה הזו מנקה את כל מאזיני Quagga
-        checkKosherStatus(result.codeResult.code);
-    });
-    // --- סוף השינוי ---
-
     Quagga.init({
         inputStream: { name: "Live", type: "LiveStream", target: video },
         decoder: { readers: ["ean_reader", "ean_8_reader", "code_128_reader"] },
-        locate: true,
+        locate: true, // פרמטר חשוב לציור המסגרת
     }, (err) => {
-        if (err) {
-            cameraManager.stop();
-            showAlert('שגיאת סורק', 'לא הצלחנו להפעיל את סורק הברקודים.');
-            return;
-        }
+        if (err) { cameraManager.stop(); showAlert('שגיאת סורק', 'לא הצלחנו להפעיל את סורק הברקודים.'); return; }
         
         Quagga.start();
         window.Quagga.running = true;
         $('#barcode-status-display').textContent = 'מחפש ברקוד...';
+
+        Quagga.onProcessed(function (result) {
+            const drawingCtx = Quagga.canvas.ctx.overlay;
+            const drawingCanvas = Quagga.canvas.dom.overlay;
+            if (drawingCtx && drawingCanvas) {
+                drawingCtx.clearRect(0, 0, parseInt(drawingCanvas.getAttribute("width")), parseInt(drawingCanvas.getAttribute("height")));
+                if (result && result.box) {
+                    Quagga.ImageDebug.drawPath(result.box, { x: 0, y: 1 }, drawingCtx, { color: "green", lineWidth: 4 });
+                }
+            }
+        });
+
+        Quagga.onDetected(result => {
+            // --- הוספה: עדכון הסטטוס לפני הסגירה ---
+            $('#barcode-status-display').textContent = 'ברקוד זוהה! מאמת נתונים...';
+            // ------------------------------------------
+            
+            // השהייה קצרה כדי שהמשתמש יספיק לראות את ההודעה
+            setTimeout(() => {
+                cameraManager.stop();
+                checkKosherStatus(result.codeResult.code);
+            }, 500); // חצי שנייה
+        });
     });
 }
 window.startKosherBarcodeScanner = startKosherBarcodeScanner;
