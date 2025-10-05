@@ -1065,9 +1065,19 @@ async function generateDailySummary(dayId) {
     hideLoading();
     showAlert(`סיכום יומי: ${dayData.name}`, podcastScript, { text: podcastScript, useApi: true });
 }
-function startRecognition(langCode) {
-    if (!speechRecognizer) { showAlert('שגיאה', 'זיהוי קולי אינו נתמך בדפדפן זה.'); return; }
-    if (isRecognizing) { speechRecognizer.stop(); return; }
+    function startRecognition(langCode, buttonElement) { // <-- הוספנו את buttonElement
+    if (!speechRecognizer) {
+        showAlert('שגיאה', 'זיהוי קולי אינו נתמך בדפדפן זה.');
+        return;
+    }
+    if (isRecognizing) {
+        speechRecognizer.stop();
+        return;
+    }
+
+    // <-- הוספנו את השורה הזו כדי לשמור את הכפתור שנלחץ
+    activeVoiceButton = buttonElement;
+
     try {
         speechRecognizer.lang = langCode;
         speechRecognizer.start();
@@ -1075,7 +1085,8 @@ function startRecognition(langCode) {
         console.error("Error starting speech recognition:", e);
         showAlert('שגיאה בזיהוי דיבור', 'לא הצלחנו להפעיל את המיקרופון. ודא שהענקת הרשאות לדפדפן ונסה שוב.');
     }
-}
+    }
+    
     // --- UTILS ---
     const $ = (s, p = document) => p.querySelector(s);
     const $$ = (s, p = document) => Array.from(p.querySelectorAll(s));
@@ -3884,6 +3895,11 @@ document.getElementById('tefilat-haderech-btn').addEventListener('click', () => 
     document.getElementById('global-voice-select').addEventListener('change', () => {
         ttsManager.speak("שלום, זהו הקול שבחרת.", true, 'he-IL');
     });
+
+  // ודא שהשורות האלה נראות כך בחלק התחתון של הקוד שלך
+heBtn.addEventListener('click', (e) => window.startRecognition('he-IL', e.currentTarget));
+itBtn.addEventListener('click', (e) => window.startRecognition('it-IT', e.currentTarget));
+
 
 }); // <--- הסוגר הסופי של document.addEventListener('DOMContentLoaded')
 //------------
