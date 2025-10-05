@@ -2610,15 +2610,20 @@ window.stopCamera = stopCamera;
 
 async function startKosherBarcodeScanner() {
     window.cameraMode = 'barcode';
-    stopCamera(); // מתחילים נקי
+    stopCamera(); 
 
-    // --- הגדרת UI ייעודית ---
-    $('#camera-title').textContent = 'סריקת כשרות (ברקוד)';
-    $('#capture-btn').style.display = 'none'; // אין כפתור צילום
-    $('#barcode-status-display').style.display = 'block'; // הצגת סטטוס
-    $('#upload-receipt-btn').style.display = 'flex'; // כפתור העלאה (אם קיים)
+    // --- איפוס קונטיינרים ראשיים (חובה!) ---
+    $('#camera-controls-bottom').style.display = 'flex';
+    $('#main-controls').style.display = 'flex';
+    $('#torch-btn').style.display = 'flex'; // הפנס צריך להיות גלוי
     
-    // --- הפעלת חומרה (מבודדת) ---
+    // --- הגדרת UI ייעודית ---
+    $('#camera-title').textContent = 'סריקת ברקוד (כשרות)';
+    $('#capture-btn').style.display = 'none'; // הסתרת כפתור הצילום (סורק אוטומטי)
+    $('#upload-receipt-btn').style.display = 'none'; // הסתרת העלאת קבלה
+    $('#barcode-status-display').style.display = 'flex'; // הצגת שדה הסטטוס
+    
+    // --- הפעלת חומרה + Quagga ---
     const video = document.getElementById('camera-feed');
     try {
         const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' } }, audio: false });
@@ -2626,23 +2631,18 @@ async function startKosherBarcodeScanner() {
         video.srcObject = stream;
         await video.play();
         window.activeVideoTrack = stream.getVideoTracks()[0];
-        $('#camera-modal').classList.add('flex'); // פתיחת מודל
-
-        // --- הפעלת Quagga (מבודדת) ---
-        const container = video.parentNode;
-        window.Quagga.init({
-            inputStream: { type: "LiveStream", target: container, constraints: { facingMode: "environment" } },
-            decoder: { readers: ["ean_reader", "upc_reader", "code_128_reader"] }
-        }, (err) => {
-            if (err) {
-                document.getElementById('barcode-status-display').textContent = '❌ שגיאת סורק: לא הצליח לאתחל.';
-                return;
-            }
-            window.Quagga.start();
-            window.Quagga.running = true;
-            document.getElementById('barcode-status-display').textContent = '🔍 מחפש ברקוד...';
-        });
-
+        $('#camera-modal').classList.add('flex');
+        
+        // אתחול Quagga
+        await initQuagga(video);
+        
+    } catch (err) {
+        console.error('Barcode Scanner Error:', err);
+        stopCamera();
+        showAlert('שגיאת מצלמה', `לא ניתן לגשת למצלמה לסריקת ברקוד.`);
+    }
+}
+window.startKosherBarcodeScanner = startKosherBarcodeScanner;
         // לוגיקת onDetected צריכה להיות מוגדרת פעם אחת גלובלית
     } catch (err) {
         console.error('Barcode Camera Error:', err);
@@ -2677,24 +2677,22 @@ async function startSiteLookupCamera() {
         showAlert('שגיאת מצלמה', `לא ניתן לגשת למצלמה לזיהוי.`);
     }
 }
-window.startSiteLookupCamera = startSiteLookupCamera;
-
-  
 async function startReceiptScanCamera() {
     window.cameraMode = 'receipt';
     stopCamera(); 
 
+    // --- איפוס קונטיינרים ראשיים (חובה!) ---
+    $('#camera-controls-bottom').style.display = 'flex';
+    $('#main-controls').style.display = 'flex';
+    $('#torch-btn').style.display = 'flex'; // הפנס צריך להיות גלוי
+    
     // --- הגדרת UI ייעודית ---
     $('#camera-title').textContent = 'סריקת קבלה (הכנסת הוצאה)';
-    
-    // **התיקון הקריטי:** הצגת כפתור הצילום והעלאה בכוח!
-    $('#capture-btn').style.display = 'flex';
-    $('#upload-receipt-btn').style.display = 'flex'; 
-    
-    // הסתרת סטטוס ברקוד
+    $('#capture-btn').style.display = 'flex'; // הצגת כפתור הצילום
+    $('#upload-receipt-btn').style.display = 'flex'; // הצגת כפתור העלאת קובץ
     $('#barcode-status-display').style.display = 'none';
-
-    // --- הפעלת חומרה (מבודדת) ---
+    
+    // --- הפעלת חומרה ---
     const video = document.getElementById('camera-feed');
     try {
         const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' } }, audio: false });
@@ -2702,7 +2700,7 @@ async function startReceiptScanCamera() {
         video.srcObject = stream;
         await video.play();
         window.activeVideoTrack = stream.getVideoTracks()[0];
-        $('#camera-modal').classList.add('flex'); // פתיחת מודל
+        $('#camera-modal').classList.add('flex');
     } catch (err) {
         console.error('Receipt Camera Error:', err);
         stopCamera();
@@ -2710,19 +2708,23 @@ async function startReceiptScanCamera() {
     }
 }
 window.startReceiptScanCamera = startReceiptScanCamera;
-    
 // --- פונקציה 3: תרגומון (Translate) ---
 async function startTranslateCamera() {
     window.cameraMode = 'translate';
     stopCamera(); 
 
-    // --- הגדרת UI ייעודית ---
-    $('#camera-title').textContent = 'תרגום תפריט / טקסט';
-    $('#capture-btn').style.display = 'flex'; 
-    $('#barcode-status-display').style.display = 'none';
-    $('#upload-receipt-btn').style.display = 'none';
+    // --- איפוס קונטיינרים ראשיים (חובה!) ---
+    $('#camera-controls-bottom').style.display = 'flex';
+    $('#main-controls').style.display = 'flex';
+    $('#torch-btn').style.display = 'flex'; // הפנס צריך להיות גלוי
     
-    // --- הפעלת חומרה (מבודדת) ---
+    // --- הגדרת UI ייעודית ---
+    $('#camera-title').textContent = 'תרגום טקסט מיידי';
+    $('#capture-btn').style.display = 'flex'; // הצגת כפתור הצילום
+    //$('#upload-receipt-btn').style.display = 'none'; // הסתרת העלאת קבלה
+    $('#barcode-status-display').style.display = 'none';
+    
+    // --- הפעלת חומרה ---
     const video = document.getElementById('camera-feed');
     try {
         const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' } }, audio: false });
@@ -2730,14 +2732,14 @@ async function startTranslateCamera() {
         video.srcObject = stream;
         await video.play();
         window.activeVideoTrack = stream.getVideoTracks()[0];
-        $('#camera-modal').classList.add('flex'); // פתיחת מודל
+        $('#camera-modal').classList.add('flex');
     } catch (err) {
         console.error('Translate Camera Error:', err);
         stopCamera();
         showAlert('שגיאת מצלמה', `לא ניתן לגשת למצלמה לתרגום.`);
     }
 }
-window.startTranslateCamera = startTranslateCamera; // סוגר את הפונקציה
+window.startTranslateCamera = startTranslateCamera;
 // ========================= התחלה: קוד מתוקן ומשופר להפעלת הפנס =========================
 async function toggleTorch() {
     const torchBtn = $('#torch-btn');
