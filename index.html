@@ -2230,28 +2230,6 @@ function findUtility(query, queryHebrew) {
     }
 }
 
-//========================================================================
-// קטע קוד חדש ל-generateDailyPodcast
-async function generateDailySummary(dayIndex, dayName) {
-    showLoading(`מכין פודקאסט יומי...`, `המערכת מסכמת את יום ${dayName} בתכנית הטיול ומכינה פודקאסט מותאם. זה עשוי לקחת מספר שניות.`);
-
-    // ... (שליפת נתונים מה-Firestore נשארת כפי שהייתה) ...
-
-    const placesNames = dayData.places.map(p => p.name).join(', ');
-    const prompt = `אתה קריין פודקאסט ידידותי ומקצועי. כתוב פודקאסט קצר (כ-800 תווים) בעברית המסכם את יום ${dayName} בטיול. התחל במשפט: "שלום לכולם וברוכים הבאים לסיכום היומי שלנו!" וסכם את היעדים המרכזיים שהיו: ${placesNames}. בסוף הדיבור, ציין: "סוף הסיכום היומי".`;
-    
-    const payload = { contents: [{ parts: [{ text: "" }] }] };
-    const podcastScript = await callGemini(payload, prompt, true);
-
-    // --- התיקון: שימוש ב-speakTextSmartly לניגון איכותי (API) ---
-    // ה-text המעוצב מוצג, וה-text הנקי מושמע.
-    window.speakTextSmartly(podcastScript.replace(/\n/g, ' '), podcastScript, `סיכום יומי: ${dayName}`);
-    // ----------------------------------------------------------------
-
-    hideLoading();
-}
-  
-
     // ========================= התחלה: לוגיקה לעוזר המטרו =========================
 function initMetroHelper() {
     const metroData = {
