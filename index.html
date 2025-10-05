@@ -896,40 +896,99 @@ stop() {
         } catch (err) {
             console.error('Error controlling torch:', err);
         }
-    }
-   async startBarcodeDetection() {
-        if (!('BarcodeDetector' in window)) {
-            showAlert('סורק לא נתמך', 'הדפדפן שלך אינו תומך בסורק הברקודים המובנה.');
+    },
+async startBarcodeDetection() {
+        // בודק אם ספריית QuaggaJS נטענה
+        if (typeof Quagga === 'undefined') {
+            showAlert('שגיאה', 'ספריית סריקת ברקוד (QuaggaJS) לא נטענה כראוי.');
             return;
         }
-        
-        const barcodeDetector = new BarcodeDetector({ formats: ['ean_13', 'ean_8', 'code_128'] });
+
         this.isDetecting = true;
+        const videoContainer = document.getElementById('video-container');
+        const statusDisplay = document.getElementById('barcode-status-display');
+        statusDisplay.textContent = 'מאתחל סריקה...';
         
-        const scan = async () => {
-            if (!this.isDetecting || !this.videoElement || this.videoElement.readyState < 2) return;
-            
-            try {
-                const barcodes = await barcodeDetector.detect(this.videoElement);
-                if (barcodes.length > 0) {
-                    this.isDetecting = false; // הפסק לסרוק ברגע שנמצא משהו
-                    const detectedCode = barcodes[0].rawValue;
-                    console.log(`Native barcode detected: ${detectedCode}`);
-                    $('#barcode-status-display').textContent = `ברקוד זוהה! מאמת נתונים...`;
-                    setTimeout(() => {
-                        this.stop();
-                        checkKosherStatus(detectedCode);
-                    }, 500);
-                } else {
-                    requestAnimationFrame(scan); // אם לא נמצא, נסה שוב בפריים הבא
-                }
-            } catch (err) {
-                console.error("Barcode detection failed:", err);
-                this.isDetecting = false;
-            }
+        // עצירה וודאית של Quagga לפני אתחול מחדש
+        if (Quagga.initialized) Quagga.stop();
+
+        const config = {
+            inputStream: {
+                name: "Live",
+                type: "LiveStream",
+                target: videoContainer, // Quagga יצמיד את ה-canvas ל-videoContainer
+                constraints: {
+                    width: { min: 640 },
+                    height: { min: 480 },
+                    facingMode: "environment"
+                },
+            },
+            decoder: {
+                // הגדרת קוראים (Reader) לברקודים הנפוצים באיטליה (EAN)
+                readers: ["ean_reader", "ean_8_reader", "code_128_reader"],
+                multiple: false
+            },
+            locator: { // הגדרות שמזהות את המיקום של הברקוד בפריים
+                patchSize: "medium",
+                halfSample: true
+            },
+            locate: true, // צייר מלבן סביב הברקוד
         };
-        requestAnimationFrame(scan);
-    }
+
+        Quagga.init(config, (err) => {
+            if (err) {
+                console.error("QuaggaJS Init Error:", err);
+                statusDisplay.textContent = 'שגיאה באתחול הסורק.';
+                this.stop();
+                return;
+            }
+            // חשוב: הפעל את הסטרימינג רק לאחר שהאתחול הצליח
+            statusDisplay.textContent = 'מחפש ברקוד... כוון את המצלמה.';
+            Quagga.start();
+        });
+
+        // הסר מאזינים קודמים כדי למנוע כפילויות
+        Quagga.offDetected(); 
+        
+        // הגדרת Callback לזיהוי מוצלח
+        Quagga.onDetected((result) => {
+            if (!this.isDetecting) return; // לוודא שלא נסרוק לאחר עצירה
+
+            Quagga.stop(); // עצור את המנוע של QuaggaJS
+            this.isDetecting = false;
+            
+            const barcode = result.codeResult.code;
+            statusDisplay.textContent = `ברקוד זוהה: ${barcode}`;
+            
+            // הסר את המאזין באופן סופי
+            Quagga.offDetected(); 
+            
+            // עצור את הזרמת המצלמה ברמת הדפדפן לאחר השהיה קצרה ל-UI
+            setTimeout(() => {
+                this.stop(); 
+                // קריאה לפונקציית הבדיקה
+                window.checkKosherStatus(barcode); 
+            }, 500);
+        });
+    },
+    
+    // *** חובה: עדכן את פונקציית stop() כדי שתכלול את Quagga.stop() ***
+    stop() {
+        this.isDetecting = false;
+        
+        // עצור את QuaggaJS אם הוא פועל
+        if (typeof Quagga !== 'undefined') {
+            Quagga.stop();
+            Quagga.offDetected();
+        }
+
+        if (this.stream) {
+            this.stream.getTracks().forEach(track => track.stop());
+        }
+        // ... (שאר איפוס המשתנים)
+        document.getElementById('camera-modal').classList.remove('flex');
+    },
+
 
 };
 window.cameraManager = cameraManager;
