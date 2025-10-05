@@ -3295,14 +3295,14 @@ if (recognition) {
         const targetLangCode = (sourceLang === 'he-IL') ? 'it-IT' : 'he-IL';
         const escapedText = translatedText.replace(/'/g, "\\'");
 
-        // החלטה חכמה באיזה מנוע TTS להשתמש
+        // קבע אם להשתמש ב-API לפי השפה
         const useApiForPlayback = (targetLangCode === 'he-IL');
 
         resultContainer.innerHTML = `<span>${translatedText}</span> 
             <button onclick="ttsManager.speak('${escapedText}', ${useApiForPlayback}, '${targetLangCode}')" 
             class="btn btn-ghost p-1 h-auto"><i class="fa-solid fa-volume-high"></i></button>`;
 
-        // ניגון אוטומטי עם המנוע הנכון
+        // ניגון אוטומטי
         ttsManager.speak(translatedText, useApiForPlayback, targetLangCode);
     };
 }
@@ -3320,7 +3320,7 @@ function startRecognition(langCode, button) {
     
     try {
         activeVoiceButton = button;
-        // עדכון UI מיידי למשתמש
+        // פידבק ויזואלי מיידי למשתמש
         activeVoiceButton.innerHTML = '<i class="fa-solid fa-microphone-lines fa-beat animate-pulse"></i> מקליט...';
         activeVoiceButton.classList.add('text-red-500');
         
