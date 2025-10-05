@@ -4160,6 +4160,10 @@ $('#scan-kosher-barcode-btn').addEventListener('click', window.startKosherBarcod
     document.getElementById('translate-camera-btn').addEventListener('click', startTranslateCamera);
     document.getElementById('scan-receipt-btn').addEventListener('click', startReceiptScanCamera);
     document.getElementById('scan-kosher-barcode-btn').addEventListener('click', startKosherBarcodeScanner);
+    document.getElementById('camera-close-btn').addEventListener('click', () => cameraManager.stop());
+    document.getElementById('torch-btn').addEventListener('click', () => cameraManager.toggleTorch());
+    document.getElementById('zoom-in-btn').addEventListener('click', () => cameraManager.changeZoom(1));
+    document.getElementById('zoom-out-btn').addEventListener('click', () => cameraManager.changeZoom(-1));
 
     
   }); // <--- הסוגר הסופי של document.addEventListener('DOMContentLoaded')
