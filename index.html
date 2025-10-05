@@ -1066,36 +1066,7 @@ async function generateDailySummary(dayId) {
     showAlert(`סיכום יומי: ${dayData.name}`, podcastScript, { text: podcastScript, useApi: true });
 }
 // הדבק את כל הקטע הבא בקוד שלך
-function startRecognition(langCode, button) {
-    if (!speechRecognizer) {
-        showAlert('שגיאה', 'זיהוי קולי אינו נתמך בדפדפן זה.');
-        return;
-    }
 
-    if (isRecognizing) {
-        speechRecognizer.stop();
-        return;
-    }
-    
-    try {
-        activeVoiceButton = button;
-        // פידבק ויזואלי מיידי למשתמש
-        activeVoiceButton.innerHTML = '<i class="fa-solid fa-microphone-lines fa-beat animate-pulse"></i> מקליט...';
-        activeVoiceButton.classList.add('text-red-500');
-        
-        speechRecognizer.lang = langCode;
-        speechRecognizer.start();
-    } catch (e) {
-        console.error("Error starting speech recognition:", e);
-        showAlert('שגיאת מיקרופון', 'לא ניתן היה להפעיל את המיקרופון. אנא ודא שהענקת הרשאות לדפדפן.');
-        // איפוס הכפתור במקרה של שגיאה מיידית
-        if (activeVoiceButton) {
-            activeVoiceButton.classList.remove('text-red-500', 'animate-pulse');
-            activeVoiceButton.innerHTML = activeVoiceButton.id.includes('he') ? '<i class="fa-solid fa-microphone"></i> דבר בעברית' : '<i class="fa-solid fa-microphone"></i> Parla Italiano';
-            activeVoiceButton = null;
-        }
-    }
-}
 window.startRecognition = startRecognition;
     // --- UTILS ---
     const $ = (s, p = document) => p.querySelector(s);
@@ -3278,6 +3249,7 @@ const recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
 let speechRecognizer = null;
 let isRecognizing = false;
 let activeVoiceButton = null;
+
 if (recognition) {
     speechRecognizer = new recognition();
     speechRecognizer.continuous = false;
@@ -3323,19 +3295,47 @@ if (recognition) {
         const targetLangCode = (sourceLang === 'he-IL') ? 'it-IT' : 'he-IL';
         const escapedText = translatedText.replace(/'/g, "\\'");
 
-        // קבע אם להשתמש ב-API לפי השפה
+        // החלטה חכמה באיזה מנוע TTS להשתמש
         const useApiForPlayback = (targetLangCode === 'he-IL');
 
         resultContainer.innerHTML = `<span>${translatedText}</span> 
             <button onclick="ttsManager.speak('${escapedText}', ${useApiForPlayback}, '${targetLangCode}')" 
             class="btn btn-ghost p-1 h-auto"><i class="fa-solid fa-volume-high"></i></button>`;
 
-        // ניגון אוטומטי
+        // ניגון אוטומטי עם המנוע הנכון
         ttsManager.speak(translatedText, useApiForPlayback, targetLangCode);
     };
 }
- else {
-    console.warn("Web Speech API is not supported in this browser.");
+
+function startRecognition(langCode, button) {
+    if (!speechRecognizer) {
+        showAlert('שגיאה', 'זיהוי קולי אינו נתמך בדפדפן זה.');
+        return;
+    }
+
+    if (isRecognizing) {
+        speechRecognizer.stop();
+        return;
+    }
+    
+    try {
+        activeVoiceButton = button;
+        // עדכון UI מיידי למשתמש
+        activeVoiceButton.innerHTML = '<i class="fa-solid fa-microphone-lines fa-beat animate-pulse"></i> מקליט...';
+        activeVoiceButton.classList.add('text-red-500');
+        
+        speechRecognizer.lang = langCode;
+        speechRecognizer.start();
+    } catch (e) {
+        console.error("Error starting speech recognition:", e);
+        showAlert('שגיאת מיקרופון', 'לא ניתן היה להפעיל את המיקרופון. אנא ודא שהענקת הרשאות לדפדפן.');
+        // איפוס הכפתור במקרה של שגיאה מיידית
+        if (activeVoiceButton) {
+            activeVoiceButton.classList.remove('text-red-500', 'animate-pulse');
+            activeVoiceButton.innerHTML = activeVoiceButton.id.includes('he') ? '<i class="fa-solid fa-microphone"></i> דבר בעברית' : '<i class="fa-solid fa-microphone"></i> Parla Italiano';
+            activeVoiceButton = null;
+        }
+    }
 }
 // ==========================================================
 // סוף: קוד מתוקן ומשופר לתרגום קולי
