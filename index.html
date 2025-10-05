@@ -2841,12 +2841,22 @@ async function translateText(sourceLang, targetLang) {
 
     const langCode = currentLang === 'he-it' ? 'it-IT' : 'he-IL';
     
-    // שימוש ב-speakTextSmartly כנדרש
+    // 1. שמירה בהיסטוריה
+    translationHistory.unshift({ 
+        sourceText: text, 
+        translatedText: responseText, 
+        timestamp: Date.now() 
+    });
+    // שמירה של 10 הפריטים האחרונים בלבד
+    translationHistory = translationHistory.slice(0, 10); 
+    localStorage.setItem('milanTripTranslationHistory', JSON.stringify(translationHistory));
+    renderTranslationHistory();
+    
+    // 2. יצירת כפתור ה-TTS המתוקן
+    const escapedText = responseText.replace(/'/g, "\\'");
     resultContainer.innerHTML = `<span>${responseText}</span> 
-        <button onclick="window.speakTextSmartly('${responseText.replace(/'/g, "\\'")}', '<span>${responseText}</span>', 'תרגום קולי', '${langCode}')" 
+        <button onclick="ttsManager.speak('${escapedText}', true, '${langCode}')" 
         class="btn btn-ghost p-1 h-auto"><i class="fa-solid fa-volume-high"></i></button>`;
-
-    // ... (שאר הקוד של שמירת היסטוריה) ...
 
     translateBtn.disabled = false;
 }
@@ -3313,6 +3323,7 @@ function startRecognition(langCode, button) {
         return;
     }
 
+    // התיקון הקריטי: בודק אם הזיהוי כבר מתבצע ומפסיק אותו
     if (isRecognizing) {
         speechRecognizer.stop();
         return;
