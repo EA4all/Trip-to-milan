@@ -2574,33 +2574,41 @@ window.findNearbyAttractions = findNearbyAttractions;
 
 function stopCamera() {
     console.log("LOG: stopCamera called.");
-    // 1. עצירת זרם הווידאו
-    if (window.cameraStream) { 
+    if (window.cameraStream) {
         window.cameraStream.getTracks().forEach(track => track.stop());
     }
-    window.cameraStream = null; 
-    window.activeVideoTrack = null; 
+    // איפוס מאזינים כדי למנוע כפילויות
+    const video = document.getElementById('camera-feed');
+    video.oncanplay = null; 
     
-    // 2. עצירת סורק Quagga
-    try { 
-        if (window.Quagga && window.Quagga.running) { 
-            window.Quagga.stop(); 
-            window.Quagga.running = false; 
-        } 
-    } catch(e){ console.warn(e); }
+    // ניקוי מלא של ספריית הברקודים
+    if (window.Quagga) {
+        Quagga.offDetected();
+        Quagga.offProcessed();
+        if (window.Quagga.running) {
+            Quagga.stop();
+            window.Quagga.running = false;
+        }
+    }
     
-    // 3. סגירת המודל (בלי לגעת ב-UI הפנימי)
+    // --- התיקון: איפוס משתני מצלמה וזום ---
+    window.cameraStream = null;
+    window.activeVideoTrack = null;
+    zoomCapabilities = null; // -> איפוס יכולות הזום
+    currentZoom = 1; // -> איפוס הזום הנוכחי לברירת המחדל
+    // --- סוף התיקון ---
+
     $('#camera-modal').classList.remove('flex');
 }
+
 window.stopCamera = stopCamera;
 // --------------------------------------------------------------------------
 // פונקציה 1: סורק ברקוד (Kosher)
 // --------------------------------------------------------------------------
 async function startKosherBarcodeScanner() {
     window.cameraMode = 'barcode';
-    window.stopCamera();
+    stopCamera();
 
-    // הגדרות UI
     $('#camera-title').textContent = 'סריקת כשרות (ברקוד)';
     $('#capture-btn').style.display = 'none';
     $('#upload-receipt-btn').style.display = 'none';
@@ -2609,26 +2617,40 @@ async function startKosherBarcodeScanner() {
 
     const video = document.getElementById('camera-feed');
     try {
-        const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' } } });
+        // בקשה לגישה למצלמה עם יכולת שליטה על הפנס
+        const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' }, torch: false } });
         window.cameraStream = stream;
         video.srcObject = stream;
-        video.play(); // -> הפעלת הנגן כדי שהאירוע oncanplay יופעל
+        video.play();
 
         video.oncanplay = () => {
             window.activeVideoTrack = stream.getVideoTracks()[0];
             if (!window.activeVideoTrack) {
-                showAlert('שגיאת מצלמה', 'לא נמצא שידור וידאו תקין מהמצלמה.');
-                stopCamera();
-                return;
+                showAlert('שגיאת מצלמה', 'לא נמצא שידור וידאו תקין.');
+                stopCamera(); return;
             }
+            
             $('#camera-modal').classList.add('flex');
+
             if ('zoom' in activeVideoTrack.getCapabilities()) {
                 zoomCapabilities = activeVideoTrack.getCapabilities().zoom;
+                console.log('Zoom capabilities:', zoomCapabilities);
                 currentZoom = activeVideoTrack.getSettings().zoom || 1;
-                $('#zoom-level').textContent = `${currentZoom.toFixed(1)}x`;
+                zoomLevelDisplay.textContent = `${currentZoom.toFixed(1)}x`;
             } else {
+                console.log('Zoom not supported on this device.');
                 zoomCapabilities = null;
             }
+
+            // הגדרת מאזין הזיהוי לפני אתחול הסורק
+            Quagga.onDetected(function(result) {
+                const code = result.codeResult.code;
+                console.log(`LOG: Barcode detected: ${code}`);
+                $('#barcode-status-display').textContent = `נמצא ברקוד: ${code}`;
+                stopCamera();
+                checkKosherStatus(code);
+            });
+
             Quagga.init({
                 inputStream: { name: "Live", type: "LiveStream", target: video },
                 decoder: { readers: ["ean_reader", "ean_8_reader", "code_128_reader"] },
@@ -2639,18 +2661,12 @@ async function startKosherBarcodeScanner() {
                 }
                 Quagga.start();
                 window.Quagga.running = true;
+                // עדכון הסטטוס לאחר שהסורק באמת התחיל
                 $('#barcode-status-display').textContent = 'מחפש ברקוד...';
             });
         };
-        
-        Quagga.onDetected(function(result) {
-            const code = result.codeResult.code;
-            stopCamera();
-            checkKosherStatus(code);
-        });
-
     } catch (err) {
-        console.error('Barcode Scanner Error:', err);
+        console.error('Camera Error:', err);
         stopCamera();
         showAlert('שגיאת מצלמה', 'לא ניתן היה להפעיל את המצלמה. אנא ודא שהענקת הרשאות מתאימות לדפדפן.');
     }
@@ -2662,7 +2678,7 @@ window.startKosherBarcodeScanner = startKosherBarcodeScanner;
 // --------------------------------------------------------------------------
 async function startSiteLookupCamera() {
     window.cameraMode = 'lookup';
-    window.stopCamera();
+    stopCamera();
 
     $('#camera-title').textContent = 'זיהוי אתרים/אובייקטים';
     $('#capture-btn').style.display = 'flex';
@@ -2672,10 +2688,10 @@ async function startSiteLookupCamera() {
     
     const video = document.getElementById('camera-feed');
     try {
-        const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' } } });
+        const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' }, torch: false } });
         window.cameraStream = stream;
         video.srcObject = stream;
-        video.play(); // -> הפעלת הנגן
+        video.play();
 
         video.oncanplay = () => {
             window.activeVideoTrack = stream.getVideoTracks()[0];
@@ -2686,14 +2702,16 @@ async function startSiteLookupCamera() {
             $('#camera-modal').classList.add('flex');
             if ('zoom' in activeVideoTrack.getCapabilities()) {
                 zoomCapabilities = activeVideoTrack.getCapabilities().zoom;
+                console.log('Zoom capabilities:', zoomCapabilities);
                 currentZoom = activeVideoTrack.getSettings().zoom || 1;
                 zoomLevelDisplay.textContent = `${currentZoom.toFixed(1)}x`;
             } else {
+                console.log('Zoom not supported on this device.');
                 zoomCapabilities = null;
             }
         };
     } catch (err) {
-        console.error('Lookup Camera Error:', err);
+        console.error('Camera Error:', err);
         stopCamera();
         showAlert('שגיאת מצלמה', 'לא ניתן היה להפעיל את המצלמה. אנא ודא שהענקת הרשאות מתאימות לדפדפן.');
     }
@@ -2705,9 +2723,9 @@ window.startSiteLookupCamera = startSiteLookupCamera;
 // --------------------------------------------------------------------------
 async function startReceiptScanCamera() {
     window.cameraMode = 'receipt';
-    window.stopCamera();
+    stopCamera();
 
-    $('#camera-title').textContent = 'סריקת קבלה (הכנסת הוצאה)';
+    $('#camera-title').textContent = 'סריקת קבלה';
     $('#capture-btn').style.display = 'flex';
     $('#capture-btn').disabled = false;
     $('#upload-receipt-btn').style.display = 'flex';
@@ -2715,10 +2733,10 @@ async function startReceiptScanCamera() {
     
     const video = document.getElementById('camera-feed');
     try {
-        const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' } } });
+        const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' }, torch: false } });
         window.cameraStream = stream;
         video.srcObject = stream;
-        video.play(); // -> הפעלת הנגן
+        video.play();
 
         video.oncanplay = () => {
             window.activeVideoTrack = stream.getVideoTracks()[0];
@@ -2729,14 +2747,16 @@ async function startReceiptScanCamera() {
             $('#camera-modal').classList.add('flex');
             if ('zoom' in activeVideoTrack.getCapabilities()) {
                 zoomCapabilities = activeVideoTrack.getCapabilities().zoom;
+                console.log('Zoom capabilities:', zoomCapabilities);
                 currentZoom = activeVideoTrack.getSettings().zoom || 1;
                 zoomLevelDisplay.textContent = `${currentZoom.toFixed(1)}x`;
             } else {
+                console.log('Zoom not supported on this device.');
                 zoomCapabilities = null;
             }
         };
     } catch (err) {
-        console.error('Receipt Camera Error:', err);
+        console.error('Camera Error:', err);
         stopCamera();
         showAlert('שגיאת מצלמה', 'לא ניתן היה להפעיל את המצלמה. אנא ודא שהענקת הרשאות מתאימות לדפדפן.');
     }
@@ -2758,10 +2778,10 @@ async function startTranslateCamera() {
     
     const video = document.getElementById('camera-feed');
     try {
-        const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' } } });
+        const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' }, torch: false } });
         window.cameraStream = stream;
         video.srcObject = stream;
-        video.play(); // -> הפעלת הנגן
+        video.play();
 
         video.oncanplay = () => {
             window.activeVideoTrack = stream.getVideoTracks()[0];
@@ -2772,14 +2792,16 @@ async function startTranslateCamera() {
             $('#camera-modal').classList.add('flex');
             if ('zoom' in activeVideoTrack.getCapabilities()) {
                 zoomCapabilities = activeVideoTrack.getCapabilities().zoom;
+                console.log('Zoom capabilities:', zoomCapabilities);
                 currentZoom = activeVideoTrack.getSettings().zoom || 1;
                 zoomLevelDisplay.textContent = `${currentZoom.toFixed(1)}x`;
             } else {
+                console.log('Zoom not supported on this device.');
                 zoomCapabilities = null;
             }
         };
     } catch (err) {
-        console.error('Translate Camera Error:', err);
+        console.error('Camera Error:', err);
         stopCamera();
         showAlert('שגיאת מצלמה', 'לא ניתן היה להפעיל את המצלמה. אנא ודא שהענקת הרשאות מתאימות לדפדפן.');
     }
