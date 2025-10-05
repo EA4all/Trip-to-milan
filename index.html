@@ -933,40 +933,7 @@ stop() {
 
 };
 window.cameraManager = cameraManager;
-      async startBarcodeDetection() {
-        if (!('BarcodeDetector' in window)) {
-            showAlert('סורק לא נתמך', 'הדפדפן שלך אינו תומך בסורק הברקודים המובנה.');
-            return;
-        }
-        
-        const barcodeDetector = new BarcodeDetector({ formats: ['ean_13', 'ean_8', 'code_128'] });
-        this.isDetecting = true;
-        
-        const scan = async () => {
-            if (!this.isDetecting || !this.videoElement || this.videoElement.readyState < 2) return;
-            
-            try {
-                const barcodes = await barcodeDetector.detect(this.videoElement);
-                if (barcodes.length > 0) {
-                    this.isDetecting = false; // הפסק לסרוק ברגע שנמצא משהו
-                    const detectedCode = barcodes[0].rawValue;
-                    console.log(`Native barcode detected: ${detectedCode}`);
-                    $('#barcode-status-display').textContent = `ברקוד זוהה! מאמת נתונים...`;
-                    setTimeout(() => {
-                        this.stop();
-                        checkKosherStatus(detectedCode);
-                    }, 500);
-                } else {
-                    requestAnimationFrame(scan); // אם לא נמצא, נסה שוב בפריים הבא
-                }
-            } catch (err) {
-                console.error("Barcode detection failed:", err);
-                this.isDetecting = false;
-            }
-        };
-        requestAnimationFrame(scan);
-    }
-};
+   
 // --- סוף Camera Manager ---
     
     // --- Firebase SDK ---
