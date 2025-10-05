@@ -2229,26 +2229,7 @@ function findUtility(query, queryHebrew) {
         showAlert('שגיאה', 'שירותי מיקום אינם נתמכים בדפדפן זה.');
     }
 }
-    // ========================= התחלה: פונקציה למדריך קולי =========================
-async function getAudioGuide(placeName, textOnly = false) {
-    if (textOnly) {
-        showAlert('מדריך קולי', 'אין אפשרות להשמיע את הטקסט כאשר האפליקציה פועלת במצב "טקסט בלבד".');
-        return;
-    }
-    showLoading('מכין מדריך קולי...', 'המערכת מייצרת כעת מדריך מקיף על ' + placeName + '. זה עשוי לקחת מספר שניות.');
 
-    const prompt = `צור מדריך קולי מפורט ותמציתי על ${placeName}. המדריך צריך להיות כתוב בעברית ברורה, בטון ידידותי ומעניין, באורך של כ-1000 תווים. בסוף הדיבור, ציין: "סוף המדריך הקולי".`;
-    const payload = { contents: [{ parts: [{ text: "" }] }] };
-    
-    let scriptText = await callGemini(payload, prompt, false);
-    
-    // --- התיקון: שימוש ב-speakTextSmartly לניגון איכותי (API) ---
-    // ה-text המעוצב מוצג, וה-text הנקי מושמע.
-  window.speakTextSmartly(scriptText.replace(/\n/g, ' '), scriptText, `מדריך קולי ל-${placeName}`, 'he-IL'); 
-    //----------------------------------------------------------------
-
-    hideLoading();
-}
 //========================================================================
 // קטע קוד חדש ל-generateDailyPodcast
 async function generateDailySummary(dayIndex, dayName) {
