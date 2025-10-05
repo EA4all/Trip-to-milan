@@ -2683,7 +2683,8 @@ document.getElementById('zoom-out-btn').addEventListener('click', () => cameraMa
 // --------------------------------------------------------------------------
 async function startKosherBarcodeScanner() {
     cameraManager.stop();
-  
+    window.cameraMode = 'barcode';
+
     $('#camera-title').textContent = 'סריקת כשרות (ברקוד)';
     $('#capture-btn').style.display = 'none';
     $('#upload-receipt-btn').style.display = 'none';
@@ -2693,30 +2694,34 @@ async function startKosherBarcodeScanner() {
     const video = await cameraManager.open('barcode');
     if (!video) return;
 
+    // --- שינוי מרכזי: הגדרת המאזינים לפני האתחול ---
+    Quagga.onProcessed(function (result) {
+        const drawingCtx = Quagga.canvas.ctx.overlay;
+        const drawingCanvas = Quagga.canvas.dom.overlay;
+        if (drawingCtx && drawingCanvas) {
+            drawingCtx.clearRect(0, 0, parseInt(drawingCanvas.getAttribute("width")), parseInt(drawingCanvas.getAttribute("height")));
+            if (result && result.box) {
+                Quagga.ImageDebug.drawPath(result.box, { x: 0, y: 1 }, drawingCtx, { color: "green", lineWidth: 4 });
+            }
+        }
+    });
+
+    Quagga.onDetected(result => {
+        cameraManager.stop(); // הפונקציה הזו מנקה את כל מאזיני Quagga
+        checkKosherStatus(result.codeResult.code);
+    });
+    // --- סוף השינוי ---
+
     Quagga.init({
         inputStream: { name: "Live", type: "LiveStream", target: video },
         decoder: { readers: ["ean_reader", "ean_8_reader", "code_128_reader"] },
     }, (err) => {
-        if (err) { cameraManager.stop(); showAlert('שגיאת סורק', 'לא הצלחנו להפעיל את סורק הברקודים.'); return; }
-        
-        // --- הוספה מחדש: מאזין שפועל על כל פריים ואחראי על הציור ---
-        Quagga.onProcessed(function (result) {
-            const drawingCtx = Quagga.canvas.ctx.overlay;
-            const drawingCanvas = Quagga.canvas.dom.overlay;
-
-            drawingCtx.clearRect(0, 0, parseInt(drawingCanvas.getAttribute("width")), parseInt(drawingCanvas.getAttribute("height")));
-            
-            if (result && result.box) {
-                Quagga.ImageDebug.drawPath(result.box, { x: 0, y: 1 }, drawingCtx, { color: "green", lineWidth: 4 });
-            }
-        });
-        // --- סוף הוספת מאזין הציור ---
-
-        Quagga.onDetected(result => {
+        if (err) {
             cameraManager.stop();
-            checkKosherStatus(result.codeResult.code);
-        });
-
+            showAlert('שגיאת סורק', 'לא הצלחנו להפעיל את סורק הברקודים.');
+            return;
+        }
+        
         Quagga.start();
         window.Quagga.running = true;
         $('#barcode-status-display').textContent = 'מחפש ברקוד...';
