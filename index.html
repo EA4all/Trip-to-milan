@@ -2686,10 +2686,14 @@ async function startReceiptScanCamera() {
 
     // --- הגדרת UI ייעודית ---
     $('#camera-title').textContent = 'סריקת קבלה (הכנסת הוצאה)';
-    $('#capture-btn').style.display = 'flex'; 
-    $('#barcode-status-display').style.display = 'none';
-    $('#upload-receipt-btn').style.display = 'flex'; // כפתור העלאת קובץ
     
+    // **התיקון הקריטי:** הצגת כפתור הצילום והעלאה בכוח!
+    $('#capture-btn').style.display = 'flex';
+    $('#upload-receipt-btn').style.display = 'flex'; 
+    
+    // הסתרת סטטוס ברקוד
+    $('#barcode-status-display').style.display = 'none';
+
     // --- הפעלת חומרה (מבודדת) ---
     const video = document.getElementById('camera-feed');
     try {
@@ -2705,7 +2709,8 @@ async function startReceiptScanCamera() {
         showAlert('שגיאת מצלמה', `לא ניתן לגשת למצלמה לסריקת קבלה.`);
     }
 }
-window.startReceiptScanCamera = startReceiptScanCamera; // סוגר את הפונקציה
+window.startReceiptScanCamera = startReceiptScanCamera;
+    
 // --- פונקציה 3: תרגומון (Translate) ---
 async function startTranslateCamera() {
     window.cameraMode = 'translate';
@@ -3758,9 +3763,7 @@ $('#tefilat-haderech-btn')?.addEventListener('click', () => {
     $('#bracha-achrona-btn')?.addEventListener('click', showBrachaAchronaOptions);
 
     // --- חיבור כפתור סריקת ברקוד ---
-$('#scan-kosher-barcode-btn').addEventListener('click', () => {
-    window.startCamera('barcode'); 
-});
+
 
     // --- הוספת הלוגיקה של הגדרות הקול וחיבור הכפתורים ---
     const voiceSettingsModal = $('#voice-settings-modal');
