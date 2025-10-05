@@ -2695,11 +2695,27 @@ async function startKosherBarcodeScanner() {
     const video = await cameraManager.open('barcode');
     if (!video) return;
 
-    Quagga.init({
-        inputStream: { name: "Live", type: "LiveStream", target: video },
-        decoder: { readers: ["ean_reader", "ean_8_reader", "code_128_reader"] },
-        locate: true,
-    }, (err) => {
+  Quagga.init({
+    // החלף את כל הבלוק של inputStream בבלוק החדש הזה
+    inputStream: {
+        name: "Live",
+        type: "LiveStream",
+        target: video,
+        constraints: {
+            width: { ideal: 1280 }, // בקש רזולוציה גבוהה יותר (720p)
+            height: { ideal: 720 },
+            facingMode: "environment"
+        },
+        area: { // הגבל את אזור הסריקה למרכז המסך כדי לשפר דיוק
+            top: "25%",
+            right: "10%",
+            left: "10%",
+            bottom: "25%"
+        }
+    },
+    decoder: { readers: ["ean_reader", "ean_8_reader", "code_128_reader"] },
+    locate: true,
+}, (err) => {
         if (err) { cameraManager.stop(); showAlert('שגיאת סורק', 'לא הצלחנו להפעיל את סורק הברקודים.'); return; }
         
         Quagga.start();
