@@ -2572,42 +2572,42 @@ window.findNearbyAttractions = findNearbyAttractions;
 
     // --- Camera Functions ---
 
+
 function stopCamera() {
     console.log("LOG: stopCamera called.");
-    if (window.cameraStream) {
-        window.cameraStream.getTracks().forEach(track => track.stop());
-    }
-    // איפוס מאזינים כדי למנוע כפילויות
-    const video = document.getElementById('camera-feed');
-    video.oncanplay = null; 
     
-    // ניקוי מלא של ספריית הברקודים
+    // ניקוי מלא של ספריית הברקודים קודם כל
     if (window.Quagga) {
-        Quagga.offDetected();
-        Quagga.offProcessed();
+        Quagga.offDetected(); // הסרת מאזין כדי למנוע הפעלות כפולות
         if (window.Quagga.running) {
             Quagga.stop();
             window.Quagga.running = false;
         }
     }
+
+    if (window.cameraStream) {
+        window.cameraStream.getTracks().forEach(track => track.stop());
+    }
     
-    // --- התיקון: איפוס משתני מצלמה וזום ---
+    const video = document.getElementById('camera-feed');
+    video.srcObject = null; // ניתוק מלא של מקור הוידאו
+    video.oncanplay = null;
+    
     window.cameraStream = null;
     window.activeVideoTrack = null;
-    zoomCapabilities = null; // -> איפוס יכולות הזום
-    currentZoom = 1; // -> איפוס הזום הנוכחי לברירת המחדל
-    // --- סוף התיקון ---
+    zoomCapabilities = null;
+    currentZoom = 1;
 
     $('#camera-modal').classList.remove('flex');
 }
-
+    
 window.stopCamera = stopCamera;
 // --------------------------------------------------------------------------
 // פונקציה 1: סורק ברקוד (Kosher)
 // --------------------------------------------------------------------------
 async function startKosherBarcodeScanner() {
     window.cameraMode = 'barcode';
-    stopCamera();
+    stopCamera(); // מבטיח ניקוי מלא של כל הפעלת מצלמה קודמת
 
     $('#camera-title').textContent = 'סריקת כשרות (ברקוד)';
     $('#capture-btn').style.display = 'none';
@@ -2620,51 +2620,52 @@ async function startKosherBarcodeScanner() {
         const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' }, torch: false } });
         window.cameraStream = stream;
         video.srcObject = stream;
-        await video.play();
+        video.play();
 
-        // --- תיקון קריטי: המתנה קצרה כדי לאפשר לדפדפן לאתחל את כל רכיבי הוידאו ---
-        await new Promise(resolve => setTimeout(resolve, 100)); 
-
-        window.activeVideoTrack = stream.getVideoTracks()[0];
-        if (!window.activeVideoTrack) {
-            throw new Error("No video track found in the stream.");
-        }
-        
-        $('#camera-modal').classList.add('flex');
-
-        if ('zoom' in activeVideoTrack.getCapabilities()) {
-            zoomCapabilities = activeVideoTrack.getCapabilities().zoom;
-            console.log('Zoom capabilities:', zoomCapabilities);
-            currentZoom = activeVideoTrack.getSettings().zoom || 1;
-            zoomLevelDisplay.textContent = `${currentZoom.toFixed(1)}x`;
-        } else {
-            console.log('Zoom not supported on this device.');
-            zoomCapabilities = null;
-        }
-
-        Quagga.init({
-            inputStream: { name: "Live", type: "LiveStream", target: video },
-            decoder: { readers: ["ean_reader", "ean_8_reader", "code_128_reader"] },
-        }, (err) => {
-            if (err) {
-                showAlert('שגיאת סורק', 'לא הצלחנו להפעיל את סורק הברקודים.');
-                stopCamera(); return;
+        video.oncanplay = () => {
+            window.activeVideoTrack = stream.getVideoTracks()[0];
+            if (!window.activeVideoTrack) {
+                throw new Error("No video track found.");
             }
-            Quagga.start();
-            window.Quagga.running = true;
-            $('#barcode-status-display').textContent = 'מחפש ברקוד...';
-        });
+            
+            $('#camera-modal').classList.add('flex');
 
-        Quagga.onDetected(function(result) {
-            const code = result.codeResult.code;
-            stopCamera();
-            checkKosherStatus(code);
-        });
+            if ('zoom' in activeVideoTrack.getCapabilities()) {
+                zoomCapabilities = activeVideoTrack.getCapabilities().zoom;
+                currentZoom = activeVideoTrack.getSettings().zoom || 1;
+                zoomLevelDisplay.textContent = `${currentZoom.toFixed(1)}x`;
+            } else {
+                zoomCapabilities = null;
+            }
 
+            // הגדרת מאזין הזיהוי *בתוך* ה-init callback מבטיחה שהוא יפעל רק פעם אחת
+            Quagga.init({
+                inputStream: { name: "Live", type: "LiveStream", target: video },
+                decoder: { readers: ["ean_reader", "ean_8_reader", "code_128_reader"] },
+            }, (err) => {
+                if (err) {
+                    showAlert('שגיאת סורק', 'לא הצלחנו להפעיל את סורק הברקודים.');
+                    stopCamera(); return;
+                }
+                
+                // רק אחרי אתחול מוצלח, הגדר את מאזין הזיהוי
+                Quagga.onDetected(function(result) {
+                    const code = result.codeResult.code;
+                    // הסר את המאזין מיד כדי למנוע זיהויים כפולים
+                    Quagga.offDetected(); 
+                    stopCamera();
+                    checkKosherStatus(code);
+                });
+                
+                Quagga.start();
+                window.Quagga.running = true;
+                $('#barcode-status-display').textContent = 'מחפש ברקוד...';
+            });
+        };
     } catch (err) {
         console.error('Camera Error:', err);
         stopCamera();
-        showAlert('שגיאת מצלמה', 'לא ניתן היה להפעיל את המצלמה. אנא ודא שהענקת הרשאות מתאימות לדפדפן.');
+        showAlert('שגיאת מצלמה', 'לא ניתן היה להפעיל את המצלמה. ודא שהענקת הרשאות מתאימות לדפדפן.');
     }
 }
 window.startKosherBarcodeScanner = startKosherBarcodeScanner;
