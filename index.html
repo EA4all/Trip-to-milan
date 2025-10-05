@@ -2617,54 +2617,50 @@ async function startKosherBarcodeScanner() {
 
     const video = document.getElementById('camera-feed');
     try {
-        // בקשה לגישה למצלמה עם יכולת שליטה על הפנס
         const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' }, torch: false } });
         window.cameraStream = stream;
         video.srcObject = stream;
-        video.play();
+        await video.play();
 
-        video.oncanplay = () => {
-            window.activeVideoTrack = stream.getVideoTracks()[0];
-            if (!window.activeVideoTrack) {
-                showAlert('שגיאת מצלמה', 'לא נמצא שידור וידאו תקין.');
+        // --- תיקון קריטי: המתנה קצרה כדי לאפשר לדפדפן לאתחל את כל רכיבי הוידאו ---
+        await new Promise(resolve => setTimeout(resolve, 100)); 
+
+        window.activeVideoTrack = stream.getVideoTracks()[0];
+        if (!window.activeVideoTrack) {
+            throw new Error("No video track found in the stream.");
+        }
+        
+        $('#camera-modal').classList.add('flex');
+
+        if ('zoom' in activeVideoTrack.getCapabilities()) {
+            zoomCapabilities = activeVideoTrack.getCapabilities().zoom;
+            console.log('Zoom capabilities:', zoomCapabilities);
+            currentZoom = activeVideoTrack.getSettings().zoom || 1;
+            zoomLevelDisplay.textContent = `${currentZoom.toFixed(1)}x`;
+        } else {
+            console.log('Zoom not supported on this device.');
+            zoomCapabilities = null;
+        }
+
+        Quagga.init({
+            inputStream: { name: "Live", type: "LiveStream", target: video },
+            decoder: { readers: ["ean_reader", "ean_8_reader", "code_128_reader"] },
+        }, (err) => {
+            if (err) {
+                showAlert('שגיאת סורק', 'לא הצלחנו להפעיל את סורק הברקודים.');
                 stopCamera(); return;
             }
-            
-            $('#camera-modal').classList.add('flex');
+            Quagga.start();
+            window.Quagga.running = true;
+            $('#barcode-status-display').textContent = 'מחפש ברקוד...';
+        });
 
-            if ('zoom' in activeVideoTrack.getCapabilities()) {
-                zoomCapabilities = activeVideoTrack.getCapabilities().zoom;
-                console.log('Zoom capabilities:', zoomCapabilities);
-                currentZoom = activeVideoTrack.getSettings().zoom || 1;
-                zoomLevelDisplay.textContent = `${currentZoom.toFixed(1)}x`;
-            } else {
-                console.log('Zoom not supported on this device.');
-                zoomCapabilities = null;
-            }
+        Quagga.onDetected(function(result) {
+            const code = result.codeResult.code;
+            stopCamera();
+            checkKosherStatus(code);
+        });
 
-            // הגדרת מאזין הזיהוי לפני אתחול הסורק
-            Quagga.onDetected(function(result) {
-                const code = result.codeResult.code;
-                console.log(`LOG: Barcode detected: ${code}`);
-                $('#barcode-status-display').textContent = `נמצא ברקוד: ${code}`;
-                stopCamera();
-                checkKosherStatus(code);
-            });
-
-            Quagga.init({
-                inputStream: { name: "Live", type: "LiveStream", target: video },
-                decoder: { readers: ["ean_reader", "ean_8_reader", "code_128_reader"] },
-            }, (err) => {
-                if (err) {
-                    showAlert('שגיאת סורק', 'לא הצלחנו להפעיל את סורק הברקודים.');
-                    stopCamera(); return;
-                }
-                Quagga.start();
-                window.Quagga.running = true;
-                // עדכון הסטטוס לאחר שהסורק באמת התחיל
-                $('#barcode-status-display').textContent = 'מחפש ברקוד...';
-            });
-        };
     } catch (err) {
         console.error('Camera Error:', err);
         stopCamera();
@@ -2691,25 +2687,27 @@ async function startSiteLookupCamera() {
         const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' }, torch: false } });
         window.cameraStream = stream;
         video.srcObject = stream;
-        video.play();
+        await video.play();
+        
+        // --- תיקון קריטי: המתנה קצרה ---
+        await new Promise(resolve => setTimeout(resolve, 100));
 
-        video.oncanplay = () => {
-            window.activeVideoTrack = stream.getVideoTracks()[0];
-            if (!window.activeVideoTrack) {
-                showAlert('שגיאת מצלמה', 'לא נמצא שידור וידאו תקין.');
-                stopCamera(); return;
-            }
-            $('#camera-modal').classList.add('flex');
-            if ('zoom' in activeVideoTrack.getCapabilities()) {
-                zoomCapabilities = activeVideoTrack.getCapabilities().zoom;
-                console.log('Zoom capabilities:', zoomCapabilities);
-                currentZoom = activeVideoTrack.getSettings().zoom || 1;
-                zoomLevelDisplay.textContent = `${currentZoom.toFixed(1)}x`;
-            } else {
-                console.log('Zoom not supported on this device.');
-                zoomCapabilities = null;
-            }
-        };
+        window.activeVideoTrack = stream.getVideoTracks()[0];
+        if (!window.activeVideoTrack) {
+            throw new Error("No video track found in the stream.");
+        }
+
+        $('#camera-modal').classList.add('flex');
+        
+        if ('zoom' in activeVideoTrack.getCapabilities()) {
+            zoomCapabilities = activeVideoTrack.getCapabilities().zoom;
+            console.log('Zoom capabilities:', zoomCapabilities);
+            currentZoom = activeVideoTrack.getSettings().zoom || 1;
+            zoomLevelDisplay.textContent = `${currentZoom.toFixed(1)}x`;
+        } else {
+            console.log('Zoom not supported on this device.');
+            zoomCapabilities = null;
+        }
     } catch (err) {
         console.error('Camera Error:', err);
         stopCamera();
@@ -2736,32 +2734,33 @@ async function startReceiptScanCamera() {
         const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' }, torch: false } });
         window.cameraStream = stream;
         video.srcObject = stream;
-        video.play();
+        await video.play();
 
-        video.oncanplay = () => {
-            window.activeVideoTrack = stream.getVideoTracks()[0];
-            if (!window.activeVideoTrack) {
-                showAlert('שגיאת מצלמה', 'לא נמצא שידור וידאו תקין.');
-                stopCamera(); return;
-            }
-            $('#camera-modal').classList.add('flex');
-            if ('zoom' in activeVideoTrack.getCapabilities()) {
-                zoomCapabilities = activeVideoTrack.getCapabilities().zoom;
-                console.log('Zoom capabilities:', zoomCapabilities);
-                currentZoom = activeVideoTrack.getSettings().zoom || 1;
-                zoomLevelDisplay.textContent = `${currentZoom.toFixed(1)}x`;
-            } else {
-                console.log('Zoom not supported on this device.');
-                zoomCapabilities = null;
-            }
-        };
+        // --- תיקון קריטי: המתנה קצרה ---
+        await new Promise(resolve => setTimeout(resolve, 100));
+
+        window.activeVideoTrack = stream.getVideoTracks()[0];
+        if (!window.activeVideoTrack) {
+            throw new Error("No video track found in the stream.");
+        }
+
+        $('#camera-modal').classList.add('flex');
+
+        if ('zoom' in activeVideoTrack.getCapabilities()) {
+            zoomCapabilities = activeVideoTrack.getCapabilities().zoom;
+            console.log('Zoom capabilities:', zoomCapabilities);
+            currentZoom = activeVideoTrack.getSettings().zoom || 1;
+            zoomLevelDisplay.textContent = `${currentZoom.toFixed(1)}x`;
+        } else {
+            console.log('Zoom not supported on this device.');
+            zoomCapabilities = null;
+        }
     } catch (err) {
         console.error('Camera Error:', err);
         stopCamera();
         showAlert('שגיאת מצלמה', 'לא ניתן היה להפעיל את המצלמה. אנא ודא שהענקת הרשאות מתאימות לדפדפן.');
     }
 }
-
 window.startReceiptScanCamera = startReceiptScanCamera;
 // --------------------------------------------------------------------------
 // פונקציה 4: תרגומון (Translate)
@@ -2781,25 +2780,27 @@ async function startTranslateCamera() {
         const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' }, torch: false } });
         window.cameraStream = stream;
         video.srcObject = stream;
-        video.play();
+        await video.play();
 
-        video.oncanplay = () => {
-            window.activeVideoTrack = stream.getVideoTracks()[0];
-            if (!window.activeVideoTrack) {
-                showAlert('שגיאת מצלמה', 'לא נמצא שידור וידאו תקין.');
-                stopCamera(); return;
-            }
-            $('#camera-modal').classList.add('flex');
-            if ('zoom' in activeVideoTrack.getCapabilities()) {
-                zoomCapabilities = activeVideoTrack.getCapabilities().zoom;
-                console.log('Zoom capabilities:', zoomCapabilities);
-                currentZoom = activeVideoTrack.getSettings().zoom || 1;
-                zoomLevelDisplay.textContent = `${currentZoom.toFixed(1)}x`;
-            } else {
-                console.log('Zoom not supported on this device.');
-                zoomCapabilities = null;
-            }
-        };
+        // --- תיקון קריטי: המתנה קצרה ---
+        await new Promise(resolve => setTimeout(resolve, 100));
+
+        window.activeVideoTrack = stream.getVideoTracks()[0];
+        if (!window.activeVideoTrack) {
+            throw new Error("No video track found in the stream.");
+        }
+
+        $('#camera-modal').classList.add('flex');
+
+        if ('zoom' in activeVideoTrack.getCapabilities()) {
+            zoomCapabilities = activeVideoTrack.getCapabilities().zoom;
+            console.log('Zoom capabilities:', zoomCapabilities);
+            currentZoom = activeVideoTrack.getSettings().zoom || 1;
+            zoomLevelDisplay.textContent = `${currentZoom.toFixed(1)}x`;
+        } else {
+            console.log('Zoom not supported on this device.');
+            zoomCapabilities = null;
+        }
     } catch (err) {
         console.error('Camera Error:', err);
         stopCamera();
