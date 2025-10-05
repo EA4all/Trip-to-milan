@@ -2607,7 +2607,6 @@ function stopCamera() {
     $('#camera-modal').classList.remove('flex');
 }
 window.stopCamera = stopCamera;
-
 async function startKosherBarcodeScanner() {
     window.cameraMode = 'barcode';
     stopCamera(); 
@@ -2638,14 +2637,6 @@ async function startKosherBarcodeScanner() {
         
     } catch (err) {
         console.error('Barcode Scanner Error:', err);
-        stopCamera();
-        showAlert('שגיאת מצלמה', `לא ניתן לגשת למצלמה לסריקת ברקוד.`);
-    }
-}
-window.startKosherBarcodeScanner = startKosherBarcodeScanner;
-        // לוגיקת onDetected צריכה להיות מוגדרת פעם אחת גלובלית
-    } catch (err) {
-        console.error('Barcode Camera Error:', err);
         stopCamera();
         showAlert('שגיאת מצלמה', `לא ניתן לגשת למצלמה לסריקת ברקוד.`);
     }
