@@ -633,7 +633,7 @@ body {
         </div>
     </div>
   </div>
------
+
 <div id="camera-modal" class="modal-backdrop">
     <div class="modal">
         <div class="p-4 border-b flex justify-between items-center">
@@ -669,7 +669,7 @@ body {
         </div>
     </div>
 </div>
-------
+
 <div id="alert-modal" class="modal-backdrop">
     <div class="modal">
         <div class="p-4 border-b flex justify-between items-center">
@@ -793,7 +793,7 @@ body {
   <script type="module">
 
 // ==========================================================================
-// --- ארכיטקטורת מצלמה חדשה (גרסה 8 - תיקון זום) ---
+// --- ארכיטקטורת מצלמה חדשה (גרסה 8 - תיקון זום) 
 // ==========================================================================
 const cameraManager = {
     stream: null,
@@ -849,20 +849,21 @@ const cameraManager = {
         }
     },
 
-    stop() {
-        this.isDetecting = false;
-        if (this.stream) {
-            this.stream.getTracks().forEach(track => track.stop());
-        }
-        // --- תיקון: איפוס מלא של כל המשתנים ---
-        this.stream = null;
-        this.videoTrack = null;
-        this.mode = null;
-        this.zoomCapabilities = null;
-        this.currentZoom = 1;
-        // --- סוף התיקון ---
-        document.getElementById('camera-modal').classList.remove('flex');
-    },
+stop() {
+    if (this.audio) {
+        this.audio.pause();
+        this.audio.currentTime = 0;
+        this.audio.src = ''; // -> מנקה את המשאב לחלוטין
+    }
+    if ('speechSynthesis' in window) {
+        speechSynthesis.cancel();
+    }
+    this.audio = null;
+    this.utterance = null;
+    this.isPlaying = false;
+    this.isPaused = false;
+    this.updateUI();
+},
 
     updateZoomUI() {
         // --- תיקון: שימוש במשתנה המצב השמור ---
@@ -904,49 +905,67 @@ window.cameraManager = cameraManager;
 const ttsManager = {
     audio: null, utterance: null, isPlaying: false, isPaused: false,
 
-    async speak(text, useApi = true, lang = 'he-IL') {
-        this.stop();
-        if (!text) { console.error("TTS Error: No text provided."); return; }
+async speak(text, useApi = true, lang = 'he-IL') {
+    this.stop();
+    if (!text) { console.error("TTS Error: No text provided."); return; }
 
-        const characterLimit = 4800;
-        if (useApi && text.length < characterLimit) {
-            const apiKey = "AIzaSyDzQFz_abwcxSwq8VhHCQS-HcsYk_Qug-I";
-            const url = `https://texttospeech.googleapis.com/v1/text:synthesize?key=${apiKey}`;
-            const selectedVoice = document.getElementById("global-voice-select")?.value || "he-IL-Wavenet-D";
-            
-            try {
-                const response = await fetch(url, {
-                    method: "POST", headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({
-                        input: { text },
-                        voice: { languageCode: lang, name: selectedVoice },
-                        audioConfig: { audioEncoding: "MP3" }
-                    })
-                });
-                const data = await response.json();
-                if (!data.audioContent) throw new Error("No audio content in API response");
-                this.audio = new Audio("data:audio/mp3;base64," + data.audioContent);
-                this.audio.play();
-                this.isPlaying = true;
-                this.updateUI();
-                this.audio.onended = () => this.stop();
-            } catch (err) {
-                console.error("Google TTS API failed, falling back to local TTS:", err);
-                this.speak(text, false, lang);
+    const characterLimit = 4800;
+    if (useApi && text.length < characterLimit) {
+        // ... (החלק של ה-API נשאר ללא שינוי) ...
+        const apiKey = "AIzaSyDzQFz_abwcxSwq8VhHCQS-HcsYk_Qug-I";
+        const url = `https://texttospeech.googleapis.com/v1/text:synthesize?key=${apiKey}`;
+        const selectedVoice = document.getElementById("global-voice-select")?.value || "he-IL-Wavenet-D";
+        try {
+            const response = await fetch(url, {
+                method: "POST", headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    input: { text },
+                    voice: { languageCode: lang, name: selectedVoice },
+                    audioConfig: { audioEncoding: "MP3" }
+                })
+            });
+            const data = await response.json();
+            if (!data.audioContent) throw new Error("No audio content");
+            this.audio = new Audio("data:audio/mp3;base64," + data.audioContent);
+            this.audio.play();
+            this.isPlaying = true;
+            this.updateUI();
+            this.audio.onended = () => this.stop();
+        } catch (err) {
+            console.error("Google TTS API failed, falling back to local TTS:", err);
+            this.speak(text, false, lang);
+        }
+    } else {
+        // --- תיקון: הוספת לוגיקת חיתוך לטקסטים ארוכים ---
+        if (!('speechSynthesis' in window)) { showAlert('שגיאה', 'הדפדפן אינו תומך בהקראת טקסט.'); return; }
+        
+        const chunks = text.match(/[\s\S]{1,200}/g) || []; // חותך את הטקסט לחלקים של 200 תווים
+        let chunkIndex = 0;
+
+        const speakChunk = () => {
+            if (chunkIndex >= chunks.length) {
+                this.stop();
+                return;
             }
-        } else {
-            if (!('speechSynthesis' in window)) { showAlert('שגיאה', 'הדפדפן שלך אינו תומך בהקראת טקסט.'); return; }
-            this.utterance = new SpeechSynthesisUtterance(text);
+            this.utterance = new SpeechSynthesisUtterance(chunks[chunkIndex]);
             this.utterance.lang = lang;
             const voices = speechSynthesis.getVoices() || [];
             const selectedVoiceName = document.getElementById("global-voice-select")?.value;
             if(selectedVoiceName) this.utterance.voice = voices.find(v => v.name === selectedVoiceName);
-            this.utterance.onend = () => this.stop();
+            
+            this.utterance.onend = () => {
+                chunkIndex++;
+                speakChunk(); // קרא לחלק הבא
+            };
             speechSynthesis.speak(this.utterance);
-            this.isPlaying = true;
-            this.updateUI();
-        }
-    },
+        };
+        
+        speakChunk(); // התחל לקרוא את החלק הראשון
+        this.isPlaying = true;
+        this.updateUI();
+        // --- סוף התיקון ---
+    }
+},
     togglePause() {
         if (!this.isPlaying && !this.isPaused) return;
         if (this.audio) {
@@ -3838,16 +3857,21 @@ $('#scan-kosher-barcode-btn').addEventListener('click', window.startKosherBarcod
     document.getElementById('zoom-out-btn').addEventListener('click', () => cameraManager.changeZoom(-1));
 
     // --- חיבור כפתורי תפילות ---
-    document.getElementById('tefilat-haderech-btn').addEventListener('click', () => {
-        const text = hebrewPrayers.tefilatHaderech.replace(/<[^>]*>?/gm, '');
-        showAlert('תפילת הדרך', hebrewPrayers.tefilatHaderech, { text, useApi: false }); // ארוך מדי ל-API
-    });
+document.getElementById('tefilat-haderech-btn').addEventListener('click', () => {
+    const text = hebrewPrayers.tefilatHaderech.replace(/<[^>]*>?/gm, '');
+    showAlert('תפילת הדרך', hebrewPrayers.tefilatHaderech, { text, useApi: true }); // <-- השינוי כאן
+});
     document.getElementById('birkat-hamazon-btn').addEventListener('click', () => {
         const text = hebrewPrayers.birkatHaMazon.replace(/<[^>]*>?/gm, '');
         showAlert('ברכת המזון', hebrewPrayers.birkatHaMazon, { text, useApi: false }); // ארוך מדי ל-API
     });
     document.getElementById('bracha-achrona-btn').addEventListener('click', showBrachaAchronaOptions);
-  }); // <--- הסוגר הסופי של document.addEventListener('DOMContentLoaded')
+    // מאזין להשמעת דגימת קול בשינוי הגדרות
+    document.getElementById('global-voice-select').addEventListener('change', () => {
+        ttsManager.speak("שלום, זהו הקול שבחרת.", true, 'he-IL');
+    });
+
+}); // <--- הסוגר הסופי של document.addEventListener('DOMContentLoaded')
 //------------
 
 
