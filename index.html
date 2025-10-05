@@ -3318,8 +3318,6 @@ speechRecognizer.onend = () => {
 speechRecognizer.onresult = async (event) => {
     const spokenText = event.results[0][0].transcript;
     const sourceLang = speechRecognizer.lang;
-    console.log(`Speech recognized in ${sourceLang}: ${spokenText}`);
-
     const resultContainer = $('#translation-result-container');
     resultContainer.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> מתרגם...`;
 
@@ -3329,21 +3327,17 @@ speechRecognizer.onresult = async (event) => {
 
     let translatedText = await callGemini(payload);
     translatedText = translatedText.replace(/[\*\_`\.]/g, '').trim();
-
     const targetLangCode = (sourceLang === 'he-IL') ? 'it-IT' : 'he-IL';
     const escapedText = translatedText.replace(/'/g, "\\'");
 
-    // מעדכנים את התצוגה עם התרגום וכפתור להשמעה חוזרת
+    // === התיקון כאן: שימוש בפונקציה הנכונה ttsManager.speak ===
     resultContainer.innerHTML = `<span>${translatedText}</span> 
         <button onclick="ttsManager.speak('${escapedText}', false, '${targetLangCode}')" 
         class="btn btn-ghost p-1 h-auto"><i class="fa-solid fa-volume-up"></i></button>`;
 
-    // === החלק שהשתנה: השמעה אוטומטית ===
-    // מפעילים את מנהל הקול במצב "דפדפן בלבד" (useApi = false)
+    // ונגינה אוטומטית, גם עם הפונקציה הנכונה
     ttsManager.speak(translatedText, false, targetLangCode);
-    // ======================================
 };
-
 } else {
     console.warn("Web Speech API is not supported in this browser.");
 }
