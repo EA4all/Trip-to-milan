@@ -4183,25 +4183,17 @@ function hideLoading() {
     window.closeModal(); 
 }
 window.hideLoading = hideLoading;
-  // --- מאזין אירועים לטעינת קובץ תמונה במצב זיהוי ---
-const receiptFileInput = $('#receipt-file-input');
-if (receiptFileInput) {
-    receiptFileInput.addEventListener('change', async (e) => {
-        if (e.target.files.length > 0) {
-            const file = e.target.files[0];
-            const reader = new FileReader();
-            reader.onload = async (event) => { 
-                const base64String = event.target.result.split(',')[1];
-                // מפעיל את ניתוח הקבלה עם תמונת הבסיס 64
-                await processReceiptImage(base64String); 
-            };
-            reader.readAsDataURL(file);
-        }
-        e.target.value = ''; // איפוס
-    });
-}
     // --- מאזין לכפתור הפתיחה של קלט הקבצים ---
 const uploadReceiptBtn = document.getElementById('upload-receipt-btn');
+
+if (uploadReceiptBtn) { // ✅ בדיקה בטוחה: פותר את שגיאת ה-Null
+    uploadReceiptBtn.addEventListener('click', () => {
+        // שימוש ב-receiptFileInput שכבר הוגדר למעלה!
+        if (receiptFileInput) {
+             receiptFileInput.click();
+        }
+    });
+}
 const receiptFileInput = document.getElementById('receipt-file-input'); // הפנייה לאלמנט הקלט הנסתר
 
 if (uploadReceiptBtn) { 
