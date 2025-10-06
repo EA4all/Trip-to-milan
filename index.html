@@ -1149,6 +1149,44 @@ window.checkKosherStatus(code);
 
 };
 window.cameraManager = cameraManager;
+
+// --------------------------------------------------------
+// פונקציה לבדיקת כשרות דרך OpenFoodFacts
+// --------------------------------------------------------
+window.checkKosherStatus = async function (barcode) {
+    const statusDisplay = document.getElementById('barcode-status-display');
+    statusDisplay.textContent = 'בודק נתונים...';
+
+    try {
+        const response = await fetch(`https://world.openfoodfacts.org/api/v2/product/${barcode}.json`);
+        const data = await response.json();
+
+        if (data.status === 1) {
+            const p = data.product;
+            const productName = p.product_name_he || p.product_name || 'מוצר ללא שם';
+            const image = p.image_front_small_url || '';
+            const kosherTags = (p.labels_tags || []).filter(tag => tag.includes('kosher'));
+            const isKosher = kosherTags.length > 0;
+
+            let message = `
+                <div class="text-center space-y-3">
+                    ${image ? `<img src="${image}" alt="מוצר" class="mx-auto rounded-lg max-h-40">` : ''}
+                    <div class="font-bold text-lg">${productName}</div>
+                    <div>${isKosher ? '✅ ייתכן שמוצר זה כשר' : '⚠️ לא נמצא מידע על כשרות'}</div>
+                    <a href="https://world.openfoodfacts.org/product/${barcode}" target="_blank" class="text-blue-600 underline">צפה בפרטים המלאים</a>
+                </div>
+            `;
+
+            showAlert('תוצאת הסריקה', message);
+        } else {
+            showAlert('לא נמצא', `לא נמצא מוצר עם ברקוד ${barcode} במאגר.`);
+        }
+    } catch (err) {
+        console.error('OpenFoodFacts API Error:', err);
+        showAlert('שגיאה', 'לא ניתן היה לגשת למאגר המידע.');
+    }
+};
+
    
 // --- סוף Camera Manager ---
     
