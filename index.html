@@ -910,244 +910,136 @@ stop() {
     // *** כאן הוספת הפסיק החסר ***
     ,
 async startBarcodeDetection() {
+    if (typeof Quagga === 'undefined') {
+        showAlert('שגיאה', 'ספריית סריקת ברקוד (QuaggaJS) לא נטענה כראוי.');
+        return;
+    }
 
-if (typeof Quagga === 'undefined') {
+    this.isDetecting = true;
+    const videoContainer = document.getElementById('video-container');
+    const statusDisplay = document.getElementById('barcode-status-display');
+    statusDisplay.textContent = 'מאתחל סריקה...';
 
-showAlert('שגיאה', 'ספריית סריקת ברקוד (QuaggaJS) לא נטענה כראוי.');
+    // ניקוי קודם
+    try { Quagga.stop(); Quagga.offDetected(); Quagga.offProcessed(); } catch {}
 
-return;
+    // ודא שהוידאו מוצג
+    const video = document.getElementById('camera-feed');
+    if (!video) {
+        showAlert('שגיאה', 'לא נמצאה מצלמה פעילה.');
+        return;
+    }
 
+    // קו מיקוד אדום באמצע המסך (מהקוד המקורי שלך)
+    let focusLine = document.getElementById('focus-line');
+    if (!focusLine) {
+        focusLine = document.createElement('div');
+        focusLine.id = 'focus-line';
+        focusLine.style.position = 'absolute';
+        focusLine.style.top = '50%';
+        focusLine.style.left = '0';
+        focusLine.style.width = '100%';
+        focusLine.style.height = '2px';
+        focusLine.style.background = 'red';
+        focusLine.style.opacity = '0.8';
+        focusLine.style.transform = 'translateY(-50%)';
+        focusLine.style.animation = 'scanLine 1.5s infinite alternate ease-in-out';
+        focusLine.style.zIndex = '10';
+        videoContainer.appendChild(focusLine);
+
+        const style = document.createElement('style');
+        style.textContent = `
+        @keyframes scanLine {
+            0% { opacity: 0.8; transform: translateY(-50%) scaleY(1); }
+            50% { opacity: 0.3; transform: translateY(-50%) scaleY(1.2); }
+            100% { opacity: 0.8; transform: translateY(-50%) scaleY(1); }
+        }`;
+        document.head.appendChild(style);
+    }
+
+    // --- הגדרות משופרות ---
+    const config = {
+        inputStream: {
+            name: "Live",
+            type: "LiveStream",
+            target: videoContainer,
+            constraints: {
+                facingMode: "environment",
+                width: { min: 640 },
+                height: { min: 480 }
+            },
+            // שיפור 1: מיקוד אזור הסריקה לביצועים ודיוק
+            area: {
+                top: "25%",
+                right: "10%",
+                left: "10%",
+                bottom: "25%"
+            }
+        },
+        // שיפור 2: דיוק גבוה יותר
+        locator: { patchSize: "medium", halfSample: false },
+        decoder: {
+            readers: ["ean_reader", "ean_8_reader", "upc_reader", "code_128_reader"],
+            multiple: false
+        },
+        locate: true,
+        // שיפור 3: שימוש בריבוי ליבות למהירות
+        numOfWorkers: navigator.hardwareConcurrency || 4,
+    };
+
+    Quagga.init(config, (err) => {
+        if (err) {
+            console.error("QuaggaJS Init Error:", err);
+            statusDisplay.textContent = 'שגיאה באתחול הסורק.';
+            return;
+        }
+
+        Quagga.initialized = true;
+        Quagga.start();
+        statusDisplay.textContent = 'כוון את הברקוד לקו האדום...';
+
+        // ציור תיבות זיהוי (מהקוד המקורי שלך)
+        Quagga.onProcessed((result) => {
+            const ctx = Quagga.canvas.ctx.overlay;
+            const canvas = Quagga.canvas.dom.overlay;
+            if (!ctx || !canvas) return;
+            ctx.clearRect(0, 0, parseInt(canvas.getAttribute("width")), parseInt(canvas.getAttribute("height")));
+
+            if (result) {
+                if (result.boxes) {
+                    result.boxes
+                        .filter(b => b !== result.box)
+                        .forEach(box => Quagga.ImageDebug.drawPath(box, { x: 0, y: 1 }, ctx, { color: "green", lineWidth: 2 }));
+                }
+                if (result.box) {
+                    Quagga.ImageDebug.drawPath(result.box, { x: 0, y: 1 }, ctx, { color: "blue", lineWidth: 3 });
+                }
+                if (result.codeResult && result.codeResult.code) {
+                    Quagga.ImageDebug.drawPath(result.line, { x: 'x', y: 'y' }, ctx, { color: "red", lineWidth: 3 });
+                }
+            }
+        });
+
+        // זיהוי ברקוד
+        Quagga.onDetected((result) => {
+            const code = result.codeResult?.code;
+            if (!code) return;
+
+            statusDisplay.textContent = `✅ ברקוד זוהה: ${code}`;
+            navigator.vibrate(100); // שיפור 4: רטט כמשוב
+            Quagga.stop();
+            this.isDetecting = false;
+            const line = document.getElementById('focus-line');
+            if (line) line.remove();
+
+            setTimeout(() => {
+                this.stop();
+                window.checkKosherStatus(code);
+            }, 800);
+        });
+    });
 }
 
-
-
-this.isDetecting = true;
-
-const videoContainer = document.getElementById('video-container');
-
-const statusDisplay = document.getElementById('barcode-status-display');
-
-statusDisplay.textContent = 'מאתחל סריקה...';
-
-
-
-// ניקוי קודם
-
-try { Quagga.stop(); Quagga.offDetected(); Quagga.offProcessed(); } catch {}
-
-
-
-// ודא שהוידאו מוצג
-
-const video = document.getElementById('camera-feed');
-
-if (!video) {
-
-showAlert('שגיאה', 'לא נמצאה מצלמה פעילה.');
-
-return;
-
-}
-
-
-
-// קו מיקוד אדום באמצע המסך
-
-let focusLine = document.getElementById('focus-line');
-
-if (!focusLine) {
-
-focusLine = document.createElement('div');
-
-focusLine.id = 'focus-line';
-
-focusLine.style.position = 'absolute';
-
-focusLine.style.top = '50%';
-
-focusLine.style.left = '0';
-
-focusLine.style.width = '100%';
-
-focusLine.style.height = '2px';
-
-focusLine.style.background = 'red';
-
-focusLine.style.opacity = '0.8';
-
-focusLine.style.transform = 'translateY(-50%)';
-
-focusLine.style.animation = 'scanLine 1.5s infinite alternate ease-in-out';
-
-focusLine.style.zIndex = '10';
-
-videoContainer.appendChild(focusLine);
-
-
-
-const style = document.createElement('style');
-
-style.textContent = `
-
-@keyframes scanLine {
-
-0% { opacity: 0.8; transform: translateY(-50%) scaleY(1); }
-
-50% { opacity: 0.3; transform: translateY(-50%) scaleY(1.2); }
-
-100% { opacity: 0.8; transform: translateY(-50%) scaleY(1); }
-
-}`;
-
-document.head.appendChild(style);
-
-}
-
-
-
-const config = {
-
-inputStream: {
-
-name: "Live",
-
-type: "LiveStream",
-
-target: videoContainer,
-
-constraints: {
-
-facingMode: "environment",
-
-width: { min: 640 },
-
-height: { min: 480 }
-
-}
-
-},
-
-locator: { patchSize: "medium", halfSample: true },
-
-decoder: {
-
-readers: ["ean_reader", "ean_8_reader", "code_128_reader"],
-
-multiple: false
-
-},
-
-locate: true,
-
-numOfWorkers: 0
-
-};
-
-
-
-Quagga.init(config, (err) => {
-
-if (err) {
-
-console.error("QuaggaJS Init Error:", err);
-
-statusDisplay.textContent = 'שגיאה באתחול הסורק.';
-
-return;
-
-}
-
-
-
-Quagga.initialized = true;
-
-Quagga.start();
-
-statusDisplay.textContent = 'כוון את המצלמה לברקוד...';
-
-
-
-// ציור תיבות זיהוי
-
-Quagga.onProcessed((result) => {
-
-const ctx = Quagga.canvas.ctx.overlay;
-
-const canvas = Quagga.canvas.dom.overlay;
-
-if (!ctx || !canvas) return;
-
-ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-
-
-if (result) {
-
-if (result.boxes) {
-
-result.boxes
-
-.filter(b => b !== result.box)
-
-.forEach(box => Quagga.ImageDebug.drawPath(box, { x: 0, y: 1 }, ctx, { color: "green", lineWidth: 2 }));
-
-}
-
-if (result.box) {
-
-Quagga.ImageDebug.drawPath(result.box, { x: 0, y: 1 }, ctx, { color: "blue", lineWidth: 3 });
-
-}
-
-if (result.codeResult && result.codeResult.code) {
-
-Quagga.ImageDebug.drawPath(result.line, { x: 'x', y: 'y' }, ctx, { color: "red", lineWidth: 3 });
-
-}
-
-}
-
-});
-
-
-
-// זיהוי ברקוד
-
-Quagga.onDetected((result) => {
-
-const code = result.codeResult?.code;
-
-if (!code) return;
-
-
-
-statusDisplay.textContent = `✅ ברקוד זוהה: ${code}`;
-
-Quagga.stop();
-
-this.isDetecting = false;
-
-const line = document.getElementById('focus-line');
-
-if (line) line.remove();
-
-
-
-setTimeout(() => {
-
-this.stop();
-
-window.checkKosherStatus(code);
-
-}, 800);
-
-});
-
-});
-
-}
-
-};
 window.cameraManager = cameraManager;
 
 // --------------------------------------------------------
