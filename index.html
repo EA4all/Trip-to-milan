@@ -1032,13 +1032,14 @@ async startBarcodeDetection() {
             const line = document.getElementById('focus-line');
             if (line) line.remove();
 
-            setTimeout(() => {
+setTimeout(() => {
                 this.stop();
                 window.checkKosherStatus(code);
             }, 800);
         });
     });
-};
+} // <-- 🎯 הסוגר הזה היה חסר. הוא סוגר את הפונקציה startBarcodeDetection
+}; // <-- הסוגר הזה סוגר את כל האובייקט cameraManager
 
 window.cameraManager = cameraManager;
 
