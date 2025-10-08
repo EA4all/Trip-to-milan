@@ -1,8 +1,12 @@
 {
+  {
+  "name": "תוכנית הטיול שלנו למילאנו",
+  "short_name": "מילאנו",
+  "start_url": "/Trip-to-milan/index.html",
+  "scope": "/Trip-to-milan/",
   "name": "החופשה במילאנו",
   "short_name": "מילאנו",
   "description": "דשבורד אינטראקטיבי ושיתופי לתכנון חופשה במילאנו.",
-  "start_url": "/index.html",
   "display": "standalone",
   "background_color": "#0b1220",
   "theme_color": "#1d4ed8",
