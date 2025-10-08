@@ -648,18 +648,21 @@ body {
             <div id="barcode-status-container" class="p-2 text-center">
                 <span id="barcode-status-display" class="text-sm text-gray-400">המתן להפעלת המצלמה...</span>
             </div>
-            <div class="p-4 flex justify-around items-center gap-4">
-                <button id="torch-btn" class="btn btn-ghost rounded-full w-12 h-12 text-xl" title="פנס">
-                    <i class="fa-solid fa-lightbulb"></i>
-                </button>
-                <button id="capture-btn" class="btn btn-primary rounded-full w-16 h-16 text-2xl border-4 border-white dark:border-gray-900 ring-2 ring-brand-500" title="צלם">
-                    <i class="fa-solid fa-camera"></i>
-                </button>
-           <button id="upload-kosher-label-btn" class="btn btn-ghost rounded-full w-12 h-12 text-xl" title="העלה תווית">
-            <i class="fa-solid fa-upload"></i>
-          </button>
-          <input type="file" id="kosher-file-input" class="hidden" accept="image/*">
-            </div>
+
+<div class="p-4 flex justify-around items-center gap-4">
+    <button id="torch-btn" class="btn btn-ghost rounded-full w-12 h-12 text-xl" title="פנס">
+        <i class="fa-solid fa-lightbulb"></i>
+    </button>
+    <button id="capture-btn" class="btn btn-primary rounded-full w-16 h-16 text-2xl border-4 border-white dark:border-gray-900 ring-2 ring-brand-500" title="צלם">
+        <i class="fa-solid fa-camera"></i>
+    </button>
+    <button id="upload-kosher-label-btn" class="btn btn-ghost rounded-full w-12 h-12 text-xl" title="העלה תווית">
+        <i class="fa-solid fa-upload"></i>
+    </button>
+    <input type="file" id="kosher-file-input" class="hidden" accept="image/*">
+</div>
+          
+          
             <div class="p-2 border-t flex justify-center items-center gap-4">
                 <button id="zoom-out-btn" class="btn btn-ghost" title="הקטן"><i class="fa-solid fa-magnifying-glass-minus"></i></button>
                 <span id="zoom-level" class="font-mono text-sm">1.0x</span>
