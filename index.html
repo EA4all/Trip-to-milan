@@ -3575,13 +3575,17 @@ newBtn.addEventListener('click', () => {
     initMetroHelper();
 
     // --- PWA Service Worker Registration ---
-    if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-            navigator.serviceWorker.register('sw.js')
-                .then(registration => console.log('LOG: Service Worker registered with scope:', registration.scope))
-                .catch(error => console.log('ERROR: Service Worker registration failed:', error));
-        });
-    }
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register('sw.js', { scope: '/Trip-to-milan/' })
+            .then(registration => {
+                console.log('SW registered with scope:', registration.scope);
+            })
+            .catch(error => {
+                console.error('SW registration failed:', error);
+            });
+    });
+}
 
     // --- Firebase Initialization ---
     const firebaseConfig = {
