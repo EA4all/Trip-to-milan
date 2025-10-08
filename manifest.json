@@ -1,5 +1,5 @@
 {
-  "name": "תוכנית הטיול שלנו למילאנו",
+  "name": "החופשה במילאנו",
   "short_name": "מילאנו",
   "description": "דשבורד אינטראקטיבי ושיתופי לתכנון חופשה במילאנו.",
   "start_url": "/Trip-to-milan/index.html",
@@ -10,14 +10,20 @@
   "orientation": "portrait-primary",
   "icons": [
     {
-      "src": "https://placehold.co/192x192/1d4ed8/ffffff?text=MTP&font=assistant",
+      "src": "/Trip-to-milan/icons/icon-192x192.png",
       "type": "image/png",
       "sizes": "192x192"
     },
     {
-      "src": "https://placehold.co/512x512/1d4ed8/ffffff?text=MTP&font=assistant",
+      "src": "/Trip-to-milan/icons/icon-512x512.png",
       "type": "image/png",
       "sizes": "512x512"
+    },
+    {
+      "src": "/Trip-to-milan/icons/icon-512x512.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "maskable"
     }
   ]
 }
