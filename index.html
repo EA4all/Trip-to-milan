@@ -666,6 +666,36 @@ body {
                 <span id="zoom-level" class="font-mono text-sm">1.0x</span>
                 <button id="zoom-in-btn" class="btn btn-ghost" title="הגדל"><i class="fa-solid fa-magnifying-glass-plus"></i></button>
             </div>
+          <!-- מצב סריקה -->
+<div id="scan-mode-selector" style="text-align:center; margin-top:10px;">
+  <button class="scan-mode-btn active" onclick="cameraManager.setScanMode('auto', this)">🤖 אוטומטי</button>
+  <button class="scan-mode-btn" onclick="cameraManager.setScanMode('home', this)">🏠 בית</button>
+  <button class="scan-mode-btn" onclick="cameraManager.setScanMode('super', this)">🏬 סופר</button>
+  <button class="scan-mode-btn" onclick="cameraManager.setScanMode('outdoor', this)">☀️ חוץ</button>
+</div>
+
+<style>
+  .scan-mode-btn {
+    background: #333;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 6px 10px;
+    margin: 0 3px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: all 0.3s;
+  }
+  .scan-mode-btn.active {
+    background: #e53935;
+    color: #fff;
+    font-weight: bold;
+  }
+  .scan-mode-btn:hover {
+    background: #555;
+  }
+</style>
+
         </div>
     </div>
 </div>
@@ -923,28 +953,29 @@ async startBarcodeDetection() {
     // ניקוי קודם
     try { Quagga.stop(); Quagga.offDetected(); Quagga.offProcessed(); } catch {}
 
-    // ודא שהוידאו מוצג
     const video = document.getElementById('camera-feed');
     if (!video) {
         showAlert('שגיאה', 'לא נמצאה מצלמה פעילה.');
         return;
     }
 
-    // קו מיקוד אדום באמצע המסך (מהקוד המקורי שלך)
+    // 🟥 קו מיקוד אדום
     let focusLine = document.getElementById('focus-line');
     if (!focusLine) {
         focusLine = document.createElement('div');
         focusLine.id = 'focus-line';
-        focusLine.style.position = 'absolute';
-        focusLine.style.top = '50%';
-        focusLine.style.left = '0';
-        focusLine.style.width = '100%';
-        focusLine.style.height = '2px';
-        focusLine.style.background = 'red';
-        focusLine.style.opacity = '0.8';
-        focusLine.style.transform = 'translateY(-50%)';
-        focusLine.style.animation = 'scanLine 1.5s infinite alternate ease-in-out';
-        focusLine.style.zIndex = '10';
+        Object.assign(focusLine.style, {
+            position: 'absolute',
+            top: '50%',
+            left: '0',
+            width: '100%',
+            height: '2px',
+            background: 'red',
+            opacity: '0.8',
+            transform: 'translateY(-50%)',
+            animation: 'scanLine 1.5s infinite alternate ease-in-out',
+            zIndex: '10'
+        });
         videoContainer.appendChild(focusLine);
 
         const style = document.createElement('style');
@@ -957,7 +988,53 @@ async startBarcodeDetection() {
         document.head.appendChild(style);
     }
 
-    // --- הגדרות משופרות ---
+    // 🟦 תיבת Debug
+    let debugBox = document.getElementById('barcode-debug');
+    if (!debugBox) {
+        debugBox = document.createElement('div');
+        debugBox.id = 'barcode-debug';
+        Object.assign(debugBox.style, {
+            position: 'absolute',
+            bottom: '8px',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            background: 'rgba(0,0,0,0.6)',
+            color: 'white',
+            fontSize: '14px',
+            padding: '4px 10px',
+            borderRadius: '6px',
+            zIndex: '20',
+            fontFamily: 'monospace',
+            opacity: '0.85'
+        });
+        videoContainer.appendChild(debugBox);
+    }
+    debugBox.textContent = '';
+
+    // 🧠 בחירת הגדרות לפי מצב
+    let patchSize = "medium";
+    let halfSample = false;
+    let locate = true;
+    let numOfWorkers = navigator.hardwareConcurrency ? Math.min(4, navigator.hardwareConcurrency) : 2;
+
+    switch (this.scanMode) {
+        case 'home':
+            patchSize = "small"; halfSample = false; locate = true;
+            break;
+        case 'super':
+            patchSize = "large"; halfSample = true; locate = true;
+            break;
+        case 'outdoor':
+            patchSize = "medium"; halfSample = false; locate = false;
+            break;
+        default:
+            const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            patchSize = isDark ? "small" : "medium";
+            halfSample = !isDark;
+            locate = true;
+            break;
+    }
+
     const config = {
         inputStream: {
             name: "Live",
@@ -967,29 +1044,24 @@ async startBarcodeDetection() {
                 facingMode: "environment",
                 width: { min: 640 },
                 height: { min: 480 }
-            },
-            // שיפור 1: מיקוד אזור הסריקה לביצועים ודיוק
-            area: {
-                top: "25%",
-                right: "10%",
-                left: "10%",
-                bottom: "25%"
             }
         },
-        // שיפור 2: דיוק גבוה יותר
-        locator: { patchSize: "medium", halfSample: false },
+        locator: { patchSize, halfSample },
         decoder: {
             readers: ["ean_reader", "ean_8_reader", "upc_reader", "code_128_reader"],
             multiple: false
         },
-        locate: true,
-        // שיפור 3: שימוש בריבוי ליבות למהירות
-        numOfWorkers: navigator.hardwareConcurrency || 4,
+        locate,
+        numOfWorkers
     };
+
+    let detectionTimeout;
+    let lastCode = null;
+    let sameCount = 0;
 
     Quagga.init(config, (err) => {
         if (err) {
-            console.error("QuaggaJS Init Error:", err);
+            console.error("Quagga Init Error:", err);
             statusDisplay.textContent = 'שגיאה באתחול הסורק.';
             return;
         }
@@ -998,50 +1070,98 @@ async startBarcodeDetection() {
         Quagga.start();
         statusDisplay.textContent = 'כוון את הברקוד לקו האדום...';
 
-        // ציור תיבות זיהוי (מהקוד המקורי שלך)
+        // ⏱️ טיימר 10 שניות
+        detectionTimeout = setTimeout(() => {
+            if (this.isDetecting) {
+                this.isDetecting = false;
+                Quagga.stop();
+                const line = document.getElementById('focus-line');
+                if (line) line.remove();
+                debugBox.remove();
+                statusDisplay.textContent = '❌ לא זוהה ברקוד';
+                showAlert('לא זוהה', 'לא נמצא ברקוד, נסה שוב מקרוב יותר או עם תאורה טובה.');
+                this.stop();
+            }
+        }, 10000);
+
+        // ציור מסגרת
         Quagga.onProcessed((result) => {
             const ctx = Quagga.canvas.ctx.overlay;
             const canvas = Quagga.canvas.dom.overlay;
             if (!ctx || !canvas) return;
-            ctx.clearRect(0, 0, parseInt(canvas.getAttribute("width")), parseInt(canvas.getAttribute("height")));
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-            if (result) {
-                if (result.boxes) {
-                    result.boxes
-                        .filter(b => b !== result.box)
-                        .forEach(box => Quagga.ImageDebug.drawPath(box, { x: 0, y: 1 }, ctx, { color: "green", lineWidth: 2 }));
-                }
-                if (result.box) {
-                    Quagga.ImageDebug.drawPath(result.box, { x: 0, y: 1 }, ctx, { color: "blue", lineWidth: 3 });
-                }
-                if (result.codeResult && result.codeResult.code) {
-                    Quagga.ImageDebug.drawPath(result.line, { x: 'x', y: 'y' }, ctx, { color: "red", lineWidth: 3 });
-                }
+            if (result?.boxes) {
+                result.boxes
+                    .filter(b => b !== result.box)
+                    .forEach(box => Quagga.ImageDebug.drawPath(box, { x: 0, y: 1 }, ctx, { color: "green", lineWidth: 2 }));
+            }
+            if (result?.box) {
+                Quagga.ImageDebug.drawPath(result.box, { x: 0, y: 1 }, ctx, { color: "blue", lineWidth: 3 });
             }
         });
 
-        // זיהוי ברקוד
+        // 🔍 זיהוי עם ניקוי רעשים + debug
         Quagga.onDetected((result) => {
+            if (!this.isDetecting) return;
             const code = result.codeResult?.code;
             if (!code) return;
 
-            statusDisplay.textContent = `✅ ברקוד זוהה: ${code}`;
-            navigator.vibrate(100); // שיפור 4: רטט כמשוב
-            Quagga.stop();
+            // debug: מציג קוד בזמן אמת
+            debugBox.textContent = `מזהה אפשרי: ${code}`;
+
+            // ניקוי רעשים
+            if (code === lastCode) {
+                sameCount++;
+            } else {
+                lastCode = code;
+                sameCount = 1;
+            }
+
+            if (sameCount < 2) return; // מאשר רק אחרי פעמיים זהות
+
+            clearTimeout(detectionTimeout);
             this.isDetecting = false;
+            statusDisplay.textContent = `✅ ברקוד זוהה: ${code}`;
+            navigator.vibrate?.(100);
+
             const line = document.getElementById('focus-line');
             if (line) line.remove();
+            debugBox.remove();
 
-setTimeout(() => {
+            Quagga.offDetected();
+            Quagga.stop();
+
+            setTimeout(() => {
                 this.stop();
                 window.checkKosherStatus(code);
-            }, 800);
+            }, 600);
         });
     });
-} // <-- 🎯 הסוגר הזה היה חסר. הוא סוגר את הפונקציה startBarcodeDetection
+}
+
 }; // <-- הסוגר הזה סוגר את כל האובייקט cameraManager
 
 window.cameraManager = cameraManager;
+
+    cameraManager.setScanMode = function(mode, btn) {
+    this.scanMode = mode;
+
+    // הסרת הדגשה מכפתורים אחרים
+    document.querySelectorAll('.scan-mode-btn').forEach(b => b.classList.remove('active'));
+    if (btn) btn.classList.add('active');
+
+    const statusDisplay = document.getElementById('barcode-status-display');
+    let desc = '';
+    switch(mode) {
+        case 'home': desc = '🏠 מצב בית - תאורה חלשה, דיוק גבוה'; break;
+        case 'super': desc = '🏬 מצב סופר - תאורה חזקה / פלורסנט'; break;
+        case 'outdoor': desc = '☀️ מצב חוץ - אור חזק עם החזרי אור'; break;
+        default: desc = '🤖 מצב אוטומטי - התאמה אוטומטית לפי תאורה'; break;
+    }
+    statusDisplay.textContent = desc;
+};
+
 
 // --------------------------------------------------------
 // פונקציה לבדיקת כשרות דרך OpenFoodFacts
