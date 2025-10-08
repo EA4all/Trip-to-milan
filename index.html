@@ -3584,22 +3584,37 @@ newBtn.addEventListener('click', () => {
     enableIndexedDbPersistence(db).catch(err => console.warn(`WARN: Firestore persistence failed. Code: ${err.code}`));
 
     // --- Caching and Sharing Logic ---
-    let tripId = window.location.hash.substring(1);
-    if (!tripId) {
+// --- לוגיקת שמירה ושיתוף Trip ID (PWA Fix) ---
+let tripId = window.location.hash.substring(1);
+
+// 1. אם אין Hash ב-URL (כמו בפתיחה דרך אייקון PWA סטטי), נסה לטעון את האחרון השמור.
+if (!tripId) {
+    const storedTripId = localStorage.getItem('lastTripId');
+    if (storedTripId) {
+        tripId = storedTripId;
+        window.location.hash = tripId; // עדכן את ה-URL
+    } else {
+        // 2. אם אין שמור, צור חדש.
         tripId = Math.random().toString(36).substring(2, 12);
         window.location.hash = tripId;
     }
-    $('#user-name-input').value = localStorage.getItem('userName') || '';
+}
 
-    const cachedData = localStorage.getItem(`tripData_${tripId}`);
-    if (cachedData) {
-        try {
-            localTripData = JSON.parse(cachedData);
-        } catch(e) {
-            console.error("ERROR: Failed to parse cached data.", e);
-            localStorage.removeItem(`tripData_${tripId}`);
-        }
+// 3. תמיד שמור את המזהה הנוכחי כ"אחרון בשימוש" עבור הפעם הבאה.
+localStorage.setItem('lastTripId', tripId);
+
+// 4. המשך בלוגיקה הישנה שלא הוחלפה (טעינת שם משתמש וקאש מקומי):
+$('#user-name-input').value = localStorage.getItem('userName') || '';
+
+const cachedData = localStorage.getItem(`tripData_${tripId}`);
+if (cachedData) {
+    try {
+        localTripData = JSON.parse(cachedData);
+    } catch(e) {
+        console.error("ERROR: Failed to parse cached data.", e);
+        localStorage.removeItem(`tripData_${tripId}`);
     }
+}
 
     signInAnonymously(auth).catch(error => showAlert("שגיאת התחברות ל-Firebase", `ההתחברות האנונימית נכשלה. ${error.message}`));
 
