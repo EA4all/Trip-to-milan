@@ -939,9 +939,9 @@ stop() {
     }
     // *** כאן הוספת הפסיק החסר ***
     ,
-async startBarcodeDetection() {
+async startBarcodeDetection(showDebug = true) {
     if (typeof Quagga === 'undefined') {
-        showAlert('שגיאה', 'ספריית סריקת ברקוד (QuaggaJS) לא נטענה כראוי.');
+        showAlert('שגיאה', 'ספריית QuaggaJS לא נטענה כראוי.');
         return;
     }
 
@@ -987,7 +987,32 @@ async startBarcodeDetection() {
         document.head.appendChild(style);
     }
 
-    // 🧠 קונפיג חדש עם רזולוציה חכמה, אזור סריקה ממוקד ודיוק מוגבר
+    // 🟦 תיבת debug אופציונלית
+    let debugBox = document.getElementById('barcode-debug');
+    if (showDebug) {
+        if (!debugBox) {
+            debugBox = document.createElement('div');
+            debugBox.id = 'barcode-debug';
+            Object.assign(debugBox.style, {
+                position: 'absolute',
+                bottom: '8px',
+                left: '50%',
+                transform: 'translateX(-50%)',
+                background: 'rgba(0,0,0,0.6)',
+                color: 'white',
+                fontSize: '14px',
+                padding: '4px 10px',
+                borderRadius: '6px',
+                zIndex: '20',
+                fontFamily: 'monospace',
+                opacity: '0.85'
+            });
+            videoContainer.appendChild(debugBox);
+        }
+        debugBox.textContent = '';
+    }
+
+    // ⚙️ קונפיג חדש עם שיפורי רזולוציה, fps, ופילטרים
     const config = {
         inputStream: {
             name: "Live",
@@ -995,17 +1020,27 @@ async startBarcodeDetection() {
             target: videoContainer,
             constraints: {
                 facingMode: "environment",
+                frameRate: { ideal: 30, min: 15 },
                 width: { ideal: 1280, min: 640 },
                 height: { ideal: 720, min: 480 }
             },
-            area: { top: "30%", right: "15%", left: "15%", bottom: "30%" }
+            area: { top: "20%", right: "10%", left: "10%", bottom: "20%" }
         },
-        locator: { patchSize: "small", halfSample: false },
+        locator: { patchSize: "medium", halfSample: false },
         decoder: {
-            readers: ["ean_reader", "ean_8_reader", "upc_reader", "code_128_reader"],
+            readers: [
+                "ean_reader",
+                "ean_8_reader",
+                "upc_reader",
+                "upc_e_reader",
+                "code_128_reader",
+                "code_39_reader",
+                "code_93_reader"
+            ],
             multiple: false
         },
         locate: true,
+        frequency: 5,
         numOfWorkers: navigator.hardwareConcurrency ? Math.min(4, navigator.hardwareConcurrency) : 2
     };
 
@@ -1013,46 +1048,100 @@ async startBarcodeDetection() {
     let lastCode = null;
     let sameCount = 0;
 
-    // 🧠 שיפור contrast לפני עיבוד
-    Quagga.onProcessed((result) => {
-        const ctx = Quagga.canvas.ctx.image;
-        const canvas = Quagga.canvas.dom.image;
-        if (ctx && canvas) {
-            try {
-                const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-                const data = imageData.data;
-                for (let i = 0; i < data.length; i += 4) {
-                    data[i] = Math.min(255, data[i] * 1.2);     // R
-                    data[i + 1] = Math.min(255, data[i + 1] * 1.2); // G
-                    data[i + 2] = Math.min(255, data[i + 2] * 1.2); // B
+    const runScanner = () => {
+        Quagga.start();
+        statusDisplay.textContent = 'כוון את הברקוד לקו האדום...';
+
+        detectionTimeout = setTimeout(() => {
+            if (this.isDetecting) {
+                this.isDetecting = false;
+                Quagga.stop();
+                const line = document.getElementById('focus-line');
+                if (line) line.remove();
+                if (debugBox) debugBox.remove();
+                statusDisplay.textContent = '❌ לא זוהה ברקוד';
+                showAlert('לא זוהה', 'לא נמצא ברקוד. נסה שוב מקרוב יותר או עם תאורה טובה.');
+                this.stop();
+            }
+        }, 12000);
+
+        // עיבוד וחדוד תמונה (contrast + sharpen)
+        Quagga.onProcessed((result) => {
+            const ctx = Quagga.canvas.ctx.image;
+            const canvas = Quagga.canvas.dom.image;
+            if (ctx && canvas) {
+                try {
+                    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                    const data = imageData.data;
+                    for (let i = 0; i < data.length; i += 4) {
+                        const avg = (data[i] + data[i+1] + data[i+2]) / 3;
+                        const factor = 1.3;
+                        data[i] = Math.min(255, (data[i] - avg) * factor + avg);
+                        data[i+1] = Math.min(255, (data[i+1] - avg) * factor + avg);
+                        data[i+2] = Math.min(255, (data[i+2] - avg) * factor + avg);
+                    }
+                    ctx.putImageData(imageData, 0, 0);
+                } catch {}
+            }
+
+            // ציור מסגרות זיהוי
+            const overlayCtx = Quagga.canvas.ctx.overlay;
+            const overlayCanvas = Quagga.canvas.dom.overlay;
+            if (overlayCtx && overlayCanvas) {
+                overlayCtx.clearRect(0, 0, overlayCanvas.width, overlayCanvas.height);
+                if (result?.boxes) {
+                    result.boxes
+                        .filter(b => b !== result.box)
+                        .forEach(box => Quagga.ImageDebug.drawPath(box, { x: 0, y: 1 }, overlayCtx, { color: "green", lineWidth: 2 }));
                 }
-                ctx.putImageData(imageData, 0, 0);
-            } catch {}
-        }
+                if (result?.box) {
+                    Quagga.ImageDebug.drawPath(result.box, { x: 0, y: 1 }, overlayCtx, { color: "blue", lineWidth: 3 });
+                }
+            }
 
-        // ציור מסגרות זיהוי
-        const overlayCtx = Quagga.canvas.ctx.overlay;
-        const overlayCanvas = Quagga.canvas.dom.overlay;
-        if (!overlayCtx || !overlayCanvas) return;
-        overlayCtx.clearRect(0, 0, overlayCanvas.width, overlayCanvas.height);
+            if (showDebug && result?.codeResult?.code) {
+                debugBox.textContent = `מזהה אפשרי: ${result.codeResult.code}`;
+            }
+        });
 
-        if (result?.boxes) {
-            result.boxes
-                .filter(b => b !== result.box)
-                .forEach(box => Quagga.ImageDebug.drawPath(box, { x: 0, y: 1 }, overlayCtx, { color: "green", lineWidth: 2 }));
-        }
-        if (result?.box) {
-            Quagga.ImageDebug.drawPath(result.box, { x: 0, y: 1 }, overlayCtx, { color: "blue", lineWidth: 3 });
-        }
-    });
+        // 🔍 זיהוי סופי
+        Quagga.onDetected((result) => {
+            if (!this.isDetecting) return;
+            const code = result.codeResult?.code;
+            if (!code || code.length < 8) return;
 
+            if (showDebug) debugBox.textContent = `↳ ${code}`;
+
+            if (code === lastCode) sameCount++;
+            else { lastCode = code; sameCount = 1; }
+
+            if (sameCount < 1) return; // דורש שלוש קריאות זהות
+
+            clearTimeout(detectionTimeout);
+            this.isDetecting = false;
+            statusDisplay.textContent = `✅ ברקוד זוהה: ${code}`;
+            navigator.vibrate?.(100);
+
+            const line = document.getElementById('focus-line');
+            if (line) line.remove();
+            if (debugBox) debugBox.remove();
+
+            Quagga.offDetected();
+            Quagga.stop();
+
+            setTimeout(() => {
+                this.stop();
+                window.checkKosherStatus(code);
+            }, 600);
+        });
+    };
+
+    // הפעלת Quagga עם fallback לרזולוציה נמוכה במידת הצורך
     Quagga.init(config, (err) => {
         if (err) {
-            console.warn("Quagga Init Error, retrying low-res:", err);
-            // fallback לרזולוציה נמוכה
+            console.warn("Quagga Init Error, fallback:", err);
             config.inputStream.constraints.width = { ideal: 640 };
             config.inputStream.constraints.height = { ideal: 480 };
-
             Quagga.init(config, (err2) => {
                 if (err2) {
                     console.error("Quagga Init Failed:", err2);
@@ -1063,59 +1152,6 @@ async startBarcodeDetection() {
             });
         } else {
             runScanner();
-        }
-
-        function runScanner() {
-            Quagga.initialized = true;
-            Quagga.start();
-            statusDisplay.textContent = 'כוון את הברקוד לקו האדום...';
-
-            // ⏱️ טיימר ל־10 שניות
-            detectionTimeout = setTimeout(() => {
-                if (this.isDetecting) {
-                    this.isDetecting = false;
-                    Quagga.stop();
-                    const line = document.getElementById('focus-line');
-                    if (line) line.remove();
-                    statusDisplay.textContent = '❌ לא זוהה ברקוד';
-                    showAlert('לא זוהה', 'לא נמצא ברקוד, נסה שוב מקרוב יותר או עם תאורה טובה.');
-                    this.stop();
-                }
-            }, 10000);
-
-            // 🔍 זיהוי ברקוד
-            Quagga.onDetected((result) => {
-                if (!this.isDetecting) return;
-                const code = result.codeResult?.code;
-                if (!code || code.length < 8) return;
-
-                statusDisplay.textContent = `זיהוי אפשרי: ${code}`;
-
-                if (code === lastCode) {
-                    sameCount++;
-                } else {
-                    lastCode = code;
-                    sameCount = 1;
-                }
-
-                if (sameCount < 3) return; // דורש שלוש קריאות זהות רצופות
-
-                clearTimeout(detectionTimeout);
-                this.isDetecting = false;
-                statusDisplay.textContent = `✅ ברקוד זוהה: ${code}`;
-                navigator.vibrate?.(100);
-
-                const line = document.getElementById('focus-line');
-                if (line) line.remove();
-
-                Quagga.offDetected();
-                Quagga.stop();
-
-                setTimeout(() => {
-                    this.stop();
-                    window.checkKosherStatus(code);
-                }, 600);
-            });
         }
     });
 }
