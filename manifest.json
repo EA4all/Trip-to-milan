@@ -12,12 +12,14 @@
     {
       "src": "https://placehold.co/192x192/1d4ed8/ffffff?text=MTP&font=assistant",
       "type": "image/png",
-      "sizes": "192x192"
+      "sizes": "192x192",
+      "purpose": "any"
     },
     {
       "src": "https://placehold.co/512x512/1d4ed8/ffffff?text=MTP&font=assistant",
       "type": "image/png",
-      "sizes": "512x512"
+      "sizes": "512x512",
+      "purpose": "any"
     }
   ]
 }
