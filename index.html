@@ -4286,16 +4286,13 @@ $('#eruv-map-btn').addEventListener('click', () => {
 $('#close-eruv-modal').addEventListener('click', () => {
     $('#eruv-modal').classList.remove('flex');
 });
-  // מאזינים לחלון הקופץ של מפת העירוב
-$('#eruv-map-btn').addEventListener('click', () => {
-    $('#eruv-modal').classList.add('flex');
-    // מאתחל את המפה רק לאחר שהחלון נראה
-    setTimeout(() => {
-        initEruvMap();
-    }, 100); // השהייה קטנה כדי להבטיח שה-div של המפה קיים
+// === פתיחה/סגירה של חלון המפה ===
+document.getElementById('eruv-map-btn').addEventListener('click', () => {
+  document.getElementById('eruv-modal').classList.remove('hidden');
 });
-$('#close-eruv-modal').addEventListener('click', () => {
-    $('#eruv-modal').classList.remove('flex');
+
+document.getElementById('close-eruv-modal').addEventListener('click', () => {
+  document.getElementById('eruv-modal').classList.add('hidden');
 });
 
 }); // <--- הסוגר הסופי של document.addEventListener('DOMContentLoaded')
