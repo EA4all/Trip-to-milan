@@ -326,59 +326,75 @@ body {
     </section>
 
 <section id="kosher" class="my-12 scroll-mt-24">
-  <h2 class="text-3xl font-bold text-center text-brand-900 dark:text-brand-300 mb-6">המדריך הקולינרי והיהודי</h2>
-
-<div class="text-center flex flex-wrap justify-center gap-2">
-    <button id="toggle-kosher-btn" class="btn btn-primary">הצג מדריך כשרות</button>
-    <button id="toggle-shabbat-btn" class="btn btn-primary">היערכות לשבת</button>
-    <button id="scan-kosher-barcode-btn" class="btn btn-primary bg-green-600 hover:bg-green-700">
-        <i class="fa-solid fa-camera-retro mr-2"></i> צלם תווית (AI)
-    </button>
-    <button id="birkat-hamazon-btn" class="btn btn-primary bg-yellow-600 hover:bg-yellow-700">
-        <i class="fa-solid fa-bread-slice mr-2"></i> ברכת המזון
-    </button>
-    <button id="bracha-achrona-btn" class="btn btn-primary bg-blue-800 hover:bg-blue-900">
-        <i class="fa-solid fa-pray mr-2"></i> ברכה אחרונה
-    </button>
-</div>
-
-  <div id="kosher-container" class="hidden mt-6">
-    <div class="bg-white dark:bg-gray-950 p-4 sm:p-6 rounded-2xl shadow-lg">
-      <p id="kosher-subtitle" class="text-center mb-6 text-gray-600 dark:text-gray-400">ריכוז האפשרויות בשכונות Bande Nere ו‑Washington.</p>
-      <div id="kosher-filters" class="mb-4 flex flex-wrap gap-2 justify-center"></div>
-      <div id="kosher-results"></div>
-    </div>
-  </div>
-
-  <div id="shabbat-container" class="hidden mt-6">
-<div id="shabbat-prep-tool" class="bg-white dark:bg-gray-950 p-6 rounded-2xl shadow-lg">
-    <h2 id="parasha-title" class="text-xl font-bold mb-2 text-center">טוען מידע על השבת...</h2>
-    <div id="shabbat-times-container" class="space-y-2">
-        <p class="text-center">טוען זמני שבת...</p>
+    <h2 class="text-3xl font-bold text-center text-brand-900 dark:text-brand-300 mb-6">המדריך הקולינרי והיהודי</h2>
+  
+    <div class="text-center flex flex-wrap justify-center gap-2">
+        <button id="toggle-kosher-btn" class="btn btn-primary">הצג מדריך כשרות</button>
+        <button id="toggle-shabbat-btn" class="btn btn-primary">היערכות לשבת</button>
+        <button id="scan-kosher-barcode-btn" class="btn btn-primary bg-green-600 hover:bg-green-700">
+            <i class="fa-solid fa-camera-retro mr-2"></i> צלם תווית (AI)
+        </button>
+        <button id="birkat-hamazon-btn" class="btn btn-primary bg-yellow-600 hover:bg-yellow-700">
+            <i class="fa-solid fa-bread-slice mr-2"></i> ברכת המזון
+        </button>
+        <button id="bracha-achrona-btn" class="btn btn-primary bg-blue-800 hover:bg-blue-900">
+            <i class="fa-solid fa-pray mr-2"></i> ברכה אחרונה
+        </button>
     </div>
 
-    <div class="text-center mt-3">
-      <button id="eruv-btn" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition">
-        צפה במפת העירוב
-      </button>
-    </div>
-
-    <div id="eruv-modal" class="fixed inset-0 bg-black/70 hidden justify-center items-center z-50">
-      <div class="bg-white dark:bg-gray-900 rounded-2xl shadow-xl max-w-2xl w-11/12 p-4 relative">
-        <button id="close-eruv" class="absolute top-2 right-3 text-2xl font-bold text-gray-600 hover:text-red-600">×</button>
-        <h3 class="text-lg font-semibold text-center mb-2 text-gray-800 dark:text-gray-200">תחום העירוב במילאנו</h3>
-        <iframe
-          src="https://www.google.com/maps/embed?pb=!1m28!1m12!1m3!1d2795.038573338907!2d9.1888429!3d45.4632758!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!4m13!3e0!4m3!3m2!1d45.4689!2d9.2044!4m3!3m2!1d45.4562!2d9.1999!4m3!3m2!1d45.4653!2d9.2101!5e0!3m2!1she!2sil!4v1739071255000!5m2!1she!2sil"
-          width="100%"
-          height="400"
-          style="border:0; border-radius: 12px;"
-          allowfullscreen=""
-          loading="lazy">
-        </iframe>
+    <div id="kosher-container" class="hidden mt-6">
+      <div class="bg-white dark:bg-gray-950 p-4 sm:p-6 rounded-2xl shadow-lg">
+        <p id="kosher-subtitle" class="text-center mb-6 text-gray-600 dark:text-gray-400">ריכוז האפשרויות בשכונות Bande Nere ו‑Washington.</p>
+        <div id="kosher-filters" class="mb-4 flex flex-wrap gap-2 justify-center"></div>
+        <div id="kosher-results"></div>
       </div>
     </div>
-</div>
-  </div>
+  
+    <div id="shabbat-container" class="hidden mt-6">
+        <div id="shabbat-prep-tool" class="bg-white dark:bg-gray-950 p-6 rounded-2xl shadow-lg">
+            <h3 class="text-xl font-bold mb-3"><i class="fa-solid fa-star-of-david mr-2"></i>היערכות לשבת במילאנו</h3>
+            <div class="grid md:grid-cols-2 gap-x-6 gap-y-8">
+                <div>
+                    <h4 id="parasha-title" class="text-lg font-bold text-brand-800 dark:text-brand-200 mb-3">זמני השבת</h4>
+                    <div id="shabbat-times-container" class="space-y-2">
+                        <p>טוען זמני שבת עדכניים...</p>
+                    </div>
+                    <div class="text-center mt-4">
+                      <button id="eruv-map-btn" class="btn btn-primary bg-green-600 hover:bg-green-700 w-full">
+                        <i class="fa-solid fa-map-marked-alt mr-2"></i> צפה במפת העירוב
+                      </button>
+                    </div>
+                </div>
+                <div>
+                    <h4 class="text-lg font-bold text-brand-800 dark:text-brand-200 mb-3">בתי חב"ד וקהילות</h4>
+                    <ul class="space-y-4">
+                        <li class="flex items-start gap-3">
+                            <i class="fa-solid fa-torah mt-1 text-brand-600"></i>
+                            <div>
+                                <p class="font-semibold">בית חב"ד המרכזי - הרב סנדר פרידמן</p>
+                                <p class="text-sm text-gray-600 dark:text-gray-400">כתובת: Via Ciro Menotti, 1, 20129 Milano</p>
+                                <div class="flex gap-2 mt-1">
+                                    <a href="tel:+39-02-7010-1774" class="btn btn-ghost btn-sm"><i class="fa fa-phone"></i> חיוג</a>
+                                    <a href="https://www.google.com/maps/search/?api=1&query=Chabad+Via+Ciro+Menotti,1,Milano" target="_blank" class="btn btn-ghost btn-sm"><i class="fa fa-map-location-dot"></i> ניווט</a>
+                                </div>
+                            </div>
+                        </li>
+                        <li class="flex items-start gap-3">
+                            <i class="fa-solid fa-utensils mt-1 text-brand-600"></i>
+                            <div>
+                                <p class="font-semibold">בית חב"ד "בית הלל" (סעודות שבת) - הרב לוי חזן</p>
+                                <p class="text-sm text-gray-600 dark:text-gray-400">כתובת: Via Tiziano, 18, 20145 Milano</p>
+                                 <div class="flex gap-2 mt-1">
+                                    <a href="tel:+39-328-355-1559" class="btn btn-ghost btn-sm"><i class="fa fa-phone"></i> חיוג</a>
+                                    <a href="https://www.google.com/maps/search/?api=1&query=Chabad+Via+Tiziano,18,Milano" target="_blank" class="btn btn-ghost btn-sm"><i class="fa fa-map-location-dot"></i> ניווט</a>
+                                </div>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
 </section>
 
     <section id="tools" class="my-12 scroll-mt-24">
@@ -645,7 +661,17 @@ body {
             <div id="gallery-grid" class="grid grid-cols-2 sm:grid-cols-3 gap-4"></div>
         </div>
     </section>
-
+<div id="eruv-modal" class="modal-backdrop">
+  <div class="modal max-w-3xl w-11/12">
+    <div class="p-4 border-b flex justify-between items-center">
+        <h3 class="text-lg font-bold">תחום העירוב במילאנו</h3>
+        <button id="close-eruv-modal" class="text-2xl">×</button>
+    </div>
+    <div class="p-1 md:p-2">
+        <div id="eruv-leaflet-map" style="height: 60vh; border-radius: 12px;"></div>
+    </div>
+  </div>
+</div>
   </main>
   <div id="lightbox-modal" class="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-[200]" style="display: none;">
     <img id="lightbox-image" src="" alt="תצוגה מוגדלת" class="max-w-[95vw] max-h-[95vh] rounded-lg shadow-2xl">
@@ -1855,6 +1881,52 @@ if (activity.type === 'attraction') {
     console.error("Error fetching Shabbat times:", e);
     container.innerHTML = '<p>שגיאה בטעינת זמני שבת.</p>';
   }
+}
+
+    let eruvMapInstance = null;
+function initEruvMap() {
+    // מונע יצירה מחדש של המפה אם היא כבר קיימת
+    if (eruvMapInstance) {
+        // ממקד מחדש את המפה במקרה שהמשתמש זז
+        eruvMapInstance.fitBounds(eruvPolygon.getBounds());
+        return;
+    }
+
+    // =================================================================
+    // כאן נמצאים נתוני התיחום של העירוב שהיו אצלך במקור
+    // אלו הקואורדינטות המקוריות שלך, מסודרות למערך של Leaflet
+    // =================================================================
+    const eruvCoordinates = [
+        [45.47461, 9.17647], [45.47352, 9.17622], [45.47289, 9.17551], [45.47214, 9.17513],
+        [45.47141, 9.17482], [45.4705, 9.17462], [45.46973, 9.17448], [45.46879, 9.17431],
+        [45.46788, 9.17424], [45.4668, 9.17428], [45.466, 9.17436], [45.46497, 9.17463],
+        [45.4643, 9.17486], [45.46399, 9.1751], [45.46366, 9.17556], [45.46342, 9.17621],
+        [45.46317, 9.17711], [45.46294, 9.1782], [45.46282, 9.17935], [45.46281, 9.18055],
+        [45.46292, 9.18182], [45.4631, 9.18301], [45.46342, 9.1843], [45.46377, 9.18552],
+        [45.46422, 9.18667], [45.46493, 9.18788], [45.46569, 9.18873], [45.4664, 9.1893],
+        [45.46704, 9.18956], [45.46777, 9.18956], [45.4687, 9.18949], [45.46961, 9.18951],
+        [45.4704, 9.18962], [45.47116, 9.18991], [45.47181, 9.19036], [45.47242, 9.19084],
+        [45.47306, 9.19124], [45.47353, 9.19143], [45.47402, 9.19156], [45.47479, 9.19145],
+        [45.47547, 9.19102], [45.47608, 9.19036], [45.47669, 9.18956], [45.47714, 9.18875],
+        [45.47743, 9.18788], [45.47754, 9.1868], [45.47748, 9.18567], [45.47719, 9.18449],
+        [45.47672, 9.1832], [45.47614, 9.18187], [45.47551, 9.18042], [45.47461, 9.17647]
+    ];
+
+    eruvMapInstance = L.map('eruv-leaflet-map').setView([45.468, 9.185], 15); // Center of the Eruv
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors'
+    }).addTo(eruvMapInstance);
+
+    const eruvPolygon = L.polygon(eruvCoordinates, {
+        color: '#3b82f6', // צבע כחול
+        weight: 3,
+        opacity: 0.8,
+        fillOpacity: 0.1
+    }).addTo(eruvMapInstance);
+
+    // ממקד את המפה כדי להציג את כל העירוב
+    eruvMapInstance.fitBounds(eruvPolygon.getBounds());
 }
 
 // === פתיחה/סגירה של חלון המפה ===
@@ -4207,7 +4279,24 @@ $('#toggle-quick-search-btn').addEventListener('click', e => {
     const isHidden = container.classList.toggle('hidden');
     e.target.textContent = isHidden ? 'הצג' : 'הסתר';
 });
-
+// מאזינים לחלון הקופץ של מפת העירוב
+$('#eruv-map-btn').addEventListener('click', () => {
+    $('#eruv-modal').classList.add('flex');
+});
+$('#close-eruv-modal').addEventListener('click', () => {
+    $('#eruv-modal').classList.remove('flex');
+});
+  // מאזינים לחלון הקופץ של מפת העירוב
+$('#eruv-map-btn').addEventListener('click', () => {
+    $('#eruv-modal').classList.add('flex');
+    // מאתחל את המפה רק לאחר שהחלון נראה
+    setTimeout(() => {
+        initEruvMap();
+    }, 100); // השהייה קטנה כדי להבטיח שה-div של המפה קיים
+});
+$('#close-eruv-modal').addEventListener('click', () => {
+    $('#eruv-modal').classList.remove('flex');
+});
 
 }); // <--- הסוגר הסופי של document.addEventListener('DOMContentLoaded')
 //------------
