@@ -2709,7 +2709,6 @@ async function startReceiptScanCamera() {
       cameraManager.stop(); // <-- הוסף שורה זו
     $('#camera-title').textContent = 'סריקת קבלה';
     $('#capture-btn').style.display = 'flex';
-    $('#upload-receipt-btn').style.display = 'flex';
     $('#barcode-status-display').style.display = 'none';
     await cameraManager.open('receipt');
 }
