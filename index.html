@@ -354,17 +354,17 @@ body {
         <div id="shabbat-prep-tool" class="bg-white dark:bg-gray-950 p-6 rounded-2xl shadow-lg">
             <h3 class="text-xl font-bold mb-3"><i class="fa-solid fa-star-of-david mr-2"></i>היערכות לשבת במילאנו</h3>
             <div class="grid md:grid-cols-2 gap-x-6 gap-y-8">
-                <div>
-                    <h4 id="parasha-title" class="text-lg font-bold text-brand-800 dark:text-brand-200 mb-3">זמני השבת</h4>
-                    <div id="shabbat-times-container" class="space-y-2">
-                        <p>טוען זמני שבת עדכניים...</p>
-                    </div>
-                    <div class="text-center mt-4">
-                      <button id="eruv-map-btn" class="btn btn-primary bg-green-600 hover:bg-green-700 w-full">
-                        <i class="fa-solid fa-map-marked-alt mr-2"></i> צפה במפת העירוב
-                      </button>
-                    </div>
-                </div>
+<div>
+    <h4 id="parasha-title" class="text-lg font-bold text-brand-800 dark:text-brand-200 mb-3">זמני השבת</h4>
+    <div id="shabbat-times-container" class="space-y-2">
+        <p>טוען זמני שבת עדכניים...</p>
+    </div>
+    <div class="text-center mt-4">
+      <button id="eruv-map-btn" class="btn btn-primary bg-green-600 hover:bg-green-700 w-full">
+        <i class="fa-solid fa-map-marked-alt mr-2"></i> צפה במפת העירוב
+      </button>
+    </div>
+</div>
                 <div>
                     <h4 class="text-lg font-bold text-brand-800 dark:text-brand-200 mb-3">בתי חב"ד וקהילות</h4>
                     <ul class="space-y-4">
@@ -1824,48 +1824,47 @@ if (activity.type === 'attraction') {
 async function fetchShabbatTimes() {
     const container = document.getElementById('shabbat-times-container');
     const parashaTitle = document.getElementById('parasha-title');
-    if (!container || !parashaTitle) {
-        console.error("Shabbat DOM elements not found.");
-        return;
-    }
+    if (!container || !parashaTitle) return;
 
-    // הצגת הודעת טעינה ראשונית
     parashaTitle.textContent = 'טוען מידע על השבת...';
     container.innerHTML = '<p class="text-center">מאתר זמנים עדכניים...</p>';
 
     try {
-        // שימוש בכתובת API פשוטה וישירה יותר שמחזירה תמיד את השבת הקרובה
-        const response = await fetch('https://www.hebcal.com/shabbat?cfg=json&geonameid=3173435&lg=h&a=on');
-        if (!response.ok) {
-            throw new Error(`שגיאת רשת: ${response.status}`);
-        }
+        const now = new Date();
+        const endDate = new Date(now.getTime() + 10 * 24 * 60 * 60 * 1000); // נביא מידע ל-10 הימים הקרובים
+
+        const response = await fetch(`https://www.hebcal.com/hebcal?v=1&cfg=json&maj=on&min=on&nx=on&mf=on&ss=on&lg=h&geonameid=3173435&start=${now.toISOString().split('T')[0]}&end=${endDate.toISOString().split('T')[0]}`);
         const data = await response.json();
 
-        if (!data || !data.items) {
-            throw new Error("תשובת API לא תקינה מ-Hebcal");
-        }
+        if (!data || !data.items) throw new Error("תשובת API לא תקינה");
 
-        // חיפוש פריטי המידע החיוניים
-        const candleLightingItem = data.items.find(item => item.category === 'candles');
+        const formatTime = (iso) => new Date(iso).toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' });
+        const formatDate = (iso) => new Date(iso).toLocaleDateString('he-IL', { weekday: 'long', day: 'numeric', month: 'long' });
+
+        // --- מציאת זמני השבת הקרובה ---
+        const candleLightingItem = data.items.find(item => item.category === 'candles' && new Date(item.date).getDay() === 5); // 5 = Friday
         const havdalahItem = data.items.find(item => item.category === 'havdalah');
-        const parashaItem = data.items.find(item => item.category === 'parashat');
-        const holidayItem = data.items.find(item => item.yomtov === true || (item.category === 'holiday' && item.title.toLowerCase().includes('shabbat')));
-
-        const location = data.location ? `${data.location.city}, ${data.location.country}` : "מילאנו, איטליה";
-        const formatTime = (isoDate) => new Date(isoDate).toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' });
 
         if (candleLightingItem && havdalahItem) {
-            // קביעת הכותרת: עדיפות לשם של חג, אחר כך פרשה, ולבסוף כותרת כללית
             let shabbatTitle = "";
-            if (holidayItem) {
-                shabbatTitle = holidayItem.hebrew;
-            } else if (parashaItem) {
-                shabbatTitle = `פרשת ${parashaItem.hebrew}`;
-            }
+            const shabbatDate = new Date(candleLightingItem.date);
+            shabbatDate.setDate(shabbatDate.getDate() + 1);
+            const shabbatDayStr = shabbatDate.toISOString().split('T')[0];
 
-            parashaTitle.textContent = shabbatTitle ? `שבת ${shabbatTitle}` : `זמני השבת (${location})`;
+            const eventOnShabbat = data.items.find(item => item.date.startsWith(shabbatDayStr) && (item.yomtov || item.category === 'parashat' || item.title.toLowerCase().includes('shabbat')));
+
+            if (eventOnShabbat) {
+                shabbatTitle = eventOnShabbat.hebrew;
+                if (eventOnShabbat.category === 'parashat' && !shabbatTitle.includes('פרשת')) {
+                    shabbatTitle = `פרשת ${shabbatTitle}`;
+                }
+            }
+            parashaTitle.textContent = shabbatTitle ? `שבת ${shabbatTitle}` : 'זמני השבת';
 
             container.innerHTML = `
+                <div class="text-center mb-2 text-gray-700 dark:text-gray-200">
+                  <div class="text-sm">${formatDate(candleLightingItem.date)}</div>
+                </div>
                 <div class="flex justify-between p-2 bg-gray-50 dark:bg-gray-800 rounded-lg">
                     <span class="font-semibold">🕯️ הדלקת נרות:</span>
                     <span class="font-bold">${formatTime(candleLightingItem.date)}</span>
@@ -1873,15 +1872,37 @@ async function fetchShabbatTimes() {
                 <div class="flex justify-between p-2 bg-gray-50 dark:bg-gray-800 rounded-lg mt-1">
                     <span class="font-semibold">🍷 צאת השבת:</span>
                     <span class="font-bold">${formatTime(havdalahItem.date)}</span>
+                </div>`;
+        } else {
+            parashaTitle.textContent = "זמני השבת";
+            container.innerHTML = '<p>לא נמצאו זמני שבת קרובים.</p>';
+        }
+
+        // --- חלק חדש: בדיקת חגים באמצע השבוע ---
+        const midweekHolidayCandles = data.items.find(item => 
+            item.category === 'candles' && 
+            new Date(item.date) > now &&
+            new Date(item.date).getDay() !== 5 // לא יום שישי
+        );
+
+        if (midweekHolidayCandles && midweekHolidayCandles.memo) {
+            const holidayInfo = `
+                <div class="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+                    <h4 class="text-lg font-bold text-brand-800 dark:text-brand-200 mb-2">חג קרוב באמצע השבוע</h4>
+                    <div class="flex justify-between p-2 bg-blue-50 dark:bg-blue-900/30 rounded-lg">
+                        <span class="font-semibold">${midweekHolidayCandles.hebrew.replace('הדלקת נרות ', '')}:</span>
+                        <span class="font-bold">${formatTime(midweekHolidayCandles.date)}</span>
+                    </div>
                 </div>
             `;
-        } else {
-            throw new Error("לא נמצאו זמני הדלקת נרות או הבדלה בתשובה.");
+            // הוספת המידע על החג מתחת לזמני השבת
+            container.insertAdjacentHTML('afterend', holidayInfo);
         }
+
     } catch (e) {
-        console.error("Error fetching Shabbat times:", e);
+        console.error("Error fetching Shabbat/Holiday times:", e);
         parashaTitle.textContent = 'שגיאה';
-        container.innerHTML = `<p class="text-center text-red-500">שגיאה בטעינת זמני שבת. בדוק את חיבור האינטרנט.</p>`;
+        container.innerHTML = `<p class="text-center text-red-500">שגיאה בטעינת זמנים.</p>`;
     }
 }
     let eruvMapInstance = null;
