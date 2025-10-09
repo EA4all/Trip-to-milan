@@ -440,7 +440,7 @@ body {
     </div>
 </div>
 
-<div class="bg-white dark:bg-gray-950 p-6 rounded-2xl shadow-lg">
+<div id="utility-finder-tool" class="bg-white dark:bg-gray-950 p-6 rounded-2xl shadow-lg">
     <div class="flex justify-between items-center">
         <h3 class="text-xl font-bold"><i class="fa-solid fa-map-signs mr-2"></i>מצא מקומות קרובים</h3>
         <button id="toggle-quick-search-btn" class="btn btn-primary btn-sm">הצג</button>
@@ -1637,19 +1637,26 @@ function renderAllPlans(planData) {
 }
 // ========================= התחלה: פונקציה ליצירת תפריטי ניווט מהיר =========================
 function renderMobileNavSubmenus() {
+// מצא והחלף את כל הפונקציה הזו
+function renderMobileNavSubmenus() {
     const toolsContainer = $('#tools-submenu-links');
     if (toolsContainer) {
         let toolsHtml = '<a href="#overview" class="p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 col-span-3 font-bold text-brand-600">חזור לסקירה</a>';
+
+        // לולאה שבונה אוטומטית את רוב כפתורי הכלים
         $$('#tools > div > div').forEach(toolElement => {
             const toolId = toolElement.id;
             const toolTitleElement = toolElement.querySelector('h3');
             if (toolId && toolTitleElement) {
                 const toolTitle = toolTitleElement.textContent || 'כלי';
-                // לוקחים רק את הטקסט, בלי האייקון
                 const cleanTitle = toolTitleElement.childNodes.length > 1 ? toolTitleElement.lastChild.textContent.trim() : toolTitle.trim();
                 toolsHtml += `<a href="#${toolId}" class="p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700">${cleanTitle}</a>`;
             }
         });
+
+        // 👇🏽 השורה החדשה שהוספנו באופן ידני 👇🏽
+        toolsHtml += `<a href="#documents-and-gallery" class="p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700">מסמכים וגלריה</a>`;
+
         toolsContainer.innerHTML = toolsHtml;
     }
 }
