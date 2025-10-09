@@ -325,28 +325,66 @@ body {
         </div>
     </section>
 
-    <section id="kosher" class="my-12 scroll-mt-24">
-      <h2 class="text-3xl font-bold text-center text-brand-900 dark:text-brand-300 mb-6">המדריך הקולינרי הכשר</h2>
-<div class="text-center flex flex-wrap justify-center gap-2">
-    <button id="toggle-kosher-btn" class="btn btn-primary">הצג מדריך כשרות</button>
-<button id="scan-kosher-barcode-btn" class="btn btn-primary bg-green-600 hover:bg-green-700">
-    <i class="fa-solid fa-camera-retro mr-2"></i> צלם תווית (AI)
-</button>
-  <button id="birkat-hamazon-btn" class="btn btn-primary bg-yellow-600 hover:bg-yellow-700">
-    <i class="fa-solid fa-bread-slice mr-2"></i> ברכת המזון
-</button>
-  <button id="bracha-achrona-btn" class="btn btn-primary bg-blue-800 hover:bg-blue-900">
-    <i class="fa-solid fa-pray mr-2"></i> ברכה אחרונה
-</button>
-</div>
-      <div id="kosher-container" class="hidden mt-6">
-        <div class="bg-white dark:bg-gray-950 p-4 sm:p-6 rounded-2xl shadow-lg">
-          <p id="kosher-subtitle" class="text-center mb-6 text-gray-600 dark:text-gray-400">ריכוז האפשרויות בשכונות Bande Nere ו‑Washington.</p>
-          <div id="kosher-filters" class="mb-4 flex flex-wrap gap-2 justify-center"></div>
-          <div id="kosher-results"></div>
+<section id="kosher" class="my-12 scroll-mt-24">
+  <h2 class="text-3xl font-bold text-center text-brand-900 dark:text-brand-300 mb-6">המדריך הקולינרי והיהודי</h2>
+
+  <div class="text-center flex flex-wrap justify-center gap-2">
+      <button id="toggle-kosher-btn" class="btn btn-primary">הצג מדריך כשרות</button>
+      <button id="toggle-shabbat-btn" class="btn btn-primary">היערכות לשבת</button>
+      <button id="scan-kosher-barcode-btn" class="btn btn-primary bg-green-600 hover:bg-green-700">
+          <i class="fa-solid fa-camera-retro mr-2"></i> צלם תווית (AI)
+      </button>
+  </div>
+
+  <div id="kosher-container" class="hidden mt-6">
+    <div class="bg-white dark:bg-gray-950 p-4 sm:p-6 rounded-2xl shadow-lg">
+      <p id="kosher-subtitle" class="text-center mb-6 text-gray-600 dark:text-gray-400">ריכוז האפשרויות בשכונות Bande Nere ו‑Washington.</p>
+      <div id="kosher-filters" class="mb-4 flex flex-wrap gap-2 justify-center"></div>
+      <div id="kosher-results"></div>
+    </div>
+  </div>
+
+  <div id="shabbat-container" class="hidden mt-6">
+    <div id="shabbat-prep-tool" class="bg-white dark:bg-gray-950 p-6 rounded-2xl shadow-lg">
+        <h3 class="text-xl font-bold mb-3"><i class="fa-solid fa-star-of-david mr-2"></i>היערכות לשבת במילאנו</h3>
+        <div class="grid md:grid-cols-2 gap-6">
+            <div>
+                <h4 id="parasha-title" class="text-lg font-bold text-brand-800 dark:text-brand-200 mb-3">זמני השבת</h4>
+                <div id="shabbat-times-container" class="space-y-2">
+                    <p>טוען זמני שבת עדכניים...</p>
+                </div>
+            </div>
+            <div>
+                <h4 class="text-lg font-bold text-brand-800 dark:text-brand-200 mb-3">בתי חב"ד וקהילות</h4>
+                <ul class="space-y-4">
+                    <li class="flex items-start gap-3">
+                        <i class="fa-solid fa-torah mt-1 text-brand-600"></i>
+                        <div>
+                            <p class="font-semibold">בית חב"ד המרכזי - הרב סנדר פרידמן</p>
+                            <p class="text-sm text-gray-600 dark:text-gray-400">כתובת: Via Ciro Menotti, 1, 20129 Milano</p>
+                            <div class="flex gap-2 mt-1">
+                                <a href="tel:+39-02-7010-1774" class="btn btn-ghost btn-sm"><i class="fa fa-phone"></i> חיוג</a>
+                                <a href="https://www.google.com/maps/search/?api=1&query=Chabad+Via+Ciro+Menotti,1,Milano" target="_blank" class="btn btn-ghost btn-sm"><i class="fa fa-map-location-dot"></i> ניווט</a>
+                            </div>
+                        </div>
+                    </li>
+                    <li class="flex items-start gap-3">
+                        <i class="fa-solid fa-utensils mt-1 text-brand-600"></i>
+                        <div>
+                            <p class="font-semibold">בית חב"ד "בית הלל" (סעודות שבת) - הרב לוי חזן</p>
+                            <p class="text-sm text-gray-600 dark:text-gray-400">כתובת: Via Tiziano, 18, 20145 Milano</p>
+                             <div class="flex gap-2 mt-1">
+                                <a href="tel:+39-328-355-1559" class="btn btn-ghost btn-sm"><i class="fa fa-phone"></i> חיוג</a>
+                                <a href="https://www.google.com/maps/search/?api=1&query=Chabad+Via+Tiziano,18,Milano" target="_blank" class="btn btn-ghost btn-sm"><i class="fa fa-map-location-dot"></i> ניווט</a>
+                            </div>
+                        </div>
+                    </li>
+                </ul>
+            </div>
         </div>
-      </div>
-    </section>
+    </div>
+  </div>
+</section>
 
     <section id="tools" class="my-12 scroll-mt-24">
         <h2 class="text-3xl font-bold text-center text-brand-900 dark:text-brand-300 mb-6">כלים ומידע שימושי</h2>
@@ -359,45 +397,7 @@ body {
         </div>
     </details>
 </div>
-          <div id="shabbat-prep-tool" class="bg-white dark:bg-gray-950 p-6 rounded-2xl shadow-lg md:col-span-2 lg:col-span-3">
-    <h3 class="text-xl font-bold mb-3"><i class="fa-solid fa-star-of-david mr-2"></i>היערכות לשבת במילאנו</h3>
-    <div class="grid md:grid-cols-2 gap-6">
-        <div>
-            <h4 class="text-lg font-bold text-brand-800 dark:text-brand-200 mb-3">זמני השבת (פרשת נצבים-וילך)</h4>
-            <div id="shabbat-times-container" class="space-y-2">
-                <p>טוען זמני שבת עדכניים...</p>
-            </div>
-        </div>
 
-        <div>
-            <h4 class="text-lg font-bold text-brand-800 dark:text-brand-200 mb-3">בתי חב"ד וקהילות</h4>
-            <ul class="space-y-4">
-                <li class="flex items-start gap-3">
-                    <i class="fa-solid fa-torah mt-1 text-brand-600"></i>
-                    <div>
-                        <p class="font-semibold">בית חב"ד המרכזי - הרב סנדר פרידמן</p>
-                        <p class="text-sm text-gray-600 dark:text-gray-400">כתובת: Via Ciro Menotti, 1, 20129 Milano</p>
-                        <div class="flex gap-2 mt-1">
-                            <a href="tel:+39-02-7010-1774" class="btn btn-ghost btn-sm"><i class="fa fa-phone"></i> חיוג</a>
-                            <a href="https://www.google.com/maps/search/?api=1&query=Chabad+Via+Ciro+Menotti,1,Milano" target="_blank" class="btn btn-ghost btn-sm"><i class="fa fa-map-location-dot"></i> ניווט</a>
-                        </div>
-                    </div>
-                </li>
-                <li class="flex items-start gap-3">
-                    <i class="fa-solid fa-utensils mt-1 text-brand-600"></i>
-                    <div>
-                        <p class="font-semibold">בית חב"ד "בית הלל" (סעודות שבת) - הרב לוי חזן</p>
-                        <p class="text-sm text-gray-600 dark:text-gray-400">כתובת: Via Tiziano, 18, 20145 Milano</p>
-                         <div class="flex gap-2 mt-1">
-                            <a href="tel:+39-328-355-1559" class="btn btn-ghost btn-sm"><i class="fa fa-phone"></i> חיוג</a>
-                            <a href="https://www.google.com/maps/search/?api=1&query=Chabad+Via+Tiziano,18,Milano" target="_blank" class="btn btn-ghost btn-sm"><i class="fa fa-map-location-dot"></i> ניווט</a>
-                        </div>
-                    </div>
-                </li>
-            </ul>
-        </div>
-    </div>
-</div>
 <div id="metro-helper-tool" class="bg-white dark:bg-gray-950 p-6 rounded-2xl shadow-lg md:col-span-2 lg:col-span-3">
     <h3 class="text-xl font-bold mb-3"><i class="fa-solid fa-train-subway mr-2"></i>עוזר קווי מטרו</h3>
     <div class="grid md:grid-cols-3 gap-4">
@@ -434,12 +434,15 @@ body {
     </div>
 </div>
 
-<div id="utility-finder-tool" class="bg-white dark:bg-gray-950 p-6 rounded-2xl shadow-lg">
-    <h3 class="text-xl font-bold mb-3"><i class="fa-solid fa-map-signs mr-2"></i>חיפוש מהיר (פתוח עכשיו)</h3>
-    <div class="grid grid-cols-1 gap-2">
-      <button class="btn btn-primary" onclick="findNearbyAttractions()">
-    <i class="fa-solid fa-star w-4"></i> מצא אטרקציות קרובות
-</button>
+<div class="bg-white dark:bg-gray-950 p-6 rounded-2xl shadow-lg">
+    <div class="flex justify-between items-center">
+        <h3 class="text-xl font-bold"><i class="fa-solid fa-map-signs mr-2"></i>חיפוש מהיר</h3>
+        <button id="toggle-quick-search-btn" class="btn btn-primary btn-sm">הצג</button>
+    </div>
+    <div id="quick-search-container" class="hidden mt-4 grid grid-cols-1 gap-2">
+        <button class="btn btn-primary" onclick="findNearbyAttractions()">
+            <i class="fa-solid fa-star w-4"></i> מצא אטרקציות קרובות (פתוח עכשיו)
+        </button>
         <button class="btn btn-primary" onclick="window.findUtility('bagno pubblico', 'שירותים ציבוריים')">
             <i class="fa-solid fa-restroom w-4"></i> מצא שירותים
         </button>
@@ -452,12 +455,12 @@ body {
         <button class="btn btn-primary" onclick="window.findUtility('bureau de change', 'המרת כספים')">
             <i class="fa-solid fa-coins w-4"></i> מצא Change
         </button>
-      <button class="btn btn-primary" onclick="window.findUtility('sinagoga', 'בתי כנסת')">
+        <button class="btn btn-primary" onclick="window.findUtility('sinagoga', 'בתי כנסת')">
            <i class="fa-solid fa-synagogue w-4"></i> מצא בית כנסת
         </button>
-      <button class="btn btn-primary" onclick="window.findUtility('mikvah', 'מקווה')">
-    <i class="fa-solid fa-water w-4"></i> מצא מקווה
-</button>
+        <button class="btn btn-primary" onclick="window.findUtility('mikvah', 'מקווה')">
+            <i class="fa-solid fa-water w-4"></i> מצא מקווה
+        </button>
     </div>
 </div>
             
@@ -824,37 +827,41 @@ body {
         </div>
     </div>
 </div>
-
-
-
-  <div id="floating-nav-container" class="md:hidden fixed bottom-0 left-0 right-0 z-40">
-      <div id="plan-submenu" class="floating-submenu fixed bottom-[68px] left-0 right-0 bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm p-2 rounded-t-2xl">
-          <div class="grid grid-cols-3 gap-2 text-center text-sm" id="plan-submenu-links">
-              </div>
-      </div>
-<div id="tools-submenu" class="floating-submenu fixed bottom-[68px] left-0 right-0 bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm p-2 rounded-t-2xl">
-    <div id="tools-submenu-links" class="grid grid-cols-3 gap-2 text-center text-sm">
+<div id="floating-nav-container" class="md:hidden fixed bottom-0 left-0 right-0 z-40">
+    <div id="plan-submenu" class="floating-submenu fixed bottom-[68px] left-0 right-0 bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm p-2 rounded-t-2xl">
+        <div class="grid grid-cols-3 gap-2 text-center text-sm" id="plan-submenu-links"></div>
+    </div>
+    <div id="kosher-submenu" class="floating-submenu fixed bottom-[68px] left-0 right-0 bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm p-2 rounded-t-2xl">
+        <div id="kosher-submenu-links" class="grid grid-cols-3 gap-2 text-center text-sm">
+             <a href="#kosher" data-action="toggle-kosher" class="p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700">מדריך כשרות</a>
+             <a href="#kosher" data-action="toggle-shabbat" class="p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700">היערכות לשבת</a>
+             <a href="#kosher" data-action="scan-kosher" class="p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 col-span-3 font-bold text-brand-600">צלם תווית (AI)</a>
         </div>
+    </div>
+    <div id="tools-submenu" class="floating-submenu fixed bottom-[68px] left-0 right-0 bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm p-2 rounded-t-2xl">
+        <div id="tools-submenu-links" class="grid grid-cols-3 gap-2 text-center text-sm"></div>
+    </div>
+
+    <nav id="floating-nav" class="bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm shadow-[0_-2px_10px_rgba(0,0,0,0.1)] dark:shadow-[0_-2px_10px_rgba(0,0,0,0.3)] rounded-t-2xl">
+      <div class="flex justify-around p-2 text-gray-700 dark:text-gray-300">
+          <button id="floating-plan-btn" class="flex flex-col items-center text-xs gap-1 p-1 hover:text-brand-600 w-1/4">
+              <i class="fa-solid fa-calendar-days fa-lg"></i>
+              <span>תוכנית</span>
+          </button>
+          <button id="floating-kosher-btn" class="flex flex-col items-center text-xs gap-1 p-1 hover:text-brand-600 w-1/4">
+              <i class="fa-solid fa-utensils fa-lg"></i>
+              <span>כשר</span>
+          </button>
+          <button id="floating-tools-btn" class="flex flex-col items-center text-xs gap-1 p-1 hover:text-brand-600 w-1/4">
+              <i class="fa-solid fa-screwdriver-wrench fa-lg"></i>
+              <span>כלים</span>
+          </button>
+      </div>
+    </nav>
 </div>
 
-      <nav id="floating-nav" class="bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm shadow-[0_-2px_10px_rgba(0,0,0,0.1)] dark:shadow-[0_-2px_10px_rgba(0,0,0,0.3)] rounded-t-2xl">
-        <div class="flex justify-around p-2 text-gray-700 dark:text-gray-300">
-            <button id="floating-plan-btn" class="flex flex-col items-center text-xs gap-1 p-1 hover:text-brand-600 w-1/4">
-                <i class="fa-solid fa-calendar-days fa-lg"></i>
-                <span>תוכנית</span>
-            </button>
-            <a href="#kosher" class="flex flex-col items-center text-xs gap-1 p-1 hover:text-brand-600 w-1/4">
-                <i class="fa-solid fa-utensils fa-lg"></i>
-                <span>כשר</span>
-            </a>
-            <button id="floating-tools-btn" class="flex flex-col items-center text-xs gap-1 p-1 hover:text-brand-600 w-1/4">
-                <i class="fa-solid fa-screwdriver-wrench fa-lg"></i>
-                <span>כלים</span>
-            </button>
-        </div>
-      </nav>
-  </div>
-  
+
+
   
   <script type="module">
 
@@ -1787,23 +1794,47 @@ if (activity.type === 'attraction') {
         `;
     }
 
-    async function fetchShabbatTimes() {
+async function fetchShabbatTimes() {
     const container = document.getElementById('shabbat-times-container');
-    if (!container) return;
+    const parashaTitle = document.getElementById('parasha-title');
+    if (!container || !parashaTitle) return;
 
     try {
-        // Hebcal API call for Milan, weekly Torah portion included
-        const response = await fetch('https://www.hebcal.com/shabbat?cfg=json&geonameid=3173435&m=50');
+        const now = new Date();
+        const year = now.getFullYear();
+        const month = now.getMonth() + 1; // getMonth is 0-indexed
+
+        // Fetching calendar for the current month to get all relevant events
+        const response = await fetch(`https://www.hebcal.com/hebcal?v=1&cfg=json&maj=on&min=on&nx=on&mf=on&ss=on&lg=h&geonameid=3173435&month=${month}&year=${year}`);
         const data = await response.json();
         
-        const candleLightingItem = data.items.find(item => item.category === 'candles');
-        const havdalahItem = data.items.find(item => item.category === 'havdalah');
-        const parashaItem = data.items.find(item => item.category === 'parashat');
-        
+        // Find the next upcoming Shabbat events
+        let candleLightingItem = null;
+        let havdalahItem = null;
+        let parashaItem = data.items.find(item => item.category === 'parashat' && new Date(item.date) >= now);
+
+        for (const item of data.items) {
+            const itemDate = new Date(item.date);
+            if (item.category === 'candles' && itemDate >= now && !candleLightingItem) {
+                candleLightingItem = item;
+            }
+            if (item.category === 'havdalah' && itemDate >= now && !havdalahItem) {
+                havdalahItem = item;
+            }
+            if (candleLightingItem && havdalahItem) break;
+        }
+
+        // Fallback for Parasha if we are in the middle of the week
+        if (!parashaItem) {
+             const lastParasha = data.items.filter(item => item.category === 'parashat').pop();
+             if(lastParasha) parashaItem = lastParasha;
+        }
+
         const formatDate = (isoDate) => new Date(isoDate).toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' });
 
-        if (candleLightingItem && havdalahItem && parashaItem) {
-            document.querySelector('#shabbat-prep-tool h4').textContent = `זמני השבת (פרשת ${parashaItem.hebrew})`;
+        if (candleLightingItem && havdalahItem) {
+            const parashaText = parashaItem ? ` (פרשת ${parashaItem.hebrew})` : '';
+            parashaTitle.textContent = `זמני השבת${parashaText}`;
             
             container.innerHTML = `
                 <div class="flex justify-between p-2 bg-gray-50 dark:bg-gray-800 rounded-lg">
@@ -1816,7 +1847,7 @@ if (activity.type === 'attraction') {
                 </div>
             `;
         } else {
-            container.innerHTML = '<p>לא נמצאו זמני שבת עדכניים.</p>';
+            container.innerHTML = '<p>לא נמצאו זמני שבת קרובים החודש.</p>';
         }
     } catch (e) {
         console.error("Error fetching Shabbat times:", e);
@@ -3883,11 +3914,19 @@ if (cachedData) {
         e.target.textContent = isHidden ? 'הצג הצעות נוספות' : 'הסתר הצעות';
     });
 
-    $('#toggle-kosher-btn').addEventListener('click', e => {
-        const container = $('#kosher-container');
-        const isHidden = container.classList.toggle('hidden');
-        e.target.textContent = isHidden ? 'הצג מדריך כשרות' : 'הסתר מדריך כשרות';
-    });
+$('#toggle-kosher-btn').addEventListener('click', e => {
+    const container = $('#kosher-container');
+    const isHidden = container.classList.toggle('hidden');
+    e.target.textContent = isHidden ? 'הצג מדריך כשרות' : 'הסתר מדריך כשרות';
+    if (!isHidden) $('#shabbat-container').classList.add('hidden'); // סגור את השני
+});
+
+$('#toggle-shabbat-btn').addEventListener('click', e => {
+    const container = $('#shabbat-container');
+    const isHidden = container.classList.toggle('hidden');
+    e.target.textContent = isHidden ? 'היערכות לשבת' : 'הסתר היערכות לשבת';
+    if (!isHidden) $('#kosher-container').classList.add('hidden'); // סגור את השני
+});
 
     // --- מאזיני תרגום ומטבע ---
     $('#eur-input').addEventListener('input', e => {
@@ -4008,6 +4047,24 @@ if (cachedData) {
     const toolsBtn = $('#floating-tools-btn');
     const planSubmenu = $('#plan-submenu');
     const toolsSubmenu = $('#tools-submenu');
+    const kosherBtn = $('#floating-kosher-btn');
+    const kosherSubmenu = $('#kosher-submenu');
+    kosherBtn.addEventListener('click', (e) => { e.stopPropagation(); toggleSubmenu(kosherSubmenu, kosherBtn); });
+
+// הפעלת הכפתורים בתוך תת-התפריט של כשרות
+$$('#kosher-submenu-links a').forEach(link => {
+    link.addEventListener('click', (e) => {
+        const action = e.currentTarget.dataset.action;
+        if (action === 'toggle-kosher') {
+            $('#toggle-kosher-btn').click();
+        } else if (action === 'toggle-shabbat') {
+            $('#toggle-shabbat-btn').click();
+        } else if (action === 'scan-kosher') {
+            $('#scan-kosher-barcode-btn').click();
+        }
+        toggleSubmenu(null, null); // סגור תפריט אחרי לחיצה
+    });
+});
     function toggleSubmenu(submenuToToggle, buttonToHighlight) {
         const isAlreadyActive = submenuToToggle && submenuToToggle.classList.contains('active');
         $$('.floating-submenu').forEach(sm => sm.classList.remove('active'));
@@ -4131,7 +4188,11 @@ document.getElementById('upload-kosher-label-btn').addEventListener('click', () 
 
 // 2. מאזין לאלמנט הקלט הנסתר (כשהמשתמש סיים לבחור קובץ)
 document.getElementById('kosher-file-input').addEventListener('change', window.handleKosherImageUpload); 
-
+$('#toggle-quick-search-btn').addEventListener('click', e => {
+    const container = $('#quick-search-container');
+    const isHidden = container.classList.toggle('hidden');
+    e.target.textContent = isHidden ? 'הצג' : 'הסתר';
+});
 
 
 }); // <--- הסוגר הסופי של document.addEventListener('DOMContentLoaded')
