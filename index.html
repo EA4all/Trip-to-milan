@@ -1930,11 +1930,20 @@ function initEruvMap() {
 }
 
 // === פתיחה/סגירה של חלון המפה ===
-document.getElementById('eruv-btn').addEventListener('click', () => {
-  document.getElementById('eruv-modal').classList.remove('hidden');
+// === פתיחה/סגירה של חלון המפה ===
+document.getElementById('eruv-map-btn').addEventListener('click', () => {
+    const modal = document.getElementById('eruv-modal');
+    if (modal) modal.classList.add('flex');
+
+    // אתחול המפה רק לאחר שהחלון נראה
+    setTimeout(() => {
+        initEruvMap();
+    }, 100); 
 });
-document.getElementById('close-eruv').addEventListener('click', () => {
-  document.getElementById('eruv-modal').classList.add('hidden');
+
+document.getElementById('close-eruv-modal').addEventListener('click', () => {
+    const modal = document.getElementById('eruv-modal');
+    if (modal) modal.classList.remove('flex');
 });
 
 
