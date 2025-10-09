@@ -1813,30 +1813,52 @@ async function fetchShabbatTimes() {
     if (!container || !parashaTitle) return;
 
     try {
-        // שימוש בכתובת API פשוטה וישירה יותר
+        // מילאנו (geonameid = 3173435)
         const response = await fetch('https://www.hebcal.com/shabbat?cfg=json&geonameid=3173435&lg=h');
         const data = await response.json();
-        
+
         const candleLightingItem = data.items.find(item => item.category === 'candles');
         const havdalahItem = data.items.find(item => item.category === 'havdalah');
         const parashaItem = data.items.find(item => item.category === 'parashat');
+        const title = data.title || "זמני שבת"; 
+        const location = data.location ? `${data.location.city}, ${data.location.country}` : "מילאנו, איטליה";
 
-        // הכותרת תהיה שם האירוע מה-API, שיכול להיות שם הפרשה או שם החג
-        const title = data.title || "זמני השבת"; 
-        
-        const formatDate = (isoDate) => new Date(isoDate).toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' });
+        const formatTime = (isoDate) =>
+            new Date(isoDate).toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' });
+
+        const formatDate = (isoDate) =>
+            new Date(isoDate).toLocaleDateString('he-IL', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
 
         if (candleLightingItem && havdalahItem) {
-            parashaTitle.textContent = `זמני השבת (${title.replace('Havdalah', '').trim()})`;
-            
+            const parashaName = parashaItem ? parashaItem.hebrew : '—';
+            const hebrewDate = candleLightingItem.hebrew || '';
+
+            // כותרת עליונה
+            parashaTitle.textContent = `שבת ${parashaName} (${location})`;
+
+            // קישור למפה
+            const eruvMapUrl = "https://www.google.com/maps?q=Via+Guastalla+19,+Milan,+Italy";
+
+            // תוכן ראשי
             container.innerHTML = `
+                <div class="text-center mb-2 text-gray-700 dark:text-gray-200">
+                    <div class="text-lg font-bold">${hebrewDate}</div>
+                    <div class="text-sm">${formatDate(candleLightingItem.date)}</div>
+                </div>
+
                 <div class="flex justify-between p-2 bg-gray-50 dark:bg-gray-800 rounded-lg">
                     <span class="font-semibold">🕯️ הדלקת נרות:</span>
-                    <span class="font-bold">${formatDate(candleLightingItem.date)}</span>
+                    <span class="font-bold">${formatTime(candleLightingItem.date)}</span>
                 </div>
-                <div class="flex justify-between p-2 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                <div class="flex justify-between p-2 bg-gray-50 dark:bg-gray-800 rounded-lg mt-1">
                     <span class="font-semibold">🍷 צאת השבת:</span>
-                    <span class="font-bold">${formatDate(havdalahItem.date)}</span>
+                    <span class="font-bold">${formatTime(havdalahItem.date)}</span>
+                </div>
+                <div class="flex justify-between items-center p-2 bg-gray-50 dark:bg-gray-800 rounded-lg mt-1">
+                    <span class="font-semibold">🏙️ עירוב:</span>
+                    <a href="${eruvMapUrl}" target="_blank" class="font-bold text-green-600 underline hover:text-green-700">
+                        קיים בעיר מילאנו (צפה במפה)
+                    </a>
                 </div>
             `;
         } else {
@@ -1844,7 +1866,6 @@ async function fetchShabbatTimes() {
         }
     } catch (e) {
         console.error("Error fetching Shabbat times:", e);
-        alert("Error in fetchShabbatTimes: " + e.message);
         container.innerHTML = '<p>שגיאה בטעינת זמני שבת.</p>';
     }
 }
