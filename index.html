@@ -2721,7 +2721,6 @@ async function startTranslateCamera() {
       cameraManager.stop(); // <-- הוסף שורה זו
     $('#camera-title').textContent = 'תרגום תפריט / טקסט';
     $('#capture-btn').style.display = 'flex';
-    $('#upload-receipt-btn').style.display = 'none';
     $('#barcode-status-display').style.display = 'none';
     await cameraManager.open('translate');
 }
