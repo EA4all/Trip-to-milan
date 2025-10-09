@@ -1637,8 +1637,6 @@ function renderAllPlans(planData) {
 }
 // ========================= התחלה: פונקציה ליצירת תפריטי ניווט מהיר =========================
 function renderMobileNavSubmenus() {
-// מצא והחלף את כל הפונקציה הזו
-function renderMobileNavSubmenus() {
     const toolsContainer = $('#tools-submenu-links');
     if (toolsContainer) {
         let toolsHtml = '<a href="#overview" class="p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 col-span-3 font-bold text-brand-600">חזור לסקירה</a>';
@@ -1654,7 +1652,7 @@ function renderMobileNavSubmenus() {
             }
         });
 
-        // 👇🏽 השורה החדשה שהוספנו באופן ידני 👇🏽
+        // הוספה ידנית של הקישור למסמכים וגלריה
         toolsHtml += `<a href="#documents-and-gallery" class="p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700">מסמכים וגלריה</a>`;
 
         toolsContainer.innerHTML = toolsHtml;
@@ -3602,17 +3600,132 @@ function startRecognition(langCode, button) {
 
     // --- INIT ---
 document.addEventListener('DOMContentLoaded', () => {
+
+  const heBtn = $('#voice-translate-he-btn');
+    const itBtn = $('#voice-translate-it-btn');
+    
+    // ודא ש-speechRecognizer קיים לפני הוספת המאזינים
+    if (speechRecognizer) {
+        // ודא שאתה קורא לפונקציה שהגדרת בסעיף 3
+        heBtn.addEventListener('click', (e) => window.startRecognition('he-IL', e.currentTarget));
+        itBtn.addEventListener('click', (e) => window.startRecognition('it-IT', e.currentTarget));
+    } else {
+        // ... (הקוד הקיים שלך לטיפול במצב שבו אין Speech Recognition)
+        if (heBtn) { heBtn.disabled = true; heBtn.innerHTML = 'לא נתמך'; }
+        if (itBtn) { itBtn.disabled = true; itBtn.innerHTML = 'Non supportato'; }
+    }
+
+// מאזין רשמי לברכת המזון - מוצג קודם, ואז משמיע דרך speakTextLocally
+(function(){
+  const birkatBtn = document.getElementById('birkat-hamazon-btn');
+  if (!birkatBtn) return;
+  if (birkatBtn.dataset.birkatBound) return;
+
+  const newBtn = birkatBtn.cloneNode(true);
+  birkatBtn.replaceWith(newBtn);
+
+newBtn.addEventListener('click', () => {
+    // 1. עצור כל דיבור קיים (חובה לפני הפעלת ניגון חדש)
+    try { if (window.activeAudio) { window.activeAudio.pause(); window.activeAudio = null; } } catch(e){}
+    try { if ('speechSynthesis' in window) window.speechSynthesis.cancel(); } catch(e){}
+
+    const brachaHTML = hebrewPrayers.birkatHaMazon || '<div>טקסט הברכה לא זמין</div>';
+    const tmp = document.createElement('div');
+    tmp.innerHTML = brachaHTML;
+    const brachaCleanText = (tmp.textContent || tmp.innerText || '').replace(/\n/g, ' ').replace(/\s+/g, ' ').trim();
+
+    // 2. השתמש ב-showAlert כדי להציג את המודל ולומר לו להפעיל TTS מקומי
+    showAlert('ברכת המזון', brachaHTML, { 
+        text: brachaCleanText, 
+        localOnly: true, // זה מבטיח TTS דפדפן + כפתורים
+        lang: 'he-IL' 
+    });
+    
+    // אין צורך ב-setTimeout ו-speakTextLocally, ה-showAlert מטפל בזה.
+});
+
+  newBtn.dataset.birkatBound = '1';
+})();
+
+
+
     console.log("LOG: DOMContentLoaded event fired. Initializing app.");
+     // --- מאזיני כפתורים יהודיים חדשים ---
+
+   
+
+    // --- חיבור כפתור סריקת ברקוד ---
+
+
+    // --- הוספת הלוגיקה של הגדרות הקול וחיבור הכפתורים ---
+    const voiceSettingsModal = $('#voice-settings-modal');
+    const globalVoiceSelect = $('#global-voice-select');
+
+    // 1. טעינת בחירה שמורה ושמירה בשינוי
+    const savedVoice = localStorage.getItem("selectedVoice");
+    if (savedVoice && globalVoiceSelect) {
+        globalVoiceSelect.value = savedVoice;
+    }
+
+    if (globalVoiceSelect) {
+        globalVoiceSelect.addEventListener("change", (e) => {
+            const selectedVoice = e.target.value;
+            localStorage.setItem("selectedVoice", selectedVoice); // שמירה
+            speakText(" שלום, זהו הקול שבחרת."); // דוגמת קול
+        });
+    }
+
+    // 2. פתיחה/סגירת המודל
+    $('#voice-settings-close-btn').addEventListener('click', () => voiceSettingsModal.classList.remove('flex'));
+    
+    // 3. חיבור הכפתורים לחלון הגדרות הקול (אלרט ותרגומון)
+    document.addEventListener('click', (e) => {
+        if (e.target.closest('#alert-modal-tts-settings-btn')) {
+            voiceSettingsModal.classList.add('flex');
+        }
+        if (e.target.closest('#translator-tts-settings-btn')) {
+            voiceSettingsModal.classList.add('flex');
+        }
+    });
+
+    // --- Expose functions to window for onclick attributes ---
+    window.handleTransportChange = handleTransportChange;
+    window.removeActivity = removeActivity;
+    window.moveActivity = moveActivity;
+    window.toggleChecklistItem = toggleChecklistItem;
+    window.removeChecklistItem = removeChecklistItem;
+    window.removeJournalEntry = removeJournalEntry;
+    window.removeExpense = removeExpense;
+    window.removeDocument = removeDocument;
+    window.removeImage = removeImage;
+    window.findUtility = findUtility;
+    window.getAudioGuide = getAudioGuide;
+    window.generateDailySummary = generateDailySummary; 
+    window.askGeneralGemini = askGeneralGemini; 
+    initMetroHelper();
+
+    // --- PWA Service Worker Registration ---
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register('sw.js', { scope: '/Trip-to-milan/' })
+            .then(registration => {
+                console.log('SW registered with scope:', registration.scope);
+            })
+            .catch(error => {
+                console.error('SW registration failed:', error);
+            });
+    });
+}
 
     // --- Firebase Initialization ---
     const firebaseConfig = {
-        apiKey: "AIzaSyD47-qHc8vmGQt4n4LluKW64LEMB-UYrfk",
-        authDomain: "trip-to-milan.firebaseapp.com",
-        projectId: "trip-to-milan",
-        storageBucket: "trip-to-milan.firebasestorage.app",
-        messagingSenderId: "305191186184",
-        appId: "1:305191186184:web:fff1488b64a06942dfc6bd",
-        measurementId: "G-P17LYZJ2H0"
+      apiKey: "AIzaSyD47-qHc8vmGQt4n4LluKW64LEMB-UYrfk",
+      authDomain: "trip-to-milan.firebaseapp.com",
+      projectId: "trip-to-milan",
+      storageBucket: "trip-to-milan.firebasestorage.app",
+      messagingSenderId: "305191186184",
+      appId: "1:305191186184:web:fff1488b64a06942dfc6bd",
+      measurementId: "G-P17LYZJ2H0"
     };
 
     const app = initializeApp(firebaseConfig);
@@ -3621,77 +3734,88 @@ document.addEventListener('DOMContentLoaded', () => {
     enableIndexedDbPersistence(db).catch(err => console.warn(`WARN: Firestore persistence failed. Code: ${err.code}`));
 
     // --- Caching and Sharing Logic ---
-    let tripId = window.location.hash.substring(1);
-    if (!tripId) {
-        const storedTripId = localStorage.getItem('lastTripId');
-        if (storedTripId) {
-            tripId = storedTripId;
-            window.location.hash = tripId;
-        } else {
-            tripId = Math.random().toString(36).substring(2, 12);
-            window.location.hash = tripId;
-        }
-    }
-    localStorage.setItem('lastTripId', tripId);
-    $('#user-name-input').value = localStorage.getItem('userName') || '';
+// --- לוגיקת שמירה ושיתוף Trip ID (PWA Fix) ---
+let tripId = window.location.hash.substring(1);
 
-    const cachedData = localStorage.getItem(`tripData_${tripId}`);
-    if (cachedData) {
-        try {
-            localTripData = JSON.parse(cachedData);
-        } catch(e) {
-            console.error("ERROR: Failed to parse cached data.", e);
-            localStorage.removeItem(`tripData_${tripId}`);
-        }
+// 1. אם אין Hash ב-URL (כמו בפתיחה דרך אייקון PWA סטטי), נסה לטעון את האחרון השמור.
+if (!tripId) {
+    const storedTripId = localStorage.getItem('lastTripId');
+    if (storedTripId) {
+        tripId = storedTripId;
+        window.location.hash = tripId; // עדכן את ה-URL
+    } else {
+        // 2. אם אין שמור, צור חדש.
+        tripId = Math.random().toString(36).substring(2, 12);
+        window.location.hash = tripId;
     }
+}
 
-    // --- Authentication and Data Sync ---
+// 3. תמיד שמור את המזהה הנוכחי כ"אחרון בשימוש" עבור הפעם הבאה.
+localStorage.setItem('lastTripId', tripId);
+
+// 4. המשך בלוגיקה הישנה שלא הוחלפה (טעינת שם משתמש וקאש מקומי):
+$('#user-name-input').value = localStorage.getItem('userName') || '';
+
+const cachedData = localStorage.getItem(`tripData_${tripId}`);
+if (cachedData) {
+    try {
+        localTripData = JSON.parse(cachedData);
+    } catch(e) {
+        console.error("ERROR: Failed to parse cached data.", e);
+        localStorage.removeItem(`tripData_${tripId}`);
+    }
+}
+
     signInAnonymously(auth).catch(error => showAlert("שגיאת התחברות ל-Firebase", `ההתחברות האנונימית נכשלה. ${error.message}`));
 
     onAuthStateChanged(auth, (user) => {
-        if (user) {
-            currentUserId = user.uid;
-            tripDocRef = doc(db, "milantrip", tripId);
-            locationsColRef = collection(db, "milantrip", tripId, "locations");
+      if (user) {
+        currentUserId = user.uid;
+        tripDocRef = doc(db, "milantrip", tripId);
+        locationsColRef = collection(db, "milantrip", tripId, "locations");
 
-            initLiveMap();
-            listenForLocationUpdates();
+        initLiveMap();
+        listenForLocationUpdates();
 
-            onSnapshot(tripDocRef, async (docSnap) => {
-                $('#sync-status i').classList.replace('text-yellow-500', 'text-green-500');
-                $('#sync-status span').textContent = 'מחובר';
-                isFirebaseConnected = true;
-
-                if (docSnap.exists()) {
-                    localTripData = docSnap.data();
-                } else {
-                    localTripData = getInitialTripData();
-                    await setDoc(tripDocRef, localTripData);
-                }
-                localStorage.setItem(`tripData_${tripId}`, JSON.stringify(localTripData));
-
-                // --- Render all components with fresh data ---
-                renderAllPlans(localTripData.plan);
-                renderSuggestions(localTripData.suggestions);
-                renderKosher();
-                renderChecklist(localTripData.checklist);
-                renderBudget(localTripData);
-                renderDocuments(localTripData.documents);
-                renderGallery(localTripData.gallery);
-                initPassCalculator();
-                renderScrapbook();
-            }, (error) => {
-                console.error("ERROR: Firestore snapshot error:", error);
+        onSnapshot(tripDocRef, async (docSnap) => {
+            if (!isFirebaseConnected) {
                 const statusIcon = $('#sync-status i');
-                statusIcon.className = 'fa-solid fa-cloud text-red-500';
-                $('#sync-status span').textContent = 'בעיית סנכרון';
-            });
-        }
+                const statusText = $('#sync-status span');
+                statusIcon.classList.replace('text-yellow-500', 'text-green-500');
+                statusText.textContent = 'מחובר';
+                isFirebaseConnected = true;
+            }
+            if (docSnap.exists()) {
+                localTripData = docSnap.data();
+            } else {
+                localTripData = getInitialTripData();
+                await setDoc(tripDocRef, localTripData);
+            }
+            localStorage.setItem(`tripData_${tripId}`, JSON.stringify(localTripData));
+
+            // --- Render all components with fresh data ---
+            renderAllPlans(localTripData.plan);
+            renderSuggestions(localTripData.suggestions);
+            renderKosher();
+            renderChecklist(localTripData.checklist);
+            renderBudget(localTripData);
+            renderDocuments(localTripData.documents);
+            renderGallery(localTripData.gallery);
+            initPassCalculator();
+            renderScrapbook();
+        }, (error) => {
+            console.error("ERROR: Firestore snapshot error:", error);
+            const statusIcon = $('#sync-status i');
+            const statusText = $('#sync-status span');
+            statusIcon.classList.remove('text-green-500', 'text-yellow-500');
+            statusIcon.classList.add('text-red-500');
+            statusText.textContent = 'בעיית סנכרון';
+        });
+      }
     });
 
-    // ==========================================================
-    // --- INITIAL RENDERS & FETCHES (Runs on page load) ---
-    // ==========================================================
+    // --- Initial Renders & Fetches ---
+    console.log("LOG: Performing initial renders and fetches.");
     renderOverview();
     renderKosherFilters();
     fetchWeather();
@@ -3712,22 +3836,216 @@ document.addEventListener('DOMContentLoaded', () => {
         options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true } }, plugins: { legend: { display: false } } }
     });
 
-    if ('speechSynthesis' in window && speechSynthesis.getVoices().length === 0) {
-        speechSynthesis.onvoiceschanged = () => {
-            console.log("LOG: TTS voices loaded.");
-            speechSynthesis.onvoiceschanged = null;
-        };
+    // --- Event Listeners (החלק שחזר) ---
+    console.log("LOG: Adding main event listeners.");
+    if ('speechSynthesis' in window) {
+        if (speechSynthesis.getVoices().length === 0) {
+            speechSynthesis.onvoiceschanged = () => {
+                console.log("LOG: TTS voices loaded via onvoiceschanged event.");
+                speechSynthesis.onvoiceschanged = null;
+            };
+        }
     }
-
-    // ==========================================================
-    // --- ALL EVENT LISTENERS ---
-    // ==========================================================
-
-    // --- Main Header Buttons ---
+    
+    // --- מאזיני כפתורים כלליים ---
     $('#theme-toggle').addEventListener('click', () => {
         const isDark = document.documentElement.classList.toggle('dark');
         if(tripDocRef && isFirebaseConnected) updateDoc(tripDocRef, { theme: isDark ? 'dark' : 'light' });
     });
+
+    $('#show-tip-btn').addEventListener('click', openTipModal); // טיפ יומי
+    $('#create-summary-btn').addEventListener('click', generateTripSummary); // סיכום טיול
+    $('#refresh-warnings-btn').addEventListener('click', fetchSafetyWarnings);
+    $('#share-btn').addEventListener('click', () => { // שתף תוכנית
+        const url = window.location.href;
+        if (navigator.share) {
+            navigator.share({ title: 'תוכנית הטיול שלנו למילאנו', url: url });
+        } else {
+            navigator.clipboard.writeText(url).then(() => showAlert('הקישור הועתק!', 'הקישור הועתק ללוח.'));
+        }
+    });
+
+    $('#collapse-all').addEventListener('click', () => $$('#plan-content-container details').forEach(d => d.removeAttribute('open')));
+    $('#expand-all').addEventListener('click', () => $$('#plan-content-container details').forEach(d => d.setAttribute('open', true)));
+    $('#print-btn').addEventListener('click', () => window.print());
+
+    // --- מאזיני טפסים ותקציב ---
+    $('#add-checklist-item-form').addEventListener('submit', async e => {
+        e.preventDefault();
+        if(!isFirebaseConnected) { showAlert('שגיאת סנכרון', 'אין חיבור למסד הנתונים.'); return; }
+        const text = $('#new-item-text').value.trim(); if (!text) return;
+        let categoryName = $('#new-category-text').value.trim() || $('#category-select').value;
+        if (!categoryName) { showAlert('שגיאה', 'יש לבחור או ליצור קטגוריה.'); return; }
+
+        let updatedChecklist = [...(localTripData.checklist || [])];
+        let category = updatedChecklist.find(c => c.category === categoryName);
+        if (!category) {
+            category = { id: 'cat' + Date.now(), category: categoryName, items: [] };
+            updatedChecklist.push(category);
+        }
+        category.items.push({ id: `c${Date.now()}`, text, done: false });
+
+        await updateDoc(tripDocRef, { checklist: updatedChecklist });
+        e.target.reset();
+    });
+
+    $('#expense-form').addEventListener('submit', async e => {
+        e.preventDefault();
+        if(!isFirebaseConnected) { showAlert('שגיאת סנכרון', 'אין חיבור למסד הנתונים.'); return; }
+        const desc = $('#expense-desc').value.trim();
+        const amount = parseFloat($('#expense-amount').value);
+        const category = $('#expense-category').value;
+        if(desc && !isNaN(amount) && category) {
+            const newExpense = {id: Date.now().toString(), desc, amount, category};
+            await updateDoc(tripDocRef, { expenses: arrayUnion(newExpense) });
+            e.target.reset();
+        } else {
+            showAlert('שגיאה', 'יש למלא את כל השדות כולל קטגוריה.');
+        }
+    });
+
+    $('#total-budget').addEventListener('input', async e => {
+        if(!isFirebaseConnected) { return; }
+        const newTotalBudget = parseFloat(e.target.value) || 0;
+        if (tripDocRef) await updateDoc(tripDocRef, { totalBudget: newTotalBudget });
+    });
+
+    $('#include-estimated-costs').addEventListener('change', async e => {
+        if(!isFirebaseConnected) { return; }
+        const include = e.target.checked;
+        await updateDoc(tripDocRef, { 'settings.includeEstimatedCostsInBalance': include });
+    });
+
+    $('#calculate-estimated-btn').addEventListener('click', () => {
+        const estimatedCosts = calculateEstimatedCosts(localTripData.plan);
+        showAlert('עלות משוערת', `העלות המשוערת לאטרקציות בתוכנית עבור זוג היא: €${estimatedCosts.toFixed(2)}.`);
+    });
+    
+    $('#toggle-suggestions-btn').addEventListener('click', e => {
+        const container = $('#suggestions-container');
+        const isHidden = container.classList.toggle('hidden');
+        e.target.textContent = isHidden ? 'הצג הצעות נוספות' : 'הסתר הצעות';
+    });
+
+$('#toggle-kosher-btn').addEventListener('click', e => {
+    const container = $('#kosher-container');
+    const isHidden = container.classList.toggle('hidden');
+    e.target.textContent = isHidden ? 'הצג מדריך כשרות' : 'הסתר מדריך כשרות';
+    if (!isHidden) $('#shabbat-container').classList.add('hidden'); // סגור את השני
+});
+
+$('#toggle-shabbat-btn').addEventListener('click', e => {
+    const container = $('#shabbat-container');
+    const isHidden = container.classList.toggle('hidden');
+    e.target.textContent = isHidden ? 'היערכות לשבת' : 'הסתר היערכות לשבת';
+    if (!isHidden) $('#kosher-container').classList.add('hidden'); // סגור את השני
+});
+
+    // --- מאזיני תרגום ומטבע ---
+    $('#eur-input').addEventListener('input', e => {
+        const eur = parseFloat(e.target.value);
+        $('#ils-input').value = isNaN(eur) ? '' : (eur * eurToIlsRate).toFixed(2);
+    });
+    $('#ils-input').addEventListener('input', e => {
+        const ils = parseFloat(e.target.value);
+        $('#eur-input').value = isNaN(ils) ? '' : (ils / eurToIlsRate).toFixed(2);
+    });
+
+    $('#dictionary-form').addEventListener('submit', async e => { e.preventDefault(); const input = $('#dictionary-input').value.trim(); if (input) await translateText(input); });
+
+    $('#swap-lang-btn').addEventListener('click', () => {
+        const inputEl = $('#dictionary-input'); const labelEl = $('#lang-direction-label');
+        currentLang = (currentLang === 'he-it') ? 'it-he' : 'he-it';
+        inputEl.placeholder = (currentLang === 'he-it') ? 'הקלד מילה...' : 'Scrivi una parola...';
+        labelEl.innerHTML = (currentLang === 'he-it') ? 'עברית <i class="fa-solid fa-arrow-right-long"></i> איטלקית' : 'איטלקית <i class="fa-solid fa-arrow-right-long"></i> עברית';
+        inputEl.value = '';
+    });
+
+    // --- מאזיני העלאת קבצים ---
+    $('#image-translate-upload').addEventListener('change', (e) => {
+        const file = e.target.files[0]; if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (event) => { const base64String = event.target.result.split(',')[1]; translateImage(base64String, file.type); };
+        reader.readAsDataURL(file);
+    });
+
+    $('#document-upload-btn').addEventListener('click', () => $('#document-upload').click());
+    $('#image-upload-btn').addEventListener('click', () => {
+    const opts = $('#modal-upload-day-options');
+    opts.innerHTML = Object.entries(localTripData.plan).sort((a,b) => a[0].localeCompare(b[0])).map(([dayId, dayData]) => 
+        `<button class="btn btn-primary" data-day-id="${dayId}">${dayData.name}</button>`
+    ).join('');
+
+    $$('#modal-upload-day-options button').forEach(btn => {
+        btn.onclick = () => {
+            const selectedDayId = btn.dataset.dayId;
+            window.closeModal();
+            $('#image-upload').setAttribute('data-day-id', selectedDayId);
+            $('#image-upload').click();
+        };
+    });
+
+    $('#select-day-for-upload-modal').classList.add('flex');
+    });
+
+    $('#alert-modal-copy-btn').addEventListener('click', (e) => {
+        navigator.clipboard.writeText($('#alert-modal-body').textContent).then(() => {
+            e.target.textContent = 'הועתק!';
+            setTimeout(() => e.target.innerHTML = '<i class="fa-solid fa-copy mr-1"></i>העתק', 2000);
+        });
+    });
+
+    $('#document-upload').addEventListener('change', (e) => {
+        for (const file of e.target.files) {
+            const reader = new FileReader();
+            reader.onload = async (ev) => {
+                const newDoc = { id: Date.now().toString(), name: file.name, dataUrl: ev.target.result };
+                if (tripDocRef) await updateDoc(tripDocRef, { documents: arrayUnion(newDoc) });
+            };
+            reader.readAsDataURL(file);
+        }
+    });
+
+    $('#image-upload').addEventListener('change', (e) => {
+        const dayId = $('#image-upload').getAttribute('data-day-id');
+        for (const file of e.target.files) {
+            const reader = new FileReader();
+            reader.onload = async (ev) => {
+                const newImg = { id: Date.now().toString(), name: file.name, dataUrl: ev.target.result, dayId: dayId };
+                if (tripDocRef) await updateDoc(tripDocRef, { gallery: arrayUnion(newImg) });
+            };
+            reader.readAsDataURL(file);
+        }
+    });
+
+    // --- מאזיני Gemini ---
+    const geminiModal = $('#gemini-modal');
+    $('#gemini-btn').addEventListener('click', () => geminiModal.classList.add('flex'));
+    $('#gemini-close-btn').addEventListener('click', () => geminiModal.classList.remove('flex'));
+    $$('#gemini-tabs-nav .tab-button').forEach(b => b.addEventListener('click', (e) => {
+        $$('#gemini-tabs-nav .tab-button').forEach(btn => btn.classList.remove('tab-active'));
+        e.currentTarget.classList.add('tab-active');
+        $$('#gemini-modal .content-section').forEach(s => s.classList.remove('active'));
+        $(`#${e.currentTarget.dataset.content}`).classList.add('active');
+    }));
+
+    $('#get-smart-advice-btn').addEventListener('click', getSmartAdvice);
+    $('#gemini-submit-btn').addEventListener('click', () => {
+    const promptInput = $('#gemini-prompt');
+    const userPrompt = promptInput.value.trim();
+    if (userPrompt) {
+        window.askGeneralGemini(userPrompt);
+        promptInput.value = '';
+    }
+    });
+    $('#gemini-close-btn').addEventListener('click', () => {
+        $('#gemini-modal').classList.remove('flex');
+        geminiChatHistory = [];
+        $('#gemini-response').textContent = '';
+        $('#gemini-prompt').value = '';
+    });
+
+    // --- מאזיני שיתוף ומצלמה ---
     $('#share-btn').addEventListener('click', () => {
         const url = window.location.href;
         if (navigator.share) {
@@ -3736,142 +4054,164 @@ document.addEventListener('DOMContentLoaded', () => {
             navigator.clipboard.writeText(url).then(() => showAlert('הקישור הועתק!', 'הקישור הועתק ללוח.'));
         }
     });
-    $('#gemini-btn').addEventListener('click', () => $('#gemini-modal').classList.add('flex'));
-    $('#show-tip-btn').addEventListener('click', openTipModal);
-    $('#create-summary-btn').addEventListener('click', generateTripSummary);
 
-    // --- Plan Section Buttons ---
-    $('#collapse-all').addEventListener('click', () => $$('#plan-content-container details').forEach(d => d.removeAttribute('open')));
-    $('#expand-all').addEventListener('click', () => $$('#plan-content-container details').forEach(d => d.setAttribute('open', true)));
-    $('#print-btn').addEventListener('click', () => window.print());
+    // --- מאזיני ניווט ---
+    const planBtn = $('#floating-plan-btn');
+    const toolsBtn = $('#floating-tools-btn');
+    const planSubmenu = $('#plan-submenu');
+    const toolsSubmenu = $('#tools-submenu');
+    const kosherBtn = $('#floating-kosher-btn');
+    const kosherSubmenu = $('#kosher-submenu');
+    kosherBtn.addEventListener('click', (e) => { e.stopPropagation(); toggleSubmenu(kosherSubmenu, kosherBtn); });
 
-    // --- Suggestions & Kosher Toggles ---
-    $('#toggle-suggestions-btn').addEventListener('click', e => {
-        const container = $('#suggestions-container');
-        const isHidden = container.classList.toggle('hidden');
-        e.target.textContent = isHidden ? 'הצג הצעות נוספות' : 'הסתר הצעות';
-    });
-    $('#toggle-kosher-btn').addEventListener('click', e => {
-        const container = $('#kosher-container');
-        const isHidden = container.classList.toggle('hidden');
-        e.target.textContent = isHidden ? 'הצג מדריך כשרות' : 'הסתר מדריך כשרות';
-        if (!isHidden) { $('#shabbat-container').classList.add('hidden'); $('#toggle-shabbat-btn').textContent = 'היערכות לשבת'; }
-    });
-    $('#toggle-shabbat-btn').addEventListener('click', e => {
-        const container = $('#shabbat-container');
-        const isHidden = container.classList.toggle('hidden');
-        e.target.textContent = isHidden ? 'היערכות לשבת' : 'הסתר היערכות לשבת';
-        if (!isHidden) { $('#kosher-container').classList.add('hidden'); $('#toggle-kosher-btn').textContent = 'הצג מדריך כשרות'; }
-    });
-
-    // --- Jewish/Prayer Buttons ---
-    (function(){ // Special handler for Birkat Hamazon to avoid conflicts
-        const birkatBtn = document.getElementById('birkat-hamazon-btn');
-        if (!birkatBtn || birkatBtn.dataset.birkatBound) return;
-        const newBtn = birkatBtn.cloneNode(true);
-        birkatBtn.replaceWith(newBtn);
-        newBtn.addEventListener('click', () => {
-            const text = hebrewPrayers.birkatHaMazon.replace(/<[^>]*>?/gm, '');
-            showAlert('ברכת המזון', hebrewPrayers.birkatHaMazon, { text, useApi: false });
-        });
-        newBtn.dataset.birkatBound = '1';
-    })();
-    $('#tefilat-haderech-btn').addEventListener('click', () => {
-        const text = hebrewPrayers.tefilatHaderech.replace(/<[^>]*>?/gm, '');
-        showAlert('תפילת הדרך', hebrewPrayers.tefilatHaderech, { text, useApi: true });
-    });
-    $('#bracha-achrona-btn').addEventListener('click', showBrachaAchronaOptions);
-
-    // --- Tools: Camera Buttons ---
-    $('#lookup-site-btn').addEventListener('click', startSiteLookupCamera);
-    $('#scan-receipt-btn').addEventListener('click', startReceiptScanCamera);
-    $('#scan-kosher-barcode-btn').addEventListener('click', startKosherLookupCamera);
-    $('#translate-camera-btn').addEventListener('click', startTranslateCamera);
-
-    // --- Tools: Other ---
-    $('#add-checklist-item-form').addEventListener('submit', async e => {
-        e.preventDefault(); if(!isFirebaseConnected) { showAlert('שגיאת סנכרון', 'אין חיבור למסד הנתונים.'); return; }
-        const text = $('#new-item-text').value.trim(); if (!text) return;
-        let categoryName = $('#new-category-text').value.trim() || $('#category-select').value;
-        if (!categoryName) { showAlert('שגיאה', 'יש לבחור או ליצור קטגוריה.'); return; }
-        let updatedChecklist = [...(localTripData.checklist || [])];
-        let category = updatedChecklist.find(c => c.category === categoryName);
-        if (!category) {
-            category = { id: 'cat' + Date.now(), category: categoryName, items: [] };
-            updatedChecklist.push(category);
+// הפעלת הכפתורים בתוך תת-התפריט של כשרות
+// החלף את כל הבלוק הקיים בבלוק המעודכן הבא
+$$('#kosher-submenu-links a').forEach(link => {
+    link.addEventListener('click', (e) => {
+        const action = e.currentTarget.dataset.action;
+        if (action === 'toggle-kosher') {
+            $('#toggle-kosher-btn').click();
+        } else if (action === 'toggle-shabbat') {
+            $('#toggle-shabbat-btn').click();
+        } else if (action === 'scan-kosher') {
+            $('#scan-kosher-barcode-btn').click();
+        } else if (action === 'birkat-hamazon') {
+            $('#birkat-hamazon-btn').click();
+        } else if (action === 'bracha-achrona') {
+            $('#bracha-achrona-btn').click();
         }
-        category.items.push({ id: `c${Date.now()}`, text, done: false });
-        await updateDoc(tripDocRef, { checklist: updatedChecklist });
-        e.target.reset();
+        toggleSubmenu(null, null); // סגור תפריט אחרי לחיצה
     });
-    $('#expense-form').addEventListener('submit', async e => {
-        e.preventDefault(); if(!isFirebaseConnected) { showAlert('שגיאת סנכרון', 'אין חיבור למסד הנתונים.'); return; }
-        const desc = $('#expense-desc').value.trim();
-        const amount = parseFloat($('#expense-amount').value);
-        const category = $('#expense-category').value;
-        if(desc && !isNaN(amount) && category) {
-            const newExpense = {id: Date.now().toString(), desc, amount, category};
-            await updateDoc(tripDocRef, { expenses: arrayUnion(newExpense) });
-            e.target.reset();
-        } else { showAlert('שגיאה', 'יש למלא את כל השדות כולל קטגוריה.'); }
-    });
-    $('#total-budget').addEventListener('input', async e => { if(isFirebaseConnected) await updateDoc(tripDocRef, { totalBudget: parseFloat(e.target.value) || 0 }); });
-    $('#include-estimated-costs').addEventListener('change', async e => { if(isFirebaseConnected) await updateDoc(tripDocRef, { 'settings.includeEstimatedCostsInBalance': e.target.checked }); });
-    $('#calculate-estimated-btn').addEventListener('click', () => { const estimatedCosts = calculateEstimatedCosts(localTripData.plan); showAlert('עלות משוערת', `העלות המשוערת לאטרקציות בתוכנית עבור זוג היא: €${estimatedCosts.toFixed(2)}.`); });
-    $('#dictionary-form').addEventListener('submit', async e => { e.preventDefault(); const input = $('#dictionary-input').value.trim(); if (input) await translateText(input); });
-    $('#eur-input').addEventListener('input', e => { $('#ils-input').value = isNaN(parseFloat(e.target.value)) ? '' : (parseFloat(e.target.value) * eurToIlsRate).toFixed(2); });
-    $('#ils-input').addEventListener('input', e => { $('#eur-input').value = isNaN(parseFloat(e.target.value)) ? '' : (parseFloat(e.target.value) / eurToIlsRate).toFixed(2); });
-    $('#toggle-quick-search-btn').addEventListener('click', e => {
-        const container = $('#quick-search-container');
-        const isHidden = container.classList.toggle('hidden');
-        e.target.textContent = isHidden ? 'הצג' : 'הסתר';
-    });
-
-    // --- Mobile Floating Navigation ---
-    const planBtn = $('#floating-plan-btn'), toolsBtn = $('#floating-tools-btn'), kosherBtn = $('#floating-kosher-btn'), searchBtn = $('#floating-search-btn');
-    const planSubmenu = $('#plan-submenu'), toolsSubmenu = $('#tools-submenu'), kosherSubmenu = $('#kosher-submenu'), searchSubmenu = $('#search-submenu');
-
+});
     function toggleSubmenu(submenuToToggle, buttonToHighlight) {
         const isAlreadyActive = submenuToToggle && submenuToToggle.classList.contains('active');
         $$('.floating-submenu').forEach(sm => sm.classList.remove('active'));
-        $$('#floating-nav button').forEach(btn => btn.classList.remove('text-brand-600'));
+        $$('#floating-nav button, #floating-nav a').forEach(btn => btn.classList.remove('text-brand-600'));
         if (submenuToToggle && !isAlreadyActive) {
             submenuToToggle.classList.add('active');
             buttonToHighlight.classList.add('text-brand-600');
         }
     }
-
     planBtn.addEventListener('click', (e) => { e.stopPropagation(); toggleSubmenu(planSubmenu, planBtn); });
     toolsBtn.addEventListener('click', (e) => { e.stopPropagation(); toggleSubmenu(toolsSubmenu, toolsBtn); });
-    kosherBtn.addEventListener('click', (e) => { e.stopPropagation(); toggleSubmenu(kosherSubmenu, kosherBtn); });
-    searchBtn.addEventListener('click', (e) => { e.stopPropagation(); toggleSubmenu(searchSubmenu, searchBtn); });
 
-    $$('#kosher-submenu-links a').forEach(link => {
-        link.addEventListener('click', (e) => {
-            const action = e.currentTarget.dataset.action;
-            if (action === 'toggle-kosher') { $('#toggle-kosher-btn').click(); }
-            else if (action === 'toggle-shabbat') { $('#toggle-shabbat-btn').click(); }
-            else if (action === 'scan-kosher') { $('#scan-kosher-barcode-btn').click(); }
-            else if (action === 'birkat-hamazon') { document.getElementById('birkat-hamazon-btn').click(); }
-            else if (action === 'bracha-achrona') { $('#bracha-achrona-btn').click(); }
-            toggleSubmenu(null, null);
-        });
+    document.addEventListener('click', (e) => { 
+        if (!e.target.closest('#floating-nav-container')) toggleSubmenu(null, null);
     });
-    $$('#plan-submenu a, #tools-submenu a, #search-submenu a').forEach(link => link.addEventListener('click', () => toggleSubmenu(null, null)));
-    document.addEventListener('click', (e) => { if (!e.target.closest('#floating-nav-container')) toggleSubmenu(null, null); });
+    $$('#plan-submenu a, #tools-submenu a').forEach(link => link.addEventListener('click', () => toggleSubmenu(null, null)));
 
-    // --- All other listeners ---
-    window.addEventListener('beforeunload', () => { if (watchingLocation && currentUserId) deleteDoc(doc(locationsColRef, currentUserId)); });
+    window.addEventListener('beforeunload', () => {
+        if (watchingLocation && currentUserId) deleteDoc(doc(locationsColRef, currentUserId));
+    });
+
+    // --- מאזיני סגירה ---
     $('#alert-modal-close').addEventListener('click', () => $('#alert-modal').classList.remove('flex'));
     $('#daily-tip-close').addEventListener('click', () => $('#daily-tip-modal').classList.remove('flex'));
-    $('#voice-settings-close-btn').addEventListener('click', () => $('#voice-settings-modal').classList.remove('flex'));
-    document.addEventListener('click', (e) => {
-        if (e.target.closest('#alert-modal-tts-settings-btn') || e.target.closest('#translator-tts-settings-btn')) {
-            $('#voice-settings-modal').classList.add('flex');
+    
+    // --- מאזיני קול קלט (היה חסר) ---
+// הוסף פונקציות אלו באזור ה-UTILS
+function showLoading(title, message) {
+    // משתמש בפונקציית showAlert הקיימת כדי להציג הודעת טעינה.
+    showAlert(title, `<div class="text-center"><i class="fa-solid fa-sync fa-spin fa-2x"></i><p class="mt-2">${message}</p></div>`);
+}
+window.showLoading = showLoading;
+
+function hideLoading() {
+    // סוגר את כל המודלים מסוג backdrop, כולל הטעינה
+    window.closeModal(); 
+}
+window.hideLoading = hideLoading;
+    // --- מאזין לכפתור הפתיחה של קלט הקבצים ---
+const uploadReceiptBtn = document.getElementById('upload-receipt-btn');
+
+if (uploadReceiptBtn) { // ✅ בדיקה בטוחה: פותר את שגיאת ה-Null
+    uploadReceiptBtn.addEventListener('click', () => {
+        // שימוש ב-receiptFileInput שכבר הוגדר למעלה!
+        if (receiptFileInput) {
+             receiptFileInput.click();
         }
     });
+}
+const receiptFileInput = document.getElementById('receipt-file-input'); // הפנייה לאלמנט הקלט הנסתר
 
+if (uploadReceiptBtn) { 
+    uploadReceiptBtn.addEventListener('click', () => {
+        if (receiptFileInput) {
+             receiptFileInput.click();
+        }
+    });
+}
+
+  // --- מאזיני שיתוף ומצלמה ---
+
+// 1. זיהוי אתרים/אובייקטים:
+$('#lookup-site-btn').addEventListener('click', window.startSiteLookupCamera);
+
+// 2. תרגום מצלמה:
+$('#translate-camera-btn').addEventListener('click', window.startTranslateCamera);
+ 
+// 3. סריקת קבלה (הכנסת הוצאה):
+$('#scan-receipt-btn').addEventListener('click', window.startReceiptScanCamera);
+
+// 4. סריקת ברקוד (כשרות):
+  document.getElementById('scan-kosher-barcode-btn').addEventListener('click', window.startKosherLookupCamera); 
+  // --- לוגיקה חדשה עבור זום המצלמה ---
+    
+
+    document.getElementById('capture-btn').addEventListener('click', captureFrame);
+    document.getElementById('lookup-site-btn').addEventListener('click', startSiteLookupCamera);
+    document.getElementById('translate-camera-btn').addEventListener('click', startTranslateCamera);
+    document.getElementById('scan-receipt-btn').addEventListener('click', startReceiptScanCamera);
+    document.getElementById('camera-close-btn').addEventListener('click', () => cameraManager.stop());
+    document.getElementById('torch-btn').addEventListener('click', () => cameraManager.toggleTorch());
+    document.getElementById('zoom-in-btn').addEventListener('click', () => cameraManager.changeZoom(1));
+    document.getElementById('zoom-out-btn').addEventListener('click', () => cameraManager.changeZoom(-1));
+
+    // --- חיבור כפתורי מצלמה ראשיים ---
+    document.getElementById('lookup-site-btn').addEventListener('click', startSiteLookupCamera);
+    document.getElementById('translate-camera-btn').addEventListener('click', startTranslateCamera);
+    document.getElementById('scan-receipt-btn').addEventListener('click', startReceiptScanCamera);
+    
+    // --- חיבור כפתורי שליטה במצלמה ---
+    document.getElementById('camera-close-btn').addEventListener('click', () => cameraManager.stop());
+    document.getElementById('capture-btn').addEventListener('click', captureFrame);
+    document.getElementById('torch-btn').addEventListener('click', () => cameraManager.toggleTorch());
+    document.getElementById('zoom-in-btn').addEventListener('click', () => cameraManager.changeZoom(1));
+    document.getElementById('zoom-out-btn').addEventListener('click', () => cameraManager.changeZoom(-1));
+
+    // --- חיבור כפתורי תפילות ---
+document.getElementById('tefilat-haderech-btn').addEventListener('click', () => {
+    const text = hebrewPrayers.tefilatHaderech.replace(/<[^>]*>?/gm, '');
+    showAlert('תפילת הדרך', hebrewPrayers.tefilatHaderech, { text, useApi: true }); // <-- השינוי כאן
 });
+
+    document.getElementById('bracha-achrona-btn').addEventListener('click', showBrachaAchronaOptions);
+    // מאזין להשמעת דגימת קול בשינוי הגדרות
+    document.getElementById('global-voice-select').addEventListener('change', () => {
+        ttsManager.speak("שלום, זהו הקול שבחרת.", true, 'he-IL');
+    });
+
+  // ודא שהשורות האלה נראות כך בחלק התחתון של הקוד שלך
+heBtn.addEventListener('click', (e) => window.startRecognition('he-IL', e.currentTarget));
+itBtn.addEventListener('click', (e) => window.startRecognition('it-IT', e.currentTarget));
+  
+// 1. מאזין לכפתור הלחיץ
+document.getElementById('upload-kosher-label-btn').addEventListener('click', () => {
+    // מפעיל את אלמנט ה-input file הנסתר
+    document.getElementById('kosher-file-input').click(); 
+});
+
+// 2. מאזין לאלמנט הקלט הנסתר (כשהמשתמש סיים לבחור קובץ)
+document.getElementById('kosher-file-input').addEventListener('change', window.handleKosherImageUpload); 
+$('#toggle-quick-search-btn').addEventListener('click', e => {
+    const container = $('#quick-search-container');
+    const isHidden = container.classList.toggle('hidden');
+    e.target.textContent = isHidden ? 'הצג' : 'הסתר';
+});
+
+
+}); // <--- הסוגר הסופי של document.addEventListener('DOMContentLoaded')
+//------------
 
 
   </script>
