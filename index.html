@@ -328,13 +328,19 @@ body {
 <section id="kosher" class="my-12 scroll-mt-24">
   <h2 class="text-3xl font-bold text-center text-brand-900 dark:text-brand-300 mb-6">המדריך הקולינרי והיהודי</h2>
 
-  <div class="text-center flex flex-wrap justify-center gap-2">
-      <button id="toggle-kosher-btn" class="btn btn-primary">הצג מדריך כשרות</button>
-      <button id="toggle-shabbat-btn" class="btn btn-primary">היערכות לשבת</button>
-      <button id="scan-kosher-barcode-btn" class="btn btn-primary bg-green-600 hover:bg-green-700">
-          <i class="fa-solid fa-camera-retro mr-2"></i> צלם תווית (AI)
-      </button>
-  </div>
+<div class="text-center flex flex-wrap justify-center gap-2">
+    <button id="toggle-kosher-btn" class="btn btn-primary">הצג מדריך כשרות</button>
+    <button id="toggle-shabbat-btn" class="btn btn-primary">היערכות לשבת</button>
+    <button id="scan-kosher-barcode-btn" class="btn btn-primary bg-green-600 hover:bg-green-700">
+        <i class="fa-solid fa-camera-retro mr-2"></i> צלם תווית (AI)
+    </button>
+    <button id="birkat-hamazon-btn" class="btn btn-primary bg-yellow-600 hover:bg-yellow-700">
+        <i class="fa-solid fa-bread-slice mr-2"></i> ברכת המזון
+    </button>
+    <button id="bracha-achrona-btn" class="btn btn-primary bg-blue-800 hover:bg-blue-900">
+        <i class="fa-solid fa-pray mr-2"></i> ברכה אחרונה
+    </button>
+</div>
 
   <div id="kosher-container" class="hidden mt-6">
     <div class="bg-white dark:bg-gray-950 p-4 sm:p-6 rounded-2xl shadow-lg">
@@ -436,7 +442,7 @@ body {
 
 <div class="bg-white dark:bg-gray-950 p-6 rounded-2xl shadow-lg">
     <div class="flex justify-between items-center">
-        <h3 class="text-xl font-bold"><i class="fa-solid fa-map-signs mr-2"></i>חיפוש מהיר</h3>
+        <h3 class="text-xl font-bold"><i class="fa-solid fa-map-signs mr-2"></i>מצא מקומות קרובים</h3>
         <button id="toggle-quick-search-btn" class="btn btn-primary btn-sm">הצג</button>
     </div>
     <div id="quick-search-container" class="hidden mt-4 grid grid-cols-1 gap-2">
@@ -832,11 +838,13 @@ body {
         <div class="grid grid-cols-3 gap-2 text-center text-sm" id="plan-submenu-links"></div>
     </div>
     <div id="kosher-submenu" class="floating-submenu fixed bottom-[68px] left-0 right-0 bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm p-2 rounded-t-2xl">
-        <div id="kosher-submenu-links" class="grid grid-cols-3 gap-2 text-center text-sm">
-             <a href="#kosher" data-action="toggle-kosher" class="p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700">מדריך כשרות</a>
-             <a href="#kosher" data-action="toggle-shabbat" class="p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700">היערכות לשבת</a>
-             <a href="#kosher" data-action="scan-kosher" class="p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 col-span-3 font-bold text-brand-600">צלם תווית (AI)</a>
-        </div>
+<div id="kosher-submenu-links" class="grid grid-cols-2 gap-2 text-center text-sm">
+    <a href="#kosher" data-action="toggle-kosher" class="p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700">מדריך כשרות</a>
+    <a href="#kosher" data-action="toggle-shabbat" class="p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700">היערכות לשבת</a>
+    <a href="#" data-action="birkat-hamazon" class="p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700">ברכת המזון</a>
+    <a href="#" data-action="bracha-achrona" class="p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700">ברכה אחרונה</a>
+    <a href="#" data-action="scan-kosher" class="p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 col-span-2 font-bold text-brand-600">צלם תווית (AI)</a>
+</div>
     </div>
     <div id="tools-submenu" class="floating-submenu fixed bottom-[68px] left-0 right-0 bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm p-2 rounded-t-2xl">
         <div id="tools-submenu-links" class="grid grid-cols-3 gap-2 text-center text-sm"></div>
@@ -4052,6 +4060,7 @@ $('#toggle-shabbat-btn').addEventListener('click', e => {
     kosherBtn.addEventListener('click', (e) => { e.stopPropagation(); toggleSubmenu(kosherSubmenu, kosherBtn); });
 
 // הפעלת הכפתורים בתוך תת-התפריט של כשרות
+// החלף את כל הבלוק הקיים בבלוק המעודכן הבא
 $$('#kosher-submenu-links a').forEach(link => {
     link.addEventListener('click', (e) => {
         const action = e.currentTarget.dataset.action;
@@ -4061,6 +4070,10 @@ $$('#kosher-submenu-links a').forEach(link => {
             $('#toggle-shabbat-btn').click();
         } else if (action === 'scan-kosher') {
             $('#scan-kosher-barcode-btn').click();
+        } else if (action === 'birkat-hamazon') {
+            $('#birkat-hamazon-btn').click();
+        } else if (action === 'bracha-achrona') {
+            $('#bracha-achrona-btn').click();
         }
         toggleSubmenu(null, null); // סגור תפריט אחרי לחיצה
     });
@@ -4166,10 +4179,7 @@ document.getElementById('tefilat-haderech-btn').addEventListener('click', () => 
     const text = hebrewPrayers.tefilatHaderech.replace(/<[^>]*>?/gm, '');
     showAlert('תפילת הדרך', hebrewPrayers.tefilatHaderech, { text, useApi: true }); // <-- השינוי כאן
 });
-    document.getElementById('birkat-hamazon-btn').addEventListener('click', () => {
-        const text = hebrewPrayers.birkatHaMazon.replace(/<[^>]*>?/gm, '');
-        showAlert('ברכת המזון', hebrewPrayers.birkatHaMazon, { text, useApi: false }); // ארוך מדי ל-API
-    });
+
     document.getElementById('bracha-achrona-btn').addEventListener('click', showBrachaAchronaOptions);
     // מאזין להשמעת דגימת קול בשינוי הגדרות
     document.getElementById('global-voice-select').addEventListener('change', () => {
