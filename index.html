@@ -1866,16 +1866,16 @@ document.getElementById('close-eruv').addEventListener('click', () => {
     
 //============ זמני שבת ============ -->
 <h2 id="parasha-title" class="text-xl font-bold mb-2 text-center"></h2>
-<div id="shabbat-times-container" class="space-y-2"></div>
+<div id="shabbat-times-container" class="space-y-2">
+    <p>טוען זמני שבת...</p>
+</div>
 
-//כפתור עירוב -->
 <div class="text-center mt-3">
   <button id="eruv-btn" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition">
     צפה במפת העירוב
   </button>
 </div>
 
-//חלון קופץ (מפת עירוב) -->
 <div id="eruv-modal" class="fixed inset-0 bg-black/70 hidden justify-center items-center z-50">
   <div class="bg-white dark:bg-gray-900 rounded-2xl shadow-xl max-w-2xl w-11/12 p-4 relative">
     <button id="close-eruv" class="absolute top-2 right-3 text-2xl font-bold text-gray-600 hover:text-red-600">×</button>
