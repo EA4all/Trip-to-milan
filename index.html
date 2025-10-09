@@ -1840,7 +1840,6 @@ async function fetchShabbatTimes() {
     try {
         const now = new Date();
         const endDate = new Date(now.getTime() + 10 * 24 * 60 * 60 * 1000);
-        
         const response = await fetch(`https://www.hebcal.com/hebcal?v=1&cfg=json&maj=on&min=on&nx=on&mf=on&ss=on&lg=h&geonameid=3173435&start=${now.toISOString().split('T')[0]}&end=${endDate.toISOString().split('T')[0]}`);
         const data = await response.json();
 
@@ -1849,7 +1848,6 @@ async function fetchShabbatTimes() {
         const formatTime = (iso) => new Date(iso).toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' });
         const formatDate = (iso) => new Date(iso).toLocaleDateString('he-IL', { weekday: 'long', day: 'numeric', month: 'long' });
 
-        // --- 1. מציאת ועיבוד זמני השבת הקרובה ---
         const candleLightingItem = data.items.find(item => item.category === 'candles' && new Date(item.date).getDay() === 5);
         const havdalahItem = data.items.find(item => item.category === 'havdalah' && new Date(item.date) >= new Date(candleLightingItem.date));
 
@@ -1859,18 +1857,18 @@ async function fetchShabbatTimes() {
             shabbatDate.setDate(shabbatDate.getDate() + 1);
             const shabbatDayStr = shabbatDate.toISOString().split('T')[0];
 
-            const eventOnShabbat = data.items.find(item => item.date.startsWith(shabbatDayStr) && (item.yomtov || item.category === 'parashat' || (item.category === 'holiday' && item.subcat === 'shabbat')));
-            
+            const eventOnShabbat = data.items.find(item => item.date.startsWith(shabbatDayStr) && (item.yomtov || item.category === 'parashat' || item.subcat === 'shabbat'));
+
             if (eventOnShabbat) {
                 shabbatTitle = eventOnShabbat.hebrew;
                 if (eventOnShabbat.category === 'parashat' && !shabbatTitle.includes('פרשת')) {
                     shabbatTitle = `פרשת ${shabbatTitle}`;
                 }
             }
-            
-            const hebrewDate = candleLightingItem.hebrew || ''; 
+
+            const hebrewDate = candleLightingItem.hebrew || '';
             parashaTitle.textContent = shabbatTitle ? `שבת ${shabbatTitle}` : 'זמני השבת';
-            
+
             container.innerHTML = `
                 <div class="text-center mb-2 text-gray-700 dark:text-gray-200">
                   <div class="font-semibold">${formatDate(candleLightingItem.date)}</div>
@@ -1889,19 +1887,22 @@ async function fetchShabbatTimes() {
             container.innerHTML = '<p>לא נמצאו זמני שבת קרובים.</p>';
         }
 
-        // --- 2. בדיקת חגים באמצע השבוע ---
         const midweekHolidayCandles = data.items.find(item => 
             item.category === 'candles' && new Date(item.date) > now && new Date(item.date).getDay() !== 5 && item.memo
         );
 
         if (midweekHolidayCandles) {
             const holidayName = midweekHolidayCandles.memo.replace('Erev ', ''); 
+            const holidayDate = midweekHolidayCandles.hebrew || '';
             const holidayInfo = `
                 <div class="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
                     <h4 class="text-lg font-bold text-brand-800 dark:text-brand-200 mb-2">חג קרוב באמצע השבוע</h4>
-                    <div class="flex justify-between p-2 bg-blue-50 dark:bg-blue-900/30 rounded-lg">
-                        <span class="font-semibold">${holidayName}:</span>
-                        <span class="font-bold">${formatTime(midweekHolidayCandles.date)}</span>
+                    <div class="p-2 bg-blue-50 dark:bg-blue-900/30 rounded-lg">
+                        <div class="text-center mb-1 text-sm text-gray-700 dark:text-gray-200">${formatDate(midweekHolidayCandles.date)} | ${holidayDate}</div>
+                        <div class="flex justify-between">
+                            <span class="font-semibold">${holidayName}:</span>
+                            <span class="font-bold">${formatTime(midweekHolidayCandles.date)}</span>
+                        </div>
                     </div>
                 </div>
             `;
@@ -2465,32 +2466,53 @@ function updateClocks() {
     const milanDateEl = $('#milan-date'), israelDateEl = $('#israel-date');
 
     // פונקציית עזר להמרת תאריך לעברי
+function updateClocks() {
+    const milanTimeEl = $('#milan-time'), israelTimeEl = $('#israel-time');
+    const milanDateEl = $('#milan-date'), israelDateEl = $('#israel-date');
+
+    // פונקציית עזר להמרת מספרים לאותיות עבריות (גימטריה ליום בחודש)
+    function toHebrewDay(day) {
+        const hebrewNumerals = {
+            1: 'א׳', 2: 'ב׳', 3: 'ג׳', 4: 'ד׳', 5: 'ה׳', 6: 'ו׳', 7: 'ז׳', 8: 'ח׳', 9: 'ט׳',
+            10: 'י׳', 11: 'י״א', 12: 'י״ב', 13: 'י״ג', 14: 'י״ד', 15: 'ט״ו', 16: 'ט״ז',
+            20: 'כ׳', 30: 'ל׳'
+        };
+        if (hebrewNumerals[day]) return hebrewNumerals[day];
+        if (day === 17) return 'י״ז';
+        if (day === 18) return 'י״ח';
+        if (day === 19) return 'י״ט';
+        if (day > 19 && day < 30) return 'כ״' + hebrewNumerals[day - 20];
+        return day; // Fallback
+    }
+
     function toHebrewDate(date) {
         try {
-            // השיטה המודרנית והמדויקת ביותר, נתמכת ברוב הדפדפנים
-            const hebrewDateString = new Intl.DateTimeFormat('he-u-ca-hebrew', {
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric'
-            }).format(date);
-            // ניקוי טקסטים מיותרים שהפורמט מוסיף לפעמים
-            return hebrewDateString.replace('ב', '').replace('ל', '').trim();
+            const options = { year: 'numeric', month: 'long', day: 'numeric' };
+            const formatter = new Intl.DateTimeFormat('he-u-ca-hebrew', options);
+            const parts = formatter.formatToParts(date);
+
+            const dayPart = parts.find(p => p.type === 'day');
+            const monthPart = parts.find(p => p.type === 'month');
+            const yearPart = parts.find(p => p.type === 'year');
+
+            if (dayPart && monthPart && yearPart) {
+                const dayInHebrew = toHebrewDay(parseInt(dayPart.value));
+                return `${dayInHebrew} ${monthPart.value}, ${yearPart.value}`;
+            }
+            return formatter.format(date); // Fallback to default format
         } catch (e) {
-            console.error("Hebrew date formatting failed:", e);
             return "תאריך עברי לא זמין";
         }
     }
 
     if (milanTimeEl && israelTimeEl && milanDateEl && israelDateEl) {
         const now = new Date();
-        // שימוש ב-API של הדפדפן כדי לקבל את התאריך והשעה הנכונים לפי אזור זמן
         const milanDate = new Date(now.toLocaleString('en-US', { timeZone: 'Europe/Rome' }));
         const israelDate = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Jerusalem' }));
 
         milanTimeEl.textContent = milanDate.toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
         israelTimeEl.textContent = israelDate.toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
 
-        // הגדרת הטקסט המלא שכולל תאריך לועזי ועברי
         milanDateEl.textContent = `${milanDate.toLocaleDateString('he-IL', { weekday: 'long', day: 'numeric', month: 'long' })} | ${toHebrewDate(milanDate)}`;
         israelDateEl.textContent = `${israelDate.toLocaleDateString('he-IL', { weekday: 'long', day: 'numeric', month: 'long' })} | ${toHebrewDate(israelDate)}`;
     }
