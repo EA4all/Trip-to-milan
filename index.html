@@ -1864,10 +1864,11 @@ async function fetchShabbatTimes() {
         } else {
             container.innerHTML = '<p>לא נמצאו זמני שבת קרובים.</p>';
         }
-    } catch (e) {
-        console.error("Error fetching Shabbat times:", e);
-        container.innerHTML = '<p>שגיאה בטעינת זמני שבת.</p>';
-    }
+} catch (e) {
+    console.error("Error fetching Shabbat times:", e);
+    alert("Error fetching Shabbat times: " + e.message); // <-- הוסף את השורה הזו
+    container.innerHTML = '<p>שגיאה בטעינת זמני שבת.</p>';
+}
 }
 
 // יש לקרוא לפונקציה הזו יחד עם שאר הפונקציות שרצות בתחילת טעינת העמוד
