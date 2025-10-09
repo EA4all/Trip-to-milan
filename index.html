@@ -1821,66 +1821,72 @@ if (activity.type === 'attraction') {
             </table>
         `;
     }
+
 async function fetchShabbatTimes() {
     const container = document.getElementById('shabbat-times-container');
     const parashaTitle = document.getElementById('parasha-title');
     if (!container || !parashaTitle) return;
 
     try {
-        // === שלב 1: נסה להביא את שם השבת מאתר ישיבה (דרך פרוקסי) ===
-        let shabbatNameFromYeshiva = '';
-        try {
-            const proxyUrl = 'https://api.allorigins.win/raw?url=';
-            const targetUrl = encodeURIComponent('https://www.yeshiva.org.il/calendar/shabatot?place=%D7%9E%D7%99%D7%9C%D7%90%D7%A0%D7%95');
-            const html = await fetch(proxyUrl + targetUrl).then(r => r.text());
-            const match = html.match(/<div class="hebdate">([^<]+)<\/div>\s*<div class="title">([^<]+)/);
-            if (match && match[2]) {
-                shabbatNameFromYeshiva = match[2].trim();
-            }
-        } catch (err) {
-            console.warn('Could not fetch Shabbat name from Yeshiva.org.il, will use Hebcal as fallback.', err);
-        }
+        // קריאת API משופרת שמביאה אירועים ל-28 הימים הקרובים
+        const now = new Date();
+        const endDate = new Date(now.getTime() + 28 * 24 * 60 * 60 * 1000);
 
-        // === שלב 2: הבא זמנים ותאריך עברי מ־Hebcal (מקור אמין) ===
-        const response = await fetch('https://www.hebcal.com/shabbat?cfg=json&geonameid=3173435&lg=h');
+        const response = await fetch(`https://www.hebcal.com/hebcal?v=1&cfg=json&maj=on&min=on&nx=on&mf=on&ss=on&lg=h&geonameid=3173435&start=${now.toISOString().split('T')[0]}&end=${endDate.toISOString().split('T')[0]}`);
         const data = await response.json();
 
-        const candleLightingItem = data.items.find(i => i.category === 'candles');
-        const havdalahItem = data.items.find(i => i.category === 'havdalah');
-        const parashaItem = data.items.find(i => i.category === 'parashat');
-        const location = data.location ? `${data.location.city}, ${data.location.country}` : "מילאנו, איטליה";
+        if (!data || !data.items) {
+            throw new Error("Invalid API response from Hebcal");
+        }
 
-        const formatTime = iso => new Date(iso).toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' });
-        const formatDate = iso => new Date(iso).toLocaleDateString('he-IL', { weekday: 'long', day: 'numeric', month: 'long' });
+        // מציאת הדלקת נרות והבדלה הקרובים ביותר
+        const candleLightingItem = data.items.find(item => item.category === 'candles');
+        const havdalahItem = data.items.find(item => item.category === 'havdalah');
+
+        let shabbatTitle = "";
+
+        // לוגיקה למציאת שם השבת
+        if (candleLightingItem) {
+            const shabbatDate = new Date(candleLightingItem.date);
+            shabbatDate.setDate(shabbatDate.getDate() + 1); // קביעת התאריך של יום שבת עצמו
+            const shabbatDayStr = shabbatDate.toISOString().split('T')[0];
+
+            // חיפוש אירוע באותו יום שבת, עם עדיפות לשם של חג/שבת מיוחדת
+            const eventOnShabbat = data.items.find(item => 
+                item.date.startsWith(shabbatDayStr) && 
+                (item.yomtov === true || item.category === 'parashat' || (item.category === 'holiday' && item.title.toLowerCase().includes('shabbat')))
+            );
+
+            if (eventOnShabbat) {
+                shabbatTitle = eventOnShabbat.hebrew;
+                // אם זה פרשה, נוסיף את המילה "פרשת"
+                if (eventOnShabbat.category === 'parashat' && !shabbatTitle.includes('פרשת')) {
+                    shabbatTitle = `פרשת ${shabbatTitle}`;
+                }
+            }
+        }
+
+        const formatTime = (isoDate) => new Date(isoDate).toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' });
 
         if (candleLightingItem && havdalahItem) {
-            // קביעת הכותרת: עדיפות לשם שהבאנו מאתר ישיבה, ואם נכשל, נשתמש בפרשה מ-Hebcal
-            const shabbatTitle = shabbatNameFromYeshiva || (parashaItem ? `פרשת ${parashaItem.hebrew}` : 'שבת');
-            const hebrewDate = candleLightingItem.hebrew || '';
-
-            parashaTitle.textContent = `${shabbatTitle} - ${location}`;
+            parashaTitle.textContent = shabbatTitle ? `זמני השבת (${shabbatTitle})` : 'זמני השבת';
 
             container.innerHTML = `
-                <div class="text-center mb-2 text-gray-700 dark:text-gray-200">
-                  <div class="text-lg font-bold">${hebrewDate}</div>
-                  <div class="text-sm">${formatDate(candleLightingItem.date)}</div>
-                </div>
-
                 <div class="flex justify-between p-2 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                  <span class="font-semibold">🕯️ הדלקת נרות:</span>
-                  <span class="font-bold">${formatTime(candleLightingItem.date)}</span>
+                    <span class="font-semibold">🕯️ הדלקת נרות:</span>
+                    <span class="font-bold">${formatTime(candleLightingItem.date)}</span>
                 </div>
                 <div class="flex justify-between p-2 bg-gray-50 dark:bg-gray-800 rounded-lg mt-1">
-                  <span class="font-semibold">🍷 צאת השבת:</span>
-                  <span class="font-bold">${formatTime(havdalahItem.date)}</span>
+                    <span class="font-semibold">🍷 צאת השבת:</span>
+                    <span class="font-bold">${formatTime(havdalahItem.date)}</span>
                 </div>
             `;
         } else {
             container.innerHTML = '<p>לא נמצאו זמני שבת קרובים.</p>';
         }
     } catch (e) {
-        console.error("Error in fetchShabbatTimes main block:", e);
-        container.innerHTML = '<p>שגיאה כללית בטעינת זמני שבת.</p>';
+        console.error("Error fetching Shabbat times:", e);
+        container.innerHTML = '<p>שגיאה בטעינת זמני שבת.</p>';
     }
 }
 
