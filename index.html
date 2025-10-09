@@ -2722,6 +2722,7 @@ async function startTranslateCamera() {
     $('#camera-title').textContent = 'תרגום תפריט / טקסט';
     $('#capture-btn').style.display = 'flex';
     $('#barcode-status-display').style.display = 'none';
+    $('#upload-receipt-btn').style.display = 'none
     await cameraManager.open('translate');
 }
 window.startTranslateCamera = startTranslateCamera;
@@ -2732,7 +2733,6 @@ async function startKosherLookupCamera() {
     $('#camera-title').textContent = 'צילום תווית כשרות';
     $('#capture-btn').style.display = 'flex'; // הצג את כפתור הצילום
     // ודא שהאלמנטים האלה מוסתרים במצב החדש:
-    $('#upload-receipt-btn').style.display = 'none'; 
     $('#barcode-status-display').style.display = 'none'; 
     await cameraManager.open('kosher-lookup'); // מצב חדש לזיהוי כשרות
 }
