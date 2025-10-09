@@ -351,44 +351,31 @@ body {
   </div>
 
   <div id="shabbat-container" class="hidden mt-6">
-    <div id="shabbat-prep-tool" class="bg-white dark:bg-gray-950 p-6 rounded-2xl shadow-lg">
-        <h3 class="text-xl font-bold mb-3"><i class="fa-solid fa-star-of-david mr-2"></i>היערכות לשבת במילאנו</h3>
-        <div class="grid md:grid-cols-2 gap-6">
-            <div>
-                <h4 id="parasha-title" class="text-lg font-bold text-brand-800 dark:text-brand-200 mb-3">זמני השבת</h4>
-                <div id="shabbat-times-container" class="space-y-2">
-                    <p>טוען זמני שבת עדכניים...</p>
-                </div>
-            </div>
-            <div>
-                <h4 class="text-lg font-bold text-brand-800 dark:text-brand-200 mb-3">בתי חב"ד וקהילות</h4>
-                <ul class="space-y-4">
-                    <li class="flex items-start gap-3">
-                        <i class="fa-solid fa-torah mt-1 text-brand-600"></i>
-                        <div>
-                            <p class="font-semibold">בית חב"ד המרכזי - הרב סנדר פרידמן</p>
-                            <p class="text-sm text-gray-600 dark:text-gray-400">כתובת: Via Ciro Menotti, 1, 20129 Milano</p>
-                            <div class="flex gap-2 mt-1">
-                                <a href="tel:+39-02-7010-1774" class="btn btn-ghost btn-sm"><i class="fa fa-phone"></i> חיוג</a>
-                                <a href="https://www.google.com/maps/search/?api=1&query=Chabad+Via+Ciro+Menotti,1,Milano" target="_blank" class="btn btn-ghost btn-sm"><i class="fa fa-map-location-dot"></i> ניווט</a>
-                            </div>
-                        </div>
-                    </li>
-                    <li class="flex items-start gap-3">
-                        <i class="fa-solid fa-utensils mt-1 text-brand-600"></i>
-                        <div>
-                            <p class="font-semibold">בית חב"ד "בית הלל" (סעודות שבת) - הרב לוי חזן</p>
-                            <p class="text-sm text-gray-600 dark:text-gray-400">כתובת: Via Tiziano, 18, 20145 Milano</p>
-                             <div class="flex gap-2 mt-1">
-                                <a href="tel:+39-328-355-1559" class="btn btn-ghost btn-sm"><i class="fa fa-phone"></i> חיוג</a>
-                                <a href="https://www.google.com/maps/search/?api=1&query=Chabad+Via+Tiziano,18,Milano" target="_blank" class="btn btn-ghost btn-sm"><i class="fa fa-map-location-dot"></i> ניווט</a>
-                            </div>
-                        </div>
-                    </li>
-                </ul>
-            </div>
-        </div>
+<div id="shabbat-prep-tool" class="bg-white dark:bg-gray-950 p-6 rounded-2xl shadow-lg">
+    <h2 id="parasha-title" class="text-xl font-bold mb-2 text-center"></h2>
+    <div id="shabbat-times-container" class="space-y-2"></div>
+
+    <div class="text-center mt-3">
+      <button id="eruv-btn" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition">
+        צפה במפת העירוב
+      </button>
     </div>
+
+    <div id="eruv-modal" class="fixed inset-0 bg-black/70 hidden justify-center items-center z-50">
+      <div class="bg-white dark:bg-gray-900 rounded-2xl shadow-xl max-w-2xl w-11/12 p-4 relative">
+        <button id="close-eruv" class="absolute top-2 right-3 text-2xl font-bold text-gray-600 hover:text-red-600">×</button>
+        <h3 class="text-lg font-semibold text-center mb-2 text-gray-800 dark:text-gray-200">תחום העירוב במילאנו</h3>
+        <iframe
+          src="https://www.google.com/maps/embed?pb=!1m28!1m12!1m3!1d2795.038573338907!2d9.1888429!3d45.4632758!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!4m13!3e0!4m3!3m2!1d45.4689!2d9.2044!4m3!3m2!1d45.4562!2d9.1999!4m3!3m2!1d45.4653!2d9.2101!5e0!3m2!1she!2sil!4v1739071255000!5m2!1she!2sil"
+          width="100%"
+          height="400"
+          style="border:0; border-radius: 12px;"
+          allowfullscreen=""
+          loading="lazy">
+        </iframe>
+      </div>
+    </div>
+</div>
   </div>
 </section>
 
@@ -1806,36 +1793,7 @@ if (activity.type === 'attraction') {
             </table>
         `;
     }
-    
-//============ זמני שבת ============ -->
-<h2 id="parasha-title" class="text-xl font-bold mb-2 text-center"></h2>
-<div id="shabbat-times-container" class="space-y-2"></div>
-
-//כפתור עירוב -->
-<div class="text-center mt-3">
-  <button id="eruv-btn" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition">
-    צפה במפת העירוב
-  </button>
-</div>
-
-//חלון קופץ (מפת עירוב) -->
-<div id="eruv-modal" class="fixed inset-0 bg-black/70 hidden justify-center items-center z-50">
-  <div class="bg-white dark:bg-gray-900 rounded-2xl shadow-xl max-w-2xl w-11/12 p-4 relative">
-    <button id="close-eruv" class="absolute top-2 right-3 text-2xl font-bold text-gray-600 hover:text-red-600">×</button>
-    <h3 class="text-lg font-semibold text-center mb-2 text-gray-800 dark:text-gray-200">תחום העירוב במילאנו</h3>
-    <iframe
-      src="https://www.google.com/maps/embed?pb=!1m28!1m12!1m3!1d2795.038573338907!2d9.1888429!3d45.4632758!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!4m13!3e0!4m3!3m2!1d45.4689!2d9.2044!4m3!3m2!1d45.4562!2d9.1999!4m3!3m2!1d45.4653!2d9.2101!5e0!3m2!1she!2sil!4v1739071255000!5m2!1she!2sil"
-      width="100%"
-      height="400"
-      style="border:0; border-radius: 12px;"
-      allowfullscreen=""
-      loading="lazy">
-    </iframe>
-  </div>
-</div>
-
-<script>
-async function fetchShabbatTimes() {
+    async function fetchShabbatTimes() {
   const container = document.getElementById('shabbat-times-container');
   const parashaTitle = document.getElementById('parasha-title');
   if (!container || !parashaTitle) return;
@@ -1905,11 +1863,33 @@ document.getElementById('close-eruv').addEventListener('click', () => {
   document.getElementById('eruv-modal').classList.add('hidden');
 });
 
-// הפעלת הפונקציה
-fetchShabbatTimes();
-</script>
+    
+//============ זמני שבת ============ -->
+<h2 id="parasha-title" class="text-xl font-bold mb-2 text-center"></h2>
+<div id="shabbat-times-container" class="space-y-2"></div>
 
+//כפתור עירוב -->
+<div class="text-center mt-3">
+  <button id="eruv-btn" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition">
+    צפה במפת העירוב
+  </button>
+</div>
 
+//חלון קופץ (מפת עירוב) -->
+<div id="eruv-modal" class="fixed inset-0 bg-black/70 hidden justify-center items-center z-50">
+  <div class="bg-white dark:bg-gray-900 rounded-2xl shadow-xl max-w-2xl w-11/12 p-4 relative">
+    <button id="close-eruv" class="absolute top-2 right-3 text-2xl font-bold text-gray-600 hover:text-red-600">×</button>
+    <h3 class="text-lg font-semibold text-center mb-2 text-gray-800 dark:text-gray-200">תחום העירוב במילאנו</h3>
+    <iframe
+      src="https://www.google.com/maps/embed?pb=!1m28!1m12!1m3!1d2795.038573338907!2d9.1888429!3d45.4632758!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!4m13!3e0!4m3!3m2!1d45.4689!2d9.2044!4m3!3m2!1d45.4562!2d9.1999!4m3!3m2!1d45.4653!2d9.2101!5e0!3m2!1she!2sil!4v1739071255000!5m2!1she!2sil"
+      width="100%"
+      height="400"
+      style="border:0; border-radius: 12px;"
+      allowfullscreen=""
+      loading="lazy">
+    </iframe>
+  </div>
+</div>
 
 // יש לקרוא לפונקציה הזו יחד עם שאר הפונקציות שרצות בתחילת טעינת העמוד
 
@@ -2043,47 +2023,47 @@ fetchShabbatTimes();
         $('.kosher-filter-btn[data-filter="all"]').classList.add('tab-active');
     }
 
-    const rowRestaurant = r => {
-        const logoSrc = r.logo || placeholderLogoUrl(r.name);
-        return `
-        <tr class="align-top border-b dark:border-gray-800">
-            <td data-label="לוגו" class="p-3 logo-cell"><img class="logo" src="${logoSrc}" alt="${r.name}" onerror="this.onerror=null;this.src='${placeholderLogoUrl(r.name)}';"></td>
-            <td data-label="שם" class="p-3 font-medium">${r.name} <span class="text-xs font-normal text-gray-500">${r.distance ? formatKm(r.distance) : ''}</span></td>
-            <td data-label="סגנון" class="p-3">${r.style}</td>
-            <td data-label="שעות" class="p-3 text-xs">${r.hours || ''}</td>
-            <td data-label="פעולות" class="p-3">
-                <div class="flex flex-wrap gap-2">
-                    <button onclick="window.openAddToDayModal('${r.name}', 'kosher')" class="btn btn-primary btn-sm" title="הוסף ליום"><i class="fa-solid fa-plus"></i></button>
-                    ${r.phone ? `<a title="התקשר" href="tel:${r.phone}" class="btn btn-ghost btn-sm"><i class="fa-solid fa-phone"></i></a>`:''}
-                    <a title="Waze" href="https://waze.com/ul?q=${encodeURIComponent(r.address)}" target="_blank" class="btn btn-ghost btn-sm"><i class="fa-brands fa-waze"></i></a>
-                    <a title="Google Maps" href="https://maps.google.com/?q=${encodeURIComponent(r.address)}" target="_blank" class="btn btn-ghost btn-sm"><i class="fa-brands fa-google"></i></a>
-                    ${r.menu ? `<a href="${r.menu}" target="_blank" class="btn btn-ghost btn-sm" title="תפריט"><i class="fa-solid fa-utensils"></i></a>`:''}
-                    ${r.website ? `<a href="${r.website}" target="_blank" class="btn btn-ghost btn-sm" title="אתר"><i class="fa-solid fa-globe"></i></a>`:''}
-                    ${r.instagram ? `<a title="אינסטגרם" href="${r.instagram}" target="_blank" class="btn btn-ghost btn-sm"><i class="fa-brands fa-instagram"></i></a>`:''}
-                </div>
-            </td>
-        </tr>`;
-    };
-    const rowMarket = m => {
-        const logoSrc = m.logo || placeholderLogoUrl(m.name);
-        return `
-        <tr class="align-top border-b dark:border-gray-800">
-            <td data-label="לוגו" class="p-3 logo-cell"><img class="logo" src="${logoSrc}" alt="${m.name}" onerror="this.onerror=null;this.src='${placeholderLogoUrl(m.name)}';"></td>
-            <td data-label="שם" class="p-3 font-medium">${m.name} <span class="text-xs font-normal text-gray-500">${m.distance ? formatKm(m.distance) : ''}</span></td>
-            <td data-label="סוג" class="p-3">${m.style}</td>
-            <td data-label="שעות" class="p-3 text-xs">${m.hours || ''}</td>
-            <td data-label="פעולות" class="p-3">
-                <div class="flex flex-wrap gap-2">
-                    <button onclick="window.openAddToDayModal('${m.name}', 'kosher')" class="btn btn-primary btn-sm" title="הוסף ליום"><i class="fa-solid fa-plus"></i></button>
-                    ${m.phone ? `<a title="התקשר" href="tel:${m.phone}" class="btn btn-ghost btn-sm"><i class="fa-solid fa-phone"></i></a>`:''}
-                    <a title="Waze" href="https://waze.com/ul?q=${encodeURIComponent(m.address)}" target="_blank" class="btn btn-ghost btn-sm"><i class="fa-brands fa-waze"></i></a>
-                    <a title="Google Maps" href="https://maps.google.com/?q=${encodeURIComponent(m.address)}" target="_blank" class="btn btn-ghost btn-sm"><i class="fa-brands fa-google"></i></a>
-                    ${m.website ? `<a href="${m.website}" target="_blank" class="btn btn-ghost btn-sm" title="אתר"><i class="fa-solid fa-globe"></i></a>`:''}
-                    ${m.instagram ? `<a title="אינסטגרם" href="${r.instagram}" target="_blank" class="btn btn-ghost btn-sm"><i class="fa-brands fa-instagram"></i></a>`:''}
-                </div>
-            </td>
-        </tr>`;
-    };
+const rowRestaurant = r => {
+    const logoSrc = r.logo || placeholderLogoUrl(r.name);
+    return ` 
+    <tr class="align-top border-b dark:border-gray-800">
+        <td data-label="לוגו" class="p-3 logo-cell"><img class="logo" src="${logoSrc}" alt="${r.name}" onerror="this.onerror=null;this.src='${placeholderLogoUrl(r.name)}';"></td>
+        <td data-label="שם" class="p-3 font-medium">${r.name} <span class="text-xs font-normal text-gray-500">${r.distance ? formatKm(r.distance) : ''}</span></td>
+        <td data-label="סגנון" class="p-3">${r.style}</td>
+        <td data-label="שעות" class="p-3 text-xs">${r.hours || ''}</td>
+        <td data-label="פעולות" class="p-3">
+            <div class="flex flex-wrap gap-2">
+                <button onclick="window.openAddToDayModal('${r.name}', 'kosher')" class="btn btn-primary btn-sm" title="הוסף ליום"><i class="fa-solid fa-plus"></i></button>
+                ${r.phone ? `<a title="התקשר" href="tel:${r.phone}" class="btn btn-ghost btn-sm"><i class="fa-solid fa-phone"></i></a>`:''}
+                <a title="Waze" href="https://waze.com/ul?q=${encodeURIComponent(r.address)}" target="_blank" class="btn btn-ghost btn-sm"><i class="fa-brands fa-waze"></i></a>
+                <a title="Google Maps" href="https://maps.google.com/?q=${encodeURIComponent(r.address)}" target="_blank" class="btn btn-ghost btn-sm"><i class="fa-brands fa-google"></i></a>
+                ${r.menu ? `<a href="${r.menu}" target="_blank" class="btn btn-ghost btn-sm" title="תפריט"><i class="fa-solid fa-utensils"></i></a>`:''}
+                ${r.website ? `<a href="${r.website}" target="_blank" class="btn btn-ghost btn-sm" title="אתר"><i class="fa-solid fa-globe"></i></a>`:''}
+                ${r.instagram ? `<a title="אינסטגרם" href="${r.instagram}" target="_blank" class="btn btn-ghost btn-sm"><i class="fa-brands fa-instagram"></i></a>`:''}
+            </div>
+        </td>
+    </tr>`;
+};
+const rowMarket = m => {
+    const logoSrc = m.logo || placeholderLogoUrl(m.name);
+    return ` 
+    <tr class="align-top border-b dark:border-gray-800">
+        <td data-label="לוגו" class="p-3 logo-cell"><img class="logo" src="${logoSrc}" alt="${m.name}" onerror="this.onerror=null;this.src='${placeholderLogoUrl(m.name)}';"></td>
+        <td data-label="שם" class="p-3 font-medium">${m.name} <span class="text-xs font-normal text-gray-500">${m.distance ? formatKm(m.distance) : ''}</span></td>
+        <td data-label="סוג" class="p-3">${m.style}</td>
+        <td data-label="שעות" class="p-3 text-xs">${m.hours || ''}</td>
+        <td data-label="פעולות" class="p-3">
+            <div class="flex flex-wrap gap-2">
+                <button onclick="window.openAddToDayModal('${m.name}', 'kosher')" class="btn btn-primary btn-sm" title="הוסף ליום"><i class="fa-solid fa-plus"></i></button>
+                ${m.phone ? `<a title="התקשר" href="tel:${m.phone}" class="btn btn-ghost btn-sm"><i class="fa-solid fa-phone"></i></a>`:''}
+                <a title="Waze" href="https://waze.com/ul?q=${encodeURIComponent(m.address)}" target="_blank" class="btn btn-ghost btn-sm"><i class="fa-brands fa-waze"></i></a>
+                <a title="Google Maps" href="https://maps.google.com/?q=${encodeURIComponent(m.address)}" target="_blank" class="btn btn-ghost btn-sm"><i class="fa-brands fa-google"></i></a>
+                ${m.website ? `<a href="${m.website}" target="_blank" class="btn btn-ghost btn-sm" title="אתר"><i class="fa-solid fa-globe"></i></a>`:''}
+                ${m.instagram ? `<a title="אינסטגרם" href="${m.instagram}" target="_blank" class="btn btn-ghost btn-sm"><i class="fa-brands fa-instagram"></i></a>`:''}
+            </div>
+        </td>
+    </tr>`;
+};
 
     function renderChecklist(checklistData) {
         console.log("LOG: renderChecklist called.");
