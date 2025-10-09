@@ -2684,7 +2684,7 @@ async function processKosherImage(base64ImageData) {
 
     const responseText = await callGemini(payload, '', false);
     
-    stopCamera(); 
+    cameraManager.stop(); 
     
     showAlert('תוצאת בדיקת כשרות (AI)', responseText, { text: responseText, useApi: true });
 }
@@ -2790,7 +2790,7 @@ async function processReceiptImage(base64ImageData) {
     let responseText = await callGemini(payload, '', false);
     
     // סוגר את מודל המצלמה (ללא קשר לתוצאת ה-AI)
-    stopCamera();
+    cameraManager.stop();
     
     try {
         const jsonMatch = responseText.match(/\{[\s\S]*\}/);
