@@ -2665,9 +2665,12 @@ document.getElementById('zoom-out-btn').addEventListener('click', () => cameraMa
 // הוסף פונקציה זו בבלוק הפונקציות של קריאות ה-Gemini (קרוב ל-processLookupImage)
 // הוסף או ודא שזו הפונקציה הקיימת שלך
 async function processKosherImage(base64ImageData) {
+    // שלב 1: סגור את המצלמה מיד כדי לשחרר את הממשק
+    cameraManager.stop(); 
+
+    // שלב 2: הצג הודעת "טוען..." בזמן שה-AI עובד ברקע
     showAlert('מנתח כשרות...', '<div class="text-center"><i class="fa-solid fa-sync fa-spin fa-2x"></i><p class="mt-2">מזהה תווית ובוחן סטטוס כשרות מקובל באינטרנט...</p></div>');
 
-    // **הפרומפט המעודכן בעברית**
     const prompt = `אתה מומחה לכשרות וניתוח תוויות מזון. נתח את תווית המוצר בתמונה.
 בצע שני שלבים עיקריים:
 1. ניתוח התווית (ויזואלי וטקסטואלי):
@@ -2679,13 +2682,13 @@ async function processKosherImage(base64ImageData) {
    לדוגמה: האם זה מוצר שידוע בציבור ככשר ללא חשש (כגון קוקה קולה או פסטה ברילה)?
 הצג את התשובה הסופית כסיכום מקיף ומנוסח היטב בעברית קולחת. התחל את התשובה עם כותרת ברורה וסיכום ממצאים.
 סיים באזהרה מודגשת כי ההחלטה הסופית על צריכת המוצר היא באחריות המשתמש, ושמדובר בבדיקה אינפורמטיבית בלבד.`;
-    
+
     const payload = { contents: [{ parts: [{ text: prompt }, { inlineData: { mimeType: 'image/jpeg', data: base64ImageData } }] }] };
 
+    // שלב 3: חכה לתשובת ה-AI
     const responseText = await callGemini(payload, '', false);
-    
-    cameraManager.stop(); 
-    
+
+    // שלב 4: הצג את התשובה הסופית
     showAlert('תוצאת בדיקת כשרות (AI)', responseText, { text: responseText, useApi: true });
 }
 
