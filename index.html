@@ -3913,22 +3913,43 @@ if ('serviceWorker' in navigator) {
 
     // --- Caching and Sharing Logic ---
 // --- לוגיקת שמירה ושיתוף Trip ID (PWA Fix) ---
-let tripId = window.location.hash.substring(1);
+let tripId;
+const knownSections = ['overview', 'plan', 'suggestions', 'kosher', 'tools', 'documents-and-gallery', 'live-location-tool'];
+const initialHash = window.location.hash.substring(1);
+window.sectionToScrollTo = null; // משתנה גלובלי כדי לגשת אליו בהמשך
 
-// 1. אם אין Hash ב-URL (כמו בפתיחה דרך אייקון PWA סטטי), נסה לטעון את האחרון השמור.
-if (!tripId) {
-    const storedTripId = localStorage.getItem('lastTripId');
-    if (storedTripId) {
-        tripId = storedTripId;
-        window.location.hash = tripId; // עדכן את ה-URL
-    } else {
-        // 2. אם אין שמור, צור חדש.
+if (knownSections.includes(initialHash)) {
+    // הכתובת מכילה קישור לחלק בעמוד, לא מזהה טיול
+    console.log(`LOG: Detected section link on initial load: #${initialHash}`);
+    window.sectionToScrollTo = initialHash;
+
+    // מנקה את ה-hash הבעייתי מהכתובת באופן מיידי
+    history.replaceState(null, '', window.location.pathname + window.location.search);
+
+    // עכשיו, מוצא את מזהה הטיול הנכון מהאחסון המקומי או יוצר חדש
+    tripId = localStorage.getItem('lastTripId');
+    if (!tripId) {
         tripId = Math.random().toString(36).substring(2, 12);
-        window.location.hash = tripId;
+    }
+    window.location.hash = tripId; // מגדיר את הכתובת למזהה הטיול הנכון
+
+} else {
+    // ה-hash הוא לא חלק מוכר, אז נתייחס אליו כמזהה טיול
+    tripId = initialHash;
+    if (!tripId) {
+        // אם אין hash בכלל, בדוק באחסון או צור חדש
+        tripId = localStorage.getItem('lastTripId');
+        if (tripId) {
+             window.location.hash = tripId;
+        } else {
+            tripId = Math.random().toString(36).substring(2, 12);
+            window.location.hash = tripId;
+        }
     }
 }
 
-// 3. תמיד שמור את המזהה הנוכחי כ"אחרון בשימוש" עבור הפעם הבאה.
+// שומר תמיד את מזהה הטיול הנוכחי (והנכון) בתור "האחרון שהיה בשימוש"
+console.log(`LOG: Final tripId for this session is: ${tripId}`);
 localStorage.setItem('lastTripId', tripId);
 
 // 4. המשך בלוגיקה הישנה שלא הוחלפה (טעינת שם משתמש וקאש מקומי):
@@ -3981,6 +4002,18 @@ if (cachedData) {
             renderGallery(localTripData.gallery);
             initPassCalculator();
             renderScrapbook();
+          if (window.sectionToScrollTo) {
+    const targetElement = document.getElementById(window.sectionToScrollTo);
+    if (targetElement) {
+        console.log(`LOG: Scrolling to initial section: #${window.sectionToScrollTo}`);
+        // השהייה קטנה כדי לוודא שהעמוד הספיק להציג את כל התוכן
+        setTimeout(() => {
+            targetElement.scrollIntoView({ behavior: 'smooth' });
+        }, 200);
+    }
+    // מאפסים את המשתנה כדי שהגלילה לא תתרחש שוב בכל עדכון נתונים
+    window.sectionToScrollTo = null; 
+}
         }, (error) => {
             console.error("ERROR: Firestore snapshot error:", error);
             const statusIcon = $('#sync-status i');
