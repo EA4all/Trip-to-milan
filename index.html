@@ -3751,10 +3751,8 @@ function startRecognition(langCode, button) {
         }
     }
 }
-// ==========================================================================
-// --- תיקון ניווט וזיהוי טיול (גרסה 3 - סופי) ---
-// ==========================================================================
 function setupNavigationAndScrolling() {
+    // מטפל בגלילה ראשונית אם ה-URL נטען עם hash
     const initialHash = window.location.hash.substring(1);
     if (initialHash) {
         const targetElement = document.getElementById(initialHash);
@@ -3763,23 +3761,30 @@ function setupNavigationAndScrolling() {
             setTimeout(() => {
                 console.log(`LOG: Scrolling to initial section from hash: #${initialHash}`);
                 targetElement.scrollIntoView({ behavior: 'smooth' });
-            }, 300);
+            }, 500);
         }
     }
 
-    // מטפל בלחיצות על כל הקישורים הפנימיים
-    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-        anchor.addEventListener('click', function (e) {
-            e.preventDefault();
-            const targetId = this.getAttribute('href');
+    // מאזין ללחיצות על כל הקישורים הפנימיים בעמוד
+    document.body.addEventListener('click', function(e) {
+        const anchor = e.target.closest('a');
+
+        // בודק אם זה קישור פנימי (מתחיל ב-#) ולא קישור חיצוני
+        if (anchor && anchor.getAttribute('href') && anchor.getAttribute('href').startsWith('#')) {
+            e.preventDefault(); // מונע את התנהגות ברירת המחדל
+
+            const targetId = anchor.getAttribute('href');
             const targetElement = document.querySelector(targetId);
+
             if (targetElement) {
                 console.log(`LOG: Smooth scrolling to ${targetId}`);
                 targetElement.scrollIntoView({ behavior: 'smooth' });
-                // מוסיף את ה-hash לכתובת באופן שלא גורם לטעינה מחדש, רק לטובת המשתמש
-                history.pushState(null, null, window.location.pathname + window.location.search + targetId);
+
+                // עדכון ה-URL עם ה-hash הנכון, מבלי לרענן את העמוד
+                const currentUrlWithoutHash = window.location.pathname + window.location.search;
+                history.pushState(null, '', currentUrlWithoutHash + targetId);
             }
-        });
+        }
     });
 }
     // --- INIT ---
@@ -3918,11 +3923,6 @@ if ('serviceWorker' in navigator) {
     db = getFirestore(app);
     enableIndexedDbPersistence(db).catch(err => console.warn(`WARN: Firestore persistence failed. Code: ${err.code}`));
 
-    // --- Caching and Sharing Logic ---
-// --- לוגיקת שמירה ושיתוף Trip ID (PWA Fix) ---
-// ==========================================================================
-// --- לוגיקת טעינת מזהה טיול מכתובת ה-URL (גרסה סופית) ---
-// ==========================================================================
 let tripId;
 const urlParams = new URLSearchParams(window.location.search);
 const tripIdFromUrl = urlParams.get('trip');
@@ -3946,7 +3946,6 @@ if (tripIdFromUrl) {
 
 console.log(`LOG: Final tripId for this session is: ${tripId}`);
 // --- סוף התיקון ---
-
 // טעינת שם המשתמש והנתונים מהזיכרון המקומי (ללא שינוי)
 $('#user-name-input').value = localStorage.getItem('userName') || '';
 const cachedData = localStorage.getItem(`tripData_${tripId}`);
