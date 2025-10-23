@@ -3752,25 +3752,32 @@ function startRecognition(langCode, button) {
     }
 }
 // ==========================================================================
-// --- תיקון ניווט מהיר (מונע שינוי URL Hash) ---
+// --- תיקון ניווט וזיהוי טיול (גרסה 3 - סופי) ---
 // ==========================================================================
-function setupSmoothScroll() {
+function setupNavigationAndScrolling() {
+    const initialHash = window.location.hash.substring(1);
+    if (initialHash) {
+        const targetElement = document.getElementById(initialHash);
+        if (targetElement) {
+            // השהייה קטנה כדי לוודא שהעמוד הספיק להציג את כל התוכן לפני הגלילה
+            setTimeout(() => {
+                console.log(`LOG: Scrolling to initial section from hash: #${initialHash}`);
+                targetElement.scrollIntoView({ behavior: 'smooth' });
+            }, 300);
+        }
+    }
+
+    // מטפל בלחיצות על כל הקישורים הפנימיים
     document.querySelectorAll('a[href^="#"]').forEach(anchor => {
         anchor.addEventListener('click', function (e) {
-            // בטל את התנהגות ברירת המחדל של הקישור
             e.preventDefault();
-
             const targetId = this.getAttribute('href');
             const targetElement = document.querySelector(targetId);
-
             if (targetElement) {
                 console.log(`LOG: Smooth scrolling to ${targetId}`);
-                // גלול בצורה חלקה אל האלמנט, תוך שמירה על ה-URL המקורי
-                targetElement.scrollIntoView({
-                    behavior: 'smooth'
-                });
-            } else {
-                console.warn(`WARN: Target element not found for selector: ${targetId}`);
+                targetElement.scrollIntoView({ behavior: 'smooth' });
+                // מוסיף את ה-hash לכתובת באופן שלא גורם לטעינה מחדש, רק לטובת המשתמש
+                history.pushState(null, null, window.location.pathname + window.location.search + targetId);
             }
         });
     });
@@ -3913,48 +3920,35 @@ if ('serviceWorker' in navigator) {
 
     // --- Caching and Sharing Logic ---
 // --- לוגיקת שמירה ושיתוף Trip ID (PWA Fix) ---
+// ==========================================================================
+// --- לוגיקת טעינת מזהה טיול מכתובת ה-URL (גרסה סופית) ---
+// ==========================================================================
 let tripId;
-const knownSections = ['overview', 'plan', 'suggestions', 'kosher', 'tools', 'documents-and-gallery', 'live-location-tool'];
-const initialHash = window.location.hash.substring(1);
-window.sectionToScrollTo = null; // משתנה גלובלי כדי לגשת אליו בהמשך
+const urlParams = new URLSearchParams(window.location.search);
+const tripIdFromUrl = urlParams.get('trip');
 
-if (knownSections.includes(initialHash)) {
-    // הכתובת מכילה קישור לחלק בעמוד, לא מזהה טיול
-    console.log(`LOG: Detected section link on initial load: #${initialHash}`);
-    window.sectionToScrollTo = initialHash;
-
-    // מנקה את ה-hash הבעייתי מהכתובת באופן מיידי
-    history.replaceState(null, '', window.location.pathname + window.location.search);
-
-    // עכשיו, מוצא את מזהה הטיול הנכון מהאחסון המקומי או יוצר חדש
+if (tripIdFromUrl) {
+    tripId = tripIdFromUrl;
+    // אם המזהה קיים בכתובת, שומר אותו לשימוש עתידי
+    localStorage.setItem('lastTripId', tripId);
+} else {
+    // אם אין מזהה בכתובת, נסה לטעון את האחרון שנשמר
     tripId = localStorage.getItem('lastTripId');
     if (!tripId) {
+        // אם אין כלום, צור מזהה חדש לגמרי
         tripId = Math.random().toString(36).substring(2, 12);
+        localStorage.setItem('lastTripId', tripId);
     }
-    window.location.hash = tripId; // מגדיר את הכתובת למזהה הטיול הנכון
-
-} else {
-    // ה-hash הוא לא חלק מוכר, אז נתייחס אליו כמזהה טיול
-    tripId = initialHash;
-    if (!tripId) {
-        // אם אין hash בכלל, בדוק באחסון או צור חדש
-        tripId = localStorage.getItem('lastTripId');
-        if (tripId) {
-             window.location.hash = tripId;
-        } else {
-            tripId = Math.random().toString(36).substring(2, 12);
-            window.location.hash = tripId;
-        }
-    }
+    // עדכון ה-URL כדי שיכלול את המזהה הנכון, מבלי לרענן את העמוד
+    const newUrl = window.location.pathname + `?trip=${tripId}` + window.location.hash;
+    history.replaceState(null, '', newUrl);
 }
 
-// שומר תמיד את מזהה הטיול הנוכחי (והנכון) בתור "האחרון שהיה בשימוש"
 console.log(`LOG: Final tripId for this session is: ${tripId}`);
-localStorage.setItem('lastTripId', tripId);
+// --- סוף התיקון ---
 
-// 4. המשך בלוגיקה הישנה שלא הוחלפה (טעינת שם משתמש וקאש מקומי):
+// טעינת שם המשתמש והנתונים מהזיכרון המקומי (ללא שינוי)
 $('#user-name-input').value = localStorage.getItem('userName') || '';
-
 const cachedData = localStorage.getItem(`tripData_${tripId}`);
 if (cachedData) {
     try {
@@ -3965,66 +3959,68 @@ if (cachedData) {
     }
 }
 
-    signInAnonymously(auth).catch(error => showAlert("שגיאת התחברות ל-Firebase", `ההתחברות האנונימית נכשלה. ${error.message}`));
+signInAnonymously(auth).catch(error => showAlert("שגיאת התחברות ל-Firebase", `ההתחברות האנונימית נכשלה. ${error.message}`));
 
-    onAuthStateChanged(auth, (user) => {
-      if (user) {
-        currentUserId = user.uid;
-        tripDocRef = doc(db, "milantrip", tripId);
-        locationsColRef = collection(db, "milantrip", tripId, "locations");
+onAuthStateChanged(auth, (user) => {
+  if (user) {
+    currentUserId = user.uid;
+    tripDocRef = doc(db, "milantrip", tripId);
+    locationsColRef = collection(db, "milantrip", tripId, "locations");
 
-        initLiveMap();
-        listenForLocationUpdates();
+    initLiveMap();
+    listenForLocationUpdates();
 
-        onSnapshot(tripDocRef, async (docSnap) => {
-            if (!isFirebaseConnected) {
-                const statusIcon = $('#sync-status i');
-                const statusText = $('#sync-status span');
-                statusIcon.classList.replace('text-yellow-500', 'text-green-500');
-                statusText.textContent = 'מחובר';
-                isFirebaseConnected = true;
-            }
-            if (docSnap.exists()) {
-                localTripData = docSnap.data();
-            } else {
-                localTripData = getInitialTripData();
-                await setDoc(tripDocRef, localTripData);
-            }
-            localStorage.setItem(`tripData_${tripId}`, JSON.stringify(localTripData));
-
-            // --- Render all components with fresh data ---
-            renderAllPlans(localTripData.plan);
-            renderSuggestions(localTripData.suggestions);
-            renderKosher();
-            renderChecklist(localTripData.checklist);
-            renderBudget(localTripData);
-            renderDocuments(localTripData.documents);
-            renderGallery(localTripData.gallery);
-            initPassCalculator();
-            renderScrapbook();
-          if (window.sectionToScrollTo) {
-    const targetElement = document.getElementById(window.sectionToScrollTo);
-    if (targetElement) {
-        console.log(`LOG: Scrolling to initial section: #${window.sectionToScrollTo}`);
-        // השהייה קטנה כדי לוודא שהעמוד הספיק להציג את כל התוכן
-        setTimeout(() => {
-            targetElement.scrollIntoView({ behavior: 'smooth' });
-        }, 200);
-    }
-    // מאפסים את המשתנה כדי שהגלילה לא תתרחש שוב בכל עדכון נתונים
-    window.sectionToScrollTo = null; 
-}
-        }, (error) => {
-            console.error("ERROR: Firestore snapshot error:", error);
+    onSnapshot(tripDocRef, async (docSnap) => {
+        if (!isFirebaseConnected) {
             const statusIcon = $('#sync-status i');
             const statusText = $('#sync-status span');
-            statusIcon.classList.remove('text-green-500', 'text-yellow-500');
-            statusIcon.classList.add('text-red-500');
-            statusText.textContent = 'בעיית סנכרון';
-        });
-      }
-    });
+            statusIcon.classList.replace('text-yellow-500', 'text-green-500');
+            statusText.textContent = 'מחובר';
+            isFirebaseConnected = true;
+        }
+        if (docSnap.exists()) {
+            localTripData = docSnap.data();
+        } else {
+            localTripData = getInitialTripData();
+            await setDoc(tripDocRef, localTripData);
+        }
+        localStorage.setItem(`tripData_${tripId}`, JSON.stringify(localTripData));
 
+        // --- Render all components with fresh data ---
+        renderAllPlans(localTripData.plan);
+        renderSuggestions(localTripData.suggestions);
+        renderKosher();
+        renderChecklist(localTripData.checklist);
+        renderBudget(localTripData);
+        renderDocuments(localTripData.documents);
+        renderGallery(localTripData.gallery);
+        initPassCalculator();
+        renderScrapbook();
+      
+        // גלילה לחלק הרצוי אם הוא צוין בכתובת המקורית
+        // (הקוד הזה הועבר לכאן מההנחיה הקודמת)
+        const initialHash = window.location.hash.substring(1);
+        if (initialHash) {
+            const targetElement = document.getElementById(initialHash);
+            if (targetElement) {
+                // השהייה קטנה כדי לוודא שהעמוד הספיק להציג את כל התוכן לפני הגלילה
+                setTimeout(() => {
+                    console.log(`LOG: Scrolling to initial section from hash: #${initialHash}`);
+                    targetElement.scrollIntoView({ behavior: 'smooth' });
+                }, 300);
+            }
+        }
+        
+    }, (error) => {
+        console.error("ERROR: Firestore snapshot error:", error);
+        const statusIcon = $('#sync-status i');
+        const statusText = $('#sync-status span');
+        statusIcon.classList.remove('text-green-500', 'text-yellow-500');
+        statusIcon.classList.add('text-red-500');
+        statusText.textContent = 'בעיית סנכרון';
+    });
+  }
+});
     // --- Initial Renders & Fetches ---
     console.log("LOG: Performing initial renders and fetches.");
     renderOverview();
