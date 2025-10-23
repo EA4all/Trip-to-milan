@@ -3751,13 +3751,34 @@ function startRecognition(langCode, button) {
         }
     }
 }
-// ==========================================================
-// סוף: קוד מתוקן ומשופר לתרגום קולי
-// ==========================================================
+// ==========================================================================
+// --- תיקון ניווט מהיר (מונע שינוי URL Hash) ---
+// ==========================================================================
+function setupSmoothScroll() {
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener('click', function (e) {
+            // בטל את התנהגות ברירת המחדל של הקישור
+            e.preventDefault();
 
+            const targetId = this.getAttribute('href');
+            const targetElement = document.querySelector(targetId);
+
+            if (targetElement) {
+                console.log(`LOG: Smooth scrolling to ${targetId}`);
+                // גלול בצורה חלקה אל האלמנט, תוך שמירה על ה-URL המקורי
+                targetElement.scrollIntoView({
+                    behavior: 'smooth'
+                });
+            } else {
+                console.warn(`WARN: Target element not found for selector: ${targetId}`);
+            }
+        });
+    });
+}
     // --- INIT ---
+    
 document.addEventListener('DOMContentLoaded', () => {
-
+setupSmoothScroll()
   const heBtn = $('#voice-translate-he-btn');
     const itBtn = $('#voice-translate-it-btn');
     
