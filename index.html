@@ -4858,7 +4858,8 @@ document.getElementById('close-eruv-modal').addEventListener('click', () => {
     // חיבור הכפתורים
     if (scrapbookWidget) {
         // שינוי: במקום לפתוח את הסקראפבוק הרגיל, פתח את מודל האלבום
-        scrapbookWidget.addEventListener('click', openStorybookModal);
+      const scrapbookSummary = scrapbookWidget.querySelector('summary');
+      if (scrapbookSummary) scrapbookSummary.addEventListener('click', (e) => { e.preventDefault(); openStorybookModal(); });
     }
     storybookCloseBtn.addEventListener('click', closeStorybookModal);
     createStorybookBtn.addEventListener('click', generateStorybookAlbum);
