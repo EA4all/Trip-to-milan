@@ -4839,47 +4839,58 @@ document.getElementById('close-eruv-modal').addEventListener('click', () => {
 
     // פתיחת מודל האלבום
 const openStorybookModal = () => {
-        console.log("[Storybook] Attempting to open modal..."); // הודעת פתיחה
+        console.log("[Storybook] Attempting to open modal...");
 
-        // --- בדיקה קריטית: האם האלמנט קיים? ---
-        const flipbookElement = $("#flipbook"); 
-        
-        console.log("[Storybook] Flipbook jQuery object:", flipbookElement); // נראה מה jQuery מצא
-        
-        if (!flipbookElement || flipbookElement.length === 0) {
-            console.error("[Storybook] CRITICAL ERROR: #flipbook element NOT FOUND in the DOM!");
-            showAlert('שגיאה חמורה', 'רכיב האלבום (#flipbook) לא נמצא בדף. בדוק את קוד ה-HTML או נסה לרענן.');
+        const flipbookSelector = "#flipbook";
+        // --- שינוי 1: שימוש ב-querySelector הילידי כדי לקבל את האלמנט ---
+        const flipbookDomElement = document.querySelector(flipbookSelector); 
+
+        console.log("[Storybook] Flipbook DOM element:", flipbookDomElement); // נראה מה נמצא
+
+        if (!flipbookDomElement) {
+            console.error(`[Storybook] CRITICAL ERROR: Element with selector '${flipbookSelector}' NOT FOUND!`);
+            showAlert('שגיאה חמורה', `רכיב האלבום ('${flipbookSelector}') לא נמצא. בדוק HTML.`);
             return; // עצור אם האלמנט לא קיים
         }
-        console.log("[Storybook] #flipbook element found successfully.");
+        console.log("[Storybook] Flipbook element found successfully.");
 
         // איפוס התצוגה למצב התחלתי
         initialView.style.display = 'flex';
         loadingView.style.display = 'none';
         flipbookView.style.display = 'none';
         
-        flipbookElement.html(''); // נקה תוכן קודם
+        // --- שינוי 2: שימוש ב-innerHTML הילידי לניקוי ---
+        console.log("[Storybook] Clearing flipbook content using native innerHTML...");
+        try {
+            flipbookDomElement.innerHTML = ''; // נקה תוכן קודם
+             console.log("[Storybook] Content cleared successfully.");
+        } catch (e) {
+             console.error("[Storybook] Error clearing innerHTML:", e);
+             showAlert('שגיאת איפוס', 'לא ניתן היה לאפס את תוכן האלבום.');
+             return;
+        }
 
-        // --- בדיקה שנייה: האם פונקציית turn קיימת? ---
-        if (typeof flipbookElement.turn !== 'function') {
-            console.error("[Storybook] CRITICAL ERROR: .turn() function is not available! turn.js might not be loaded correctly or there's a conflict.");
-             showAlert('שגיאת ספרייה', 'פונקציית הדפדוף (.turn) אינה זמינה. ודא שהקובץ turn.min.js נטען כראוי.');
-             return; // עצור אם הפונקציה לא קיימת
+        // --- שינוי 3: עטיפת הגישה ל-turn בתוך jQuery ---
+        // עדיין נצטרך את jQuery כדי להפעיל את turn.js
+        const flipbookElementJQ = $(flipbookDomElement); // נעטוף את האלמנט הילידי ב-jQuery
+
+        if (typeof flipbookElementJQ.turn !== 'function') {
+            console.error("[Storybook] CRITICAL ERROR: .turn() function is not available on jQuery object! turn.js not loaded or conflict?");
+            showAlert('שגיאת ספרייה', 'פונקציית הדפדוף (.turn) אינה זמינה. ודא ש-turn.min.js נטען כראוי.');
+            return; // עצור אם הפונקציה לא קיימת
         }
         console.log("[Storybook] .turn() function is available.");
 
-        // --- המשך הקוד המקורי עם בדיקות ---
         try {
             console.log("[Storybook] Checking if turn instance exists...");
-            if (flipbookElement.turn("is")) {
-                 console.log("[Storybook] Destroying previous turn instance...");
-                 flipbookElement.turn("destroy"); 
+            if (flipbookElementJQ.turn("is")) {
+                console.log("[Storybook] Destroying previous turn instance...");
+                flipbookElementJQ.turn("destroy"); 
             } else {
-                 console.log("[Storybook] No previous turn instance to destroy.");
+                console.log("[Storybook] No previous turn instance to destroy.");
             }
         } catch (e) {
-             console.error("[Storybook] Error during turn('is') or turn('destroy'):", e);
-             // אל תעצור כאן, אולי אפשר להמשיך גם אם ה-destroy נכשל
+            console.error("[Storybook] Error during turn('is') or turn('destroy'):", e);
         }
 
         console.log("[Storybook] Removing 'hidden' class from modal.");
