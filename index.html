@@ -57,13 +57,59 @@
 }
 
 #flipbook .page-content {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    padding: 3vw; /* ריווח רספונסיבי */
+    position: relative; /* מאפשר מיקום אבסולוטי של רקעים */
+    z-index: 1; /* תוכן מעל הרקע */
+    color: #333; /* צבע טקסט ברירת מחדל */
+}
+#flipbook .page-background {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
     height: 100%;
-    box-sizing: border-box;
+    object-fit: cover;
+    z-index: 0; /* רקע מאחורי התוכן */
+    opacity: 0.15; /* שקיפות עדינה לרקע */
+}
+.template-A .page-content {
+    justify-content: flex-start; /* הצמד תוכן למעלה */
+}
+.template-A .page-content img {
+    max-height: 65%; /* תמונה תופסת רוב הגובה */
+    margin-bottom: 15px;
+}
+.template-A .page-content p {
+    font-size: 1.6vw; /* טקסט מעט קטן יותר */
+    max-height: 25%;
+    overflow: hidden;
+}
+
+/* תבנית B: טקסט בלבד (לפתיח, סיום, או קטעי מעבר) */
+.template-B .page-content {
+    justify-content: center; /* ממורכז אנכית */
+}
+.template-B .page-content p {
+    font-size: 2vw; /* טקסט גדול יותר */
+    font-style: italic; /* נטוי */
+    max-width: 80%;
+}
+
+/* תבנית C: תמונה בצד, טקסט בצד השני (ימין לשמאל) */
+.template-C .page-content {
+    flex-direction: row; /* סידור אופקי */
+    justify-content: space-between;
+    align-items: center;
+}
+.template-C .page-content img {
+    max-width: 45%;
+    max-height: 80%;
+    margin-bottom: 0;
+    margin-left: 5%; /* רווח קטן */
+}
+.template-C .page-content p {
+    max-width: 45%;
+    font-size: 1.5vw;
+    text-align: right; /* יישור לימין */
 }
 
 #flipbook .page-content img {
@@ -4941,21 +4987,15 @@ const openStorybookModal = () => {
     }
     storybookCloseBtn.addEventListener('click', closeStorybookModal);
     createStorybookBtn.addEventListener('click', generateStorybookAlbum);
-
-
-    // --- הפונקציה המרכזית שיוצרת את הסיפור ---
-// --- הפונקציה המרכזית שיוצרת את הסיפור (גרסה מתוקנת סופית) ---
-    async function generateStorybookAlbum() {
+async function generateStorybookAlbum() {
         initialView.style.display = 'none';
         loadingView.style.display = 'flex';
 
-        try { // <--- TRY ראשי מתחיל כאן
-
-            // 1. איסוף כל המידע
+        try { // TRY ראשי
+            // 1. איסוף כל המידע (זהה לקודם)
             const allEntries = [];
             const allImages = [];
             let imageCounter = 0;
-
             const sortedDays = Object.keys(localTripData.plan || {}).sort();
             
             sortedDays.forEach(dayId => {
@@ -4968,13 +5008,12 @@ const openStorybookModal = () => {
                     }
                     allEntries.push({ 
                         day: localTripData.plan[dayId].name, 
-                        text: entry.text,
+                        text: entry.text || '', // ודא שיש טקסט או מחרוזת ריקה
                         imageIndex: imageIndex
                     });
                 });
             });
 
-            // בדיקה אם יש מספיק תוכן
             if (allEntries.length === 0 && allImages.length === 0) {
                  showAlert('אין מספיק תוכן', 'כדי ליצור סיפור, צריך להוסיף לפחות חוויה אחת או תמונה אחת ליומן.');
                  loadingView.style.display = 'none';
@@ -4982,30 +5021,33 @@ const openStorybookModal = () => {
                  return;
             }
 
+            // --- חדש: הגדרת אפשרויות עיצוב ---
+            const availableTemplates = ['template-A', 'template-B', 'template-C']; // שמות ה-CSS classes שיצרנו
+            // ניתן להוסיף כאן URL-ים לרקעים (כרגע נשתמש בצבעים)
+            const availableBackgrounds = ['#f0f4f8', '#e6eaea', '#f8f0f0', '#f5f5e0']; // צבעי רקע עדינים
 
-            // 2. בניית הפרומפט לבינה המלאכותית
+            // 2. בניית הפרומפט המשודרג ל-AI
             const userNotes = allEntries.map(e => `${e.day}: ${e.text || '(רק תמונה)'}`).join('\n');
             const prompt = `
-                אתה סופר ילדים יצירתי. המשימה שלך היא לכתוב סיפור קצר וקסום (עד 8 עמודים) על טיול משפחתי למילאנו, בהתבסס על התמונות והרשומות מהיומן שלהם.
-                הרשומות מהיומן הן:
+                אתה מעצב גרפי וסופר ילדים. צור סיפור קצר (עד 8 עמודים) על טיול משפחתי למילאנו, בהתבסס על הרשומות מהיומן והתמונות.
+                הרשומות:
                 ${userNotes}
                 
-                המטרה היא ליצור עלילה קוהרנטית ומרגשת, לא רק לסכם את האירועים.
-                התשובה שלך חייבת להיות בפורמט JSON בלבד, ללא טקסט לפני או אחרי.
-                הפורמט הוא מערך של אובייקטים, כאשר כל אובייקט הוא עמוד בספר.
-                לכל עמוד צריך להיות מפתח "text" עם הסיפור לאותו עמוד, ומפתח "imageIndex" עם מספר התמונה המתאימה מהרשימה (התחל לספור מ-0).
-                אם עמוד מסוים הוא רק טקסט (כמו פתיחה או סיום), השתמש ב-imageIndex: -1.
+                עבור כל עמוד בספר (כולל כריכה קדמית וסיום), עליך להחליט על:
+                1.  'text': קטע קצר מהסיפור שאתה כותב (בעברית).
+                2.  'imageIndex': מספר התמונה המתאימה מהרשימה (0, 1, 2...) או -1 אם אין תמונה בעמוד זה.
+                3.  'templateId': שם התבנית המתאימה ביותר לעמוד זה מבין האפשרויות הבאות: ${availableTemplates.join(', ')}. (למשל, 'template-A' לתמונה גדולה, 'template-B' לטקסט בלבד, 'template-C' לתמונה וטקסט זה לצד זה).
+                4.  'backgroundId': בחר אחד מצבעי הרקע הבאים שיתאים לאווירת העמוד: ${availableBackgrounds.join(', ')}.
 
-                דוגמה לפורמט התשובה:
-                [
-                  { "page": 1, "text": "פעם אחת, לפני הרבה מאוד זמן, יצאה משפחה להרפתקה קסומה בעיר הגדולה מילאנו...", "imageIndex": -1 },
-                  { "page": 2, "text": "הדבר הראשון שהם ראו היה קתדרלה עצומה ומפוארת, שהגיעה כמעט עד העננים!", "imageIndex": 0 },
-                  { "page": 3, "text": "ליד הקתדרלה, הם מצאו גלידה טעימה ומתוקה שהצחיקה את כולם.", "imageIndex": 1 }
-                ]
+                המטרה היא ליצור אלבום ויזואלי ומרגש. התאם את התבנית והרקע לתוכן של כל עמוד.
+                התשובה שלך חייבת להיות בפורמט JSON בלבד, כמערך של אובייקטים, ללא טקסט לפני או אחרי.
+
+                דוגמה לאובייקט עמוד:
+                { "page": 1, "text": "ההרפתקה הגדולה במילאנו מתחילה!", "imageIndex": -1, "templateId": "template-B", "backgroundId": "#f0f4f8" }
             `;
 
-            // 3. קריאה ל-AI וניקוי JSON
-            console.log("[Storybook] Calling AI...");
+            // 3. קריאה ל-AI וניקוי JSON (זהה לקודם, אבל עם הפרומפט החדש)
+            console.log("[Storybook] Calling AI for designed story...");
             const aiResponseText = await callGemini({ contents: [{ parts: [{ text: prompt }] }] }, null, false);
             console.log("[Storybook] AI Response received:", aiResponseText);
 
@@ -5015,31 +5057,39 @@ const openStorybookModal = () => {
                 cleanedJsonString = jsonMatch[1] || jsonMatch[2]; 
             } else {
                  console.warn("[Storybook] Could not find clean JSON block in AI response.");
-                 throw new Error("תגובת ה-AI אינה בפורמט JSON תקין."); // זרוק שגיאה
+                 throw new Error("תגובת ה-AI אינה בפורמט JSON תקין.");
             }
             
             console.log("[Storybook] Cleaned JSON string:", cleanedJsonString); 
             const storyPages = JSON.parse(cleanedJsonString.trim()); 
-            console.log("[Storybook] Parsed story pages:", storyPages);
+            console.log("[Storybook] Parsed designed story pages:", storyPages);
 
 
-            // 4. בניית ה-HTML של הספר
-            const flipbookContainer = document.querySelector('#flipbook'); // שימוש ב-querySelector
+            // 4. בניית ה-HTML של הספר (עם עיצוב דינמי)
+            const flipbookContainer = document.querySelector('#flipbook'); 
             if (!flipbookContainer) throw new Error("Flipbook container not found!");
 
-            let bookHtml = `<div class="hard"><div class="page-content">הסיפור המופלא<br>של הטיול שלנו למילאנו</div></div>`;
+            // כריכה קדמית (עיצוב קבוע)
+            let bookHtml = `<div class="hard"><div class="page-content"><h1>הסיפור המופלא</h1><h2>של הטיול שלנו למילאנו</h2></div></div>`;
 
             storyPages.forEach(page => {
-                // בדיקה נוספת למבנה תקין
-                if (typeof page !== 'object' || !page.text) {
+                // בדיקות תקינות נוספות
+                if (typeof page !== 'object' || !page.text || !page.templateId || !page.backgroundId) {
                      console.warn("[Storybook] Skipping invalid page object from AI:", page);
-                     return; // דלג על עמוד לא תקין
+                     return; 
                 }
-                const imageIndex = parseInt(page.imageIndex, 10); // ודא שזה מספר
+                
+                const imageIndex = parseInt(page.imageIndex, 10);
                 const imageUrl = imageIndex !== -1 && allImages[imageIndex] ? allImages[imageIndex] : '';
                 const imageHtml = imageUrl ? `<img src="${imageUrl}">` : '';
+                
+                // --- חדש: הוספת ה-class של התבנית והרקע ---
+                // (כאן אפשר להשתמש בתמונה לרקע במקום צבע, אם נגדיר זאת)
+                const backgroundStyle = `style="background-color: ${page.backgroundId};"`; 
+
                 bookHtml += `
-                    <div>
+                    <div class="${page.templateId}"> 
+                        <div class="page-background" ${backgroundStyle}></div> 
                         <div class="page-content">
                             ${imageHtml}
                             <p>${page.text}</p>
@@ -5048,13 +5098,13 @@ const openStorybookModal = () => {
                 `;
             });
             
-            bookHtml += `<div class="hard"><div class="page-content">סוף</div></div>`;
+            // כריכה אחורית (עיצוב קבוע)
+            bookHtml += `<div class="hard"><div class="page-content"><h1>סוף</h1></div></div>`;
 
             flipbookContainer.innerHTML = bookHtml;
-            console.log("[Storybook] Book HTML generated and added to container.");
+            console.log("[Storybook] Book HTML with dynamic templates generated.");
 
-
-            // 5. אתחול הספר הדיגיטלי
+            // 5. אתחול הספר הדיגיטלי (זהה לקודם)
             loadingView.style.display = 'none';
             flipbookView.style.display = 'flex';
             
@@ -5076,17 +5126,16 @@ const openStorybookModal = () => {
                 } 
             }, 100); 
 
-        // כאן נסגר ה-TRY הראשי
-        } catch (error) { // <--- CATCH ראשי מתחיל כאן
+        // סגירת TRY ראשי
+        } catch (error) { 
             console.error("Error generating storybook:", error);
-            showAlert('שגיאה ביצירת הסיפור', `הייתה בעיה ביצירת הסיפור: ${error.message}. אנא נסה שוב. ודא שהעלית לפחות תמונה אחת.`);
-            // חזור למסך ההתחלתי
+            showAlert('שגיאה ביצירת הסיפור', `הייתה בעיה ביצירת הסיפור: ${error.message}. אנא נסה שוב.`);
             loadingView.style.display = 'none';
             initialView.style.display = 'flex';
-        } // <--- CATCH ראשי נסגר כאן
+        } // סגירת CATCH ראשי
 
-    } // <--- פונקציית generateStorybookAlbum נסגרת כאן
-    // ==========================================================
+    } // סגירת הפונקציה
+
 
 }); // <--- הסוגר הסופי של document.addEventListener('DOMContentLoaded')
 //------------
