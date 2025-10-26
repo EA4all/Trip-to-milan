@@ -173,7 +173,12 @@
     z-index: 2; /* Ensure text is above background */
     position: relative; /* Helps with stacking context */
      /* Add subtle shadow for readability on complex backgrounds */
-   
+   background-color: rgba(0, 0, 0, 0.5); /* רקע שחור חצי-שקוף */
+padding: 0.3em 0.5em; /* ריפוד קטן מסביב לטקסט */
+border-radius: 4px; /* פינות מעוגלות (אופציונלי) */
+color: #FFFFFF !important; /* כפה צבע טקסט לבן תמיד */
+display: inline-block; /* גורם לרקע לעטוף רק את הטקסט */
+max-width: 95%; /* הגבלה קלה למניעת גלישה */
 }
 .dark #flipbook .page-content p {
     text-shadow: 0px 1px 5px rgba(0, 0, 0, 0.7); /* Stronger shadow in dark mode */
