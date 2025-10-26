@@ -1738,7 +1738,7 @@ function renderPlanForDay(dayId, dayData) {
         content += `</div>${renderJournal(dayId, localTripData.journal ? localTripData.journal[dayId] : [])}</div>`;
         container.innerHTML = content;
         
-        // --- התחלה: קוד מתוקן לטיפול בטופס היומן ---
+        // --- התחלה: קוד מתוקן וסופי לטיפול בטופס היומן ---
         
         const journalForm = $(`#journal-form-${dayId}`);
         const textInput = $(`#journal-text-${dayId}`);
@@ -1749,7 +1749,6 @@ function renderPlanForDay(dayId, dayData) {
         const previewImg = $(`#journal-image-preview-${dayId}`);
         const removeImgBtn = $(`#journal-remove-image-btn-${dayId}`);
 
-        // פונקציית עזר לניקוי - מנקה את שני סוגי התמונות
         const clearImageData = () => {
             uploadInput.value = '';
             previewImg.src = '';
@@ -1758,20 +1757,14 @@ function renderPlanForDay(dayId, dayData) {
             delete journalForm.dataset.cameraImage;
         };
 
-        // 1. חיבור כפתור הגלריה
         uploadBtn.addEventListener('click', () => uploadInput.click());
 
-        // 2. טיפול בבחירת קובץ מהגלריה
         uploadInput.addEventListener('change', (e) => {
             const file = e.target.files[0];
             if (!file) return;
-            
-            // אם יש תמונה מהמצלמה, נקה אותה
             delete journalForm.dataset.cameraImage;
-
             const reader = new FileReader();
             reader.onload = (event) => {
-                // שמירת המידע ישירות על הטופס
                 journalForm.dataset.galleryImage = event.target.result;
                 previewImg.src = event.target.result;
                 previewContainer.classList.remove('hidden');
@@ -1779,9 +1772,7 @@ function renderPlanForDay(dayId, dayData) {
             reader.readAsDataURL(file);
         });
 
-        // 3. חיבור כפתור המצלמה
         cameraBtn.addEventListener('click', () => {
-            // אם יש תמונה מהגלריה, נקה אותה
             if (journalForm.dataset.galleryImage) {
                 delete journalForm.dataset.galleryImage;
                 uploadInput.value = '';
@@ -1790,35 +1781,57 @@ function renderPlanForDay(dayId, dayData) {
             startJournalCamera();
         });
 
-        // 4. כפתור הסרת תמונה
         removeImgBtn.addEventListener('click', clearImageData);
 
-        // 5. טיפול בשליחת הטופס (הלוגיקה המרכזית)
+        // --- הלוגיקה החדשה של השליחה ---
         if (journalForm) {
-            journalForm.addEventListener('submit', (e) => {
+            journalForm.addEventListener('submit', async (e) => {
                 e.preventDefault();
                 const text = textInput.value.trim();
-                
-                // קרא את התמונה מהמקום הנכון (מצלמה או גלריה)
                 let finalImageData = journalForm.dataset.cameraImage || journalForm.dataset.galleryImage;
 
                 if (!text && !finalImageData) {
                     showAlert('שגיאה', 'יש לכתוב חוויה או להוסיף תמונה.');
                     return;
                 }
-
-                if(!isFirebaseConnected) { 
+                if (!isFirebaseConnected) { 
                     showAlert('שגיאת סנכרון', 'אין חיבור למסד הנתונים.');
                     return; 
                 }
-                
-                addJournalEntry(dayId, text, finalImageData);
-                
-                textInput.value = '';
-                clearImageData(); // מאפס את הטופס לחלוטין
+
+                showLoading('שומר חוויה...');
+
+                try {
+                    // 1. שמור בענן והמתן לתשובה
+                    const newEntry = await addJournalEntry(dayId, text, finalImageData);
+
+                    if (newEntry) {
+                        // 2. הוסף את החוויה החדשה באופן ידני למסך
+                        const entriesContainer = $(`#journal-entries-${dayId}`);
+                        const newEntryHtml = createJournalEntryHtml(dayId, newEntry);
+                        entriesContainer.insertAdjacentHTML('afterbegin', newEntryHtml);
+                        
+                        // 3. הסר את הודעת "אין חוויות" אם היא קיימת
+                        const placeholder = entriesContainer.querySelector('p');
+                        if (placeholder && placeholder.innerText.includes('עדיין לא נוספו חוויות')) {
+                            placeholder.remove();
+                        }
+
+                        // 4. אפס את הטופס
+                        textInput.value = '';
+                        clearImageData();
+                    } else {
+                        throw new Error("addJournalEntry returned null");
+                    }
+                } catch (error) {
+                    console.error("Error saving journal entry:", error);
+                    showAlert('שגיאה', 'לא ניתן היה לשמור את החוויה. נסה שוב.');
+                } finally {
+                    hideLoading();
+                }
             });
         }
-        // --- סוף: קוד מתוקן לטיפול בטופס היומן ---
+        // --- סוף: קוד מתוקן וסופי לטיפול בטופס היומן ---
     }
     
     function renderActivityCard(dayId, activity, index, total, previousActivity) {
@@ -3851,26 +3864,49 @@ function initLiveMap() {
     
     // --- FIX 1 & 2: REWRITTEN JOURNAL FUNCTIONS ---
 async function addJournalEntry(dayId, text, imageData = null) {
-        console.log(`LOG: addJournalEntry called for day ${dayId}`);
         if (!tripDocRef) {
-            console.error("ERROR: tripDocRef is not initialized. Cannot add journal entry.");
-            return;
+            console.error("ERROR: tripDocRef is not initialized.");
+            return null; // החזר null במקרה של שגיאה
         }
         
-        // יצירת האובייקט החדש
         const newEntry = {
             id: Date.now().toString(),
             text: text,
-            imageUrl: imageData, // כאן אנו שומרים את התמונה כ-Base64
+            imageUrl: imageData,
             timestamp: new Date()
         };
 
-        // שמירה ב-Firestore
         await updateDoc(tripDocRef, {
             [`journal.${dayId}`]: arrayUnion(newEntry)
         });
-    }
 
+        return newEntry; // <-- השינוי החשוב: החזר את החוויה החדשה
+    }
+// פונקציית עזר חדשה ליצירת HTML של חוויה בודדת
+    function createJournalEntryHtml(dayId, entry) {
+        const getTimestampDate = (ts) => {
+            if (!ts) return new Date();
+            if (typeof ts.toDate === 'function') return ts.toDate(); 
+            if (ts.seconds) return new Date(ts.seconds * 1000); 
+            return new Date(); 
+        };
+
+        const dateString = getTimestampDate(entry.timestamp).toLocaleString('he-IL', {day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit'});
+        
+        const imageHtml = entry.imageUrl ? 
+            `<img src="${entry.imageUrl}" class="w-full h-48 object-cover rounded-lg mt-2 mb-2 cursor-pointer" onclick="window.openImageModal(this.src)">` : 
+            '';
+
+        return `
+        <div class="bg-blue-50 dark:bg-blue-900/30 p-3 rounded-lg relative group animate-fade-in">
+            ${imageHtml}
+            ${entry.text ? `<p class="text-sm whitespace-pre-wrap">${entry.text}</p>` : ''}
+            <div class="text-xs text-gray-500 dark:text-gray-400 mt-1">${dateString}</div>
+            <button class="absolute top-2 left-2 text-red-400 hover:text-red-600 opacity-0 group-hover:opacity-100 transition-opacity" onclick="window.removeJournalEntry('${dayId}', '${entry.id}')">
+                <i class="fa-solid fa-trash-alt fa-xs"></i>
+            </button>
+        </div>`;
+    }
     async function removeJournalEntry(dayId, entryId) {
         console.log(`LOG: removeJournalEntry called for entry ${entryId} in day ${dayId}`);
         if (!isFirebaseConnected) {
