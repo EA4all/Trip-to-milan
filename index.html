@@ -68,6 +68,7 @@
 }
 
 #flipbook .page-content {
+    isolation: isolate;
     position: relative; 
     z-index: 1; 
     display: flex;
@@ -83,7 +84,7 @@
     backface-visibility: hidden;
     -webkit-transform: translateZ(0);
     transform: translateZ(0);
-    background-color: #fefcf9 !important; /* אותו צבע כמו הדף הרגיל */
+    
 }
 #flipbook .page-background {
     position: absolute;
@@ -176,7 +177,7 @@
 }
 .dark #flipbook .page-content p {
     text-shadow: 0px 1px 5px rgba(0, 0, 0, 0.7); /* Stronger shadow in dark mode */
-  background-color: #fefcf9 !important; /* אותו צבע כמו הדף הרגיל */
+ 
 }
 
 /* עיצוב כריכה משופר */
