@@ -241,13 +241,13 @@
      }
       .template-C .page-content img {
          max-width: 80%;
-         max-height: 50%; /* Adjust height */
+         max-height: 65%; /* Adjust height */
          margin: 0 0 15px 0; /* Reset margins */
      }
       .template-C .page-content p {
          max-width: 90%;
          text-align: center; /* Center text */
-         font-size: max(14px, 2.8vw); /* Match other text */
+         font-size: max(12px, 2.5vw); /* Match other text */
      }
 }
 /* התאמות למסכים קטנים (ניידים) */
@@ -5250,23 +5250,7 @@ jQuery(flipbookContainer).turn({
                     acceleration: true, // נשאיר חומרה, אבל נהיה מודעים
                     gradients: false, // נכבה את הגרדיאנטים - לפעמים הם גורמים לבאגים גרפיים
 
-  when: { // הוספת event handlers
-                        turning: function(event, page, view) {
-                           // ננסה להסתיר דפים רחוקים בזמן הדפדוף
-                           const range = jQuery(this).turn('range');
-                           jQuery(this).children(':not(.hard)').each(function() {
-                                const pageNum = jQuery(this).attr('page') || jQuery(this).data('page'); // Get page number
-                                if (pageNum) {
-                                     const isVisible = pageNum >= range[0] && pageNum <= range[1];
-                                     // $(this).toggle(isVisible); // אולי נצטרך את זה
-                                }
-                           });
-                        },
-                        turned: function(event, page, view) {
-                             // ודא שכל הדפים הנחוצים מוצגים אחרי הדפדוף
-                           jQuery(this).children(':not(.hard)').show(); 
-                        }
-                    }
+  
                     // --- סוף שינויים ---
                 });
                     console.log("[Storybook] Turn.js initialized successfully inside setTimeout.");
