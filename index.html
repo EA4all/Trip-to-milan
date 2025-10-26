@@ -3341,7 +3341,7 @@ async function generateLupaAlbumPDF() {
         if (backgroundDataUrl) {
             pdf.saveGraphicsState(); // שומר מצב גרפי
             // הגדר שקיפות. 0.15 זה עדין, אפשר להגדיל עד 0.3
-            pdf.setGState(new pdf.GState({opacity: 0.15})); 
+            pdf.setGState(new pdf.GState({opacity: 0.40})); 
             // הוספת התמונה על כל העמוד
             pdf.addImage(backgroundDataUrl, 'JPEG', 0, 0, pdfWidth, pdfHeight); 
             pdf.restoreGraphicsState(); // שחזור מצב גרפי (כדי שהטקסט יהיה אטום)
@@ -5246,7 +5246,7 @@ async function generateStorybookAlbum() {
 jQuery(flipbookContainer).turn({ 
                     autoCenter: true,
                     // --- שינויים ---
-                    display: (window.innerWidth > window.innerHeight) ? 'double' : 'single',
+                    display: (flipbookContainer.clientWidth > flipbookContainer.clientHeight) ? 'double' : 'single',
                     acceleration: true, // נשאיר חומרה, אבל נהיה מודעים
                     gradients: false, // נכבה את הגרדיאנטים - לפעמים הם גורמים לבאגים גרפיים
 
