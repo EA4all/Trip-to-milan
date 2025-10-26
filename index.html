@@ -90,10 +90,10 @@
     background-position: center;
     z-index: 0;
     /* --- Increased opacity --- */
-    opacity: 0.4; /* Make background more visible */
+    opacity: 0.8; /* Make background more visible */
 }
     .dark #flipbook .page-background {
-    opacity: 0.25; /* Slightly less opaque in dark mode */
+    opacity: 0.7; /* Slightly less opaque in dark mode */
 }
 .template-A .page-content {
     justify-content: flex-start; /* הצמד תוכן למעלה */
@@ -139,7 +139,7 @@
 #flipbook .page-content img {
     display: block;
     max-width: 90%;
-    max-height: 55%; 
+    max-height: 70%; 
     height: auto; 
     object-fit: contain;
     border-radius: 8px;
@@ -152,7 +152,9 @@
 #flipbook .page-content p {
     font-family: 'Assistant', sans-serif;
     /* --- Responsive font size with minimum --- */
-    font-size: max(12px, 1.6vw); /* Minimum 12px, responsive above that */
+    font-size: max(16px, 1.6vw); /* Minimum 12px, responsive above that */
+    font-weight: 600;
+    text-shadow: 0px 1px 4px rgba(0, 0, 0, 0.5); /* צל טקסט חזק יותר */
     line-height: 1.6;
     text-align: center;
     max-width: 90%;
@@ -161,10 +163,10 @@
     z-index: 2; /* Ensure text is above background */
     position: relative; /* Helps with stacking context */
      /* Add subtle shadow for readability on complex backgrounds */
-    text-shadow: 0px 0px 3px rgba(0, 0, 0, 0.1); 
+   
 }
 .dark #flipbook .page-content p {
-    text-shadow: 0px 0px 5px rgba(0, 0, 0, 0.4); /* Stronger shadow in dark mode */
+    text-shadow: 0px 1px 5px rgba(0, 0, 0, 0.7); /* Stronger shadow in dark mode */
 }
 
 /* עיצוב כריכה משופר */
@@ -5200,7 +5202,7 @@ async function generateStorybookAlbum() {
 jQuery(flipbookContainer).turn({ 
                     autoCenter: true,
                     // --- שינויים ---
-                    display: 'double', // ודא שזה תמיד זוגי (אולי יעזור בנייד)
+                    display: (window.innerWidth > window.innerHeight) ? 'double' : 'single',
                     acceleration: true, // נשאיר חומרה, אבל נהיה מודעים
                     gradients: false, // נכבה את הגרדיאנטים - לפעמים הם גורמים לבאגים גרפיים
 
