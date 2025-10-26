@@ -5203,12 +5203,13 @@ jQuery(flipbookContainer).turn({
                     display: 'double', // ודא שזה תמיד זוגי (אולי יעזור בנייד)
                     acceleration: true, // נשאיר חומרה, אבל נהיה מודעים
                     gradients: false, // נכבה את הגרדיאנטים - לפעמים הם גורמים לבאגים גרפיים
-                    when: { // הוספת event handlers
+
+  when: { // הוספת event handlers
                         turning: function(event, page, view) {
                            // ננסה להסתיר דפים רחוקים בזמן הדפדוף
-                           const range = $(this).turn('range');
-                           $(this).children(':not(.hard)').each(function() {
-                                const pageNum = $(this).attr('page') || $(this).data('page'); // Get page number
+                           const range = jQuery(this).turn('range');
+                           jQuery(this).children(':not(.hard)').each(function() {
+                                const pageNum = jQuery(this).attr('page') || jQuery(this).data('page'); // Get page number
                                 if (pageNum) {
                                      const isVisible = pageNum >= range[0] && pageNum <= range[1];
                                      // $(this).toggle(isVisible); // אולי נצטרך את זה
@@ -5217,7 +5218,7 @@ jQuery(flipbookContainer).turn({
                         },
                         turned: function(event, page, view) {
                              // ודא שכל הדפים הנחוצים מוצגים אחרי הדפדוף
-                           $(this).children(':not(.hard)').show(); 
+                           jQuery(this).children(':not(.hard)').show(); 
                         }
                     }
                     // --- סוף שינויים ---
