@@ -46,20 +46,39 @@
 #flipbook {
     width: 90vw;
     height: 80vh;
-    max-width: 1200px;
-    max-height: 800px;
+    max-width: 1200px; /* Limit max width on large screens */
+    max-height: 800px;/* Limit max height */
+    /* Ensure the container itself doesn't shrink unnecessarily */
+    flex-shrink: 0; 
 }
 
 #flipbook .turn-page {
-    background-color: #fefcf9; /* רקע דף מעט יותר חם ובהיר */
+    background-color: #fefcf9; /* Default light page color */
     background-size: cover;
+    background-position: center center;
     overflow: hidden;
+    /* --- Fix for content bleeding --- */
+    backface-visibility: hidden; /* Prevent content showing through during flip */
+    -webkit-backface-visibility: hidden;
+    transform: translateZ(0); /* Force hardware acceleration, sometimes helps rendering */
+    -webkit-transform: translateZ(0);
+}
+    .dark #flipbook .turn-page {
+    background-color: #2d3748; /* Darker page background for dark mode */
 }
 
 #flipbook .page-content {
-    position: relative; /* מאפשר מיקום אבסולוטי של רקעים */
-    z-index: 1; /* תוכן מעל הרקע */
-    color: #333; /* צבע טקסט ברירת מחדל */
+    position: relative; 
+    z-index: 1; 
+    display: flex;
+    flex-direction: column;
+    justify-content: center; /* Center content vertically by default */
+    align-items: center;
+    padding: 2vw 3vw; /* Responsive padding */
+    height: 100%;
+    box-sizing: border-box;
+    /* --- Text color based on theme --- */
+    color: var(--fg); /* Use theme variable for text color */
 }
 #flipbook .page-background {
     position: absolute;
@@ -67,9 +86,14 @@
     left: 0;
     width: 100%;
     height: 100%;
-    object-fit: cover;
-    z-index: 0; /* רקע מאחורי התוכן */
-    opacity: 0.15; /* שקיפות עדינה לרקע */
+    background-size: cover; /* Ensure background covers the page */
+    background-position: center;
+    z-index: 0;
+    /* --- Increased opacity --- */
+    opacity: 0.4; /* Make background more visible */
+}
+    .dark #flipbook .page-background {
+    opacity: 0.25; /* Slightly less opaque in dark mode */
 }
 .template-A .page-content {
     justify-content: flex-start; /* הצמד תוכן למעלה */
@@ -113,54 +137,109 @@
 }
 
 #flipbook .page-content img {
-    display: block; /* ודא שהתמונה מוצגת */
+    display: block;
     max-width: 90%;
-    max-height: 55%; /* הגבל את גובה התמונה */
-    height: auto; /* שמור על יחס גובה-רוחב */
+    max-height: 55%; 
+    height: auto; 
     object-fit: contain;
     border-radius: 8px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-    margin-bottom: 20px; /* רווח בין התמונה לטקסט */
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2); /* Slightly stronger shadow */
+    margin-bottom: 15px; /* Consistent spacing */
+    z-index: 2; /* Ensure image is above background */
+    position: relative; /* Helps with stacking context */
 }
 
 #flipbook .page-content p {
     font-family: 'Assistant', sans-serif;
-    font-size: 1.8vw; /* הגדלה בסיסית של הטקסט */
+    /* --- Responsive font size with minimum --- */
+    font-size: max(12px, 1.6vw); /* Minimum 12px, responsive above that */
     line-height: 1.6;
     text-align: center;
-    color: #2c2c2c; /* טקסט כהה יותר לניגודיות מקסימלית */
     max-width: 90%;
-    margin-top: auto;
-    margin-bottom: auto;
+    margin-top: auto; /* Push text down if there's space */
+    margin-bottom: 5%; /* Ensure some space at the bottom */
+    z-index: 2; /* Ensure text is above background */
+    position: relative; /* Helps with stacking context */
+     /* Add subtle shadow for readability on complex backgrounds */
+    text-shadow: 0px 0px 3px rgba(0, 0, 0, 0.1); 
+}
+.dark #flipbook .page-content p {
+    text-shadow: 0px 0px 5px rgba(0, 0, 0, 0.4); /* Stronger shadow in dark mode */
 }
 
 /* עיצוב כריכה משופר */
+
 #flipbook .hard {
-    background-image: linear-gradient(145deg, #8a6e50, #705537);
-    color: white;
-    box-shadow: inset 0 0 20px rgba(0,0,0,0.3);
-    border: 1px solid #5d4121;
-}
-#flipbook .hard .page-content {
-    justify-content: center;
-    align-items: center;
+    background-image: linear-gradient(145deg, #a88a6a, #7d5e40); /* Richer brown gradient */
+    color: #fdfaf5; /* Creamy white text */
+    box-shadow: inset 0 0 30px rgba(0,0,0,0.4), 0 0 10px rgba(0,0,0,0.3);
+    border: 2px solid #5d4121;
     text-align: center;
 }
+#flipbook .hard .page-content {
+    display: flex; /* Override default page-content flex */
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
 #flipbook .hard h1 {
-    font-family: 'Times New Roman', serif; /* פונט קלאסי לכותרת */
-    font-size: 3vw;
+    font-family: 'Times New Roman', Times, serif; 
+    font-size: max(20px, 3.5vw); /* Responsive title */
     font-weight: bold;
-    text-shadow: 2px 2px 5px rgba(0,0,0,0.4);
-    margin: 0;
+    text-shadow: 1px 1px 3px rgba(0,0,0,0.5);
+    margin: 0 0 10px 0; /* Space below title */
+    line-height: 1.2;
 }
 #flipbook .hard h2 {
     font-family: 'Assistant', sans-serif;
-    font-size: 1.5vw;
+    font-size: max(14px, 1.8vw); /* Responsive subtitle */
     font-weight: 300;
-    margin-top: 10px;
+    margin: 0;
     opacity: 0.9;
 }
+@media (orientation: portrait) {
+    #flipbook {
+        /* On mobile portrait, make it behave more like a single page */
+        width: 85vw; 
+        height: 75vh; 
+    }
+     /* Make text slightly larger on portrait */
+    #flipbook .page-content p {
+        font-size: max(14px, 2.8vw); 
+    }
+    #flipbook .hard h1 {
+         font-size: max(24px, 5vw);
+    }
+     #flipbook .hard h2 {
+         font-size: max(16px, 3vw);
+    }
+}
+    .template-A .page-content img { max-height: 60%; }
+.template-A .page-content p { font-size: max(11px, 1.5vw); max-height: 30%; }
 
+.template-B .page-content p { font-size: max(16px, 2.2vw); font-style: italic; }
+
+.template-C .page-content { flex-direction: row; }
+.template-C .page-content img { max-width: 45%; max-height: 80%; margin: 0 0 0 5%; }
+.template-C .page-content p { max-width: 45%; font-size: max(11px, 1.5vw); text-align: right; margin: auto 0; }
+
+/* Mobile adjustments for Template C */
+@media (orientation: portrait) {
+     .template-C .page-content { 
+         flex-direction: column; /* Stack image and text vertically */
+         justify-content: center;
+     }
+      .template-C .page-content img {
+         max-width: 80%;
+         max-height: 50%; /* Adjust height */
+         margin: 0 0 15px 0; /* Reset margins */
+     }
+      .template-C .page-content p {
+         max-width: 90%;
+         text-align: center; /* Center text */
+         font-size: max(14px, 2.8vw); /* Match other text */
+     }
+}
 /* התאמות למסכים קטנים (ניידים) */
 /* ========================================================== */
 #video-container {
@@ -5118,14 +5197,33 @@ async function generateStorybookAlbum() {
             setTimeout(() => {
                 try {
                     console.log("[Storybook] Initializing Turn.js...");
-                    jQuery(flipbookContainer).turn({
-                        width: flipbookContainer.clientWidth,
-                        height: flipbookContainer.clientHeight,
-                        autoCenter: true,
-                        acceleration: true,
-                        elevation: 50,
-                        gradients: true
-                    });
+jQuery(flipbookContainer).turn({ 
+                    width: flipbookContainer.clientWidth,
+                    height: flipbookContainer.clientHeight,
+                    autoCenter: true,
+                    // --- שינויים ---
+                    display: 'double', // ודא שזה תמיד זוגי (אולי יעזור בנייד)
+                    acceleration: true, // נשאיר חומרה, אבל נהיה מודעים
+                    gradients: false, // נכבה את הגרדיאנטים - לפעמים הם גורמים לבאגים גרפיים
+                    when: { // הוספת event handlers
+                        turning: function(event, page, view) {
+                           // ננסה להסתיר דפים רחוקים בזמן הדפדוף
+                           const range = $(this).turn('range');
+                           $(this).children(':not(.hard)').each(function() {
+                                const pageNum = $(this).attr('page') || $(this).data('page'); // Get page number
+                                if (pageNum) {
+                                     const isVisible = pageNum >= range[0] && pageNum <= range[1];
+                                     // $(this).toggle(isVisible); // אולי נצטרך את זה
+                                }
+                           });
+                        },
+                        turned: function(event, page, view) {
+                             // ודא שכל הדפים הנחוצים מוצגים אחרי הדפדוף
+                           $(this).children(':not(.hard)').show(); 
+                        }
+                    }
+                    // --- סוף שינויים ---
+                });
                     console.log("[Storybook] Turn.js initialized successfully inside setTimeout.");
                 } catch(e) {
                     console.error("[Storybook] Error initializing turn.js inside setTimeout:", e);
