@@ -4872,7 +4872,7 @@ const openStorybookModal = () => {
 
         // --- שינוי 3: עטיפת הגישה ל-turn בתוך jQuery ---
         // עדיין נצטרך את jQuery כדי להפעיל את turn.js
-        const flipbookElementJQ = $(flipbookDomElement); // נעטוף את האלמנט הילידי ב-jQuery
+        const flipbookElementJQ = jQuery(flipbookDomElement); // -- שינוי: שימוש מפורש ב-jQuery --
 
         if (typeof flipbookElementJQ.turn !== 'function') {
             console.error("[Storybook] CRITICAL ERROR: .turn() function is not available on jQuery object! turn.js not loaded or conflict?");
