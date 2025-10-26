@@ -290,7 +290,6 @@ body {
             <button id="gemini-btn" class="btn btn-primary"><i class="fa-solid fa-wand-magic-sparkles mr-2"></i>שאל את Gemini</button>
             <button id="show-tip-btn" class="btn btn-primary"><i class="fa-solid fa-lightbulb mr-2"></i>טיפ יומי</button>
             <button id="create-summary-btn" class="btn btn-primary bg-green-600 hover:bg-green-700"><i class="fa-solid fa-book-open mr-2"></i>צור סיכום טיול</button>
-            <button id="create-summary-btn" class="btn btn-primary bg-green-600 hover:bg-green-700"><i class="fa-solid fa-book-open mr-2"></i>צור סיכום טיול</button>
             <button id="create-lupa-album-btn" class="btn btn-primary bg-pink-600 hover:bg-pink-700"><i class="fa-solid fa-book-sparkles mr-2"></i>צור אלבום LUPA</button>
 
           <button id="lookup-site-btn" class="btn btn-primary bg-purple-600 hover:bg-purple-700"><i class="fa-solid fa-magnifying-glass mr-2"></i>זיהוי אתרים</button>
@@ -1736,12 +1735,10 @@ function renderPlanForDay(dayId, dayData) {
             previousActivity = act;
         });
         
-        // --- כאן אנו קוראים לפונקציית היומן המעודכנת ---
         content += `</div>${renderJournal(dayId, localTripData.journal ? localTripData.journal[dayId] : [])}</div>`;
         container.innerHTML = content;
         
-        // --- התחלה: קוד חדש לטיפול בטופס היומן המשודרג ---
-        // (זה הקוד שהיה חסר לך, הוא יושב *בתוך* הפונקציה הזו)
+        // --- התחלה: קוד מתוקן לטיפול בטופס היומן ---
         
         const journalForm = $(`#journal-form-${dayId}`);
         const textInput = $(`#journal-text-${dayId}`);
@@ -1752,32 +1749,31 @@ function renderPlanForDay(dayId, dayData) {
         const previewImg = $(`#journal-image-preview-${dayId}`);
         const removeImgBtn = $(`#journal-remove-image-btn-${dayId}`);
 
-        let currentImageData = null; // משתנה שיחזיק את התמונה מהגלריה
-
-        // פונקציית עזר לניקוי
+        // פונקציית עזר לניקוי - מנקה את שני סוגי התמונות
         const clearImageData = () => {
-            currentImageData = null;
-            uploadInput.value = ''; // ניקוי הקלט הנסתר
+            uploadInput.value = '';
             previewImg.src = '';
             previewContainer.classList.add('hidden');
-            delete journalForm.dataset.imageData; // ניקוי תמונה מהמצלמה
+            delete journalForm.dataset.galleryImage;
+            delete journalForm.dataset.cameraImage;
         };
 
         // 1. חיבור כפתור הגלריה
         uploadBtn.addEventListener('click', () => uploadInput.click());
 
-        // 2. טיפול בבחירת קובץ
+        // 2. טיפול בבחירת קובץ מהגלריה
         uploadInput.addEventListener('change', (e) => {
             const file = e.target.files[0];
             if (!file) return;
+            
             // אם יש תמונה מהמצלמה, נקה אותה
-            if (journalForm.dataset.imageData) {
-                delete journalForm.dataset.imageData;
-            }
+            delete journalForm.dataset.cameraImage;
+
             const reader = new FileReader();
             reader.onload = (event) => {
-                currentImageData = event.target.result; // שמירת ה-Base64
-                previewImg.src = currentImageData;
+                // שמירת המידע ישירות על הטופס
+                journalForm.dataset.galleryImage = event.target.result;
+                previewImg.src = event.target.result;
                 previewContainer.classList.remove('hidden');
             };
             reader.readAsDataURL(file);
@@ -1786,25 +1782,25 @@ function renderPlanForDay(dayId, dayData) {
         // 3. חיבור כפתור המצלמה
         cameraBtn.addEventListener('click', () => {
             // אם יש תמונה מהגלריה, נקה אותה
-            if (currentImageData) {
-                clearImageData();
+            if (journalForm.dataset.galleryImage) {
+                delete journalForm.dataset.galleryImage;
+                uploadInput.value = '';
             }
-            cameraManager.dayId = dayId; // שומרים את ה-dayId לשימוש חוזר
-            startJournalCamera(); // פונקציה חדשה
+            cameraManager.dayId = dayId;
+            startJournalCamera();
         });
 
         // 4. כפתור הסרת תמונה
         removeImgBtn.addEventListener('click', clearImageData);
 
-        // 5. טיפול בשליחת הטופס (גרסה מתוקנת)
+        // 5. טיפול בשליחת הטופס (הלוגיקה המרכזית)
         if (journalForm) {
             journalForm.addEventListener('submit', (e) => {
                 e.preventDefault();
                 const text = textInput.value.trim();
                 
-                // קודם בודקים אם יש תמונה שהגיעה מהמצלמה (נשמרה על הטופס)
-                // אם לא, בודקים אם יש תמונה מהגלריה (נשמרה במשתנה)
-                let finalImageData = journalForm.dataset.imageData || currentImageData;
+                // קרא את התמונה מהמקום הנכון (מצלמה או גלריה)
+                let finalImageData = journalForm.dataset.cameraImage || journalForm.dataset.galleryImage;
 
                 if (!text && !finalImageData) {
                     showAlert('שגיאה', 'יש לכתוב חוויה או להוסיף תמונה.');
@@ -1812,17 +1808,17 @@ function renderPlanForDay(dayId, dayData) {
                 }
 
                 if(!isFirebaseConnected) { 
-                    showAlert('שגיאת סנכרון', 'אין חיבור למסד הנתונים. אנא בדוק את החיבור לאינטרנט.');
+                    showAlert('שגיאת סנכרון', 'אין חיבור למסד הנתונים.');
                     return; 
                 }
                 
                 addJournalEntry(dayId, text, finalImageData);
                 
                 textInput.value = '';
-                clearImageData(); // מנקה את שני סוגי התמונות
+                clearImageData(); // מאפס את הטופס לחלוטין
             });
         }
-        // --- סוף: קוד חדש לטיפול בטופס היומן המשודרג ---
+        // --- סוף: קוד מתוקן לטיפול בטופס היומן ---
     }
     
     function renderActivityCard(dayId, activity, index, total, previousActivity) {
@@ -3271,30 +3267,16 @@ function processJournalImage(base64, dayId) {
     cameraManager.stop();
     const dataUrl = `data:image/jpeg;base64,${base64}`;
     
-    // מציאת הטופס הנכון והאלמנטים שלו
     const journalForm = $(`#journal-form-${dayId}`);
     const previewContainer = $(`#journal-preview-container-${dayId}`);
     const previewImg = $(`#journal-image-preview-${dayId}`);
 
     if (journalForm && previewImg && previewContainer) {
-        // שמירת הנתונים בזיכרון של הטופס (באופן זמני)
-        // (זהירות: הקוד למעלה משתמש במשתנה 'currentImageData', זו דרך אחרת)
-        // כדי לפשט, נשתמש ישירות במשתנה הגלובלי (זה פחות אידיאלי אבל יעבוד)
+        // שמירת המידע ישירות על הטופס תחת שם ייעודי
+        journalForm.dataset.cameraImage = dataUrl;
         
-        // נמצא את המשתנה הספציפי של אותו יום
-        const formInstance = window.dayForms = window.dayForms || {};
-        formInstance[dayId] = { imageData: dataUrl };
-        
-        // נעדכן את התצוגה המקדימה
         previewImg.src = dataUrl;
         previewContainer.classList.remove('hidden');
-
-        // נעדכן את המשתנה `currentImageData` בסקופ של הטופס (זו הדרך המועדפת)
-        // ... זה מסובך כי המשתנה הוגדר בתוך מאזין...
-        // ... פתרון פשוט יותר: נשמור את ה-base64 על אלמנט הטופס
-        journalForm.dataset.imageData = dataUrl;
-        
-        // והכי פשוט - נעדכן את הקוד ב-submit
     }
 }
 async function startReceiptScanCamera() {
