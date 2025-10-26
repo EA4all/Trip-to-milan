@@ -5007,14 +5007,14 @@ const openStorybookModal = () => {
             loadingView.style.display = 'none';
             flipbookView.style.display = 'flex';
             
-            $(flipbookContainer).turn({
-                width: flipbookContainer.clientWidth,
-                height: flipbookContainer.clientHeight,
-                autoCenter: true,
-                acceleration: true,
-                elevation: 50,
-                gradients: true
-            });
+jQuery(flipbookContainer).turn({ // -- שינוי: שימוש מפורש ב-jQuery --
+    width: flipbookContainer.clientWidth,
+    height: flipbookContainer.clientHeight,
+    autoCenter: true,
+    acceleration: true,
+    elevation: 50,
+    gradients: true
+});
 
         } catch (error) {
             console.error("Error generating storybook:", error);
