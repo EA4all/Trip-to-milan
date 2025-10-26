@@ -4398,71 +4398,22 @@ function setupNavigationAndScrolling() {
 }
     const storybookAudio = document.getElementById('storybook-audio');
     const backgroundMusicPath = 'BG/music.mp3'; // <-- הגדר כאן את הנתיב לקובץ המוזיקה
+    // --- הגדרת משתנים לכפתור הניגון (ברמה הגלובלית) ---
+let playPauseBtn = null; // השתמש ב-let כדי שנוכל לאתחל מאוחר יותר
+let playIcon = null; // השתמש ב-let
+
+// פונקציה לאתחול משתני הכפתור (תקרא לה בתוך generateStorybookAlbum)
+function initializeAudioControls() {
+    playPauseBtn = document.getElementById('storybook-play-pause-btn');
+    playIcon = playPauseBtn ? playPauseBtn.querySelector('i') : null;
+    console.log("[Audio] Controls initialized:", playPauseBtn, playIcon); // לוג לבדיקה
+}
 if (storybookAudio) {
     storybookAudio.src = backgroundMusicPath; // הגדר את המקור של הנגן
     // אופציונלי: טעינה מוקדמת של הקובץ
     storybookAudio.load(); 
     console.log(`[Audio] Set source to: ${backgroundMusicPath}`);
 }
-    // --- הגדרת משתנים לכפתור הניגון (ברמה הגבוהה) ---
-const playPauseBtn = document.getElementById('storybook-play-pause-btn');
-const playIcon = playPauseBtn ? playPauseBtn.querySelector('i') : null; // ודא ש-playPauseBtn קיים
-
-// --- לוגיקה לכפתור ניגון ידני ---
-if (storybookAudio && playPauseBtn && playIcon) {
-    // מאזין שמראה את הכפתור כשהמוזיקה מוכנה
-    storybookAudio.addEventListener('canplaythrough', () => {
-        console.log("[Audio] Ready via canplaythrough, showing play button.");
-        playPauseBtn.style.display = 'flex'; // הצג את הכפתור
-    });
-
-    // מאזין לכפתור עצמו
-    playPauseBtn.addEventListener('click', () => {
-        if (storybookAudio.paused) {
-            storybookAudio.play().catch(e => { // הוספנו catch גם כאן למקרה חירום
-                 console.error("Error playing audio on button click:", e);
-                 showAlert('שגיאת ניגון', `לא ניתן היה לנגן: ${e.message}`);
-             });
-            // עדכון האייקון יתבצע דרך המאזין לאירוע 'play' למטה
-        } else {
-            storybookAudio.pause();
-            // עדכון האייקון יתבצע דרך המאזין לאירוע 'pause' למטה
-        }
-    });
-
-    // מאזין לאירוע 'pause' - עדכון האייקון ל-Play
-    storybookAudio.addEventListener('pause', () => {
-        // אל תשנה אם זה בגלל סגירת המודל (כש-currentTime הוא 0)
-        if (storybookAudio.currentTime !== 0 || storybookAudio.ended) {
-             playIcon.classList.remove('fa-pause');
-             playIcon.classList.add('fa-play');
-             console.log("[Audio] Paused, icon set to Play.");
-        } else {
-             console.log("[Audio] Paused due to modal close or reset.");
-        }
-    });
-
-    // מאזין לאירוע 'play' - עדכון האייקון ל-Pause
-     storybookAudio.addEventListener('play', () => {
-         playIcon.classList.remove('fa-play');
-         playIcon.classList.add('fa-pause');
-         console.log("[Audio] Playing, icon set to Pause.");
-    });
-
-    // מאזין לסיום השיר (בגלל loop) - כדי להשאיר אייקון Pause
-     storybookAudio.addEventListener('ended', () => {
-         // כשהשיר מסיים ומתחיל מחדש בגלל loop, אנחנו רוצים שהאייקון יישאר Pause
-         playIcon.classList.remove('fa-play');
-         playIcon.classList.add('fa-pause');
-         console.log("[Audio] Ended and looping, ensuring Pause icon.");
-    });
-
-} else {
-     console.warn("[Audio] Could not find audio element or play/pause button/icon. Manual playback controls disabled.");
-}
-// --- סוף לוגיקה לכפתור ניגון ידני ---
-
-// --- סוף לוגיקה למוזיקת רקע ---
     // --- INIT ---
     
 document.addEventListener('DOMContentLoaded', () => {
@@ -5366,7 +5317,59 @@ async function generateStorybookAlbum() {
                      flipbookView.style.display = 'none';
                 }
             }, 250); // <-- סוף ה-setTimeout
+initializeAudioControls();
+// --- לוגיקה לכפתור ניגון ידני ---
+if (storybookAudio && playPauseBtn && playIcon) {
+    // מאזין שמראה את הכפתור כשהמוזיקה מוכנה
+    storybookAudio.addEventListener('canplaythrough', () => {
+        console.log("[Audio] Ready via canplaythrough, showing play button.");
+        playPauseBtn.style.display = 'flex'; // הצג את הכפתור
+    });
 
+    // מאזין לכפתור עצמו
+    playPauseBtn.addEventListener('click', () => {
+        if (storybookAudio.paused) {
+            storybookAudio.play().catch(e => { // הוספנו catch גם כאן למקרה חירום
+                 console.error("Error playing audio on button click:", e);
+                 showAlert('שגיאת ניגון', `לא ניתן היה לנגן: ${e.message}`);
+             });
+            // עדכון האייקון יתבצע דרך המאזין לאירוע 'play' למטה
+        } else {
+            storybookAudio.pause();
+            // עדכון האייקון יתבצע דרך המאזין לאירוע 'pause' למטה
+        }
+    });
+
+    // מאזין לאירוע 'pause' - עדכון האייקון ל-Play
+    storybookAudio.addEventListener('pause', () => {
+        // אל תשנה אם זה בגלל סגירת המודל (כש-currentTime הוא 0)
+        if (storybookAudio.currentTime !== 0 || storybookAudio.ended) {
+             playIcon.classList.remove('fa-pause');
+             playIcon.classList.add('fa-play');
+             console.log("[Audio] Paused, icon set to Play.");
+        } else {
+             console.log("[Audio] Paused due to modal close or reset.");
+        }
+    });
+
+    // מאזין לאירוע 'play' - עדכון האייקון ל-Pause
+     storybookAudio.addEventListener('play', () => {
+         playIcon.classList.remove('fa-play');
+         playIcon.classList.add('fa-pause');
+         console.log("[Audio] Playing, icon set to Pause.");
+    });
+
+    // מאזין לסיום השיר (בגלל loop) - כדי להשאיר אייקון Pause
+     storybookAudio.addEventListener('ended', () => {
+         // כשהשיר מסיים ומתחיל מחדש בגלל loop, אנחנו רוצים שהאייקון יישאר Pause
+         playIcon.classList.remove('fa-play');
+         playIcon.classList.add('fa-pause');
+         console.log("[Audio] Ended and looping, ensuring Pause icon.");
+    });
+
+} else {
+     console.warn("[Audio] Could not find audio element or play/pause button/icon. Manual playback controls disabled.");
+}
         // סגירת TRY ראשי
         } catch (error) {
             console.error("Error generating storybook:", error);
