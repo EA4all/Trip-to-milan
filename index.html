@@ -37,7 +37,8 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
-
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <style>
 #video-container {
     height: 50vh; /* נסה לתפוס 50% מגובה המסך */
@@ -289,6 +290,9 @@ body {
             <button id="gemini-btn" class="btn btn-primary"><i class="fa-solid fa-wand-magic-sparkles mr-2"></i>שאל את Gemini</button>
             <button id="show-tip-btn" class="btn btn-primary"><i class="fa-solid fa-lightbulb mr-2"></i>טיפ יומי</button>
             <button id="create-summary-btn" class="btn btn-primary bg-green-600 hover:bg-green-700"><i class="fa-solid fa-book-open mr-2"></i>צור סיכום טיול</button>
+            <button id="create-summary-btn" class="btn btn-primary bg-green-600 hover:bg-green-700"><i class="fa-solid fa-book-open mr-2"></i>צור סיכום טיול</button>
+            <button id="create-lupa-album-btn" class="btn btn-primary bg-pink-600 hover:bg-pink-700"><i class="fa-solid fa-book-sparkles mr-2"></i>צור אלבום LUPA</button>
+
           <button id="lookup-site-btn" class="btn btn-primary bg-purple-600 hover:bg-purple-700"><i class="fa-solid fa-magnifying-glass mr-2"></i>זיהוי אתרים</button>
         </div>
       </div>
@@ -1451,6 +1455,21 @@ const hebrewPrayers = {
         console.log("LOG: closeModal called.");
         $$('.modal-backdrop').forEach(m => m.classList.remove('flex'));
     };
+    window.openImageModal = (imageUrl) => {
+        const modal = $('#lightbox-modal');
+        const img = $('#lightbox-image');
+        if (modal && img) {
+            img.src = imageUrl;
+            modal.style.display = 'flex'; // מציג את המודל
+        }
+    };
+    const lightboxCloseBtn = $('#lightbox-close-btn');
+    if (lightboxCloseBtn) {
+        lightboxCloseBtn.addEventListener('click', () => {
+            $('#lightbox-modal').style.display = 'none'; // מסתיר את המודל
+            $('#lightbox-image').src = ''; // מנקה את התמונה
+        });
+    }
     window.addActivityToDay = async (dayId, type) => {
         console.log(`LOG: addActivityToDay called for dayId: ${dayId}, type: ${type}`);
         const day = localTripData.plan[dayId];
@@ -1681,14 +1700,14 @@ function renderMobileNavSubmenus() {
     }
 }
 // ========================= סוף: פונקציה ליצירת תפריטי ניווט מהיר =========================
-    function renderPlanForDay(dayId, dayData) {
+function renderPlanForDay(dayId, dayData) {
         console.log(`LOG: renderPlanForDay called for ${dayId}`);
         const container = $(`#${dayId}`);
         if (!container) {
             console.error(`ERROR: Container for day ${dayId} not found.`);
             return;
         }
-// קטע קוד מעודכן מתוך renderPlanForDay
+
         let content = `<div class="p-4"><div class="flex flex-wrap items-center gap-4 mb-4">
             <div class="flex items-center gap-2">
                 <label class="font-semibold">מצב נסיעה:</label>
@@ -1717,27 +1736,93 @@ function renderMobileNavSubmenus() {
             previousActivity = act;
         });
         
+        // --- כאן אנו קוראים לפונקציית היומן המעודכנת ---
         content += `</div>${renderJournal(dayId, localTripData.journal ? localTripData.journal[dayId] : [])}</div>`;
         container.innerHTML = content;
         
-        // Add event listener to the newly created journal form
+        // --- התחלה: קוד חדש לטיפול בטופס היומן המשודרג ---
+        // (זה הקוד שהיה חסר לך, הוא יושב *בתוך* הפונקציה הזו)
+        
         const journalForm = $(`#journal-form-${dayId}`);
+        const textInput = $(`#journal-text-${dayId}`);
+        const uploadInput = $(`#journal-image-upload-${dayId}`);
+        const uploadBtn = $(`#journal-upload-btn-${dayId}`);
+        const cameraBtn = $(`#journal-camera-btn-${dayId}`);
+        const previewContainer = $(`#journal-preview-container-${dayId}`);
+        const previewImg = $(`#journal-image-preview-${dayId}`);
+        const removeImgBtn = $(`#journal-remove-image-btn-${dayId}`);
+
+        let currentImageData = null; // משתנה שיחזיק את התמונה מהגלריה
+
+        // פונקציית עזר לניקוי
+        const clearImageData = () => {
+            currentImageData = null;
+            uploadInput.value = ''; // ניקוי הקלט הנסתר
+            previewImg.src = '';
+            previewContainer.classList.add('hidden');
+            delete journalForm.dataset.imageData; // ניקוי תמונה מהמצלמה
+        };
+
+        // 1. חיבור כפתור הגלריה
+        uploadBtn.addEventListener('click', () => uploadInput.click());
+
+        // 2. טיפול בבחירת קובץ
+        uploadInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            // אם יש תמונה מהמצלמה, נקה אותה
+            if (journalForm.dataset.imageData) {
+                delete journalForm.dataset.imageData;
+            }
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                currentImageData = event.target.result; // שמירת ה-Base64
+                previewImg.src = currentImageData;
+                previewContainer.classList.remove('hidden');
+            };
+            reader.readAsDataURL(file);
+        });
+
+        // 3. חיבור כפתור המצלמה
+        cameraBtn.addEventListener('click', () => {
+            // אם יש תמונה מהגלריה, נקה אותה
+            if (currentImageData) {
+                clearImageData();
+            }
+            cameraManager.dayId = dayId; // שומרים את ה-dayId לשימוש חוזר
+            startJournalCamera(); // פונקציה חדשה
+        });
+
+        // 4. כפתור הסרת תמונה
+        removeImgBtn.addEventListener('click', clearImageData);
+
+        // 5. טיפול בשליחת הטופס (גרסה מתוקנת)
         if (journalForm) {
             journalForm.addEventListener('submit', (e) => {
                 e.preventDefault();
-                console.log(`LOG: Journal form submitted for day: ${dayId}`);
+                const text = textInput.value.trim();
+                
+                // קודם בודקים אם יש תמונה שהגיעה מהמצלמה (נשמרה על הטופס)
+                // אם לא, בודקים אם יש תמונה מהגלריה (נשמרה במשתנה)
+                let finalImageData = journalForm.dataset.imageData || currentImageData;
+
+                if (!text && !finalImageData) {
+                    showAlert('שגיאה', 'יש לכתוב חוויה או להוסיף תמונה.');
+                    return;
+                }
+
                 if(!isFirebaseConnected) { 
                     showAlert('שגיאת סנכרון', 'אין חיבור למסד הנתונים. אנא בדוק את החיבור לאינטרנט.');
                     return; 
                 }
-                const textInput = $(`#journal-text-${dayId}`);
-                const text = textInput.value.trim();
-                if (text) {
-                    addJournalEntry(dayId, text);
-                    textInput.value = '';
-                }
+                
+                addJournalEntry(dayId, text, finalImageData);
+                
+                textInput.value = '';
+                clearImageData(); // מנקה את שני סוגי התמונות
             });
         }
+        // --- סוף: קוד חדש לטיפול בטופס היומן המשודרג ---
     }
     
     function renderActivityCard(dayId, activity, index, total, previousActivity) {
@@ -2991,6 +3076,227 @@ window.startSiteLookupCamera = startSiteLookupCamera;
 // --------------------------------------------------------------------------
 // פונקציה 3: סורק קבלות (Receipt)
 // --------------------------------------------------------------------------
+    // פונקציה חדשה לפתיחת מצלמת היומן
+async function startJournalCamera() {
+    cameraManager.stop();
+    $('#camera-title').textContent = 'צילום חוויה ליומן';
+    $('#capture-btn').style.display = 'flex';
+    $('#barcode-status-display').style.display = 'none';
+    await cameraManager.open('journal'); // מצב חדש: 'journal'
+}
+async function generateLupaAlbumPDF() {
+    showLoading('מכין אלבום...', 'אוסף את כל החוויות, התמונות והסיכומים...');
+
+    const { jsPDF } = window.jspdf;
+    const pdf = new jsPDF('p', 'mm', 'a4'); // 'p' = portrait, 'mm' = מילימטרים, 'a4' = גודל
+    const pdfWidth = pdf.internal.pageSize.getWidth();
+    const pdfHeight = pdf.internal.pageSize.getHeight();
+    const margin = 15; // שוליים
+    const contentWidth = pdfWidth - margin * 2;
+    let currentY = margin;
+
+    // --- הגדרת "במת רינדור" נסתרת ---
+    // ניצור דיב נסתר, נעצב אותו, ונשתמש בו כדי לרנדר את התוכן לפני שנוסיף ל-PDF
+    const renderer = document.createElement('div');
+    renderer.style.position = 'absolute';
+    renderer.style.left = '-9999px'; // מחוץ למסך
+    renderer.style.width = '1000px'; // רוחב קבוע לאיכות גבוהה
+    renderer.style.padding = '20px';
+    renderer.style.fontFamily = 'Assistant, sans-serif'; // הפונט העברי שלך
+    renderer.style.color = '#000';
+    renderer.style.backgroundColor = '#FFF'; // רקע לבן
+    renderer.style.direction = 'rtl'; // חשוב לעברית
+    renderer.style.lineHeight = '1.6';
+    document.body.appendChild(renderer);
+
+    // פונקציית עזר להוספת עמוד חדש
+    const addPageIfNeeded = (neededHeight) => {
+        if (currentY + neededHeight > pdfHeight - margin) {
+            pdf.addPage();
+            currentY = margin;
+            return true;
+        }
+        return false;
+    };
+
+    // פונקציית עזר להוספת אלמנט HTML ל-PDF
+    const addHtmlElementToPdf = async (element) => {
+        renderer.innerHTML = ''; // נקה רינדור קודם
+        renderer.appendChild(element); // הוסף אלמנט נוכחי
+
+        // צלם "צילום מסך" של האלמנט
+        const canvas = await html2canvas(renderer, { scale: 2 }); // קנה מידה 2 לאיכות
+        const imgData = canvas.toDataURL('image/png');
+        
+        const imgProps = pdf.getImageProperties(imgData);
+        const pdfImgHeight = (imgProps.height * contentWidth) / imgProps.width;
+
+        addPageIfNeeded(pdfImgHeight); // בדוק אם צריך עמוד חדש
+
+        // הוסף את התמונה ל-PDF
+        pdf.addImage(imgData, 'PNG', margin, currentY, contentWidth, pdfImgHeight);
+        currentY += pdfImgHeight + 4; // קדם את המיקום האנכי
+    };
+    
+    // פונקציית עזר להוספת תמונה (מיומן או גלריה)
+    const addImageToPdf = async (imageUrl) => {
+        try {
+            const img = new Image();
+            img.crossOrigin = "anonymous"; // נסה למנוע שגיאות
+            
+            // המרה ל-Data URL (אם זה לא כבר)
+            // הפונקציה הזו יוצרת קנבס זמני כדי לוודא שהתמונה נקייה
+            const toDataURL = (src) => {
+                 return new Promise((resolve, reject) => {
+                    const canvas = document.createElement('canvas');
+                    const ctx = canvas.getContext('2d');
+                    const img = new Image();
+                    img.crossOrigin = 'Anonymous';
+                    img.onload = () => {
+                        canvas.height = img.naturalHeight;
+                        canvas.width = img.naturalWidth;
+                        ctx.drawImage(img, 0, 0);
+                        resolve(canvas.toDataURL('image/png'));
+                    };
+                    img.onerror = reject;
+                    img.src = src;
+                });
+            };
+
+            const dataUrl = await toDataURL(imageUrl);
+            const imgProps = pdf.getImageProperties(dataUrl);
+            const imgHeight = (imgProps.height * contentWidth) / imgProps.width;
+            
+            addPageIfNeeded(imgHeight);
+            pdf.addImage(dataUrl, 'PNG', margin, currentY, contentWidth, imgHeight);
+            currentY += imgHeight + 5;
+
+        } catch(e) {
+            console.error("Error adding image to PDF:", e);
+            // אם התמונה נכשלה, הוסף טקסט שגיאה
+            const errorEl = document.createElement('p');
+            errorEl.style.color = 'red';
+            errorEl.style.fontSize = '10px';
+            errorEl.innerText = '[שגיאה בטעינת תמונה]';
+            await addHtmlElementToPdf(errorEl);
+        }
+    };
+
+
+    // --- 1. עמוד שער ---
+    const titleEl = document.createElement('h1');
+    titleEl.style.fontSize = '32px';
+    titleEl.style.textAlign = 'center';
+    titleEl.style.borderBottom = '2px solid #3b82f6';
+    titleEl.style.paddingBottom = '10px';
+    titleEl.innerText = 'אלבום הטיול למילאנו';
+    await addHtmlElementToPdf(titleEl);
+    currentY += 10;
+
+    // --- 2. סיכום AI ---
+    const { plan, expenses, journal, gallery } = localTripData;
+    let placesVisited = [];
+    if(plan) Object.values(plan).forEach(day => (day.activities || []).forEach(act => { if (!placesVisited.includes(act.name)) placesVisited.push(act.name); }));
+    const totalExpenses = (expenses || []).reduce((sum, exp) => sum + exp.amount, 0);
+    let journalEntriesText = [];
+    if (journal) Object.values(journal).forEach(dayEntries => (dayEntries || []).forEach(entry => journalEntriesText.push(entry.text)));
+    
+    const summaryPrompt = `כתוב סיכום טיול קצר ומרגש למילאנו בעברית, בגוף ראשון. התבסס על הנתונים הבאים: מקומות שביקרנו: ${placesVisited.join(', ')}. הוצאות: ${totalExpenses.toFixed(0)} יורו. קטעים מהיומן: ${journalEntriesText.join('; ')}`;
+    const summaryText = await callGemini({ contents: [{ parts: [{ text: "" }] }] }, summaryPrompt, false);
+    
+    const summaryTitleEl = document.createElement('h2');
+    summaryTitleEl.style.fontSize = '22px';
+    summaryTitleEl.style.color = '#1d4ed8';
+    summaryTitleEl.innerText = 'סיכום הטיול שלנו';
+    await addHtmlElementToPdf(summaryTitleEl);
+    
+    const summaryEl = document.createElement('p');
+    summaryEl.style.fontSize = '14px';
+    summaryEl.innerText = summaryText.replace(/\*/g, ''); // נקה כוכביות
+    await addHtmlElementToPdf(summaryEl);
+    currentY += 10;
+
+    // --- 3. לולאה על הימים ---
+    const sortedDays = Object.entries(plan || {}).sort((a, b) => a[0].localeCompare(b[0]));
+    
+    for (const [dayId, dayData] of sortedDays) {
+        addPageIfNeeded(40); // מקום לכותרת יום
+        
+        // קו הפרדה
+        const lineEl = document.createElement('hr');
+        lineEl.style.border = 'none';
+        lineEl.style.borderTop = '1px solid #ccc';
+        lineEl.style.margin = '15px 0';
+        await addHtmlElementToPdf(lineEl);
+
+        const dayTitleEl = document.createElement('h2');
+        dayTitleEl.style.fontSize = '24px';
+        dayTitleEl.style.color = '#1e40af';
+        dayTitleEl.innerText = dayData.name;
+        await addHtmlElementToPdf(dayTitleEl);
+
+        // איסוף חוויות ותמונות
+        const dayJournalEntries = (journal && journal[dayId]) || [];
+        const dayGalleryImages = (gallery || []).filter(img => img.dayId === dayId);
+
+        // הצגת חוויות (מהיומן המשודרג)
+        for (const entry of dayJournalEntries) {
+            if (entry.imageUrl) {
+                await addImageToPdf(entry.imageUrl);
+            }
+            if (entry.text) {
+                const entryTextEl = document.createElement('p');
+                entryTextEl.style.fontSize = '12px';
+                entryTextEl.style.backgroundColor = '#f0f9ff';
+                entryTextEl.style.padding = '10px';
+                entryTextEl.style.borderRadius = '8px';
+                entryTextEl.innerText = entry.text;
+                await addHtmlElementToPdf(entryTextEl);
+            }
+        }
+        
+        // הצגת תמונות (מהגלריה הישנה)
+        for (const img of dayGalleryImages) {
+            await addImageToPdf(img.dataUrl);
+        }
+    }
+
+    // --- סיום וניקוי ---
+    document.body.removeChild(renderer); // נקה את הדיב הנסתר
+    hideLoading();
+    pdf.save('Milan_Album.pdf'); // שמירת הקובץ
+}
+// פונקציה חדשה לעיבוד התמונה שצולמה
+function processJournalImage(base64, dayId) {
+    cameraManager.stop();
+    const dataUrl = `data:image/jpeg;base64,${base64}`;
+    
+    // מציאת הטופס הנכון והאלמנטים שלו
+    const journalForm = $(`#journal-form-${dayId}`);
+    const previewContainer = $(`#journal-preview-container-${dayId}`);
+    const previewImg = $(`#journal-image-preview-${dayId}`);
+
+    if (journalForm && previewImg && previewContainer) {
+        // שמירת הנתונים בזיכרון של הטופס (באופן זמני)
+        // (זהירות: הקוד למעלה משתמש במשתנה 'currentImageData', זו דרך אחרת)
+        // כדי לפשט, נשתמש ישירות במשתנה הגלובלי (זה פחות אידיאלי אבל יעבוד)
+        
+        // נמצא את המשתנה הספציפי של אותו יום
+        const formInstance = window.dayForms = window.dayForms || {};
+        formInstance[dayId] = { imageData: dataUrl };
+        
+        // נעדכן את התצוגה המקדימה
+        previewImg.src = dataUrl;
+        previewContainer.classList.remove('hidden');
+
+        // נעדכן את המשתנה `currentImageData` בסקופ של הטופס (זו הדרך המועדפת)
+        // ... זה מסובך כי המשתנה הוגדר בתוך מאזין...
+        // ... פתרון פשוט יותר: נשמור את ה-base64 על אלמנט הטופס
+        journalForm.dataset.imageData = dataUrl;
+        
+        // והכי פשוט - נעדכן את הקוד ב-submit
+    }
+}
 async function startReceiptScanCamera() {
       cameraManager.stop(); // <-- הוסף שורה זו
     $('#camera-title').textContent = 'סריקת קבלה';
@@ -3060,6 +3366,7 @@ function captureFrame() {
     else if (currentMode === 'receipt') processReceiptImage(base64);
     else if (currentMode === 'lookup') processLookupImage(base64);
     else if (currentMode === 'kosher-lookup') processKosherImage(base64);
+    else if (currentMode === 'journal') processJournalImage(base64, cameraManager.dayId);
 }
 window.captureFrame = captureFrame;
 // שינוי בפונקציה processReceiptImage
@@ -3561,17 +3868,22 @@ function initLiveMap() {
     }
     
     // --- FIX 1 & 2: REWRITTEN JOURNAL FUNCTIONS ---
-    async function addJournalEntry(dayId, text) {
+async function addJournalEntry(dayId, text, imageData = null) {
         console.log(`LOG: addJournalEntry called for day ${dayId}`);
         if (!tripDocRef) {
             console.error("ERROR: tripDocRef is not initialized. Cannot add journal entry.");
             return;
         }
+        
+        // יצירת האובייקט החדש
         const newEntry = {
             id: Date.now().toString(),
             text: text,
+            imageUrl: imageData, // כאן אנו שומרים את התמונה כ-Base64
             timestamp: new Date()
         };
+
+        // שמירה ב-Firestore
         await updateDoc(tripDocRef, {
             [`journal.${dayId}`]: arrayUnion(newEntry)
         });
@@ -3604,7 +3916,7 @@ function initLiveMap() {
         }
     }
 
-    function renderJournal(dayId, entries = []) {
+function renderJournal(dayId, entries = []) {
         console.log(`LOG: renderJournal called for day ${dayId}`);
         const getTimestampDate = (ts) => {
             if (!ts) return new Date();
@@ -3618,9 +3930,16 @@ function initLiveMap() {
             .sort((a, b) => getTimestampDate(b.timestamp).getTime() - getTimestampDate(a.timestamp).getTime())
             .map(entry => {
                 const dateString = getTimestampDate(entry.timestamp).toLocaleString('he-IL', {day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit'});
+                
+                // --- הוספנו תמיכה בתמונה ---
+                const imageHtml = entry.imageUrl ? 
+                    `<img src="${entry.imageUrl}" class="w-full h-48 object-cover rounded-lg mt-2 mb-2 cursor-pointer" onclick="window.openImageModal(this.src)">` : 
+                    ''; // הוספנו onclick לפתיחה בגדול
+
                 return `
                 <div class="bg-blue-50 dark:bg-blue-900/30 p-3 rounded-lg relative group">
-                    <p class="text-sm whitespace-pre-wrap">${entry.text}</p>
+                    ${imageHtml}
+                    ${entry.text ? `<p class="text-sm whitespace-pre-wrap">${entry.text}</p>` : ''}
                     <div class="text-xs text-gray-500 dark:text-gray-400 mt-1">${dateString}</div>
                     <button class="absolute top-2 left-2 text-red-400 hover:text-red-600 opacity-0 group-hover:opacity-100 transition-opacity" onclick="window.removeJournalEntry('${dayId}', '${entry.id}')">
                         <i class="fa-solid fa-trash-alt fa-xs"></i>
@@ -3628,12 +3947,26 @@ function initLiveMap() {
                 </div>`;
         }).join('');
 
+        // --- זהו ה-HTML המעודכן עבור הטופס ---
         return `<div class="mt-6 border-t pt-4">
             <h4 class="font-bold text-lg mb-2">יומן מסע</h4>
-            <div id="journal-entries-${dayId}" class="space-y-3 mb-3">${entriesHtml}</div>
-            <form id="journal-form-${dayId}" class="flex gap-2">
-                <input type="text" id="journal-text-${dayId}" placeholder="הוסף חוויה מהיום..." class="w-full p-2 rounded-lg border">
-                <button type="submit" class="btn btn-primary">שלח</button>
+            <div id="journal-entries-${dayId}" class="space-y-3 mb-3">${entriesHtml || '<p class="text-xs text-gray-500">עדיין לא נוספו חוויות ליום זה.</p>'}</div>
+            
+            <form id="journal-form-${dayId}" class="space-y-2" data-day-id="${dayId}">
+                <textarea id="journal-text-${dayId}" placeholder="הוסף חוויה מהיום..." class="w-full p-2 rounded-lg border" rows="2"></textarea>
+                
+                <input type="file" id="journal-image-upload-${dayId}" class="hidden" accept="image/*">
+                
+                <div class="relative w-32 hidden" id="journal-preview-container-${dayId}">
+                    <img id="journal-image-preview-${dayId}" class="w-32 h-32 object-cover rounded-lg">
+                    <button type="button" id="journal-remove-image-btn-${dayId}" class="absolute -top-2 -right-2 btn btn-ghost p-1 h-auto bg-black/60 text-white rounded-full leading-none w-6 h-6 flex items-center justify-center">&times;</button>
+                </div>
+
+                <div class="flex gap-2">
+                    <button type="submit" class="btn btn-primary flex-grow">שלח חוויה</button>
+                    <button type="button" id="journal-upload-btn-${dayId}" class="btn btn-ghost" title="העלה מהגלריה"><i class="fa-solid fa-images"></i></button>
+                    <button type="button" id="journal-camera-btn-${dayId}" class="btn btn-ghost" title="פתח מצלמה"><i class="fa-solid fa-camera"></i></button>
+                </div>
             </form>
         </div>`;
     }
@@ -4062,6 +4395,7 @@ onAuthStateChanged(auth, (user) => {
     $('#show-tip-btn').addEventListener('click', openTipModal); // טיפ יומי
     $('#create-summary-btn').addEventListener('click', generateTripSummary); // סיכום טיול
     $('#refresh-warnings-btn').addEventListener('click', fetchSafetyWarnings);
+    $('#create-lupa-album-btn').addEventListener('click', generateLupaAlbumPDF);
     $('#share-btn').addEventListener('click', () => { // שתף תוכנית
         const url = window.location.href;
         if (navigator.share) {
