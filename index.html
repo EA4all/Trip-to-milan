@@ -5236,29 +5236,47 @@ async function generateStorybookAlbum() {
             console.log("[Storybook] Book HTML with dynamic templates and backgrounds generated.");
 
 
-            // 5. אתחול הספר הדיגיטלי (זהה לקודם)
+// 5. אתחול הספר הדיגיטלי
             loadingView.style.display = 'none';
-            flipbookView.style.display = 'flex';
+            flipbookView.style.display = 'flex'; // הצג את אזור הספר
 
-            setTimeout(() => {
+            setTimeout(() => { // הגדלנו את ההשהיה ל-250 מילישניות
                 try {
-                    console.log("[Storybook] Initializing Turn.js...");
-jQuery(flipbookContainer).turn({ 
-                    autoCenter: true,
-                    // --- שינויים ---
-                    display: (flipbookContainer.clientWidth > flipbookContainer.clientHeight) ? 'double' : 'single',
-                    acceleration: true, // נשאיר חומרה, אבל נהיה מודעים
-                    gradients: false, // נכבה את הגרדיאנטים - לפעמים הם גורמים לבאגים גרפיים
+                    // בדיקה מפורשת של הגודל *לפני* האתחול
+                    const currentWidth = flipbookContainer.clientWidth;
+                    const currentHeight = flipbookContainer.clientHeight;
+                    const currentDisplay = (currentWidth > currentHeight) ? 'double' : 'single';
 
-  
-                    // --- סוף שינויים ---
-                });
+                    console.log(`[Storybook] Attempting init. Dimensions: ${currentWidth}x${currentHeight}, Calculated display: ${currentDisplay}`);
+
+                    // אם הגודל עדיין 0, הצג שגיאה והפסק
+                    if (currentWidth === 0 || currentHeight === 0) {
+                         console.error("[Storybook] CRITICAL Error: Flipbook dimensions are zero even inside timeout!");
+                         showAlert('שגיאת תצוגה', 'לא ניתן היה לקבוע את גודל האלבום. נסה לרענן.');
+                         // החזר את התצוגה למצב התחלתי אם נכשל
+                         loadingView.style.display = 'none';
+                         initialView.style.display = 'flex';
+                         flipbookView.style.display = 'none';
+                         return; // עצור את הפונקציה
+                    }
+
+                    // אם הגודל תקין, אתחל את הספר
+                    jQuery(flipbookContainer).turn({
+                        autoCenter: true,
+                        display: currentDisplay, // השתמש במשתנה שחישבנו
+                        acceleration: true,
+                        gradients: false
+                    });
                     console.log("[Storybook] Turn.js initialized successfully inside setTimeout.");
                 } catch(e) {
                     console.error("[Storybook] Error initializing turn.js inside setTimeout:", e);
                     showAlert('שגיאת אתחול אלבום', 'לא ניתן היה להפעיל את אפקט הדפדוף.');
+                     // החזר את התצוגה למצב התחלתי אם נכשל
+                     loadingView.style.display = 'none';
+                     initialView.style.display = 'flex';
+                     flipbookView.style.display = 'none';
                 }
-            }, 100);
+            }, 250); // <-- סוף ה-setTimeout
 
         // סגירת TRY ראשי
         } catch (error) {
