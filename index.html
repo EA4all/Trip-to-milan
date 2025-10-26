@@ -4964,7 +4964,20 @@ const openStorybookModal = () => {
         try {
             // 3. קריאה ל-AI
             const aiResponseText = await callGemini({ contents: [{ parts: [{ text: prompt }] }] }, null, false);
-            const storyPages = JSON.parse(aiResponseText);
+            // --- הוספנו ניקוי לתגובת ה-AI ---
+            let cleanedJsonString = aiResponseText;
+            const jsonMatch = aiResponseText.match(/```json\s*([\s\S]*?)\s*```|(\[[\s\S]*\]|\{[\s\S]*\})/);
+            if (jsonMatch) {
+                // העדף את התוכן מתוך בלוק הקוד אם נמצא, אחרת קח את ה-JSON הראשון שנמצא
+                cleanedJsonString = jsonMatch[1] || jsonMatch[2]; 
+            } else {
+                 console.warn("[Storybook] Could not find clean JSON block in AI response, attempting parse anyway.");
+                 // אם לא מצאנו בלוק מסודר, ננסה בכל זאת, אולי הגיע נקי
+            }
+            
+            console.log("[Storybook] Cleaned JSON string:", cleanedJsonString); // לראות מה קיבלנו
+            const storyPages = JSON.parse(cleanedJsonString.trim()); // נסה לפרסר את המחרוזת הנקייה
+            // --- סוף הניקוי ---
 
             // 4. בניית ה-HTML של הספר
             const flipbookContainer = $('#flipbook');
