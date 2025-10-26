@@ -5061,106 +5061,78 @@ document.getElementById('close-eruv-modal').addEventListener('click', () => {
 
     // פתיחת מודל האלבום
 const openStorybookModal = () => {
-        console.log("[Storybook] Attempting to open modal...");
+    console.log("[Storybook] Attempting to open modal...");
 
-        const flipbookSelector = "#flipbook";
-        // --- שינוי 1: שימוש ב-querySelector הילידי כדי לקבל את האלמנט ---
-        const flipbookDomElement = document.querySelector(flipbookSelector); 
+    const flipbookSelector = "#flipbook";
+    const flipbookDomElement = document.querySelector(flipbookSelector);
 
-        console.log("[Storybook] Flipbook DOM element:", flipbookDomElement); // נראה מה נמצא
+    console.log("[Storybook] Flipbook DOM element:", flipbookDomElement);
 
-        if (!flipbookDomElement) {
-            console.error(`[Storybook] CRITICAL ERROR: Element with selector '${flipbookSelector}' NOT FOUND!`);
-            showAlert('שגיאה חמורה', `רכיב האלבום ('${flipbookSelector}') לא נמצא. בדוק HTML.`);
-            return; // עצור אם האלמנט לא קיים
+    if (!flipbookDomElement) {
+        console.error(`[Storybook] CRITICAL ERROR: Element with selector '${flipbookSelector}' NOT FOUND!`);
+        showAlert('שגיאה חמורה', `רכיב האלבום ('${flipbookSelector}') לא נמצא. בדוק HTML.`);
+        return;
+    }
+    console.log("[Storybook] Flipbook element found successfully.");
+
+    // איפוס התצוגה למצב התחלתי
+    initialView.style.display = 'flex';
+    loadingView.style.display = 'none';
+    flipbookView.style.display = 'none';
+
+    console.log("[Storybook] Clearing flipbook content using native innerHTML...");
+    try {
+        flipbookDomElement.innerHTML = ''; // נקה תוכן קודם
+         console.log("[Storybook] Content cleared successfully.");
+    } catch (e) {
+         console.error("[Storybook] Error clearing innerHTML:", e);
+         showAlert('שגיאת איפוס', 'לא ניתן היה לאפס את תוכן האלבום.');
+         return;
+    }
+
+    const flipbookElementJQ = jQuery(flipbookDomElement);
+
+    if (typeof flipbookElementJQ.turn !== 'function') {
+        console.error("[Storybook] CRITICAL ERROR: .turn() function is not available on jQuery object! turn.js not loaded or conflict?");
+        showAlert('שגיאת ספרייה', 'פונקציית הדפדוף (.turn) אינה זמינה. ודא ש-turn.min.js נטען כראוי.');
+        return;
+    }
+    console.log("[Storybook] .turn() function is available.");
+
+    try {
+        console.log("[Storybook] Checking if turn instance exists...");
+        if (flipbookElementJQ.turn("is")) {
+            console.log("[Storybook] Destroying previous turn instance...");
+            flipbookElementJQ.turn("destroy");
+        } else {
+            console.log("[Storybook] No previous turn instance to destroy.");
         }
-        console.log("[Storybook] Flipbook element found successfully.");
+    } catch (e) {
+        console.error("[Storybook] Error during turn('is') or turn('destroy'):", e);
+    }
 
-        // איפוס התצוגה למצב התחלתי
-        initialView.style.display = 'flex';
-        loadingView.style.display = 'none';
-        flipbookView.style.display = 'none';
-        
-        // --- שינוי 2: שימוש ב-innerHTML הילידי לניקוי ---
-        console.log("[Storybook] Clearing flipbook content using native innerHTML...");
-        try {
-            flipbookDomElement.innerHTML = ''; // נקה תוכן קודם
-             console.log("[Storybook] Content cleared successfully.");
-        } catch (e) {
-             console.error("[Storybook] Error clearing innerHTML:", e);
-             showAlert('שגיאת איפוס', 'לא ניתן היה לאפס את תוכן האלבום.');
-             return;
-        }
+    console.log("[Storybook] Removing 'hidden' class from modal.");
+    storybookModal.classList.remove('hidden');
 
-        // --- שינוי 3: עטיפת הגישה ל-turn בתוך jQuery ---
-        // עדיין נצטרך את jQuery כדי להפעיל את turn.js
-        const flipbookElementJQ = jQuery(flipbookDomElement); // -- שינוי: שימוש מפורש ב-jQuery --
+    // !!! הקוד לניגון אוטומטי הוסר מכאן !!!
 
-        if (typeof flipbookElementJQ.turn !== 'function') {
-            console.error("[Storybook] CRITICAL ERROR: .turn() function is not available on jQuery object! turn.js not loaded or conflict?");
-            showAlert('שגיאת ספרייה', 'פונקציית הדפדוף (.turn) אינה זמינה. ודא ש-turn.min.js נטען כראוי.');
-            return; // עצור אם הפונקציה לא קיימת
-        }
-        console.log("[Storybook] .turn() function is available.");
-
-        try {
-            console.log("[Storybook] Checking if turn instance exists...");
-            if (flipbookElementJQ.turn("is")) {
-                console.log("[Storybook] Destroying previous turn instance...");
-                flipbookElementJQ.turn("destroy"); 
-            } else {
-                console.log("[Storybook] No previous turn instance to destroy.");
-            }
-        } catch (e) {
-            console.error("[Storybook] Error during turn('is') or turn('destroy'):", e);
-        }
-
-        console.log("[Storybook] Removing 'hidden' class from modal.");
-        storybookModal.classList.remove('hidden');
-  // נגן מוזיקה אם נטענה
-setTimeout(() => { // הוספת עיכוב קטן
-        if (storybookAudio && storybookAudio.src) {
-            storybookAudio.currentTime = 0; // אתחל מההתחלה
-          console.log(`[Audio] Current readyState: ${storybookAudio.readyState}`);
-            // readyState 4 (HAVE_ENOUGH_DATA) הוא האידיאלי
-            if (storybookAudio.readyState < 3) { // לפחות HAVE_FUTURE_DATA
-                 console.warn("[Audio] Audio not ready yet. Adding 'canplaythrough' listener.");
-                 // אם לא מוכן, המתן לאירוע שמאשר שהקובץ נטען מספיק
-                 storybookAudio.addEventListener('canplaythrough', () => {
-                     console.log("[Audio] Ready via 'canplaythrough', attempting play.");
-                     storybookAudio.play().catch(e => console.error("Autoplay prevented on canplaythrough:", e));
-                 }, { once: true }); // הפעל רק פעם אחת
-                 return; // צא מהפונקציה הנוכחית, הנגינה תתבצע כשהאירוע יופעל
-            }
-            const playPromise = storybookAudio.play(); // נסה לנגן ושמור את ההבטחה
-
-            if (playPromise !== undefined) {
-                playPromise.then(_ => {
-                    // הצליח לנגן אוטומטית
-                    console.log("Background music playback started successfully via promise.");
-                }).catch(error => {
-                    // נכשל - הדפדפן חסם את הניגון האוטומטי
-                    console.error("Autoplay was prevented:", error);
-                    // הודעה למשתמש שהניגון נחסם
-                    if (error.name === 'NotAllowedError' || error.name === 'NotSupportedError') {
-                         showAlert('מוזיקה לא התחילה אוטומטית', 'הדפדפן שלך חסם את הניגון האוטומטי. יש להוסיף כפתור ניגון ידני.', false);
-                    } else {
-                         showAlert('שגיאה בניגון', `לא ניתן היה לנגן את קובץ המוזיקה: ${error.message}`, false);
-                    }
-                });
-            }
-        }
-    }, 100); // עיכוב של 100 מילישניות
-
-    };
+}; // <-- סוגר את הפונקציה openStorybookModal
 
     // סגירת מודל האלבום
 const closeStorybookModal = () => {
     storybookModal.classList.add('hidden');
-    // הפסק מוזיקה <-- הדבק כאן
+    // הפסק מוזיקה ואפס כפתור
     if (storybookAudio) {
         storybookAudio.pause();
-        storybookAudio.currentTime = 0; // אופציונלי: לאפס את המיקום
+        storybookAudio.currentTime = 0;
+        if (playIcon) { // ודא שהכפתור קיים
+            playIcon.classList.remove('fa-pause');
+            playIcon.classList.add('fa-play');
+        }
+    }
+    // הסתר את כפתור הניגון למקרה שהיה גלוי
+    if (playPauseBtn) {
+         playPauseBtn.style.display = 'none';
     }
 };
 
@@ -5374,6 +5346,9 @@ async function generateStorybookAlbum() {
 
         <div id="storybook-flipbook-view" class="hidden w-full h-full flex items-center justify-center">
             <div id="flipbook"></div>
+          <button id="storybook-play-pause-btn" class="absolute bottom-4 left-4 z-30 btn btn-primary bg-pink-500 hover:bg-pink-600 rounded-full w-12 h-12 text-xl flex items-center justify-center shadow-lg" style="display: none;">
+        <i class="fa-solid fa-play"></i>
+    </button>
         </div>
     </div>
 </div>
