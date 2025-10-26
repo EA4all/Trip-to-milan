@@ -79,6 +79,10 @@
     box-sizing: border-box;
     /* --- Text color based on theme --- */
     color: var(--fg); /* Use theme variable for text color */
+  -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
+    -webkit-transform: translateZ(0);
+    transform: translateZ(0);
 }
 #flipbook .page-background {
     position: absolute;
@@ -91,6 +95,10 @@
     z-index: 0;
     /* --- Increased opacity --- */
     opacity: 0.8; /* Make background more visible */
+  -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
+    -webkit-transform: translateZ(0);
+    transform: translateZ(0);
 }
     .dark #flipbook .page-background {
     opacity: 0.7; /* Slightly less opaque in dark mode */
@@ -3307,6 +3315,41 @@ async function generateLupaAlbumPDF() {
     const margin = 15; // שוליים
     const contentWidth = pdfWidth - margin * 2;
     let currentY = margin;
+  // --- 1. טוען את תמונת הרקע ---
+    // פונקציית עזר לטעינת תמונה כ-Base64
+    const fetchImageAsBase64 = async (url) => {
+        try {
+            const response = await fetch(url);
+            const blob = await response.blob();
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onloadend = () => resolve(reader.result);
+                reader.onerror = reject;
+                reader.readAsDataURL(blob);
+            });
+        } catch (e) {
+            console.error("Failed to fetch background image:", e);
+            return null; // החזר null אם נכשל
+        }
+    };
+    
+    // בחר כאן את תמונת הרקע המועדפת עליך מתוך ה-4
+    const backgroundDataUrl = await fetchImageAsBase64('BG/4.jpg'); 
+
+    // --- 2. פונקציית עזר להוספת הרקע ---
+    const addPageBackground = () => {
+        if (backgroundDataUrl) {
+            pdf.saveGraphicsState(); // שומר מצב גרפי
+            // הגדר שקיפות. 0.15 זה עדין, אפשר להגדיל עד 0.3
+            pdf.setGState(new pdf.GState({opacity: 0.15})); 
+            // הוספת התמונה על כל העמוד
+            pdf.addImage(backgroundDataUrl, 'JPEG', 0, 0, pdfWidth, pdfHeight); 
+            pdf.restoreGraphicsState(); // שחזור מצב גרפי (כדי שהטקסט יהיה אטום)
+        }
+    };
+
+    // --- 3. הוספת רקע לעמוד הראשון ---
+    addPageBackground();
 
     // --- הגדרת "במת רינדור" נסתרת ---
     // ניצור דיב נסתר, נעצב אותו, ונשתמש בו כדי לרנדר את התוכן לפני שנוסיף ל-PDF
@@ -3326,6 +3369,7 @@ async function generateLupaAlbumPDF() {
     const addPageIfNeeded = (neededHeight) => {
         if (currentY + neededHeight > pdfHeight - margin) {
             pdf.addPage();
+            addPageBackground();
             currentY = margin;
             return true;
         }
