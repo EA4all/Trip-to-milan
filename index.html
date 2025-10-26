@@ -5116,7 +5116,7 @@ async function generateStorybookAlbum() {
             const userNotes = allEntries.map(e => `${e.day}: ${e.text || '(רק תמונה)'}`).join('\n');
             // --- שינוי בפרומפט: מבקשים backgroundPath במקום backgroundUrl ---
             const prompt = `
-                אתה מעצב גרפי וסופר ילדים. צור סיפור קצר וקסום (עד 8 עמודים) על טיול משפחתי למילאנו, בהתבסס על הרשומות מהיומן והתמונות.
+                אתה מעצב גרפי. צור סיפור קצר וקסום (עד 8 עמודים) על טיול משפחתי למילאנו, בהתבסס על הרשומות מהיומן והתמונות.
                 הרשומות:
                 ${userNotes}
 
@@ -5130,7 +5130,7 @@ async function generateStorybookAlbum() {
                 התשובה שלך חייבת להיות בפורמט JSON בלבד, כמערך של אובייקטים, ללא טקסט לפני או אחרי.
 
                 דוגמה לאובייקט עמוד:
-                { "page": 1, "text": "ההרפתקה הגדולה במילאנו מתחילה!", "imageIndex": -1, "templateId": "template-B", "backgroundPath": "BG/1.jpg" }
+                { "page": 1, "text": "הטיול שלנו למילאנו וצפון איטליה", "imageIndex": -1, "templateId": "template-B", "backgroundPath": "BG/1.jpg" }
             `;
 
 
@@ -5198,8 +5198,6 @@ async function generateStorybookAlbum() {
                 try {
                     console.log("[Storybook] Initializing Turn.js...");
 jQuery(flipbookContainer).turn({ 
-                    width: flipbookContainer.clientWidth,
-                    height: flipbookContainer.clientHeight,
                     autoCenter: true,
                     // --- שינויים ---
                     display: 'double', // ודא שזה תמיד זוגי (אולי יעזור בנייד)
