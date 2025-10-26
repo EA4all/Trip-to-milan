@@ -162,9 +162,9 @@
 #flipbook .page-content p {
     font-family: 'Assistant', sans-serif;
     /* --- Responsive font size with minimum --- */
-    font-size: max(16px, 1.6vw); /* Minimum 12px, responsive above that */
+    font-size: max(18px, 2.1vw); /* Minimum 12px, responsive above that */
     font-weight: 600;
-    text-shadow: 0px 1px 4px rgba(0, 0, 0, 0.5); /* צל טקסט חזק יותר */
+    text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000, 0px 0px 5px rgba(0,0,0,0.5); /* מסגרת שחורה + צל עדין */
     line-height: 1.6;
     text-align: center;
     max-width: 90%;
@@ -4389,6 +4389,33 @@ function setupNavigationAndScrolling() {
         }
     });
 }
+
+    // --- לוגיקה למוזיקת רקע ---
+const musicUploadInput = document.getElementById('bg-music-upload');
+const uploadMusicBtn = document.getElementById('upload-music-btn');
+const storybookAudio = document.getElementById('storybook-audio');
+
+if (uploadMusicBtn && musicUploadInput) {
+    uploadMusicBtn.addEventListener('click', () => {
+        musicUploadInput.click(); // פותח את חלון בחירת הקובץ
+    });
+
+    musicUploadInput.addEventListener('change', (event) => {
+        const file = event.target.files[0];
+        if (file && storybookAudio) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                storybookAudio.src = e.target.result; // טוען את הקובץ שנבחר לנגן
+                console.log("Background music loaded.");
+                // שינוי טקסט הכפתור לאינדיקציה שהקובץ נטען
+                uploadMusicBtn.innerHTML = '<i class="fa-solid fa-check mr-2"></i> מוזיקה נטענה'; 
+                uploadMusicBtn.disabled = true; // אפשר לנעול אחרי טעינה
+            }
+            reader.readAsDataURL(file);
+        }
+    });
+}
+// --- סוף לוגיקה למוזיקת רקע ---
     // --- INIT ---
     
 document.addEventListener('DOMContentLoaded', () => {
@@ -5100,6 +5127,17 @@ const openStorybookModal = () => {
 
         console.log("[Storybook] Removing 'hidden' class from modal.");
         storybookModal.classList.remove('hidden');
+  // נגן מוזיקה אם נטענה
+    if (storybookAudio && storybookAudio.src) {
+        storybookAudio.currentTime = 0; // אתחל את הנגינה מההתחלה
+        storybookAudio.play().catch(e => console.warn("Autoplay prevented:", e)); 
+        // catch() חשוב כי דפדפנים מגבילים ניגון אוטומטי
+    }
+  // הפסק מוזיקה
+    if (storybookAudio) {
+        storybookAudio.pause();
+        storybookAudio.currentTime = 0; // אופציונלי: לאפס את המיקום
+    }
     };
 
     // סגירת מודל האלבום
@@ -5307,6 +5345,10 @@ async function generateStorybookAlbum() {
                 <i class="fa-solid fa-wand-magic-sparkles mr-2"></i>
                 צור את הסיפור שלי!
             </button>
+          <button id="upload-music-btn" class="btn btn-ghost mt-4">
+    <i class="fa-solid fa-music mr-2"></i>
+    העלה מוזיקת רקע (אופציונלי)
+</button>
         </div>
 
         <div id="storybook-loading-view" class="hidden flex-col items-center justify-center h-full">
@@ -5319,5 +5361,7 @@ async function generateStorybookAlbum() {
         </div>
     </div>
 </div>
+  <input type="file" id="bg-music-upload" accept="audio/*" class="hidden">
+<audio id="storybook-audio" loop></audio>
 </body>
 </html>
