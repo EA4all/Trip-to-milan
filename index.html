@@ -5118,22 +5118,51 @@ const openStorybookModal = () => {
         console.log("[Storybook] Removing 'hidden' class from modal.");
         storybookModal.classList.remove('hidden');
   // נגן מוזיקה אם נטענה
-    if (storybookAudio && storybookAudio.src) {
-        storybookAudio.currentTime = 0; // אתחל את הנגינה מההתחלה
-        storybookAudio.play().catch(e => console.warn("Autoplay prevented:", e)); 
-        // catch() חשוב כי דפדפנים מגבילים ניגון אוטומטי
-    }
-  // הפסק מוזיקה
+setTimeout(() => { // הוספת עיכוב קטן
+        if (storybookAudio && storybookAudio.src) {
+            storybookAudio.currentTime = 0; // אתחל מההתחלה
+          console.log(`[Audio] Current readyState: ${storybookAudio.readyState}`);
+            // readyState 4 (HAVE_ENOUGH_DATA) הוא האידיאלי
+            if (storybookAudio.readyState < 3) { // לפחות HAVE_FUTURE_DATA
+                 console.warn("[Audio] Audio not ready yet. Adding 'canplaythrough' listener.");
+                 // אם לא מוכן, המתן לאירוע שמאשר שהקובץ נטען מספיק
+                 storybookAudio.addEventListener('canplaythrough', () => {
+                     console.log("[Audio] Ready via 'canplaythrough', attempting play.");
+                     storybookAudio.play().catch(e => console.error("Autoplay prevented on canplaythrough:", e));
+                 }, { once: true }); // הפעל רק פעם אחת
+                 return; // צא מהפונקציה הנוכחית, הנגינה תתבצע כשהאירוע יופעל
+            }
+            const playPromise = storybookAudio.play(); // נסה לנגן ושמור את ההבטחה
+
+            if (playPromise !== undefined) {
+                playPromise.then(_ => {
+                    // הצליח לנגן אוטומטית
+                    console.log("Background music playback started successfully via promise.");
+                }).catch(error => {
+                    // נכשל - הדפדפן חסם את הניגון האוטומטי
+                    console.error("Autoplay was prevented:", error);
+                    // הודעה למשתמש שהניגון נחסם
+                    if (error.name === 'NotAllowedError' || error.name === 'NotSupportedError') {
+                         showAlert('מוזיקה לא התחילה אוטומטית', 'הדפדפן שלך חסם את הניגון האוטומטי. יש להוסיף כפתור ניגון ידני.', false);
+                    } else {
+                         showAlert('שגיאה בניגון', `לא ניתן היה לנגן את קובץ המוזיקה: ${error.message}`, false);
+                    }
+                });
+            }
+        }
+    }, 100); // עיכוב של 100 מילישניות
+
+    };
+
+    // סגירת מודל האלבום
+const closeStorybookModal = () => {
+    storybookModal.classList.add('hidden');
+    // הפסק מוזיקה <-- הדבק כאן
     if (storybookAudio) {
         storybookAudio.pause();
         storybookAudio.currentTime = 0; // אופציונלי: לאפס את המיקום
     }
-    };
-
-    // סגירת מודל האלבום
-    const closeStorybookModal = () => {
-        storybookModal.classList.add('hidden');
-    };
+};
 
     // חיבור הכפתורים
     if (scrapbookWidget) {
