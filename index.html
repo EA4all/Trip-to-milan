@@ -5007,14 +5007,22 @@ const openStorybookModal = () => {
             loadingView.style.display = 'none';
             flipbookView.style.display = 'flex';
             
-jQuery(flipbookContainer).turn({ // -- שינוי: שימוש מפורש ב-jQuery --
-    width: flipbookContainer.clientWidth,
-    height: flipbookContainer.clientHeight,
-    autoCenter: true,
-    acceleration: true,
-    elevation: 50,
-    gradients: true
-});
+setTimeout(() => {
+        try { // הוספנו try-catch נוסף לבטיחות
+            jQuery(flipbookContainer).turn({ 
+                width: flipbookContainer.clientWidth,
+                height: flipbookContainer.clientHeight,
+                autoCenter: true,
+                acceleration: true,
+                elevation: 50,
+                gradients: true
+            });
+            console.log("[Storybook] Turn.js initialized successfully inside setTimeout.");
+        } catch(e) {
+            console.error("[Storybook] Error initializing turn.js inside setTimeout:", e);
+            showAlert('שגיאת אתחול אלבום', 'לא ניתן היה להפעיל את אפקט הדפדוף.');
+        }
+    },
 
         } catch (error) {
             console.error("Error generating storybook:", error);
