@@ -39,7 +39,53 @@
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+  <script type="text/javascript" src="https://www.turnjs.com/lib/turn.min.js"></script>
   <style>
+    /* ==================== Storybook Styles ==================== */
+#flipbook {
+    width: 90vw;
+    height: 80vh;
+    max-width: 1200px;
+    max-height: 800px;
+}
+#flipbook .turn-page {
+    background-color: #fdfaf5; /* צבע דף קרמי */
+    background-size: cover;
+}
+#flipbook .page-content {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+    height: 100%;
+    box-sizing: border-box;
+}
+#flipbook .page-content img {
+    max-width: 90%;
+    max-height: 60%;
+    object-fit: contain;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+#flipbook .page-content p {
+    font-family: 'Assistant', sans-serif;
+    font-size: 1.2rem;
+    text-align: center;
+    color: #333;
+    margin-top: 20px;
+    max-width: 90%;
+}
+#flipbook .hard { /* כריכה קשה */
+    background-color: #c9a989;
+    background-image: linear-gradient(145deg, #dfb995, #b99471);
+    color: white;
+    font-size: 2.5rem;
+    font-weight: bold;
+    text-shadow: 1px 1px 3px rgba(0,0,0,0.3);
+}
+/* ========================================================== */
 #video-container {
     height: 50vh; /* נסה לתפוס 50% מגובה המסך */
     max-height: 400px; /* אבל לא יותר מ-400 פיקסלים */
@@ -4781,12 +4827,171 @@ document.getElementById('eruv-map-btn').addEventListener('click', () => {
 document.getElementById('close-eruv-modal').addEventListener('click', () => {
   document.getElementById('eruv-modal').classList.add('hidden');
 });
+  // ==================== Storybook Logic ====================
+    const storybookModal = $('#storybook-modal');
+    const storybookCloseBtn = $('#storybook-close-btn');
+    const createStorybookBtn = $('#create-storybook-btn');
+    const scrapbookWidget = $('#scrapbook-tool'); // ודא שזה ה-ID הנכון של כפתור/אזור הסקראפבוק
+
+    const initialView = $('#storybook-initial-view');
+    const loadingView = $('#storybook-loading-view');
+    const flipbookView = $('#storybook-flipbook-view');
+
+    // פתיחת מודל האלבום
+    const openStorybookModal = () => {
+        // איפוס התצוגה למצב התחלתי
+        initialView.style.display = 'flex';
+        loadingView.style.display = 'none';
+        flipbookView.style.display = 'none';
+        $('#flipbook').innerHTML = ''; // נקה ספר קודם
+        if ($("#flipbook").turn("is")) {
+             $("#flipbook").turn("destroy"); // הרס מופע קודם של הספר
+        }
+        storybookModal.classList.remove('hidden');
+    };
+
+    // סגירת מודל האלבום
+    const closeStorybookModal = () => {
+        storybookModal.classList.add('hidden');
+    };
+
+    // חיבור הכפתורים
+    if (scrapbookWidget) {
+        // שינוי: במקום לפתוח את הסקראפבוק הרגיל, פתח את מודל האלבום
+        scrapbookWidget.addEventListener('click', openStorybookModal);
+    }
+    storybookCloseBtn.addEventListener('click', closeStorybookModal);
+    createStorybookBtn.addEventListener('click', generateStorybookAlbum);
+
+
+    // --- הפונקציה המרכזית שיוצרת את הסיפור ---
+    async function generateStorybookAlbum() {
+        initialView.style.display = 'none';
+        loadingView.style.display = 'flex';
+
+        // 1. איסוף כל המידע
+        const allEntries = [];
+        const allImages = [];
+        let imageCounter = 0;
+
+        const sortedDays = Object.keys(localTripData.plan || {}).sort();
+        
+        sortedDays.forEach(dayId => {
+            const dayJournal = localTripData.journal?.[dayId] || [];
+            dayJournal.forEach(entry => {
+                let imageIndex = -1;
+                if (entry.imageUrl) {
+                    allImages.push(entry.imageUrl);
+                    imageIndex = imageCounter++;
+                }
+                allEntries.push({ 
+                    day: localTripData.plan[dayId].name, 
+                    text: entry.text,
+                    imageIndex: imageIndex
+                });
+            });
+        });
+
+        // 2. בניית הפרומפט לבינה המלאכותית
+        const userNotes = allEntries.map(e => `${e.day}: ${e.text || '(רק תמונה)'}`).join('\n');
+        const prompt = `
+            אתה סופר ילדים יצירתי. המשימה שלך היא לכתוב סיפור קצר וקסום (עד 8 עמודים) על טיול משפחתי למילאנו, בהתבסס על התמונות והרשומות מהיומן שלהם.
+            הרשומות מהיומן הן:
+            ${userNotes}
+            
+            המטרה היא ליצור עלילה קוהרנטית ומרגשת, לא רק לסכם את האירועים.
+            התשובה שלך חייבת להיות בפורמט JSON בלבד, ללא טקסט לפני או אחרי.
+            הפורמט הוא מערך של אובייקטים, כאשר כל אובייקט הוא עמוד בספר.
+            לכל עמוד צריך להיות מפתח "text" עם הסיפור לאותו עמוד, ומפתח "imageIndex" עם מספר התמונה המתאימה מהרשימה (התחל לספור מ-0).
+            אם עמוד מסוים הוא רק טקסט (כמו פתיחה או סיום), השתמש ב-imageIndex: -1.
+
+            דוגמה לפורמט התשובה:
+            [
+              { "page": 1, "text": "פעם אחת, לפני הרבה מאוד זמן, יצאה משפחה להרפתקה קסומה בעיר הגדולה מילאנו...", "imageIndex": -1 },
+              { "page": 2, "text": "הדבר הראשון שהם ראו היה קתדרלה עצומה ומפוארת, שהגיעה כמעט עד העננים!", "imageIndex": 0 },
+              { "page": 3, "text": "ליד הקתדרלה, הם מצאו גלידה טעימה ומתוקה שהצחיקה את כולם.", "imageIndex": 1 }
+            ]
+        `;
+
+        try {
+            // 3. קריאה ל-AI
+            const aiResponseText = await callGemini({ contents: [{ parts: [{ text: prompt }] }] }, null, false);
+            const storyPages = JSON.parse(aiResponseText);
+
+            // 4. בניית ה-HTML של הספר
+            const flipbookContainer = $('#flipbook');
+            
+            // כריכה קדמית
+            let bookHtml = `<div class="hard"><div class="page-content">הסיפור המופלא<br>של הטיול שלנו למילאנו</div></div>`;
+
+            storyPages.forEach(page => {
+                const imageUrl = page.imageIndex !== -1 ? allImages[page.imageIndex] : '';
+                const imageHtml = imageUrl ? `<img src="${imageUrl}">` : '';
+                bookHtml += `
+                    <div>
+                        <div class="page-content">
+                            ${imageHtml}
+                            <p>${page.text}</p>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            // כריכה אחורית
+            bookHtml += `<div class="hard"><div class="page-content">סוף</div></div>`;
+
+            flipbookContainer.innerHTML = bookHtml;
+
+            // 5. אתחול הספר הדיגיטלי
+            loadingView.style.display = 'none';
+            flipbookView.style.display = 'flex';
+            
+            $(flipbookContainer).turn({
+                width: flipbookContainer.clientWidth,
+                height: flipbookContainer.clientHeight,
+                autoCenter: true,
+                acceleration: true,
+                elevation: 50,
+                gradients: true
+            });
+
+        } catch (error) {
+            console.error("Error generating storybook:", error);
+            showAlert('שגיאה ביצירת הסיפור', 'הייתה בעיה ביצירת הסיפור. אנא נסה שוב. ודא שהעלית לפחות תמונה אחת.');
+            // חזור למסך ההתחלתי
+            loadingView.style.display = 'none';
+            initialView.style.display = 'flex';
+        }
+    }
+    // ==========================================================
 
 }); // <--- הסוגר הסופי של document.addEventListener('DOMContentLoaded')
 //------------
 
 
   </script>
+<div id="storybook-modal" class="fixed inset-0 bg-gray-800 bg-opacity-75 flex items-center justify-center z-50 hidden">
+    <div class="bg-white dark:bg-gray-900 w-11/12 h-5/6 max-w-6xl rounded-lg shadow-2xl flex flex-col p-4 relative">
+        <button id="storybook-close-btn" class="absolute top-2 right-2 btn btn-ghost text-2xl z-20">&times;</button>
+        
+        <div id="storybook-initial-view" class="flex flex-col items-center justify-center h-full text-center">
+            <h2 class="text-3xl font-bold mb-4">אלבום הטיול שלכם</h2>
+            <p class="mb-8 max-w-md">כאן תוכלו ליצור ספר סיפורים קסום מהטיול שלכם. הבינה המלאכותית תכתוב סיפור מקורי, והתמונות שלכם יהיו האיורים.</p>
+            <button id="create-storybook-btn" class="btn btn-primary bg-pink-600 hover:bg-pink-700 text-lg px-8 py-4">
+                <i class="fa-solid fa-wand-magic-sparkles mr-2"></i>
+                צור את הסיפור שלי!
+            </button>
+        </div>
 
+        <div id="storybook-loading-view" class="hidden flex-col items-center justify-center h-full">
+            <i class="fa-solid fa-book-open fa-spin text-5xl text-pink-500"></i>
+            <p class="mt-4 text-lg">כותב את הסיפור שלכם...<br>זה עשוי לקחת כדקה.</p>
+        </div>
+
+        <div id="storybook-flipbook-view" class="hidden w-full h-full flex items-center justify-center">
+            <div id="flipbook"></div>
+        </div>
+    </div>
+</div>
 </body>
 </html>
