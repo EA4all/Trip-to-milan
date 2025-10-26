@@ -4987,28 +4987,30 @@ const openStorybookModal = () => {
     }
     storybookCloseBtn.addEventListener('click', closeStorybookModal);
     createStorybookBtn.addEventListener('click', generateStorybookAlbum);
+  
+ // סגירת הפונקציה
 async function generateStorybookAlbum() {
         initialView.style.display = 'none';
         loadingView.style.display = 'flex';
 
         try { // TRY ראשי
-            // 1. איסוף כל המידע (זהה לקודם)
+            // 1. איסוף כל המידע
             const allEntries = [];
-            const allImages = [];
+            const allImages = []; // Images uploaded by the user for the story content
             let imageCounter = 0;
             const sortedDays = Object.keys(localTripData.plan || {}).sort();
-            
+
             sortedDays.forEach(dayId => {
                 const dayJournal = localTripData.journal?.[dayId] || [];
                 dayJournal.forEach(entry => {
                     let imageIndex = -1;
                     if (entry.imageUrl) {
-                        allImages.push(entry.imageUrl);
+                        allImages.push(entry.imageUrl); // User's content images
                         imageIndex = imageCounter++;
                     }
-                    allEntries.push({ 
-                        day: localTripData.plan[dayId].name, 
-                        text: entry.text || '', // ודא שיש טקסט או מחרוזת ריקה
+                    allEntries.push({
+                        day: localTripData.plan[dayId].name,
+                        text: entry.text || '',
                         imageIndex: imageIndex
                     });
                 });
@@ -5021,32 +5023,39 @@ async function generateStorybookAlbum() {
                  return;
             }
 
-            // --- חדש: הגדרת אפשרויות עיצוב ---
-            const availableTemplates = ['template-A', 'template-B', 'template-C']; // שמות ה-CSS classes שיצרנו
-            // ניתן להוסיף כאן URL-ים לרקעים (כרגע נשתמש בצבעים)
-            const availableBackgrounds = ['#f0f4f8', '#e6eaea', '#f8f0f0', '#f5f5e0']; // צבעי רקע עדינים
+            // --- חדש: הגדרת אפשרויות עיצוב עם רקעים מקומיים ---
+            const availableTemplates = ['template-A', 'template-B', 'template-C'];
+            // --- שינוי: שימוש בנתיבים מקומיים ---
+            const availableBackgrounds = [
+                'BG/1.jpg',
+                'BG/2.jpg',
+                'BG/3.jpg',
+                'BG/4.jpg'
+            ];
 
             // 2. בניית הפרומפט המשודרג ל-AI
             const userNotes = allEntries.map(e => `${e.day}: ${e.text || '(רק תמונה)'}`).join('\n');
+            // --- שינוי בפרומפט: מבקשים backgroundPath במקום backgroundUrl ---
             const prompt = `
-                אתה מעצב גרפי וסופר ילדים. צור סיפור קצר (עד 8 עמודים) על טיול משפחתי למילאנו, בהתבסס על הרשומות מהיומן והתמונות.
+                אתה מעצב גרפי וסופר ילדים. צור סיפור קצר וקסום (עד 8 עמודים) על טיול משפחתי למילאנו, בהתבסס על הרשומות מהיומן והתמונות.
                 הרשומות:
                 ${userNotes}
-                
+
                 עבור כל עמוד בספר (כולל כריכה קדמית וסיום), עליך להחליט על:
                 1.  'text': קטע קצר מהסיפור שאתה כותב (בעברית).
                 2.  'imageIndex': מספר התמונה המתאימה מהרשימה (0, 1, 2...) או -1 אם אין תמונה בעמוד זה.
                 3.  'templateId': שם התבנית המתאימה ביותר לעמוד זה מבין האפשרויות הבאות: ${availableTemplates.join(', ')}. (למשל, 'template-A' לתמונה גדולה, 'template-B' לטקסט בלבד, 'template-C' לתמונה וטקסט זה לצד זה).
-                4.  'backgroundId': בחר אחד מצבעי הרקע הבאים שיתאים לאווירת העמוד: ${availableBackgrounds.join(', ')}.
+                4.  'backgroundPath': בחר את נתיב קובץ הרקע המתאים ביותר לאווירת העמוד מהרשימה הבאה: ${availableBackgrounds.join(', ')}.
 
                 המטרה היא ליצור אלבום ויזואלי ומרגש. התאם את התבנית והרקע לתוכן של כל עמוד.
                 התשובה שלך חייבת להיות בפורמט JSON בלבד, כמערך של אובייקטים, ללא טקסט לפני או אחרי.
 
                 דוגמה לאובייקט עמוד:
-                { "page": 1, "text": "ההרפתקה הגדולה במילאנו מתחילה!", "imageIndex": -1, "templateId": "template-B", "backgroundId": "#f0f4f8" }
+                { "page": 1, "text": "ההרפתקה הגדולה במילאנו מתחילה!", "imageIndex": -1, "templateId": "template-B", "backgroundPath": "BG/1.jpg" }
             `;
 
-            // 3. קריאה ל-AI וניקוי JSON (זהה לקודם, אבל עם הפרומפט החדש)
+
+            // 3. קריאה ל-AI וניקוי JSON (זהה לקודם)
             console.log("[Storybook] Calling AI for designed story...");
             const aiResponseText = await callGemini({ contents: [{ parts: [{ text: prompt }] }] }, null, false);
             console.log("[Storybook] AI Response received:", aiResponseText);
@@ -5054,42 +5063,40 @@ async function generateStorybookAlbum() {
             let cleanedJsonString = aiResponseText;
             const jsonMatch = aiResponseText.match(/```json\s*([\s\S]*?)\s*```|(\[[\s\S]*\]|\{[\s\S]*\})/);
             if (jsonMatch) {
-                cleanedJsonString = jsonMatch[1] || jsonMatch[2]; 
+                cleanedJsonString = jsonMatch[1] || jsonMatch[2];
             } else {
                  console.warn("[Storybook] Could not find clean JSON block in AI response.");
                  throw new Error("תגובת ה-AI אינה בפורמט JSON תקין.");
             }
-            
-            console.log("[Storybook] Cleaned JSON string:", cleanedJsonString); 
-            const storyPages = JSON.parse(cleanedJsonString.trim()); 
+
+            console.log("[Storybook] Cleaned JSON string:", cleanedJsonString);
+            const storyPages = JSON.parse(cleanedJsonString.trim());
             console.log("[Storybook] Parsed designed story pages:", storyPages);
 
 
-            // 4. בניית ה-HTML של הספר (עם עיצוב דינמי)
-            const flipbookContainer = document.querySelector('#flipbook'); 
+            // 4. בניית ה-HTML של הספר
+            const flipbookContainer = document.querySelector('#flipbook');
             if (!flipbookContainer) throw new Error("Flipbook container not found!");
 
-            // כריכה קדמית (עיצוב קבוע)
-            let bookHtml = `<div class="hard"><div class="page-content"><h1>הסיפור המופלא</h1><h2>של הטיול שלנו למילאנו</h2></div></div>`;
+            let bookHtml = `<div class="hard"><div class="page-content"><h1>הסיפור המופלא</h1><h2>של הטיול שלנו למילאנו</h2></div></div>`; // Cover page
 
             storyPages.forEach(page => {
-                // בדיקות תקינות נוספות
-                if (typeof page !== 'object' || !page.text || !page.templateId || !page.backgroundId) {
+                // בדיקה נוספת למבנה תקין
+                if (typeof page !== 'object' || !page.text || !page.templateId || !page.backgroundPath) { // Check for backgroundPath
                      console.warn("[Storybook] Skipping invalid page object from AI:", page);
-                     return; 
+                     return;
                 }
-                
+
                 const imageIndex = parseInt(page.imageIndex, 10);
                 const imageUrl = imageIndex !== -1 && allImages[imageIndex] ? allImages[imageIndex] : '';
                 const imageHtml = imageUrl ? `<img src="${imageUrl}">` : '';
-                
-                // --- חדש: הוספת ה-class של התבנית והרקע ---
-                // (כאן אפשר להשתמש בתמונה לרקע במקום צבע, אם נגדיר זאת)
-                const backgroundStyle = `style="background-color: ${page.backgroundId};"`; 
+
+                // --- שינוי: שימוש ב-backgroundPath ליצירת ה-style ---
+                const backgroundStyle = `style="background-image: url('${page.backgroundPath}');"`; // Use the local path
 
                 bookHtml += `
-                    <div class="${page.templateId}"> 
-                        <div class="page-background" ${backgroundStyle}></div> 
+                    <div class="${page.templateId}">
+                        <div class="page-background" ${backgroundStyle}></div>
                         <div class="page-content">
                             ${imageHtml}
                             <p>${page.text}</p>
@@ -5097,21 +5104,21 @@ async function generateStorybookAlbum() {
                     </div>
                 `;
             });
-            
-            // כריכה אחורית (עיצוב קבוע)
-            bookHtml += `<div class="hard"><div class="page-content"><h1>סוף</h1></div></div>`;
+
+            bookHtml += `<div class="hard"><div class="page-content"><h1>סוף</h1></div></div>`; // Back cover
 
             flipbookContainer.innerHTML = bookHtml;
-            console.log("[Storybook] Book HTML with dynamic templates generated.");
+            console.log("[Storybook] Book HTML with dynamic templates and backgrounds generated.");
+
 
             // 5. אתחול הספר הדיגיטלי (זהה לקודם)
             loadingView.style.display = 'none';
             flipbookView.style.display = 'flex';
-            
+
             setTimeout(() => {
-                try { 
+                try {
                     console.log("[Storybook] Initializing Turn.js...");
-                    jQuery(flipbookContainer).turn({ 
+                    jQuery(flipbookContainer).turn({
                         width: flipbookContainer.clientWidth,
                         height: flipbookContainer.clientHeight,
                         autoCenter: true,
@@ -5120,14 +5127,14 @@ async function generateStorybookAlbum() {
                         gradients: true
                     });
                     console.log("[Storybook] Turn.js initialized successfully inside setTimeout.");
-                } catch(e) { 
+                } catch(e) {
                     console.error("[Storybook] Error initializing turn.js inside setTimeout:", e);
                     showAlert('שגיאת אתחול אלבום', 'לא ניתן היה להפעיל את אפקט הדפדוף.');
-                } 
-            }, 100); 
+                }
+            }, 100);
 
         // סגירת TRY ראשי
-        } catch (error) { 
+        } catch (error) {
             console.error("Error generating storybook:", error);
             showAlert('שגיאה ביצירת הסיפור', `הייתה בעיה ביצירת הסיפור: ${error.message}. אנא נסה שוב.`);
             loadingView.style.display = 'none';
@@ -5135,7 +5142,6 @@ async function generateStorybookAlbum() {
         } // סגירת CATCH ראשי
 
     } // סגירת הפונקציה
-
 
 }); // <--- הסוגר הסופי של document.addEventListener('DOMContentLoaded')
 //------------
