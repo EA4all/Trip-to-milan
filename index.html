@@ -4913,80 +4913,99 @@ const openStorybookModal = () => {
 
 
     // --- הפונקציה המרכזית שיוצרת את הסיפור ---
+// --- הפונקציה המרכזית שיוצרת את הסיפור (גרסה מתוקנת סופית) ---
     async function generateStorybookAlbum() {
         initialView.style.display = 'none';
         loadingView.style.display = 'flex';
 
-        // 1. איסוף כל המידע
-        const allEntries = [];
-        const allImages = [];
-        let imageCounter = 0;
+        try { // <--- TRY ראשי מתחיל כאן
 
-        const sortedDays = Object.keys(localTripData.plan || {}).sort();
-        
-        sortedDays.forEach(dayId => {
-            const dayJournal = localTripData.journal?.[dayId] || [];
-            dayJournal.forEach(entry => {
-                let imageIndex = -1;
-                if (entry.imageUrl) {
-                    allImages.push(entry.imageUrl);
-                    imageIndex = imageCounter++;
-                }
-                allEntries.push({ 
-                    day: localTripData.plan[dayId].name, 
-                    text: entry.text,
-                    imageIndex: imageIndex
+            // 1. איסוף כל המידע
+            const allEntries = [];
+            const allImages = [];
+            let imageCounter = 0;
+
+            const sortedDays = Object.keys(localTripData.plan || {}).sort();
+            
+            sortedDays.forEach(dayId => {
+                const dayJournal = localTripData.journal?.[dayId] || [];
+                dayJournal.forEach(entry => {
+                    let imageIndex = -1;
+                    if (entry.imageUrl) {
+                        allImages.push(entry.imageUrl);
+                        imageIndex = imageCounter++;
+                    }
+                    allEntries.push({ 
+                        day: localTripData.plan[dayId].name, 
+                        text: entry.text,
+                        imageIndex: imageIndex
+                    });
                 });
             });
-        });
 
-        // 2. בניית הפרומפט לבינה המלאכותית
-        const userNotes = allEntries.map(e => `${e.day}: ${e.text || '(רק תמונה)'}`).join('\n');
-        const prompt = `
-            אתה סופר ילדים יצירתי. המשימה שלך היא לכתוב סיפור קצר וקסום (עד 8 עמודים) על טיול משפחתי למילאנו, בהתבסס על התמונות והרשומות מהיומן שלהם.
-            הרשומות מהיומן הן:
-            ${userNotes}
-            
-            המטרה היא ליצור עלילה קוהרנטית ומרגשת, לא רק לסכם את האירועים.
-            התשובה שלך חייבת להיות בפורמט JSON בלבד, ללא טקסט לפני או אחרי.
-            הפורמט הוא מערך של אובייקטים, כאשר כל אובייקט הוא עמוד בספר.
-            לכל עמוד צריך להיות מפתח "text" עם הסיפור לאותו עמוד, ומפתח "imageIndex" עם מספר התמונה המתאימה מהרשימה (התחל לספור מ-0).
-            אם עמוד מסוים הוא רק טקסט (כמו פתיחה או סיום), השתמש ב-imageIndex: -1.
+            // בדיקה אם יש מספיק תוכן
+            if (allEntries.length === 0 && allImages.length === 0) {
+                 showAlert('אין מספיק תוכן', 'כדי ליצור סיפור, צריך להוסיף לפחות חוויה אחת או תמונה אחת ליומן.');
+                 loadingView.style.display = 'none';
+                 initialView.style.display = 'flex';
+                 return;
+            }
 
-            דוגמה לפורמט התשובה:
-            [
-              { "page": 1, "text": "פעם אחת, לפני הרבה מאוד זמן, יצאה משפחה להרפתקה קסומה בעיר הגדולה מילאנו...", "imageIndex": -1 },
-              { "page": 2, "text": "הדבר הראשון שהם ראו היה קתדרלה עצומה ומפוארת, שהגיעה כמעט עד העננים!", "imageIndex": 0 },
-              { "page": 3, "text": "ליד הקתדרלה, הם מצאו גלידה טעימה ומתוקה שהצחיקה את כולם.", "imageIndex": 1 }
-            ]
-        `;
 
-        try {
-            // 3. קריאה ל-AI
+            // 2. בניית הפרומפט לבינה המלאכותית
+            const userNotes = allEntries.map(e => `${e.day}: ${e.text || '(רק תמונה)'}`).join('\n');
+            const prompt = `
+                אתה סופר ילדים יצירתי. המשימה שלך היא לכתוב סיפור קצר וקסום (עד 8 עמודים) על טיול משפחתי למילאנו, בהתבסס על התמונות והרשומות מהיומן שלהם.
+                הרשומות מהיומן הן:
+                ${userNotes}
+                
+                המטרה היא ליצור עלילה קוהרנטית ומרגשת, לא רק לסכם את האירועים.
+                התשובה שלך חייבת להיות בפורמט JSON בלבד, ללא טקסט לפני או אחרי.
+                הפורמט הוא מערך של אובייקטים, כאשר כל אובייקט הוא עמוד בספר.
+                לכל עמוד צריך להיות מפתח "text" עם הסיפור לאותו עמוד, ומפתח "imageIndex" עם מספר התמונה המתאימה מהרשימה (התחל לספור מ-0).
+                אם עמוד מסוים הוא רק טקסט (כמו פתיחה או סיום), השתמש ב-imageIndex: -1.
+
+                דוגמה לפורמט התשובה:
+                [
+                  { "page": 1, "text": "פעם אחת, לפני הרבה מאוד זמן, יצאה משפחה להרפתקה קסומה בעיר הגדולה מילאנו...", "imageIndex": -1 },
+                  { "page": 2, "text": "הדבר הראשון שהם ראו היה קתדרלה עצומה ומפוארת, שהגיעה כמעט עד העננים!", "imageIndex": 0 },
+                  { "page": 3, "text": "ליד הקתדרלה, הם מצאו גלידה טעימה ומתוקה שהצחיקה את כולם.", "imageIndex": 1 }
+                ]
+            `;
+
+            // 3. קריאה ל-AI וניקוי JSON
+            console.log("[Storybook] Calling AI...");
             const aiResponseText = await callGemini({ contents: [{ parts: [{ text: prompt }] }] }, null, false);
-            // --- הוספנו ניקוי לתגובת ה-AI ---
+            console.log("[Storybook] AI Response received:", aiResponseText);
+
             let cleanedJsonString = aiResponseText;
             const jsonMatch = aiResponseText.match(/```json\s*([\s\S]*?)\s*```|(\[[\s\S]*\]|\{[\s\S]*\})/);
             if (jsonMatch) {
-                // העדף את התוכן מתוך בלוק הקוד אם נמצא, אחרת קח את ה-JSON הראשון שנמצא
                 cleanedJsonString = jsonMatch[1] || jsonMatch[2]; 
             } else {
-                 console.warn("[Storybook] Could not find clean JSON block in AI response, attempting parse anyway.");
-                 // אם לא מצאנו בלוק מסודר, ננסה בכל זאת, אולי הגיע נקי
+                 console.warn("[Storybook] Could not find clean JSON block in AI response.");
+                 throw new Error("תגובת ה-AI אינה בפורמט JSON תקין."); // זרוק שגיאה
             }
             
-            console.log("[Storybook] Cleaned JSON string:", cleanedJsonString); // לראות מה קיבלנו
-            const storyPages = JSON.parse(cleanedJsonString.trim()); // נסה לפרסר את המחרוזת הנקייה
-            // --- סוף הניקוי ---
+            console.log("[Storybook] Cleaned JSON string:", cleanedJsonString); 
+            const storyPages = JSON.parse(cleanedJsonString.trim()); 
+            console.log("[Storybook] Parsed story pages:", storyPages);
+
 
             // 4. בניית ה-HTML של הספר
-           const flipbookContainer = document.querySelector('#flipbook');
-            
-            // כריכה קדמית
+            const flipbookContainer = document.querySelector('#flipbook'); // שימוש ב-querySelector
+            if (!flipbookContainer) throw new Error("Flipbook container not found!");
+
             let bookHtml = `<div class="hard"><div class="page-content">הסיפור המופלא<br>של הטיול שלנו למילאנו</div></div>`;
 
             storyPages.forEach(page => {
-                const imageUrl = page.imageIndex !== -1 ? allImages[page.imageIndex] : '';
+                // בדיקה נוספת למבנה תקין
+                if (typeof page !== 'object' || !page.text) {
+                     console.warn("[Storybook] Skipping invalid page object from AI:", page);
+                     return; // דלג על עמוד לא תקין
+                }
+                const imageIndex = parseInt(page.imageIndex, 10); // ודא שזה מספר
+                const imageUrl = imageIndex !== -1 && allImages[imageIndex] ? allImages[imageIndex] : '';
                 const imageHtml = imageUrl ? `<img src="${imageUrl}">` : '';
                 bookHtml += `
                     <div>
@@ -4998,33 +5017,44 @@ const openStorybookModal = () => {
                 `;
             });
             
-            // כריכה אחורית
             bookHtml += `<div class="hard"><div class="page-content">סוף</div></div>`;
 
             flipbookContainer.innerHTML = bookHtml;
+            console.log("[Storybook] Book HTML generated and added to container.");
+
 
             // 5. אתחול הספר הדיגיטלי
             loadingView.style.display = 'none';
             flipbookView.style.display = 'flex';
             
-setTimeout(() => {
-        try { // הוספנו try-catch נוסף לבטיחות
-            jQuery(flipbookContainer).turn({ 
-                width: flipbookContainer.clientWidth,
-                height: flipbookContainer.clientHeight,
-                autoCenter: true,
-                acceleration: true,
-                elevation: 50,
-                gradients: true
-            });
-            console.log("[Storybook] Turn.js initialized successfully inside setTimeout.");
-        } catch(e) {
-            console.error("[Storybook] Error initializing turn.js inside setTimeout:", e);
-            showAlert('שגיאת אתחול אלבום', 'לא ניתן היה להפעיל את אפקט הדפדוף.');
-        }
-    },
-    }
-    }
+            setTimeout(() => {
+                try { 
+                    console.log("[Storybook] Initializing Turn.js...");
+                    jQuery(flipbookContainer).turn({ 
+                        width: flipbookContainer.clientWidth,
+                        height: flipbookContainer.clientHeight,
+                        autoCenter: true,
+                        acceleration: true,
+                        elevation: 50,
+                        gradients: true
+                    });
+                    console.log("[Storybook] Turn.js initialized successfully inside setTimeout.");
+                } catch(e) { 
+                    console.error("[Storybook] Error initializing turn.js inside setTimeout:", e);
+                    showAlert('שגיאת אתחול אלבום', 'לא ניתן היה להפעיל את אפקט הדפדוף.');
+                } 
+            }, 100); 
+
+        // כאן נסגר ה-TRY הראשי
+        } catch (error) { // <--- CATCH ראשי מתחיל כאן
+            console.error("Error generating storybook:", error);
+            showAlert('שגיאה ביצירת הסיפור', `הייתה בעיה ביצירת הסיפור: ${error.message}. אנא נסה שוב. ודא שהעלית לפחות תמונה אחת.`);
+            // חזור למסך ההתחלתי
+            loadingView.style.display = 'none';
+            initialView.style.display = 'flex';
+        } // <--- CATCH ראשי נסגר כאן
+
+    } // <--- פונקציית generateStorybookAlbum נסגרת כאן
     // ==========================================================
 
 }); // <--- הסוגר הסופי של document.addEventListener('DOMContentLoaded')
