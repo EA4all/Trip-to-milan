@@ -5023,14 +5023,6 @@ setTimeout(() => {
             showAlert('שגיאת אתחול אלבום', 'לא ניתן היה להפעיל את אפקט הדפדוף.');
         }
     },
-
-        } catch (error) {
-            console.error("Error generating storybook:", error);
-            showAlert('שגיאה ביצירת הסיפור', 'הייתה בעיה ביצירת הסיפור. אנא נסה שוב. ודא שהעלית לפחות תמונה אחת.');
-            // חזור למסך ההתחלתי
-            loadingView.style.display = 'none';
-            initialView.style.display = 'flex';
-        }
     }
     // ==========================================================
 
