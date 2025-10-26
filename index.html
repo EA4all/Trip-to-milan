@@ -4844,6 +4844,7 @@ document.getElementById('close-eruv-modal').addEventListener('click', () => {
         loadingView.style.display = 'none';
         flipbookView.style.display = 'none';
         $('#flipbook').innerHTML = ''; // נקה ספר קודם
+        console.log("Type of $.fn.turn:", typeof $.fn.turn);
         if ($("#flipbook").turn("is")) {
              $("#flipbook").turn("destroy"); // הרס מופע קודם של הספר
         }
