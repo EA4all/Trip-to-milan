@@ -5123,7 +5123,39 @@ const openStorybookModal = () => {
     storybookModal.classList.remove('hidden');
 
     // !!! הקוד לניגון אוטומטי הוסר מכאן !!!
+// --- ניסיון לניגון אוטומטי (עם טריק ההשתקה) ---
+    if (storybookAudio && storybookAudio.src) {
+        // התחל מושתק
+        storybookAudio.muted = true;
+        storybookAudio.currentTime = 0;
+        const playPromise = storybookAudio.play();
 
+        if (playPromise !== undefined) {
+            playPromise.then(_ => {
+                // הצליח להתחיל (מושתק), נסה לבטל השתקה
+                console.log("[Audio] Autoplay started (muted). Attempting to unmute.");
+                storybookAudio.muted = false; // <<< נסה לבטל השתקה
+                // עדכן את כפתור הניגון הידני למצב "מושהה" (כי הוא מנגן)
+                if (playIcon) {
+                    playIcon.classList.remove('fa-play');
+                    playIcon.classList.add('fa-pause');
+                }
+            }).catch(error => {
+                // נכשל אפילו בהתחלה מושתקת (נדיר) או בביטול ההשתקה
+                console.error("Autoplay (muted or unmute) failed:", error);
+                // השאר את כפתור הניגון הידני במצב "פליי"
+                if (playIcon) {
+                    playIcon.classList.remove('fa-pause');
+                    playIcon.classList.add('fa-play');
+                }
+                // הצג הודעה רק אם השגיאה היא חסימת Autoplay
+                 if (error.name === 'NotAllowedError' || error.name === 'NotSupportedError') {
+                     showAlert('מוזיקה לא התחילה אוטומטית', 'הדפדפן שלך חסם את הניגון האוטומטי. לחץ על כפתור הניגון.', false);
+                 }
+            });
+        }
+    }
+    // --- סוף ניסיון לניגון אוטומטי ---
 }; // <-- סוגר את הפונקציה openStorybookModal
 
     // סגירת מודל האלבום
