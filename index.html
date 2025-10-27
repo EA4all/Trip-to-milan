@@ -5318,13 +5318,16 @@ async function generateStorybookAlbum() {
                 }
             }, 250); // <-- סוף ה-setTimeout
 initializeAudioControls();
+          if (playPauseBtn) { // ודא שהכפתור נמצא לפני שמנסים להציג אותו
+            playPauseBtn.style.display = 'flex';
+            console.log("[Audio] Play button displayed immediately.");
+        } else {
+             console.error("[Audio] Could not find playPauseBtn to display immediately!");
+        }
 // --- לוגיקה לכפתור ניגון ידני ---
 if (storybookAudio && playPauseBtn && playIcon) {
     // מאזין שמראה את הכפתור כשהמוזיקה מוכנה
-    storybookAudio.addEventListener('canplaythrough', () => {
-        console.log("[Audio] Ready via canplaythrough, showing play button.");
-        playPauseBtn.style.display = 'flex'; // הצג את הכפתור
-    });
+
 
     // מאזין לכפתור עצמו
     playPauseBtn.addEventListener('click', () => {
