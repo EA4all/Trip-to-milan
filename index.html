@@ -2441,7 +2441,7 @@ const rowRestaurant = r => {
         <td data-label="שעות" class="p-3 text-xs">${r.hours || ''}</td>
         <td data-label="פעולות" class="p-3">
             <div class="flex flex-wrap gap-2">
-                <button onclick="window.openAddToDayModal('${r.name}', 'kosher')" class="btn btn-primary btn-sm" title="הוסף ליום"><i class="fa-solid fa-plus"></i></button>
+               <button onclick="window.openAddToDayModal('${r.name.replace(/'/g, "\\'")}', 'kosher')" class="btn btn-primary btn-sm" title="הוסף ליום"><i class="fa-solid fa-plus"></i></button>
                 ${r.phone ? `<a title="התקשר" href="tel:${r.phone}" class="btn btn-ghost btn-sm"><i class="fa-solid fa-phone"></i></a>`:''}
                 <a title="Waze" href="https://waze.com/ul?q=${encodeURIComponent(r.address)}" target="_blank" class="btn btn-ghost btn-sm"><i class="fa-brands fa-waze"></i></a>
                 <a title="Google Maps" href="https://maps.google.com/?q=${encodeURIComponent(r.address)}" target="_blank" class="btn btn-ghost btn-sm"><i class="fa-brands fa-google"></i></a>
