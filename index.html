@@ -546,6 +546,9 @@ body {
             <button id="toggle-suggestions-btn" class="btn btn-primary">הצג הצעות נוספות</button>
         </div>
         <div id="suggestions-container" class="hidden mt-6 bg-white dark:bg-gray-950 p-4 sm:p-6 rounded-2xl shadow-lg">
+          <div class="mb-4">
+        <input type="search" id="suggestion-search-input" placeholder="חפש הצעה (לדוגמה: דואומו)" class="w-full p-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800">
+    </div>
             <div id="suggestions-table-container"></div>
         </div>
     </section>
@@ -2459,7 +2462,7 @@ const rowMarket = m => {
         <td data-label="שעות" class="p-3 text-xs">${m.hours || ''}</td>
         <td data-label="פעולות" class="p-3">
             <div class="flex flex-wrap gap-2">
-                <button onclick="window.openAddToDayModal('${m.name}', 'kosher')" class="btn btn-primary btn-sm" title="הוסף ליום"><i class="fa-solid fa-plus"></i></button>
+                <button onclick="window.openAddToDayModal('${m.name.replace(/'/g, "\'")}', 'kosher')" class="btn btn-primary btn-sm" title="הוסף ליום"><i class="fa-solid fa-plus"></i></button>
                 ${m.phone ? `<a title="התקשר" href="tel:${m.phone}" class="btn btn-ghost btn-sm"><i class="fa-solid fa-phone"></i></a>`:''}
                 <a title="Waze" href="https://waze.com/ul?q=${encodeURIComponent(m.address)}" target="_blank" class="btn btn-ghost btn-sm"><i class="fa-brands fa-waze"></i></a>
                 <a title="Google Maps" href="https://maps.google.com/?q=${encodeURIComponent(m.address)}" target="_blank" class="btn btn-ghost btn-sm"><i class="fa-brands fa-google"></i></a>
@@ -4417,6 +4420,29 @@ if (storybookAudio) {
     // --- INIT ---
     
 document.addEventListener('DOMContentLoaded', () => {
+// --- מאזין לתיבת החיפוש של ההצעות ---
+const suggestionSearchInput = $('#suggestion-search-input');
+if (suggestionSearchInput) {
+    suggestionSearchInput.addEventListener('input', (e) => {
+        const searchTerm = e.target.value.toLowerCase().trim();
+        // אנו מחפשים ישירות בטבלה שכבר נוצרה
+        const tableRows = $$('#suggestions-table-container tbody tr');
+
+        tableRows.forEach(row => {
+            // TD הראשון מכיל את השם
+            const nameCell = row.querySelector('td:first-child');
+            if (nameCell) {
+                const name = nameCell.textContent.toLowerCase();
+                if (name.includes(searchTerm)) {
+                    row.style.display = ''; // הצג שורה
+                } else {
+                    row.style.display = 'none'; // הסתר שורה
+                }
+            }
+        });
+    });
+}
+  
 setupNavigationAndScrolling()
   const heBtn = $('#voice-translate-he-btn');
     const itBtn = $('#voice-translate-it-btn');
@@ -4597,6 +4623,13 @@ onAuthStateChanged(auth, (user) => {
     listenForLocationUpdates();
 
     onSnapshot(tripDocRef, async (docSnap) => {
+        // --- התחלה: קוד חדש (שמירת מצב) ---
+        // 1. שמירת המצב הנוכחי
+        const activeDayTab = $('#day-tabs-nav .tab-active');
+        const activeDayId = activeDayTab ? activeDayTab.dataset.content : null;
+        const scrollY = window.scrollY;
+        // --- סוף: קוד חדש ---
+
         if (!isFirebaseConnected) {
             const statusIcon = $('#sync-status i');
             const statusText = $('#sync-status span');
@@ -4624,19 +4657,44 @@ onAuthStateChanged(auth, (user) => {
         renderScrapbook();
       
         // גלילה לחלק הרצוי אם הוא צוין בכתובת המקורית
-        // (הקוד הזה הועבר לכאן מההנחיה הקודמת)
         const initialHash = window.location.hash.substring(1);
         if (initialHash) {
             const targetElement = document.getElementById(initialHash);
             if (targetElement) {
-                // השהייה קטנה כדי לוודא שהעמוד הספיק להציג את כל התוכן לפני הגלילה
                 setTimeout(() => {
                     console.log(`LOG: Scrolling to initial section from hash: #${initialHash}`);
                     targetElement.scrollIntoView({ behavior: 'smooth' });
                 }, 300);
             }
         }
+
+        // --- התחלה: קוד חדש (שחזור מצב) ---
+        // 2. שחזור המצב
+        if (activeDayId) {
+            // שחזור הלשונית הפעילה
+            $$('#day-tabs-nav .tab-button').forEach(btn => {
+                if (btn.dataset.content === activeDayId) {
+                    btn.classList.add('tab-active');
+                } else {
+                    btn.classList.remove('tab-active');
+                }
+            });
+            // שחזור התוכן הפעיל
+            $$('#plan-content-container .content-section').forEach(s => {
+                if (s.id === activeDayId) {
+                    s.classList.add('active');
+                } else {
+                    s.classList.remove('active');
+                }
+            });
+        }
         
+        // 3. שחזור מיקום הגלילה
+        setTimeout(() => {
+            window.scrollTo(0, scrollY);
+        }, 100); // השהיה קטנה כדי לאפשר לדפדפן לצייר את העמוד
+        // --- סוף: קוד חדש ---
+
     }, (error) => {
         console.error("ERROR: Firestore snapshot error:", error);
         const statusIcon = $('#sync-status i');
